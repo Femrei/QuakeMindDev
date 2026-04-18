@@ -256,10 +256,10 @@ The NER model is currently loaded from Hugging Face:
 yhaslan/turkish-earthquake-tweets-ner
 ```
 
-Optional reference link placeholder for later:
+Repository:
 
 ```text
-TODO_NER_HF_LINK
+https://huggingface.co/yhaslan/turkish-earthquake-tweets-ner
 ```
 
 ## How Model Download Works
@@ -337,16 +337,6 @@ Utbird/dispath_optimized_mitb4_focal_dice30
 - `ultralytics` and `opencv-python` are required for camera detection.
 - `segmentation-models-pytorch` is required for the road-damage model.
 - large model weights are intentionally hosted on Hugging Face instead of GitHub.
-
-## Future README Placeholders
-
-You said you will provide additional Hugging Face links later. These placeholders can be replaced when ready:
-
-```text
-NER_MODEL_REPO=TODO
-CAMERA_CRACK_MODEL_REPO=OPTIONAL
-CAMERA_BUILDING_MODEL_REPO=OPTIONAL
-```
 
 ## License and Distribution Note
 
