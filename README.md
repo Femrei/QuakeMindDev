@@ -1,21 +1,28 @@
 # QuakeMind
 
-QuakeMind, afet sonrası karar destek senaryoları için geliştirilen çok modüllü bir uygulama paketidir. Tek bir proje altında metin analizi, uydu görüntüsü üzerinden yol hasar analizi, deprem risk değerlendirmesi ve canlı kamera tabanlı bina/catlak tespiti bir araya getirilmiştir.
+QuakeMind is a multi-module disaster support project that brings together:
 
-Bu repo şu an çalışma odaklı bir uygulama deposu olarak düzenlenmiştir. Büyük model dosyalarının bir kısmı GitHub dışında tutulacak şekilde ayrılmıştır; Hugging Face bağlantıları eklendiğinde bu README içindeki ilgili alanlar kolayca doldurulabilir.
+- Turkish disaster text analysis
+- satellite-based road damage assessment
+- earthquake risk analysis
+- live camera-based crack and building detection
 
-## Modüller
+The repository is organized as a single project with multiple apps under `apps/`, plus one unified Streamlit entry point at the root.
 
-- `Afet Metin Analizi`
-  Türkçe afet metinlerini sınıflandırır, konum çıkarımı yapar ve harita üzerinde gösterir.
-- `Uydu Yol Hasar Analizi`
-  Uydu görüntüsü ve segmentasyon modeli ile yol erişilebilirliğini ve enkaz etkisini analiz eder.
-- `Deprem Risk Paneli`
-  Tarihsel deprem verisi, fay yakınlığı ve kısa/uzun dönem risk sinyallerini birleştirerek şehir bazlı risk çıktısı üretir.
-- `Kamera Tespiti`
-  Canlı kamera akışında çatlak ve bina durumu modellerini ayrı pencerelerde çalıştırır.
+## Overview
 
-## Proje Yapısı
+QuakeMind combines different disaster-response workflows in one place:
+
+- `Disaster NLP`
+  Classifies Turkish disaster-related text, extracts locations, and visualizes results on a map.
+- `Road Damage`
+  Uses satellite imagery and segmentation to estimate road damage and access conditions.
+- `Earthquake Risk`
+  Computes city-level earthquake risk using historical events, fault proximity, and derived risk features.
+- `Camera Detection`
+  Runs live camera-based crack and building-status detection using YOLO models.
+
+## Repository Structure
 
 ```text
 QuakeMind/
@@ -48,141 +55,125 @@ QuakeMind/
         └── utils/
 ```
 
-## Ana Çalıştırma Yolu
+## Unified App
 
-Birleşik arayüz için proje kökünden:
+Run the unified interface from the repository root:
 
 ```bash
 streamlit run main.py
 ```
 
-Bu arayüz içinde şu sayfalar bulunur:
+Available pages in the unified interface:
 
-- `Afet Metin Analizi`
-- `Uydu Yol Hasar Analizi`
-- `Deprem Risk Paneli`
-- `Kamera Tespiti`
+- `Disaster Text Analysis`
+- `Satellite Road Damage Analysis`
+- `Earthquake Risk Panel`
+- `Camera Detection`
 
-## Alt Uygulamalar
+## Individual Apps
 
-### 1. Afet Metin Analizi
+### Disaster NLP
 
-Konum:
+Location:
 
 ```text
 apps/disaster_nlp
 ```
 
-Doğrudan çalıştırmak için:
+Run directly:
 
 ```bash
 cd apps/disaster_nlp
 streamlit run app.py
 ```
 
-Öne çıkan yetenekler:
+Main capabilities:
 
-- Türkçe afet metni temizleme
-- sınıflandırma
-- NER tabanlı konum çıkarımı
-- folium ile haritalama
+- Turkish disaster text preprocessing
+- text classification
+- NER-based location extraction
+- map visualization with Folium
 
-Kullanılan model türleri:
+### Road Damage
 
-- Yerel sınıflandırma modeli
-- Hugging Face üzerinden NER modeli
-
-### 2. Uydu Yol Hasar Analizi
-
-Konum:
+Location:
 
 ```text
 apps/road_damage
 ```
 
-Doğrudan çalıştırmak için:
+Run directly:
 
 ```bash
 cd apps/road_damage
 streamlit run app.py
 ```
 
-Öne çıkan yetenekler:
+Main capabilities:
 
-- uydu katmanları ile alan seçimi
-- yol hasarı segmentasyonu
-- yol ağı analizi
-- erişime açık / kapalı yol ayrımı
+- area selection from map layers
+- road damage segmentation
+- road network accessibility analysis
+- open vs blocked route estimation
 
-### 3. Deprem Risk Paneli
+### Earthquake Risk
 
-Konum:
+Location:
 
 ```text
 apps/earthquake_risk
 ```
 
-Birleşik arayüz içinden kullanılması önerilir. İstersen masaüstü arayüzü de ayrıca kullanılabilir:
+Recommended usage is through the unified interface. A desktop-style local UI also exists:
 
 ```bash
 cd apps/earthquake_risk
 python3 main.py
 ```
 
-Öne çıkan yetenekler:
+Main capabilities:
 
-- canlı deprem verisini CSV üzerine güncelleme
-- şehir bazlı risk hesabı
-- yakın çevredeki deprem kümelerini analiz etme
-- seçilen koordinata yakın fay segmentlerini filtreleyerek haritada gösterme
+- historical earthquake data update
+- city-based risk estimation
+- nearby event analysis
+- filtered fault-line rendering around selected coordinates
 
-### 4. Kamera Tespiti
+### Camera Detection
 
-Konum:
+Location:
 
 ```text
 apps/camera_detection
 ```
 
-Bu modül birleşik arayüzde ayrı sayfa olarak açılır. Kod tarafında ana giriş dosyaları:
+Relevant files:
 
 - `apps/camera_detection/app.py`
 - `apps/camera_detection/camera_manager.py`
 
-Öne çıkan yetenekler:
+Main capabilities:
 
-- canlı kamera akışı
-- çatlak tespiti
-- bina durumu tespiti
-- iki YOLO modelini paralel çalıştırma
+- live webcam processing
+- crack detection
+- building-status detection
+- parallel YOLO inference
 
-## Kurulum
+## Requirements
 
-## 1. Python sürümü
-
-Önerilen:
+Recommended Python version:
 
 ```text
 Python 3.12
 ```
 
-## 2. Sanal ortam
-
-Örnek kurulum:
+Example virtual environment setup:
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-## 3. Bağımlılıklar
-
-Bu repo modüler yapıdadır. İki yaklaşım var:
-
-- Tek bir ortak environment kurup tüm bağımlılıkları oraya yüklemek
-- Her app için ayrı environment kullanmak
-
-Tek environment yaklaşımı için en pratik yol:
+Install dependencies app by app:
 
 ```bash
 pip install -r apps/disaster_nlp/requirements.txt
@@ -190,52 +181,26 @@ pip install -r apps/road_damage/requirements.txt
 pip install -r apps/earthquake_risk/requirements.txt
 ```
 
-Ek not:
+Notes:
 
-- `earthquake_risk` masaüstü arayüzü için Linux tarafında `python3-tk` gerekebilir.
-- Kamera tespiti için webcam erişimi gerekir.
+- On Linux, the `earthquake_risk` desktop UI may require `python3-tk`.
+- Camera detection requires webcam access.
 
-## Model Dosyaları
+## Model Sources
 
-Bu repo içinde bazı modeller yerel tutulur, bazıları Hugging Face üzerinden indirilecek şekilde planlanmıştır.
+Some large model files are intentionally hosted outside GitHub and are downloaded automatically when missing.
 
-### Hugging Face'e taşınması planlanan büyük modeller
+### Automatically Downloaded Models
 
-Buraya daha sonra bağlantı ekleyebilmemiz için boş alanlar bırakıldı:
+#### Disaster NLP classification model
 
-- `Disaster NLP classification model`
-  - Hugging Face repo: `TODO_HF_LINK_DISASTER_NLP`
-  - hedef klasör: `apps/disaster_nlp/models/2kveri/`
-- `Road Damage segmentation model`
-  - Hugging Face repo: `TODO_HF_LINK_ROAD_DAMAGE_PRIMARY`
-  - hedef dosya: `apps/road_damage/models/optimized_mitb4_focal_dice30.pth`
-- `Road Damage fallback model`
-  - Hugging Face repo: `TODO_HF_LINK_ROAD_DAMAGE_FALLBACK`
-  - hedef dosya: `apps/road_damage/models/210926_deneme_18epoch_mitb4_imagenet_focalanddiceloss.pth`
+Hugging Face repository:
 
-### Repo içinde kalabilen modeller
+```text
+https://huggingface.co/Utbird/EqTwitterTr
+```
 
-- `apps/camera_detection/models/catlak.pt`
-- `apps/camera_detection/models/bina.pt`
-- `apps/earthquake_risk/models/*.pt`
-
-### NER modeli
-
-Şu an kodda uzaktan kullanılan model:
-
-- `yhaslan/turkish-earthquake-tweets-ner`
-
-İstersen bunun için de burada ayrı bir sabit link alanı kullanabiliriz:
-
-- Hugging Face repo: `TODO_HF_LINK_TURKISH_EARTHQUAKE_TWEETS_NER`
-
-## Model Yerleştirme Adımları
-
-Hugging Face bağlantıları hazır olduktan sonra aşağıdaki bölümü güncelleyebiliriz. Şimdilik örnek akış:
-
-### Disaster NLP modeli
-
-Beklenen klasör:
+Expected local directory:
 
 ```text
 apps/disaster_nlp/models/2kveri/
@@ -245,94 +210,144 @@ apps/disaster_nlp/models/2kveri/
 └── tokenizer_config.json
 ```
 
-### Road Damage modeli
+Current code behavior:
 
-Beklenen dosyalar:
+- if the local classification model directory is incomplete or missing, the app downloads the required files from `Utbird/EqTwitterTr`
+
+Relevant code:
+
+- [apps/disaster_nlp/src/classification.py](/home/utku/Desktop/QuakeMind/apps/disaster_nlp/src/classification.py:1)
+
+#### Road Damage segmentation model
+
+Hugging Face repository:
+
+```text
+https://huggingface.co/Utbird/dispath_optimized_mitb4_focal_dice30
+```
+
+Expected local file:
 
 ```text
 apps/road_damage/models/optimized_mitb4_focal_dice30.pth
-apps/road_damage/models/210926_deneme_18epoch_mitb4_imagenet_focalanddiceloss.pth
 ```
 
-### Kamera modelleri
+Current code behavior:
 
-Beklenen dosyalar:
+- if `optimized_mitb4_focal_dice30.pth` is missing, the app downloads it automatically from `Utbird/dispath_optimized_mitb4_focal_dice30`
+
+Relevant code:
+
+- [apps/road_damage/utils/inference.py](/home/utku/Desktop/QuakeMind/apps/road_damage/utils/inference.py:1)
+
+### Other Models Kept in the Repository
+
+These are currently small enough to remain in the repo:
+
+- `apps/camera_detection/models/catlak.pt`
+- `apps/camera_detection/models/bina.pt`
+- `apps/earthquake_risk/models/*.pt`
+
+### External NER Model
+
+The NER model is currently loaded from Hugging Face:
 
 ```text
-apps/camera_detection/models/catlak.pt
-apps/camera_detection/models/bina.pt
+yhaslan/turkish-earthquake-tweets-ner
 ```
 
-## Kullanım Akışları
-
-### Birleşik arayüz ile çalışma
-
-1. Ortak environment'ı aktif et
-2. Gerekli bağımlılıkları kur
-3. Gerekli model dosyalarını doğru klasörlere yerleştir
-4. `streamlit run main.py` ile uygulamayı başlat
-5. Sol menüden modül seç
-
-### Afet metni analizi
-
-1. Örnek veri seç veya serbest metin gir
-2. Analizi çalıştır
-3. kategori, güven skoru ve konum sonucunu incele
-4. haritadaki işaretlemeyi kontrol et
-
-### Uydu yol hasar analizi
-
-1. Şehir veya bölge seç
-2. harita üzerinde alan belirle
-3. model yolunu kontrol et
-4. analizi başlat
-5. hasar maskelemesi ve yol erişim durumunu incele
-
-### Deprem risk paneli
-
-1. Şehir seç veya manuel koordinat gir
-2. istersen veriyi güncelle
-3. risk hesabını çalıştır
-4. sonuç metni, harita, ısı katmanı ve teknik verileri incele
-
-### Kamera tespiti
-
-1. Kamera sayfasını aç
-2. kamera tespitini başlat
-3. OpenCV pencerelerinde sonuçları izle
-4. çıkmak için `q` tuşuna bas
-
-## Bilinen Gereksinimler ve Notlar
-
-- `streamlit_folium` etkileşimli harita tarafında kullanılır
-- `catboost`, `geopy` ve `pandas` deprem risk tarafında gereklidir
-- `ultralytics` ve `opencv-python` kamera tarafında gereklidir
-- `segmentation-models-pytorch` road damage tarafında gereklidir
-- büyük model dosyaları GitHub yerine Hugging Face üzerinde tutulmalıdır
-
-## Geliştirme Notları
-
-Bu proje şu anda uygulama odaklıdır ve birkaç farklı alt sistemi bir araya getirir. İleride aşağıdaki iyileştirmeler eklenebilir:
-
-- otomatik model indirme yardımcı scriptleri
-- ilk kurulum scripti
-- ortak `requirements.txt` veya `pyproject.toml`
-- Hugging Face model resolver katmanı
-- Docker desteği
-
-## Hugging Face Link Alanları
-
-Bu bölümü sonradan doğrudan doldurabiliriz:
+Optional reference link placeholder for later:
 
 ```text
-DISASTER_NLP_MODEL_REPO=TODO
-ROAD_DAMAGE_PRIMARY_MODEL_REPO=TODO
-ROAD_DAMAGE_FALLBACK_MODEL_REPO=TODO
+TODO_NER_HF_LINK
+```
+
+## How Model Download Works
+
+### Disaster NLP
+
+When the local classification model is not available, the code downloads:
+
+- `config.json`
+- `model.safetensors`
+- `tokenizer.json`
+- `tokenizer_config.json`
+
+from:
+
+```text
+Utbird/EqTwitterTr
+```
+
+### Road Damage
+
+When the default segmentation weight file is not available, the code downloads:
+
+- `optimized_mitb4_focal_dice30.pth`
+
+from:
+
+```text
+Utbird/dispath_optimized_mitb4_focal_dice30
+```
+
+## Usage Flow
+
+### Unified Interface
+
+1. Activate your Python environment.
+2. Install the required dependencies.
+3. Run `streamlit run main.py`.
+4. Select the desired module from the sidebar.
+5. If a required large model is missing, the app will download it automatically.
+
+### Disaster NLP
+
+1. Select a sample text or enter custom text.
+2. Run the analysis.
+3. Review category, confidence score, and extracted location.
+4. Inspect the map output.
+
+### Road Damage
+
+1. Select a city or area.
+2. Choose or draw the region on the map.
+3. Confirm the model path.
+4. Run the analysis.
+5. Inspect the segmentation and road accessibility results.
+
+### Earthquake Risk
+
+1. Select a city or enter manual coordinates.
+2. Optionally refresh the earthquake dataset.
+3. Run the risk analysis.
+4. Review the result summary, map, heat layer, and technical details.
+
+### Camera Detection
+
+1. Open the camera page.
+2. Start camera detection.
+3. Observe the OpenCV windows.
+4. Press `q` to close the camera windows.
+
+## Technical Notes
+
+- `streamlit_folium` is used for interactive maps.
+- `catboost`, `geopy`, and `pandas` are required for earthquake risk analysis.
+- `ultralytics` and `opencv-python` are required for camera detection.
+- `segmentation-models-pytorch` is required for the road-damage model.
+- large model weights are intentionally hosted on Hugging Face instead of GitHub.
+
+## Future README Placeholders
+
+You said you will provide additional Hugging Face links later. These placeholders can be replaced when ready:
+
+```text
 NER_MODEL_REPO=TODO
 CAMERA_CRACK_MODEL_REPO=OPTIONAL
 CAMERA_BUILDING_MODEL_REPO=OPTIONAL
 ```
 
-## Lisans / Dağıtım Notu
+## License and Distribution Note
 
-Model dosyalarının lisansları, eğitim verileri ve yeniden dağıtım hakları ayrıca kontrol edilmelidir. Özellikle harici model depoları ve Hugging Face üzerinden paylaşılacak ağırlıklar için lisans bilgisinin ayrı netleştirilmesi önerilir.
+Please verify the redistribution rights, training data constraints, and model licenses before publishing model weights broadly. This is especially important for any external or third-party models referenced by the project.
