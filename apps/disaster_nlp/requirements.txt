@@ -6,3 +6,4 @@ torch
 nltk
 zeyrek
 geopy
+huggingface_hub

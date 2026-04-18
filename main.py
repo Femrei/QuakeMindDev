@@ -24,11 +24,7 @@ CAMERA_ROOT = APPS_DIR / "camera_detection"
 
 NLP_MODEL_DIR = NLP_ROOT / "models" / "2kveri"
 RISK_CSV = RISK_ROOT / "data" / "query.csv"
-ROAD_MODEL_CANDIDATES = [
-    ROAD_ROOT / "models" / "optimized_mitb4_focal_dice30.pth",
-    ROAD_ROOT / "models" / "210926_deneme_18epoch_mitb4_imagenet_focalanddiceloss.pth",
-]
-ROAD_DEFAULT_MODEL = next((path for path in ROAD_MODEL_CANDIDATES if path.exists()), ROAD_MODEL_CANDIDATES[0])
+ROAD_DEFAULT_MODEL = ROAD_ROOT / "models" / "optimized_mitb4_focal_dice30.pth"
 
 TURKEY_PROVINCES = [
     "Adana", "Adiyaman", "Afyonkarahisar", "Agri", "Amasya", "Ankara", "Antalya",

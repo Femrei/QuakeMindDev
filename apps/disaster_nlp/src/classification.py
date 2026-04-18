@@ -2,12 +2,20 @@ import os
 from pathlib import Path
 
 import torch
+from huggingface_hub import snapshot_download
 from transformers import pipeline
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_LOCAL_MODEL = BASE_DIR / "models" / "2kveri"
 REMOTE_MODEL_ENV = "DISASTER_MODEL_NAME"
+DEFAULT_HF_REPO = "Utbird/EqTwitterTr"
+REQUIRED_MODEL_FILES = (
+    "config.json",
+    "model.safetensors",
+    "tokenizer.json",
+    "tokenizer_config.json",
+)
 
 # P-5 standardında göstermek istediğimiz üst kategoriler
 CATEGORY_MAPPING = {
@@ -27,17 +35,34 @@ CATEGORY_MAPPING = {
 }
 
 
+def _has_required_local_model_files(model_dir):
+    return all((model_dir / filename).exists() for filename in REQUIRED_MODEL_FILES)
+
+
+def _download_default_model():
+    DEFAULT_LOCAL_MODEL.mkdir(parents=True, exist_ok=True)
+    snapshot_download(
+        repo_id=DEFAULT_HF_REPO,
+        local_dir=str(DEFAULT_LOCAL_MODEL),
+        allow_patterns=list(REQUIRED_MODEL_FILES),
+    )
+
+
 def _resolve_model_path(model_name=None):
     if model_name:
         return model_name
-    if DEFAULT_LOCAL_MODEL.is_dir():
+    if _has_required_local_model_files(DEFAULT_LOCAL_MODEL):
+        return str(DEFAULT_LOCAL_MODEL)
+    _download_default_model()
+    if _has_required_local_model_files(DEFAULT_LOCAL_MODEL):
         return str(DEFAULT_LOCAL_MODEL)
     remote_model_name = os.getenv(REMOTE_MODEL_ENV)
     if remote_model_name:
         return remote_model_name
     raise ValueError(
         "Siniflandirma modeli bulunamadi. "
-        f"Yerel olarak '{DEFAULT_LOCAL_MODEL}' klasorunu ekleyin veya "
+        f"Yerel olarak '{DEFAULT_LOCAL_MODEL}' klasorunu ekleyin, "
+        f"varsayilan Hugging Face reposu '{DEFAULT_HF_REPO}' erisilebilir olsun veya "
         f"{REMOTE_MODEL_ENV} ortam degiskenini Hugging Face model adi ile ayarlayin."
     )
 

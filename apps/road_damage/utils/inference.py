@@ -1,17 +1,42 @@
 import os
+from pathlib import Path
+
 import torch
 import cv2
 import numpy as np
 import segmentation_models_pytorch as smp
 import streamlit as st
+from huggingface_hub import hf_hub_download
+
+
+DEFAULT_ROAD_MODEL_REPO = "Utbird/dispath_optimized_mitb4_focal_dice30"
+DEFAULT_ROAD_MODEL_FILENAME = "optimized_mitb4_focal_dice30.pth"
+
+
+def _ensure_model_file(model_path):
+    resolved_path = Path(model_path)
+    if resolved_path.exists():
+        return resolved_path
+
+    if resolved_path.name != DEFAULT_ROAD_MODEL_FILENAME:
+        return resolved_path
+
+    resolved_path.parent.mkdir(parents=True, exist_ok=True)
+    downloaded_path = hf_hub_download(
+        repo_id=DEFAULT_ROAD_MODEL_REPO,
+        filename=DEFAULT_ROAD_MODEL_FILENAME,
+        local_dir=str(resolved_path.parent),
+    )
+    return Path(downloaded_path)
 
 
 @st.cache_resource
 def load_simple_model(model_path):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = smp.Segformer(encoder_name="mit_b4", encoder_weights=None, in_channels=3, classes=1).to(device)
-    if os.path.exists(model_path):
-        model.load_state_dict(torch.load(model_path, map_location=device))
+    resolved_model_path = _ensure_model_file(model_path)
+    if resolved_model_path.exists():
+        model.load_state_dict(torch.load(resolved_model_path, map_location=device))
         model.eval()
         return model, device
     return None, device
