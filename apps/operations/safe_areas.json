@@ -1,0 +1,150 @@
+[
+  {
+    "name": "Antakya Stadyum Toplanma Alani",
+    "city": "Hatay",
+    "lat": 36.2104,
+    "lon": 36.1572,
+    "capacity": 8500,
+    "status": "Musait"
+  },
+  {
+    "name": "Hatay Fuar Alani",
+    "city": "Hatay",
+    "lat": 36.2321,
+    "lon": 36.1728,
+    "capacity": 6200,
+    "status": "Musait"
+  },
+  {
+    "name": "Kahramanmaras Stadyum Alani",
+    "city": "Kahramanmaras",
+    "lat": 37.5895,
+    "lon": 36.9263,
+    "capacity": 9000,
+    "status": "Musait"
+  },
+  {
+    "name": "Gaziantep Demokrasi Meydani",
+    "city": "Gaziantep",
+    "lat": 37.0662,
+    "lon": 37.3833,
+    "capacity": 5400,
+    "status": "Musait"
+  },
+  {
+    "name": "Malatya Millet Bahcesi",
+    "city": "Malatya",
+    "lat": 38.3558,
+    "lon": 38.3194,
+    "capacity": 7000,
+    "status": "Kismi Dolu"
+  },
+  {
+    "name": "Adiyaman Valilik Toplanma Alani",
+    "city": "Adiyaman",
+    "lat": 37.7645,
+    "lon": 38.2786,
+    "capacity": 4800,
+    "status": "Musait"
+  },
+  {
+    "name": "Örn: Merkez StadyumMerkez Gu",
+    "city": "Hatay",
+    "lat": 36.208490000000005,
+    "lon": 36.1410478,
+    "capacity": 5000,
+    "status": "Musait",
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            36.119911,
+            36.199404
+          ],
+          [
+            36.119911,
+            36.222119
+          ],
+          [
+            36.172753,
+            36.222119
+          ],
+          [
+            36.172753,
+            36.199404
+          ],
+          [
+            36.119911,
+            36.199404
+          ]
+        ]
+      ]
+    }
+  },
+  {
+    "name": "Örn: Merkez StadyumMerkez Guvenlik Alaniu",
+    "city": "Hatay",
+    "lat": 36.153677,
+    "lon": 36.172753,
+    "capacity": 5000,
+    "status": "Musait",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        36.172753,
+        36.153677
+      ]
+    }
+  },
+  {
+    "name": "Örn: Merkez StadyumMerkez Guvenlik Alaniu",
+    "city": "Hatay",
+    "lat": 36.1627682,
+    "lon": 36.1621842,
+    "capacity": 5000,
+    "status": "Musait",
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            36.119911,
+            36.153677
+          ],
+          [
+            36.119911,
+            36.176405
+          ],
+          [
+            36.225594,
+            36.176405
+          ],
+          [
+            36.225594,
+            36.153677
+          ],
+          [
+            36.119911,
+            36.153677
+          ]
+        ]
+      ]
+    }
+  },
+  {
+    "name": "Merkez Guvenlik Alani",
+    "city": "Hatay",
+    "lat": 36.194694,
+    "lon": 36.172753,
+    "capacity": 5000,
+    "status": "Musait",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        36.172753,
+        36.194694
+      ]
+    }
+  }
+]

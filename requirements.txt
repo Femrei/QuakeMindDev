@@ -17,3 +17,5 @@ zeyrek
 osmnx
 networkx
 shapely
+segmentation-models-pytorch
+nltk
