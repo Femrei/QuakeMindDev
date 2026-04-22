@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QuakeMind Sahadan Bildirim</title>
+    <!-- Leaflet for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <!-- PWA Manifest info would go here -->
+</head>
+<body>
+    
+    <!-- Top Header -->
+    <header class="app-header">
+        <div class="logo">🛰️ QuakeMind P2P</div>
+        <div class="status-indicator">
+            <span id="connection-status" class="dot disconnected"></span>
+            <span id="connection-text">Bağlanıyor...</span>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+        
+        <!-- View 1: Map (Default) -->
+        <div id="view-map" class="view active">
+            <div id="map"></div>
+        </div>
+
+        <!-- View 2: Report (Camera & Form) -->
+        <div id="view-report" class="view">
+            <div class="report-container">
+                <h2>Durum Bildir</h2>
+                <div class="form-group">
+                    <label>Durum Tipi:</label>
+                    <select id="report-type">
+                        <option value="enkaz_bildirimi">Enkaz / Yıkım Bildirimi (Kamera)</option>
+                        <option value="yol_durumu">Kapalı Yol Bildirimi (Kamera)</option>
+                        <option value="acil_ihtiyac">Acil İhtiyaç / Çağrı (Metin / NLP)</option>
+                    </select>
+                </div>
+                
+                <div id="camera-container" class="camera-section">
+                    <video id="camera-preview" autoplay playsinline></video>
+                    <canvas id="photo-canvas" style="display: none;"></canvas>
+                    <img id="photo-result" style="display: none;">
+                    <div class="camera-controls">
+                        <button id="btn-start-camera" class="btn"><i class="fas fa-camera"></i> Kamera Aç</button>
+                        <button id="btn-take-photo" class="btn btn-primary" style="display: none;"><i class="fas fa-circle"></i> Çek</button>
+                        <button id="btn-retake" class="btn btn-secondary" style="display: none;"><i class="fas fa-redo"></i> Yeniden Çek</button>
+                    </div>
+                </div>
+
+                <div id="text-container" class="form-group" style="display: none; margin-top: 10px;">
+                    <label>Mesajınız / İhtiyacınız:</label>
+                    <textarea id="report-text" rows="4" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-panel); color: white; border: 1px solid #444;" placeholder="Lütfen acil durumunuzu veya ihtiyacınızı buraya yazın (Örn: Çadır ve su ihtiyacı var)..."></textarea>
+                </div>
+
+                <div class="location-status">
+                    <i class="fas fa-map-marker-alt"></i> Konum: <span id="loc-text">Bekleniyor...</span>
+                </div>
+
+                <button id="btn-submit-report" class="btn btn-danger btn-large" disabled>
+                    <i class="fas fa-paper-plane"></i> Ağa Gönder (P2P)
+                </button>
+            </div>
+        </div>
+
+        <!-- View 3: Mesh Network Feed (Live Data) -->
+        <div id="view-feed" class="view">
+            <div class="feed-container">
+                <h2>P2P Canlı Akış <span class="badge" id="peer-count">0</span></h2>
+                <p class="feed-desc">Local ağdaki diğer cihazlardan gelen veriler</p>
+                <div id="feed-list" class="feed-list">
+                    <!-- Feed items will be injected here -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" data-target="view-map">
+            <i class="fas fa-map"></i>
+            <span>Harita</span>
+        </a>
+        <a href="#" class="nav-item" data-target="view-report">
+            <i class="fas fa-camera-retro"></i>
+            <span>Bildir</span>
+        </a>
+        <a href="#" class="nav-item" data-target="view-feed">
+            <i class="fas fa-list-ul"></i>
+            <span>Akış</span>
+            <span class="notification-dot" id="nav-notif" style="display: none;"></span>
+        </a>
+    </nav>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

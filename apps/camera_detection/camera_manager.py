@@ -2,6 +2,7 @@ from ultralytics import YOLO
 import cv2
 import threading
 from pathlib import Path
+import argparse
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -46,29 +47,35 @@ def draw_results(frame, results, class_names, window_name):
     cv2.imshow(window_name, frame)
 
 def main():
-    # Model yolları (models klasörüne taşındı)
-    model1_path = BASE_DIR / "models" / "catlak.pt"
-    model2_path = BASE_DIR / "models" / "bina.pt"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", type=str, default="both", choices=["crack", "building", "both"], help="Detection mode")
+    args = parser.parse_args()
 
-    # Modelleri yükle
-    model1 = YOLO(str(model1_path))
-    model2 = YOLO(str(model2_path))
+    # Modelleri ve pencereleri seçilen moda göre ayarla
+    run_crack = args.mode in ["crack", "both"]
+    run_building = args.mode in ["building", "both"]
 
-    # Sınıf isimlerini al
-    class_names1 = model1.names
-    class_names2 = model2.names
+    model1, model2 = None, None
+    class_names1, class_names2 = None, None
+    window1, window2 = "catlak Tespiti", "Bina durumu"
+
+    if run_crack:
+        model1_path = BASE_DIR / "models" / "catlak.pt"
+        model1 = YOLO(str(model1_path))
+        class_names1 = model1.names
+        cv2.namedWindow(window1, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(window1, 800, 600)
+    
+    if run_building:
+        model2_path = BASE_DIR / "models" / "bina.pt"
+        model2 = YOLO(str(model2_path))
+        class_names2 = model2.names
+        cv2.namedWindow(window2, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(window2, 800, 600)
 
     # Video yakalama başlat
     video_thread = VideoCaptureThread(0)
     video_thread.start()
-
-    window1 = "catlak Tespiti"
-    window2 = "Bina durumu"
-
-    cv2.namedWindow(window1, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(window1, 800, 600)
-    cv2.namedWindow(window2, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(window2, 800, 600)
 
     try:
         while True:
@@ -76,30 +83,30 @@ def main():
             if frame is None:
                 continue
 
-            # Tahmin sonuçlarını tutacak yapı
             results1 = [None]
             results2 = [None]
 
-            # Model tahmin fonksiyonları
-            def run_model1():
-                results1[0] = model1.predict(source=frame, conf=0.6, verbose=False)[0]
+            threads = []
+            if run_crack:
+                def run_model1():
+                    results1[0] = model1.predict(source=frame, conf=0.6, verbose=False)[0]
+                t1 = threading.Thread(target=run_model1)
+                threads.append(t1)
+            
+            if run_building:
+                def run_model2():
+                    results2[0] = model2.predict(source=frame, conf=0.4, verbose=False)[0]
+                t2 = threading.Thread(target=run_model2)
+                threads.append(t2)
 
-            def run_model2():
-                results2[0] = model2.predict(source=frame, conf=0.4, verbose=False)[0]
+            for t in threads: t.start()
+            for t in threads: t.join()
 
-            # Thread'leri başlat
-            t1 = threading.Thread(target=run_model1)
-            t2 = threading.Thread(target=run_model2)
-            t1.start()
-            t2.start()
-            t1.join()
-            t2.join()
+            if run_crack:
+                draw_results(frame.copy(), results1[0], class_names1, window1)
+            if run_building:
+                draw_results(frame.copy(), results2[0], class_names2, window2)
 
-            # Sonuçları çiz
-            draw_results(frame.copy(), results1[0], class_names1, window1)
-            draw_results(frame.copy(), results2[0], class_names2, window2)
-
-            # Çıkmak için 'q' tuşuna bas
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     finally:
@@ -108,3 +115,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

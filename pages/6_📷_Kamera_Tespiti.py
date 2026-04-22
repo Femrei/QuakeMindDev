@@ -1,5 +1,7 @@
 import streamlit as st
 from core import *
+import subprocess
+import sys
 
 st.set_page_config(page_title="Kamera Tespiti", layout="wide")
 boot_resources()
@@ -23,14 +25,27 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-if "camera_feature_running" not in st.session_state:
-    st.session_state.camera_feature_running = False
 if "camera_feature_status" not in st.session_state:
     st.session_state.camera_feature_status = "Hazır"
 
 with st.sidebar:
     st.markdown("---")
     st.markdown("### Kamera Tespiti")
+    detection_mode = st.radio(
+        "Tespit Modu Seçin",
+        ["Çatlak Tespiti", "Bina Durumu", "Her İkisi"],
+        index=2,
+        key="camera_mode_selection"
+    )
+    
+    # Mode mapping
+    mode_map = {
+        "Çatlak Tespiti": "crack",
+        "Bina Durumu": "building",
+        "Her İkisi": "both"
+    }
+    selected_mode = mode_map[detection_mode]
+
     launch_camera = st.button("📷 Kamera Tespitini Baslat", type="primary", key="camera_feature_launch")
 
 with temporary_sys_path(CAMERA_ROOT):
@@ -47,25 +62,24 @@ st.write(f"- `{model_paths['crack_detection']}`")
 st.write(f"- `{model_paths['building_detection']}`")
 st.caption("Uygulama OpenCV pencereleri acarak calisir. Cikmak icin kamera penceresinde `q` tusuna basin.")
 
-if launch_camera and not st.session_state.camera_feature_running:
-    def run_camera_feature():
-        try:
-            with temporary_sys_path(CAMERA_ROOT), temporary_cwd(CAMERA_ROOT):
-                from app import launch_camera_detection
+if launch_camera:
+    try:
+        # Ayrı bir işlem olarak başlatıyoruz (Subprocess)
+        script_path = CAMERA_ROOT / "camera_manager.py"
+        python_exe = sys.executable  # Mevcut venv'deki python
+        
+        subprocess.Popen(
+            [python_exe, str(script_path), "--mode", selected_mode],
+            cwd=str(CAMERA_ROOT),
+            creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0
+        )
+        st.session_state.camera_feature_status = f"{detection_mode} baslatildi"
+        st.success(f"{detection_mode} baslatildi. Lutfen yeni acilan pencereleri kontrol edin.")
+    except Exception as exc:
+        st.error(f"Kamera baslatilamadı: {exc}")
 
-                launch_camera_detection()
-        finally:
-            st.session_state.camera_feature_running = False
-            st.session_state.camera_feature_status = "Hazır"
-
-    st.session_state.camera_feature_running = True
-    st.session_state.camera_feature_status = "Kamera tespiti baslatildi"
-    threading.Thread(target=run_camera_feature, daemon=True).start()
-    st.success("Kamera tespiti ayri pencerede baslatildi.")
 
 status_cols = st.columns(2)
 status_cols[0].caption(f"Durum: {st.session_state.camera_feature_status}")
-status_cols[1].caption(
-    "Calisiyor" if st.session_state.camera_feature_running else "Beklemede"
-)
+
 

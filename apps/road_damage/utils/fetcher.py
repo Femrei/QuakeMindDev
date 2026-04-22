@@ -71,51 +71,73 @@ def fetch_satellite_area(lat, lon, bbox=None, zoom_level=18, wayback_id=None, pr
 
 
 def get_osm_roads_overpass(bounds, w, h, thickness=4):
-    """Fetches OSM roads via Overpass and draws perfectly aligned array."""
+    """Fetches OSM roads with multiple fallbacks and robust error handling."""
+    import osmnx as ox
     west, south, east, north = bounds
     
-    servers = [
-        "http://overpass-api.de/api/interpreter",
+    road_img = np.zeros((h, w), dtype=np.uint8)
+    
+    # Servers to try
+    overpass_servers = [
+        "https://overpass-api.de/api/interpreter",
         "https://overpass.kumi.systems/api/interpreter",
-        "https://lz4.overpass-api.de/api/interpreter"
+        "http://overpass-api.de/api/interpreter",
+        "https://lz4.overpass-api.de/api/interpreter",
+        "https://overpass.osm.ch/api/interpreter",
+        "https://overpass.openstreetmap.fr/api/interpreter"
     ]
     
-    query = f'''
-    [out:json][timeout:30];
-    way["highway"]({south},{west},{north},{east});
-    out geom;
-    '''
-    
-    road_img = np.zeros((h, w), dtype=np.uint8)
-    data = None
-    
-    for url in servers:
+    # 1. Try OSMnx with multiple servers
+    for server_url in overpass_servers:
         try:
-            resp = requests.post(url, data=query, timeout=30)
+            ox.settings.overpass_url = server_url
+            ox.settings.timeout = 60
+            tags = {"highway": True}
+            gdf = ox.features_from_bbox(bbox=(south, north, west, east), tags=tags)
+            
+            if not gdf.empty:
+                for _, row in gdf.iterrows():
+                    if row.geometry.geom_type in ['LineString', 'MultiLineString']:
+                        if row.geometry.geom_type == 'LineString':
+                            lines = [row.geometry]
+                        else:
+                            lines = row.geometry.geoms
+                        for line in lines:
+                            pts = []
+                            for lon, lat in line.coords:
+                                px = int((lon - west) / (east - west) * w)
+                                py = int((north - lat) / (north - south) * h)
+                                pts.append([px, py])
+                            if len(pts) >= 2:
+                                pts_arr = np.array(pts, np.int32).reshape((-1, 1, 2))
+                                cv2.polylines(road_img, [pts_arr], False, 1, thickness=thickness)
+                return road_img
+        except Exception:
+            continue
+
+    # 2. Try raw requests as a last resort
+    query = f'[out:json][timeout:60];way["highway"]({south},{west},{north},{east});out geom;'
+    for server_url in overpass_servers:
+        try:
+            resp = requests.post(server_url, data=query, timeout=60)
             if resp.status_code == 200:
                 data = resp.json()
-                break # Success
+                for element in data.get('elements', []):
+                    if 'geometry' in element:
+                        pts = []
+                        for pt in element['geometry']:
+                            px = int((pt['lon'] - west) / (east - west) * w)
+                            py = int((north - pt['lat']) / (north - south) * h)
+                            pts.append([px, py])
+                        if len(pts) >= 2:
+                            pts_arr = np.array(pts, np.int32).reshape((-1, 1, 2))
+                            cv2.polylines(road_img, [pts_arr], False, 1, thickness=thickness)
+                return road_img
         except Exception:
             continue
             
-    if not data:
-        st.warning("All Overpass servers failed. Roads could not be fetched.")
-        return road_img
-        
-    try:
-        for element in data.get('elements', []):
-            if 'geometry' in element:
-                pts = []
-                for pt in element['geometry']:
-                    px = int((pt['lon'] - west) / (east - west) * w)
-                    py = int((north - pt['lat']) / (north - south) * h)
-                    pts.append([px, py])
-                if len(pts) >= 2:
-                    pts = np.array(pts, np.int32).reshape((-1, 1, 2))
-                    cv2.polylines(road_img, [pts], False, 1, thickness=thickness)
-    except Exception as e:
-        st.warning(f"OSM parse error: {e}")
-        
+    st.warning("Maalesef tüm OSM sunucuları başarısız oldu. Yol verisi alınamıyor.")
+    st.info("İpucu: İnternet bağlantınızı veya DNS ayarlarınızı kontrol edin.")
     return road_img
 
 @st.cache_data
