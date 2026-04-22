@@ -223,6 +223,12 @@ for index, record in enumerate(filtered_records):
             unsafe_allow_html=True,
         )
         st.write(record["tweet"])
+        
+        if record.get("resim_yolu") and os.path.exists(record["resim_yolu"]):
+            st.image(record["resim_yolu"], caption=f"P2P Saha Görüntüsü - Gönderen: {record.get('p2p_kaynagi', 'Bilinmiyor')}", use_container_width=True)
+        elif record.get("p2p_kaynagi"):
+            st.info(f"📡 Bu kayıt P2P Mesh yerel ağından geldi (Kaynak: {record['p2p_kaynagi']})")
+            
         st.caption(
             f"Konum durumu: {record.get('konum_tipi', 'Bilinmiyor')} | "
             f"Konum guveni: {record.get('konum_guveni', 'Bilinmiyor')} | "

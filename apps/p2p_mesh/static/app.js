@@ -99,10 +99,20 @@ btnStartCamera.addEventListener('click', async () => {
 });
 
 btnTakePhoto.addEventListener('click', () => {
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    // Downscale for low-bandwidth P2P transmission
+    const MAX_WIDTH = 800;
+    let width = video.videoWidth;
+    let height = video.videoHeight;
+    
+    if (width > MAX_WIDTH) {
+        height = Math.round((height * MAX_WIDTH) / width);
+        width = MAX_WIDTH;
+    }
+    
+    canvas.width = width;
+    canvas.height = height;
+    canvas.getContext('2d').drawImage(video, 0, 0, width, height);
+    photoDataUrl = canvas.toDataURL('image/jpeg', 0.6); // Lower quality for smaller size
     
     photoResult.src = photoDataUrl;
     video.style.display = 'none';
@@ -290,3 +300,43 @@ function handleIncomingMessage(data) {
         marker.bindPopup(`<b>${typeText}</b><br>Gönderen: ${data.sender_id}`);
     }
 }
+
+// Manual Location Selection
+const btnManualLoc = document.getElementById('btn-manual-loc');
+let manualMarker = null;
+
+btnManualLoc.addEventListener('click', () => {
+    // Switch to map view
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-map').classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelector('[data-target="view-map"]').classList.add('active');
+    
+    // Hint message
+    alert("Haritadan bulunduğunuz konuma tıklayın.");
+    
+    // Map click handler
+    map.once('click', (e) => {
+        const { lat, lng } = e.latlng;
+        currentLat = lat;
+        currentLon = lng;
+        
+        if (manualMarker) {
+            manualMarker.setLatLng(e.latlng);
+        } else {
+            manualMarker = L.marker(e.latlng, { draggable: true }).addTo(map)
+                .bindPopup("Manuel Seçilen Konum").openPopup();
+        }
+        
+        document.getElementById('loc-text').innerText = `${lat.toFixed(4)}, ${lng.toFixed(4)} (Manuel)`;
+        
+        // Return to report view
+        setTimeout(() => {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-report').classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelector('[data-target="view-report"]').classList.add('active');
+            checkSubmitReady();
+        }, 1000);
+    });
+});
