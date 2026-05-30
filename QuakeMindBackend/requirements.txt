@@ -1,4 +1,5 @@
 streamlit
+streamlit-js-eval
 streamlit-folium
 folium
 opencv-python
@@ -15,6 +16,8 @@ catboost
 scikit-learn
 zeyrek
 osmnx
+geopandas
+pyrosm
 networkx
 shapely
 fastapi

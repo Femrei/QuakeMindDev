@@ -10,6 +10,7 @@ segmentation-models-pytorch
 albumentations
 osmnx
 geopandas
+pyrosm
 shapely
 rasterio
 matplotlib

@@ -1,4 +1,5 @@
 import math
+import os
 import requests
 import numpy as np
 import cv2
@@ -6,6 +7,8 @@ from PIL import Image
 import datetime
 import logging
 import time
+
+from utils.local_osm import draw_local_road_mask, has_local_roads_dataset
 
 try:
     import streamlit as st
@@ -115,7 +118,7 @@ def fetch_satellite_area(lat, lon, bbox=None, zoom_level=18, wayback_id=None, pr
 
 
 def get_osm_roads_overpass(bounds, w, h, thickness=4):
-    """Fetches OSM roads via Overpass and draws perfectly aligned array."""
+    """Gets OSM roads from local dataset first, then Overpass as fallback."""
     west, south, east, north = bounds
 
     cache_key = (
@@ -130,6 +133,18 @@ def get_osm_roads_overpass(bounds, w, h, thickness=4):
 
     if cache_key in _roads_cache:
         return _roads_cache[cache_key].copy()
+
+    if has_local_roads_dataset():
+        local_mask = draw_local_road_mask(bounds, w, h, thickness=thickness)
+        if local_mask is not None and np.any(local_mask):
+            if len(_roads_cache) >= 24:
+                _roads_cache.pop(next(iter(_roads_cache)))
+            _roads_cache[cache_key] = local_mask.copy()
+            return local_mask
+
+    if os.environ.get("QUAKEMIND_OFFLINE_ONLY") == "1":
+        _warn("Offline mode is enabled and no local roads were found for this area.")
+        return np.zeros((h, w), dtype=np.uint8)
 
     servers = [
         "https://overpass-api.de/api/interpreter",

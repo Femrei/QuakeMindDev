@@ -10,6 +10,7 @@ venv/
 output/
 temp_map_inference/
 cache/
+data/osm/
 
 # Large Model Files (>100MB)
 models/
