@@ -36,8 +36,13 @@ Uygulama indirmeye gerek yoktur (PWA Mimarisi).
 1. Test için kullanacağınız telefonları (birden fazla olursa daha iyi olur) bilgisayarın açtığı Hotspot ağına bağlayın.
 2. Telefonların tarayıcısına (Chrome/Safari) bilgisayarın IP adresini **başına https:// koyarak** yazın.
    👉 **Örnek:** `https://192.168.137.1:8000/app`
-3. *Not:* Yerel SSL sertifikası kullandığımız için tarayıcı "Bağlantınız Gizli Değil" uyarısı verir. Gelişmiş -> Devam Et diyerek sayfaya giriş yapın.
-4. Sayfa açıldığında tarayıcının istediği **Kamera ve Konum** izinlerini onaylayın.
+3. Açılan yeni PWA arayüzünde artık dört ana mobil bölüm bulunur:
+   - `Özet`: vaka ve güvenli alan metrikleri
+   - `Vakalar`: operasyon havuzundaki kayıtlar
+   - `Bildir`: sahadan kamera/metin bildirimi
+   - `Harita`: güvenli alanlar ve vakalar
+4. *Not:* Yerel SSL sertifikası kullandığımız için tarayıcı "Bağlantınız Gizli Değil" uyarısı verir. Gelişmiş -> Devam Et diyerek sayfaya giriş yapın.
+5. Sayfa açıldığında tarayıcının istediği **Kamera ve Konum** izinlerini onaylayın.
 
 ## 🧪 Adım 4: Canlı Test Senaryoları
 Şu an cihazlar internet olmadan aynı yerel ağda birbirine bağlıdır!

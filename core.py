@@ -527,9 +527,9 @@ def assess_location_quality(raw_text, result):
     city_name, city_coords = infer_city_context(raw_text)
     if city_coords:
         return {
-            "konum_tipi": f"Il duzeyi tahmini alan ({city_name})",
-            "konum_guveni": "Dusuk",
-            "etki_yaricapi_km": 25.0,
+            "konum_tipi": f"Konum tahmini (İl/İlçe: {city_name})",
+            "konum_guveni": "Düşük (Merkez Odaklı)",
+            "etki_yaricapi_km": 2.0,
             "harita_merkezi": city_coords,
         }
 

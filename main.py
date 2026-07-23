@@ -18,6 +18,7 @@ Sol taraftaki menüden kullanmak istediğiniz modülü seçebilirsiniz:
 - **🚑 Acil Operasyon Merkezi:** Afet ihbarlarını ve ekipleri harita üzerinde canlı yönetir.
 - **🛠️ Yönetici Paneli:** Toplanma alanlarını (Safe Areas) harita üzerinde interaktif olarak belirler.
 - **📷 Kamera Tespiti:** Canlı kamera akışından çatlak ve bina hasarlarını tespit eder.
+- **🚨 Deprem İkaz Sistemi:** Deprem İkaz Algoritması ile sismik veri analizi, konum tabanlı alarm seviyeleri ve sesli siren uyarısı ile en yakın toplanma alanlarına rotalama sağlar.
 """)
 
 st.info("👆 Lütfen sol menüden bir modül seçin.")

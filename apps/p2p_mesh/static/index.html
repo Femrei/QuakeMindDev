@@ -2,103 +2,318 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>QuakeMind Sahadan Bildirim</title>
-    <!-- Leaflet for Map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- FontAwesome -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>QuakeMind Mobile</title>
+    <meta name="theme-color" content="#101820">
+    <meta name="description" content="QuakeMind mobil saha ve operasyon paneli">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <!-- PWA Manifest info would go here -->
 </head>
 <body>
-    
-    <!-- Top Header -->
-    <header class="app-header">
-        <div class="logo">🛰️ QuakeMind P2P</div>
-        <div class="status-indicator">
-            <span id="connection-status" class="dot disconnected"></span>
-            <span id="connection-text">Bağlanıyor...</span>
-        </div>
-    </header>
+    <div class="app-shell">
+        <header class="app-header">
+            <div>
+                <div class="eyebrow">QuakeMind Mobile</div>
+                <h1>Saha ve operasyon paneli</h1>
+            </div>
+            <button id="install-btn" class="icon-btn" aria-label="Yukle" hidden>
+                <i class="fa-solid fa-download"></i>
+            </button>
+        </header>
 
-    <!-- Main Content Area -->
-    <main class="content-area">
-        
-        <!-- View 1: Map (Default) -->
-        <div id="view-map" class="view active">
-            <div id="map"></div>
-        </div>
+        <section class="status-bar">
+            <div class="status-chip">
+                <span id="connection-status" class="dot disconnected"></span>
+                <span id="connection-text">Baglaniyor</span>
+            </div>
+            <div class="status-chip">
+                <i class="fa-solid fa-location-dot"></i>
+                <span id="loc-text">Konum bekleniyor</span>
+            </div>
+            <div id="offline-queue-chip" class="status-chip" style="display: none; background: rgba(249, 115, 22, 0.12); border-color: rgba(249, 115, 22, 0.35); color: #ff8a5b;">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span id="offline-count">Offline Kuyruk: 0</span>
+            </div>
+            <div id="battery-chip" class="status-chip" style="display: none;">
+                <i id="battery-icon" class="fa-solid fa-battery-half"></i>
+                <span id="battery-text">Pil: ...</span>
+            </div>
+        </section>
 
-        <!-- View 2: Report (Camera & Form) -->
-        <div id="view-report" class="view">
-            <div class="report-container">
-                <h2>Durum Bildir</h2>
-                <div class="form-group">
-                    <label>Durum Tipi:</label>
-                    <select id="report-type">
-                        <option value="enkaz_bildirimi">Enkaz / Yıkım Bildirimi (Kamera)</option>
-                        <option value="yol_durumu">Kapalı Yol Bildirimi (Kamera)</option>
-                        <option value="acil_ihtiyac">Acil İhtiyaç / Çağrı (Metin / NLP)</option>
-                    </select>
+        <main class="content-area">
+            <section id="view-home" class="view active">
+                <div class="hero-card">
+                    <div>
+                        <p class="hero-label">Mobil operasyon ozet</p>
+                        <h2>Afet verisini cepte toparla</h2>
+                    </div>
+                    <button id="refresh-bootstrap" class="primary-btn">
+                        <i class="fa-solid fa-rotate"></i>
+                        Yenile
+                    </button>
                 </div>
-                
-                <div id="camera-container" class="camera-section">
-                    <video id="camera-preview" autoplay playsinline></video>
-                    <canvas id="photo-canvas" style="display: none;"></canvas>
-                    <img id="photo-result" style="display: none;">
-                    <div class="camera-controls">
-                        <button id="btn-start-camera" class="btn"><i class="fas fa-camera"></i> Kamera Aç</button>
-                        <button id="btn-take-photo" class="btn btn-primary" style="display: none;"><i class="fas fa-circle"></i> Çek</button>
-                        <button id="btn-retake" class="btn btn-secondary" style="display: none;"><i class="fas fa-redo"></i> Yeniden Çek</button>
+
+                <div class="metric-grid">
+                    <article class="metric-card">
+                        <span>Toplam vaka</span>
+                        <strong id="metric-incidents">0</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span>Aktif vaka</span>
+                        <strong id="metric-active">0</strong>
+                    </article>
+                    <article class="metric-card danger">
+                        <span>Kritik / yuksek</span>
+                        <strong id="metric-high">0</strong>
+                    </article>
+                    <article class="metric-card success">
+                        <span>Guvenli alan</span>
+                        <strong id="metric-safe">0</strong>
+                    </article>
+                </div>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Canli durum</h3>
+                        <span id="generated-at" class="muted">Veri bekleniyor</span>
+                    </div>
+                    <div id="home-high-priority" class="stack-list"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Yakin guvenli alanlar</h3>
+                    </div>
+                    <div id="safe-area-list" class="stack-list"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Moduller</h3>
+                    </div>
+                    <div class="module-grid">
+                        <button class="module-card" data-jump="view-incidents">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <strong>Operasyon</strong>
+                            <span>Vaka ve gorev yonetimi</span>
+                        </button>
+                        <button class="module-card" data-jump="view-analyze">
+                            <i class="fa-solid fa-brain"></i>
+                            <strong>NLP / Risk</strong>
+                            <span>Metin ve deprem analizi</span>
+                        </button>
+                        <button class="module-card" data-jump="view-manage">
+                            <i class="fa-solid fa-shield-heart"></i>
+                            <strong>Yonetim</strong>
+                            <span>Toplanma alanlari</span>
+                        </button>
+                        <button class="module-card" data-jump="view-map">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                            <strong>Harita</strong>
+                            <span>Vaka ve guvenli alanlar</span>
+                        </button>
+                    </div>
+                </section>
+            </section>
+
+            <section id="view-incidents" class="view">
+                <div class="panel sticky-panel">
+                    <div class="panel-head">
+                        <h3>Vaka merkezi</h3>
+                    </div>
+                    <div class="toolbar">
+                        <select id="incident-filter">
+                            <option value="all">Tum vakalar</option>
+                            <option value="high">Kritik / yuksek</option>
+                            <option value="located">Konumlu</option>
+                            <option value="new">Yeni / inceleniyor</option>
+                        </select>
                     </div>
                 </div>
+                <div id="incident-list" class="incident-list"></div>
+            </section>
 
-                <div id="text-container" class="form-group" style="display: none; margin-top: 10px;">
-                    <label>Mesajınız / İhtiyacınız:</label>
-                    <textarea id="report-text" rows="4" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-panel); color: white; border: 1px solid #444;" placeholder="Lütfen acil durumunuzu veya ihtiyacınızı buraya yazın (Örn: Çadır ve su ihtiyacı var)..."></textarea>
+            <section id="view-report" class="view">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Sahadan bildirim gonder</h3>
+                    </div>
+                    <div class="form-grid">
+                        <label class="field">
+                            <span>Bildirim tipi</span>
+                            <select id="report-type">
+                                <option value="enkaz_bildirimi">Enkaz / yikim</option>
+                                <option value="yol_durumu">Kapali yol</option>
+                                <option value="acil_ihtiyac">Acil ihtiyac / cagrı</option>
+                            </select>
+                        </label>
+
+                        <div id="camera-container" class="camera-section">
+                            <video id="camera-preview" autoplay playsinline></video>
+                            <canvas id="photo-canvas" hidden></canvas>
+                            <img id="photo-result" hidden alt="Cekilen fotograf">
+                            <div class="camera-controls">
+                                <button id="btn-start-camera" class="secondary-btn" type="button">
+                                    <i class="fa-solid fa-camera"></i>
+                                    Kamera ac
+                                </button>
+                                <button id="btn-take-photo" class="primary-btn" type="button" hidden>
+                                    <i class="fa-solid fa-circle"></i>
+                                    Cek
+                                </button>
+                                <button id="btn-retake" class="secondary-btn" type="button" hidden>
+                                    <i class="fa-solid fa-rotate-right"></i>
+                                    Yeniden cek
+                                </button>
+                            </div>
+                        </div>
+
+                        <label id="text-container" class="field" hidden>
+                            <span>Mesaj / ihtiyac</span>
+                            <textarea id="report-text" rows="5" placeholder="Ornek: Antakya merkezde su, battaniye ve saglik ekibi ihtiyaci var"></textarea>
+                        </label>
+
+                        <button id="btn-manual-loc" class="secondary-btn full-btn" type="button">
+                            <i class="fa-solid fa-hand-pointer"></i>
+                            Konumu haritadan sec
+                        </button>
+
+                        <button id="btn-submit-report" class="danger-btn full-btn" type="button" disabled>
+                            <i class="fa-solid fa-paper-plane"></i>
+                            Aga gonder
+                        </button>
+                    </div>
                 </div>
+            </section>
 
-                <div class="location-status">
-                    <i class="fas fa-map-marker-alt"></i> Konum: <span id="loc-text">Bekleniyor...</span>
-                    <button id="btn-manual-loc" class="btn btn-secondary" style="margin-top: 8px; font-size: 0.85rem; padding: 6px 10px; display: block; width: 100%;"><i class="fas fa-hand-pointer"></i> GPS Çalışmıyorsa Haritadan Seç</button>
+            <section id="view-analyze" class="view">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Mobil analiz merkezi</h3>
+                    </div>
+                    <div class="segmented-control">
+                        <button class="segment-btn active" data-segment="nlp-panel">Afet NLP</button>
+                        <button class="segment-btn" data-segment="risk-panel">Deprem risk</button>
+                        <button class="segment-btn" data-segment="camera-panel">Kamera AI</button>
+                    </div>
+
+                    <div id="nlp-panel" class="segment-panel active">
+                        <label class="field">
+                            <span>Tweet / ihbar metni</span>
+                            <textarea id="nlp-text" rows="5" placeholder="Ornek: Antakya merkezde enkaz altinda kalanlar var, acil ekip gerekiyor"></textarea>
+                        </label>
+                        <button id="nlp-run" class="primary-btn full-btn" type="button">Analiz et ve operasyona ekle</button>
+                        <div id="nlp-result" class="stack-list"></div>
+                    </div>
+
+                    <div id="risk-panel" class="segment-panel">
+                        <label class="field">
+                            <span>Sehir</span>
+                            <select id="risk-city">
+                                <option>Hatay</option>
+                                <option>Kahramanmaras</option>
+                                <option>Gaziantep</option>
+                                <option>Malatya</option>
+                                <option>Adiyaman</option>
+                                <option>Istanbul</option>
+                                <option>Izmir</option>
+                                <option>Ankara</option>
+                            </select>
+                        </label>
+                        <button id="risk-run" class="primary-btn full-btn" type="button">Risk hesapla</button>
+                        <div id="risk-result" class="stack-list"></div>
+                    </div>
+
+                    <div id="camera-panel" class="segment-panel">
+                        <p class="incident-body">Mobilde desktop OpenCV yerine foto cekip sunucu tarafli AI analizi calistiriyoruz.</p>
+                        <button id="camera-ai-run" class="secondary-btn full-btn" type="button">Mevcut fotografi AI ile analiz et</button>
+                        <div id="camera-ai-result" class="stack-list"></div>
+                    </div>
                 </div>
+            </section>
 
-                <button id="btn-submit-report" class="btn btn-danger btn-large" disabled>
-                    <i class="fas fa-paper-plane"></i> Ağa Gönder (P2P)
-                </button>
-            </div>
-        </div>
-
-        <!-- View 3: Mesh Network Feed (Live Data) -->
-        <div id="view-feed" class="view">
-            <div class="feed-container">
-                <h2>P2P Canlı Akış <span class="badge" id="peer-count">0</span></h2>
-                <p class="feed-desc">Local ağdaki diğer cihazlardan gelen veriler</p>
-                <div id="feed-list" class="feed-list">
-                    <!-- Feed items will be injected here -->
+            <section id="view-manage" class="view">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Toplanma alani yonetimi</h3>
+                    </div>
+                    <div class="form-grid">
+                        <label class="field">
+                            <span>Alan adi</span>
+                            <input id="safe-name" type="text" placeholder="Ornek: Antakya Merkez Parki">
+                        </label>
+                        <label class="field">
+                            <span>Sehir</span>
+                            <input id="safe-city" type="text" placeholder="Hatay">
+                        </label>
+                        <label class="field">
+                            <span>Kapasite</span>
+                            <input id="safe-capacity" type="number" placeholder="1000">
+                        </label>
+                        <label class="field">
+                            <span>Durum</span>
+                            <select id="safe-status">
+                                <option>Musait</option>
+                                <option>Kismi Dolu</option>
+                                <option>Dolu</option>
+                                <option>Kapali</option>
+                            </select>
+                        </label>
+                        <button id="safe-use-location" class="secondary-btn full-btn" type="button">Mevcut konumumu kullan</button>
+                        <button id="safe-create" class="primary-btn full-btn" type="button">Toplanma alani ekle</button>
+                    </div>
                 </div>
-            </div>
-        </div>
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Kayitli guvenli alanlar</h3>
+                    </div>
+                    <div id="manage-safe-areas" class="stack-list"></div>
+                </div>
+            </section>
 
-    </main>
+            <section id="view-map" class="view">
+                <div class="panel panel-map">
+                    <div class="panel-head">
+                        <h3>Mobil operasyon haritasi</h3>
+                        <button id="recenter-map" class="icon-btn" type="button" aria-label="Haritayi ortala">
+                            <i class="fa-solid fa-crosshairs"></i>
+                        </button>
+                    </div>
+                    <div id="map"></div>
+                </div>
+            </section>
+        </main>
 
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <a href="#" class="nav-item active" data-target="view-map">
-            <i class="fas fa-map"></i>
-            <span>Harita</span>
-        </a>
-        <a href="#" class="nav-item" data-target="view-report">
-            <i class="fas fa-camera-retro"></i>
-            <span>Bildir</span>
-        </a>
-        <a href="#" class="nav-item" data-target="view-feed">
-            <i class="fas fa-list-ul"></i>
-            <span>Akış</span>
-            <span class="notification-dot" id="nav-notif" style="display: none;"></span>
-        </a>
-    </nav>
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-target="view-home">
+                <i class="fa-solid fa-house"></i>
+                <span>Ozet</span>
+            </button>
+            <button class="nav-item" data-target="view-incidents">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Vakalar</span>
+            </button>
+            <button class="nav-item" data-target="view-analyze">
+                <i class="fa-solid fa-brain"></i>
+                <span>Analiz</span>
+            </button>
+            <button class="nav-item" data-target="view-report">
+                <i class="fa-solid fa-satellite-dish"></i>
+                <span>Bildir</span>
+            </button>
+            <button class="nav-item" data-target="view-manage">
+                <i class="fa-solid fa-shield-heart"></i>
+                <span>Yonet</span>
+            </button>
+            <button class="nav-item" data-target="view-map">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <span>Harita</span>
+            </button>
+        </nav>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="app.js"></script>

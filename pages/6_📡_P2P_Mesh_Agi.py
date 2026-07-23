@@ -38,6 +38,10 @@ st.markdown("""
 
 st.markdown('<div class="p2p-header"><h1>📡 P2P Mesh Sahadan Bildirim Ağı</h1><p>İnternetsiz yerel ağ üzerinden gelen anlık saha verileri ve AI/NLP analiz sonuçları.</p></div>', unsafe_allow_html=True)
 
+with st.expander("Mobil PWA erisimi", expanded=True):
+    st.write("Telefon arayuzu `https://<yerel-ip>:8000/app` adresinden acilir.")
+    st.write("Yeni PWA ana ekrana eklenebilir; ozet, vakalar, harita ve saha bildirim akisini mobilde toplar.")
+
 # Load Data
 def load_p2p_data():
     if os.path.exists(P2P_RECORDS_PATH):

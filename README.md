@@ -3,7 +3,8 @@
 QuakeMind is a multi-module disaster decision-support prototype. It combines
 social-media disaster text analysis, emergency operations management,
 satellite-based road damage assessment, earthquake risk analysis, and live
-camera detection in one Streamlit interface.
+camera detection in one Streamlit interface. The project also includes a mobile
+PWA under `apps/p2p_mesh/static` for field use.
 
 ## Main Flow
 
@@ -40,6 +41,28 @@ Recommended demo flow:
   Computes city-level earthquake risk and visualizes nearby earthquake/fault data.
 - `Kamera Tespiti`
   Runs OpenCV/YOLO based crack and building-status detection in local windows.
+
+## Mobile PWA
+
+The mobile field interface is served by the P2P mesh module:
+
+```text
+https://<local-ip>:8000/app
+```
+
+The PWA includes:
+
+- mobile dashboard with incident metrics
+- incident list synchronized from `runtime/operation_incidents.json`
+- safe-area map view using `apps/operations/safe_areas.json`
+- field reporting for image or text based incidents
+- installable manifest + offline shell cache
+
+To run the PWA backend:
+
+```bash
+uvicorn apps.p2p_mesh.server:app --host 0.0.0.0 --port 8000
+```
 
 ## Operations Features
 
