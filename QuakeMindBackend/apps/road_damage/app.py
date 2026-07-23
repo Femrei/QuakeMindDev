@@ -19,7 +19,7 @@ from streamlit_js_eval import streamlit_js_eval
 
 # Import from utils
 from utils.fetcher import fetch_satellite_area, get_osm_roads_overpass, get_wayback_versions, search_oam_images
-from utils.network import analyze_road_network_graph
+from utils.network import analyze_road_network_graph, calculate_route
 from utils.inference import load_simple_model, run_inference
 from utils.local_osm import (
     OSM_DATA_DIR,
@@ -56,6 +56,10 @@ st.markdown("""
 # Initialize Session State
 if "analysis_result" not in st.session_state:
     st.session_state.analysis_result = None
+if "logistic_routing_points" not in st.session_state:
+    st.session_state.logistic_routing_points = []
+if "logistic_calculated_route" not in st.session_state:
+    st.session_state.logistic_calculated_route = None
 
 def get_b64_image(image_arr):
     img = Image.fromarray(image_arr)
@@ -642,7 +646,7 @@ with damage_tab:
             with st.spinner("Graph matrisi çıkarılıyor ve kapanan yollar siliniyor..."):
                 w, h = res["original_img"].shape[1], res["original_img"].shape[0]
                 # Use the exact intersection as the blockage mask to precisely match diagnostic visuals
-                G, safe_edges, blocked_edges = analyze_road_network_graph(res["bounds"], w, h, current_intersection)
+                G, safe_G, safe_edges, blocked_edges = analyze_road_network_graph(res["bounds"], w, h, current_intersection)
             
                 if G is None:
                     st.error("Bu bölge için OSM yol ağı (Graph) bulunamadı.")
@@ -652,30 +656,81 @@ with damage_tab:
                         "blocked_edges": blocked_edges,
                         "bounds": res["bounds"],
                         "total": len(safe_edges) + len(blocked_edges),
-                        "blocked_count": len(blocked_edges)
+                        "blocked_count": len(blocked_edges),
+                        "safe_G": safe_G
                     }
 
         if st.session_state.get("logistic_data"):
             data = st.session_state.logistic_data
             st.success(f"Yol Ağı Analizi Tamamlandı! Toplam {data['total']} sokak incelendi. {data['blocked_count']} tanesi ulaşıma kapalı.")
+            
+            st.markdown("### 📍 Güvenli Rota Çizimi")
+            st.info("Aşağıdaki lojistik haritasına tıklayarak Başlangıç ve Bitiş noktalarını seçebilir, enkazsız yeşil yollar üzerinden en stabil (Dijkstra) rotayı çizebilirsiniz.")
+            
+            # Kontrol Butonları
+            c1, c2 = st.columns([1, 1])
+            if c1.button("📌 Seçimleri Temizle"):
+                st.session_state.logistic_routing_points = []
+                st.session_state.logistic_calculated_route = None
+                st.rerun()
+                
+            if len(st.session_state.logistic_routing_points) == 2:
+                if c2.button("🚀 En Güvenli Rotayı Hesapla", type="primary"):
+                    with st.spinner("Güvenli rota hesaplanıyor..."):
+                        p1 = st.session_state.logistic_routing_points[0]
+                        p2 = st.session_state.logistic_routing_points[1]
+                        try:
+                            # Her zaman analizden çıkan safe_G'yi kullanıyoruz
+                            safe_G = data["safe_G"]
+                            dijkstra_path, _ = calculate_route(safe_G, p1[0], p1[1], p2[0], p2[1])
+                            if dijkstra_path:
+                                st.session_state.logistic_calculated_route = dijkstra_path
+                                st.success("En güvenli rota başarıyla oluşturuldu!")
+                            else:
+                                st.error("Bu iki nokta arasında güvenli bir bağlantı (rota) bulunamadı! Yol tamamen kapalı olabilir.")
+                        except Exception as e:
+                            st.error(f"Rota hesaplanırken hata oluştu: {e}")
         
-            # Visualize on a new map
+            # Haritayı Çiz
             center_lat = (data["bounds"][1] + data["bounds"][3]) / 2.0
             center_lon = (data["bounds"][0] + data["bounds"][2]) / 2.0
-        
             route_map = folium.Map(location=[center_lat, center_lon], zoom_start=16, tiles="CartoDB dark_matter")
         
-            # Add safe edges
+            # Açık Yollar
             for _, _, _, line in data["safe_edges"]:
                 points = [(lat, lon) for lon, lat in line.coords]
                 folium.PolyLine(points, color="#00FF00", weight=4, opacity=0.8, tooltip="Erişime Açık Yol").add_to(route_map)
             
-            # Add blocked edges
+            # Kapalı Yollar
             for _, _, _, line in data["blocked_edges"]:
                 points = [(lat, lon) for lon, lat in line.coords]
                 folium.PolyLine(points, color="#FF0000", weight=4, opacity=0.8, dash_array="5, 5", tooltip="ENKAZ NEDENİYLE KAPALI").add_to(route_map)
             
-            st_folium(route_map, width="100%", height=500, key="logistic_map_viz")
+            # Kullanıcının Seçtiği Noktalar
+            for i, pt in enumerate(st.session_state.logistic_routing_points):
+                label = "Başlangıç" if i == 0 else "Hedef"
+                color = "blue" if i == 0 else "orange"
+                folium.Marker(location=pt, popup=label, tooltip=label, icon=folium.Icon(color=color)).add_to(route_map)
+                
+            # Hesaplanmış Rota (Dijkstra)
+            if st.session_state.logistic_calculated_route:
+                folium.PolyLine(
+                    st.session_state.logistic_calculated_route,
+                    color="#00FFFF",  # Cyan renk ile çok belirgin
+                    weight=8,
+                    opacity=0.9,
+                    tooltip="En Güvenli Dijkstra Rotası"
+                ).add_to(route_map)
+            
+            map_out = st_folium(route_map, width="100%", height=500, key="logistic_map_viz")
+            
+            # Tıklama Kontrolü
+            if map_out and map_out.get("last_clicked"):
+                lat = map_out["last_clicked"]["lat"]
+                lng = map_out["last_clicked"]["lng"]
+                if len(st.session_state.logistic_routing_points) < 2:
+                    st.session_state.logistic_routing_points.append((lat, lng))
+                    st.rerun()
 
 with assembly_tab:
     st.subheader("OSM Toplanma ve Aday Açık Alan Haritası")
@@ -916,24 +971,26 @@ with assembly_tab:
     ).add_to(assembly_map)
 
     if display_records:
-        marker_callback = """
-            function (row) {
-                const popup = `
-                    <strong>${row[2]}</strong><br>
-                    ${row[3]}<br>
-                    Kaynak: ${row[4]}<br>
-                    ${row[5]}
-                `;
-                const markerColor = row[3].includes('resmi') ? 'green' : 'orange';
-                return L.marker(new L.LatLng(row[0], row[1]), {title: row[2]}).bindPopup(popup);
-            }
-        """
-
-        FastMarkerCluster(
-            data=build_assembly_points(display_records),
-            callback=marker_callback,
-            name="OSM alanları",
-        ).add_to(assembly_map)
+        from folium.plugins import MarkerCluster
+        cluster = MarkerCluster(name="OSM alanları")
+        for item in display_records:
+            lat = item.get("display_lat", item["lat"])
+            lon = item.get("display_lon", item["lon"])
+            name = item["toplanma_alani"] or "OSM Alanı"
+            category = item.get("category", "Aday Alan")
+            source = item.get("source", "OSM")
+            note = item.get("note", "")
+            
+            popup_html = f"<strong>{name}</strong><br>{category}<br>Kaynak: {source}<br>{note}"
+            icon_color = "green" if "resmi" in category.lower() else "orange"
+            
+            folium.Marker(
+                location=[lat, lon],
+                popup=folium.Popup(popup_html, max_width=300),
+                tooltip=name,
+                icon=folium.Icon(color=icon_color, icon="info-sign")
+            ).add_to(cluster)
+        cluster.add_to(assembly_map)
 
     folium.Marker(
         [st.session_state.assembly_user_lat, st.session_state.assembly_user_lon],
@@ -994,3 +1051,4 @@ with assembly_tab:
             st.session_state.assembly_user_lon = clicked_lon
             st.session_state.assembly_location_source = "Harita tıklaması"
             st.rerun()
+
