@@ -4,12 +4,14 @@ __pycache__/
 .DS_Store
 
 venv/
+.venv/
 **/venv/
 **/.venv/
 
 .vscode/
 .codex/
 .codex
+.git_backup_*
 
 runtime/
 cache/
@@ -21,3 +23,4 @@ catboost_info/
 apps/disaster_nlp/models/2kveri/model.safetensors
 apps/road_damage/models/optimized_mitb4_focal_dice30.pth
 apps/road_damage/models/210926_deneme_18epoch_mitb4_imagenet_focalanddiceloss.pth
+

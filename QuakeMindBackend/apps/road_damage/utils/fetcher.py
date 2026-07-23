@@ -1,0 +1,266 @@
+import math
+import os
+import requests
+import numpy as np
+import cv2
+from PIL import Image
+import datetime
+import logging
+import time
+
+from utils.local_osm import draw_local_road_mask, has_local_roads_dataset
+
+try:
+    import streamlit as st
+    from streamlit.runtime.scriptrunner import get_script_run_ctx
+    _has_st = True
+except ImportError:
+    _has_st = False
+    get_script_run_ctx = None
+
+_logger = logging.getLogger(__name__)
+_roads_cache = {}
+
+
+def _warn(msg):
+    if _has_st and get_script_run_ctx is not None and get_script_run_ctx() is not None:
+        try:
+            st.warning(msg)
+        except Exception:
+            pass
+    _logger.warning(msg)
+
+
+def _error(msg):
+    if _has_st and get_script_run_ctx is not None and get_script_run_ctx() is not None:
+        try:
+            st.error(msg)
+        except Exception:
+            pass
+    _logger.error(msg)
+
+def num2deg(xtile, ytile, zoom):
+    """Google/OSM Tile to Lat/Lon conversion."""
+    n = 2.0 ** zoom
+    lon_deg = xtile / n * 360.0 - 180.0
+    lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
+    lat_deg = math.degrees(lat_rad)
+    return (lat_deg, lon_deg)
+
+def fetch_satellite_area(lat, lon, bbox=None, zoom_level=18, wayback_id=None, provider='google', custom_url=None):
+    """Downloads tiles covering a bounding box or a single coordinate."""
+    def _try_fetch(z):
+        n = 2.0 ** z
+        if not bbox:
+            xt = int((lon + 180.0) / 360.0 * n)
+            yt = int((1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * n)
+            lat_n, lon_w = num2deg(xt, yt, z)
+            lat_s, lon_e = num2deg(xt + 2, yt + 2, z)
+            b = (lon_w, lat_s, lon_e, lat_n)
+        else:
+            b = bbox
+            
+        lon_min, lat_min, lon_max, lat_max = b
+        xtile_min = int((lon_min + 180.0) / 360.0 * n)
+        xtile_max = int((lon_max + 180.0) / 360.0 * n)
+        ytile_max = int((1.0 - math.asinh(math.tan(math.radians(lat_min))) / math.pi) / 2.0 * n)
+        ytile_min = int((1.0 - math.asinh(math.tan(math.radians(lat_max))) / math.pi) / 2.0 * n)
+        
+        if (xtile_max - xtile_min + 1) * (ytile_max - ytile_min + 1) > 36:
+            xt_c = (xtile_min + xtile_max) // 2
+            yt_c = (ytile_min + ytile_max) // 2
+            xtile_min = max(xtile_min, xt_c - 2); xtile_max = min(xtile_max, xt_c + 3)
+            ytile_min = max(ytile_min, yt_c - 2); ytile_max = min(ytile_max, yt_c + 3)
+
+        nx_tiles = xtile_max - xtile_min + 1
+        ny_tiles = ytile_max - ytile_min + 1
+        stitched_img = Image.new('RGB', (nx_tiles * 256, ny_tiles * 256))
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        any_success = False
+        
+        for x in range(xtile_min, xtile_max + 1):
+            for y in range(ytile_min, ytile_max + 1):
+                if provider == 'esri' and wayback_id:
+                    url = f"https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{wayback_id}/{z}/{y}/{x}"
+                elif provider == 'google':
+                    url = f"https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+                elif provider == 'custom' and custom_url:
+                    url = custom_url.replace('{x}', str(x)).replace('{y}', str(y)).replace('{z}', str(z))
+                else:
+                    return None, None
+                    
+                px = (x - xtile_min) * 256
+                py = (y - ytile_min) * 256
+                try:
+                    r = requests.get(url, headers=headers, timeout=8)
+                    if r.status_code == 200:
+                        from io import BytesIO
+                        tile_img = Image.open(BytesIO(r.content)).convert('RGB')
+                        stitched_img.paste(tile_img, (px, py))
+                        any_success = True
+                except Exception:
+                    pass
+
+        if not any_success:
+            return None, None
+
+        real_lat_n, real_lon_w = num2deg(xtile_min, ytile_min, z)
+        real_lat_s, real_lon_e = num2deg(xtile_max + 1, ytile_max + 1, z)
+        return stitched_img, (real_lon_w, real_lat_s, real_lon_e, real_lat_n)
+
+    # Try requested zoom level first, fallback to lower zooms if 404
+    for z in [zoom_level, zoom_level - 1, zoom_level - 2]:
+        img, final_bounds = _try_fetch(z)
+        if img is not None:
+            return img, final_bounds
+            
+    return None, None
+
+
+def get_osm_roads_overpass(bounds, w, h, thickness=4):
+    """Gets OSM roads from local dataset first, then Overpass as fallback."""
+    west, south, east, north = bounds
+
+    cache_key = (
+        round(float(west), 5),
+        round(float(south), 5),
+        round(float(east), 5),
+        round(float(north), 5),
+        int(w),
+        int(h),
+        int(thickness),
+    )
+
+    if cache_key in _roads_cache:
+        return _roads_cache[cache_key].copy()
+
+    if has_local_roads_dataset():
+        local_mask = draw_local_road_mask(bounds, w, h, thickness=thickness)
+        if local_mask is not None and np.any(local_mask):
+            if len(_roads_cache) >= 24:
+                _roads_cache.pop(next(iter(_roads_cache)))
+            _roads_cache[cache_key] = local_mask.copy()
+            return local_mask
+
+    if os.environ.get("QUAKEMIND_OFFLINE_ONLY") == "1":
+        _warn("Offline mode is enabled and no local roads were found for this area.")
+        return np.zeros((h, w), dtype=np.uint8)
+
+    servers = [
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass-api.de/api/interpreter?data=",
+        "https://overpass.kumi.systems/api/interpreter",
+        "https://lz4.overpass-api.de/api/interpreter",
+        "https://overpass.private.coffee/api/interpreter",
+    ]
+
+    query = f'''
+    [out:json][timeout:30];
+    way["highway"]({south},{west},{north},{east});
+    out geom;
+    '''
+
+    road_img = np.zeros((h, w), dtype=np.uint8)
+    data = None
+
+    session = requests.Session()
+    headers = {"User-Agent": "QuakeMindRoadDamage/1.0"}
+
+    for url in servers:
+        for attempt in range(2):
+            try:
+                if url.endswith("?data="):
+                    resp = session.get(url + requests.utils.quote(query), headers=headers, timeout=35)
+                else:
+                    resp = session.post(url, data=query, headers=headers, timeout=35)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    break  # Success
+            except Exception:
+                pass
+
+            # brief backoff between attempts/servers
+            time.sleep(0.35 + (attempt * 0.25))
+        if data is not None:
+            break
+
+    if not data:
+        _warn("All Overpass servers failed. Roads could not be fetched.")
+        return road_img
+
+    try:
+        for element in data.get('elements', []):
+            if 'geometry' in element:
+                pts = []
+                for pt in element['geometry']:
+                    px = int((pt['lon'] - west) / (east - west) * w)
+                    py = int((north - pt['lat']) / (north - south) * h)
+                    pts.append([px, py])
+                if len(pts) >= 2:
+                    pts = np.array(pts, np.int32).reshape((-1, 1, 2))
+                    cv2.polylines(road_img, [pts], False, 1, thickness=thickness)
+    except Exception as e:
+        _warn(f"OSM parse error: {e}")
+
+    # Keep a small in-memory cache to survive transient Overpass outages.
+    if len(_roads_cache) >= 24:
+        _roads_cache.pop(next(iter(_roads_cache)))
+    _roads_cache[cache_key] = road_img.copy()
+
+    return road_img
+
+def get_wayback_versions():
+    """Fetch available Esri Wayback versions."""
+    try:
+        url = "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer?f=json"
+        data = requests.get(url, timeout=5).json()
+        versions = []
+        for item in data.get('Selection', []):
+            name = item['Name']
+            if "Wayback" in name:
+                date_str = name.split("Wayback ")[-1].replace(")", "")
+                versions.append({
+                    "date": date_str, "id": item['M'], "label": f"{date_str}"
+                })
+        return versions
+    except Exception:
+        return []
+
+def search_oam_images(bbox, date_start=None, date_end=None, limit=50):
+    url = "https://api.openaerialmap.org/meta"
+    params = {
+        "bbox": f"{bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]}",
+        "limit": limit,
+        "order_by": "acquisition_end",
+        "sort": "desc"
+    }
+    
+    if date_start and date_end:
+        if isinstance(date_start, str): params["acquisition_from"] = date_start
+        else: params["acquisition_from"] = date_start.strftime("%Y-%m-%d")
+        if isinstance(date_end, str): params["acquisition_to"] = date_end
+        else: params["acquisition_to"] = date_end.strftime("%Y-%m-%d")
+
+    try:
+        resp = requests.get(url, params=params, timeout=10)
+        data = resp.json()
+        results = []
+        if 'results' in data:
+            for item in data['results']:
+                tms_url = item.get('tms') or item.get('properties', {}).get('tms')
+                if not tms_url:
+                    tms_url = item.get('wmts') or item.get('properties', {}).get('wmts')
+                
+                if tms_url:
+                    results.append({
+                        "id": item.get('_id') or item.get('uuid'),
+                        "title": item.get('title', 'Unknown Image'),
+                        "provider": item.get('provider', 'Unknown'),
+                        "date": item.get('acquisition_end', item.get('acquisition_start', 'Unknown Date')),
+                        "tms_url": tms_url,
+                        "bbox": item.get('bbox')
+                    })
+        return results
+    except Exception as e:
+        _error(f"OAM Search failed: {e}")
+        return []
