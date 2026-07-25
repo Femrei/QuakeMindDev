@@ -516,6 +516,141 @@ ki Pi imajı yanlışlıkla Streamlit'i de kurmasın.
 
 ---
 
+## Bölüm 13 — (YENİ) Resmi TÜBİTAK 2209-A Başvurusu ile Kapsam Karşılaştırması
+
+> Bu bölüm, projenin resmi araştırma öneri formu (2209-A başvurusu, IP1-IP7 iş
+> paketleri) okunduktan sonra eklendi. Bölüm 0-12'deki analiz, sohbetimizden
+> çıkardığım "Pi + hotspot + FastAPI" mimarisi varsayımıyla sınırlıydı — başvuru
+> formu okununca, bunun proje kapsamının sadece bir kesiti olduğu, resmi öneride
+> tanımlanmış bazı iş paketlerinin kodda **hiç karşılığı olmadığı** ortaya çıktı.
+> Aşağıdaki her madde, kodda gerçekten arayarak (grep + dosya okuma) doğrulandı;
+> varsayıma dayalı değil.
+
+### 39. 🔴 (yeni) P2P / BLE Mesh / Raspberry Pi Broadcast (IP5) — kodda hiçbir karşılığı yok
+**Durum:** Bekliyor
+Başvurunun 2.5 bölümü (IP5), projenin belirtilen hedeflerinden biri olarak resmi
+öneride önemli bir yer kaplıyor: Raspberry Pi üzerinde hotspot + broadcast mesajlaşma,
+**Bluetooth Low Energy (BLE) ile peer discovery ve köprüleme** (hotspot menzili dışında
+kalan kullanıcının, menzildeki başka bir kullanıcı üzerinden BLE ile veri iletmesi),
+JSON tabanlı mesaj kuyruğu, internetsiz harita modu ve konum/hasar bildirimi paylaşımı.
+`bluetooth|BLE|p2p|mesh|broadcast|raspberry` anahtar kelimeleriyle hem `QuakeMindBackend/`
+hem `quakemind/lib/` içinde arama yapıldı — **backend'de veya Flutter tarafında bu
+mimariye ait tek bir satır kod, paket bağımlılığı veya stub bile yok.** Bölüm 0-12'deki
+analiz Pi'yi yalnızca "tek hotspot + FastAPI" (yıldız topolojisi) olarak ele almıştı;
+oysa öneri **BLE mesh ile hotspot menzili dışını da kapsayan** bir mimari istiyor. Bu,
+"düşünemediğim" değil, konuşma bağlamımızda hiç gündeme gelmemiş bağımsız bir iş
+paketi — kapsam ciddiyeti nedeniyle danışmanla süre/öncelik açısından netleştirilmeli
+(gerçek bir BLE mesh + hotspot hibrit protokolü, kalan diğer tüm işlerden bağımsız,
+başlı başına önemli bir mühendislik yükü).
+
+### 40. 🔴 (yeni) Test altyapısı (IP7) tamamen yok — hiçbir başarı kriteri doğrulanamıyor
+**Durum:** Bekliyor
+`QuakeMindBackend` içinde `test` geçen tek bir dosya bulunamadı (birim testi, API testi,
+yük testi — hiçbiri yok; `quakemind/test/` sadece Flutter'ın varsayılan boilerplate
+widget testini içeriyor). Ama resmi Çalışma Takvimi'nde (bkz. `2209-A ... .pdf`, s. 17)
+her iş paketine **somut, ölçülebilir başarı kriterleri** bağlanmış: kısa vadeli risk
+modeli **%75+ doğruluk**, çatlak/yıkım YOLOv8 modelleri **%85+ doğruluk**, yol maskesi
+segmentasyonu **%80+ doğruluk**, P2P mesajlaşma **%90+ başarı**, API yanıt süresi
+**<500ms**. Şu anki kod tabanında bunların **hiçbiri otomatik/tekrarlanabilir biçimde
+ölçülmüyor** — ne `pytest`/`unittest` klasörü, ne Postman/Newman koleksiyonu, ne de
+bir benchmark script'i var. Bölüm 3'teki (madde 11) performans notları teorikti;
+gerçek bir ölçüm altyapısı olmadan proposal'daki hiçbir yüzdelik hedefin karşılanıp
+karşılanmadığı bilinemez. **Öneri:** En azından (a) üç modelin (CatBoost, YOLOv8 x2,
+Segformer) accuracy/precision/recall/F1'ini hesaplayan basit bir `eval/` script seti,
+(b) 5 API endpoint'i için Postman/Newman koleksiyonu, (c) `/api/*` endpoint'leri için
+basit bir latency-ölçüm scripti (locust veya benzeri) eklenmeli.
+
+### 41. 🟠 (yeni) Uydu görüntüsü ön işleme (NDVI/NDBI/CLAHE) ve çok sınıflı segmentasyon (2.4.1) yok
+**Durum:** Bekliyor
+Öneri, uydu görüntüsü ön işlemesi için NDVI (bitki örtüsü maskeleme), NDBI (yapılaşmış
+alan belirginleştirme), CLAHE kontrast iyileştirme ve kenar belirginleştirme adımlarını,
+ardından "yol", "bina", "açık alan", "enkaz" sınıflarını piksel seviyesinde ayıran
+**çok sınıflı** bir semantic segmentation modeli tanımlıyor. Kodda (`apps/road_damage/utils/inference.py:39`)
+`smp.Segformer(..., classes=1)` — yani **tek sınıflı (binary hasar/hasar-değil)** bir
+model kullanılıyor; NDVI/NDBI/CLAHE hesaplaması hiçbir yerde yok (aratıldı, sıfır sonuç).
+Şu anki uydu modülü, öneride tarif edilenden çok daha dar kapsamlı: sadece "hasarlı mı
+değil mi" tespit ediyor, "bu bir yol mu bina mı açık alan mı" ayrımını yapmıyor.
+
+### 42. 🟠 (yeni) Değişim tespiti / change detection (2.4.2) yok
+**Durum:** Bekliyor
+Öneri, tarihsel ve güncel uydu görüntüleri arasında fark analizi yaparak yeni oluşmuş
+engelleri otomatik işaretlemeyi tarif ediyor (madde 2.4.2, "change detection"). Kodda
+bu adıma dair hiçbir iz yok — `apps/road_damage` yalnızca **tek bir zaman noktasındaki**
+görüntüyü işliyor (kaynak: Google Maps/OpenAerialMap/Esri Wayback'ten seçilen tek kare),
+iki zaman noktasını karşılaştıran bir mantık hiç yazılmamış.
+
+### 43. 🟠 (yeni) Yıkım yoğunluğu ısı haritası — Gaussian kernel ile (2.4.3) yok; sadece deprem-epicenter heatmap'i var
+**Durum:** Bekliyor
+`map_visualizer.py`'deki `HeatMap` (folium.plugins), yalnızca **geçmiş deprem
+odaklarının** yoğunluğunu gösteriyor (earthquake_risk modülü). Öneride tarif edilen
+ısı haritası ise farklı bir şey: yıkım tespiti + kullanıcı raporlarından gelen
+konumsal işaretçilerin, **güven skoru ağırlıklı bir Gaussian çekirdek** ile
+yumuşatılarak "yıkım yoğunluğu" yüzeyine dönüştürülmesi ve bunun güvenli rota
+motorunda ceza katsayısı olarak kullanılması (2.4.3-2.4.4). Bu confidence-weighted
+destruction-density heatmap'i, road_damage modülünde **hiç yok** — road_damage şu an
+sadece bir ikili maske (`blockage_mask`) üretiyor, yoğunluk yüzeyine dönüştürmüyor.
+
+### 44. 🟠 (yeni) Güvenli rota: ceza-katsayılı çok faktörlü maliyet fonksiyonu (2.4.4) yerine ikili kenar silme var
+**Durum:** Bekliyor
+`apps/road_damage/utils/network.py:51-120` (`analyze_road_network_graph`), bir yol
+segmentini blockage_mask'e göre **tamamen bloklu ya da tamamen açık** olarak
+sınıflandırıp bloklu kenarları graf'tan **siliyor**; ardından `calculate_route`
+(satır 16-49) kalan graf üzerinde düz `nx.shortest_path`/`nx.astar_path` (weight='length',
+yani sadece mesafe) çalıştırıyor. Öneri ise (2.4.4) yıkım yoğunluğu ısı haritası,
+kapalı yol, engel segmentleri ve **kullanıcı raporlarını** bir araya getiren bir
+"ceza katsayısı" (penalty) ile ağırlıklandırılmış, sadece en kısa değil **en güvenli**
+rotayı hesaplayan bir maliyet fonksiyonu tarif ediyor. Şu anki uygulamada: (a) kullanıcı
+raporları (kapalı yol/enkaz bildirimi) rota hesaplamasına **hiç girmiyor** — sadece
+uydu tabanlı `blockage_mask` kullanılıyor; (b) kısmen hasarlı/riskli ama tam kapalı
+olmayan segmentler için bir ara "ceza" kavramı yok, ikili (binary) bir karar var.
+**Not:** Bu, Bölüm 0-12'de fark edilmemişti çünkü önceki analiz "Dijkstra/A* var mı"
+sorusuna odaklanmıştı (var), "nasıl ağırlıklandırıldığı" sorusunu sormamıştı.
+
+### 45. 🟡 (yeni) JWT tabanlı kimlik doğrulama (2.6.4) — proposal'da açıkça isteniyor, kodda yok, önceki analiz bunu bilinçli tercih sanmıştı
+**Durum:** Bekliyor
+Öneri metni (2.6.4, "Güvenli Veri Aktarımı"), HTTPS + **JWT (JSON Web Token) ile
+kullanıcı doğrulama/yetkilendirme** + rate limiting + IP bazlı erişim kontrolünü resmi
+yöntem olarak tanımlıyor. Bölüm 7'deki (madde 25) önceki analiz, kimlik doğrulamasının
+eksikliğini "afet anında insanları geciktirmemek için **bilinçli bir tasarım tercihi**
+olabilir" diye yorumlamıştı — ama resmi öneri **JWT'yi doğrudan yöntem olarak taahhüt
+ediyor**. Bu bir çelişki: ya öneri metni güncel mimariyi yansıtmıyor (TÜBİTAK'a
+taahhüt edilmiş ama sahada gevşetilmesi planlanan bir madde), ya da JWT gerçekten
+eklenmesi gereken bir eksik. **Bu, kod değil, kullanıcıyla netleştirilmesi gereken bir
+karar maddesi** — hangisi olduğu netleşmeden madde 25'teki öneri revize edilmemeli.
+
+### 46. ⚪ (bilgi amaçlı) `disaster_nlp` (BERTurk sınıflandırma + NER) modülü resmi IP1-IP7 iş paketlerinin hiçbirinde tanımlı değil
+**Durum:** Bekliyor
+Başvuru formunun yöntem bölümü (IP1-IP7) hiçbir yerde sosyal medya/metin tabanlı afet
+sınıflandırması veya NER'den bahsetmiyor — kod tabanındaki `apps/disaster_nlp` (BERTurk
++ NER pipeline, mobil uygulamada ayrı bir "NLP" sekmesi) resmi kapsamın **dışında**
+geliştirilmiş bir modül gibi görünüyor. Bu bir hata değil (muhtemelen ekstra bir
+değer katma çabası), ama şunu gösteriyor: mühendislik efor dağılımı resmi taahhütlerle
+tam örtüşmüyor — kapsam dışı bir modüle emek verilirken, kapsam içi IP5 (P2P/BLE) ve
+IP7 (test) gibi taahhüt edilmiş parçalar hiç başlanmamış durumda. Danışmanla/başvuru
+sahibiyle önceliklendirme netleştirilmeli: rapor teslimi öncesi IP1-IP7'nin kapsamı
+mı önce tamamlanmalı, yoksa NLP eklentisi de "yaygın etki" bölümündeki ek çıktı olarak
+mı sunulacak?
+
+### 47. 🟡 (yeni) Çalışma Takvimi'ndeki nicel hedefler (%75/%85/%80/%90/<500ms) hiçbir yerde izlenmiyor
+**Durum:** Bekliyor
+Madde 40 ile doğrudan ilişkili: proposal'ın "Başarı Ölçütü" sütunu (s. 17-18) somut
+yüzdelik/gecikme hedefleri veriyor, ama bunları raporlayan tek bir dashboard, log
+metriği veya CI adımı yok. Test altyapısı (madde 40) kurulduktan sonra, bu hedeflerin
+her biri için basit bir "hedefe karşı mevcut durum" tablosu (ör. bu dosyanın bir
+sonraki revizyonunda) tutulması, hem ilerleme takibini hem de sonuç raporu (IP7)
+hazırlığını kolaylaştırır.
+
+**Bölüm 13 özet değerlendirmesi:** Önceki analiz (Bölüm 0-12) "var olan kodu Pi'de
+nasıl daha iyi çalıştırırız" sorusuna odaklanmıştı ve bu soruyu iyi cevaplıyor. Ama
+resmi başvuruyla karşılaştırınca görülüyor ki üç büyük iş paketi parçası (BLE/P2P mesh,
+çok-sınıflı+NDVI/NDBI+change-detection uydu ön işleme, ceza-katsayılı rota) **var olan
+kodun optimize edilmesiyle çözülemez — sıfırdan yazılması gereken yeni özellikler.**
+Test altyapısının tam yokluğu da ayrı bir kör nokta. Bunlar "eksikler" listesinde en
+üste (madde 39, 40) eklendi çünkü kalan tüm optimizasyon önerileri (Bölüm 0-12),
+bu parçalar hiç var olmadığı sürece zaten teorik kalıyor.
+
+---
+
 ## Öncelik Sırası (Pi/offline-first bağlamına göre yeniden yazıldı)
 
 1. **Madde 34** — Gerçek Pi donanımında erken benchmark. Bunu yapmadan diğer birçok
@@ -537,3 +672,19 @@ ki Pi imajı yanlışlıkla Streamlit'i de kurmasın.
 7. **Madde 4 + 35** — RAM bütçesi ve modül tekilleştirme (OOM riskini azaltmak).
 8. Geri kalan performans/güvenlik/kod-kalitesi maddeleri (11-14, 17-22, 25-30,
    36-38) bu temeller oturunca çok daha az riskli ve hızlı ilerler.
+
+**Bölüm 13 eklendikten sonra revize edilmiş not:** Yukarıdaki 8 maddelik sıralama
+hâlâ geçerli ama sadece "mevcut kodu Pi'de optimize etme" eksenini kapsıyor. Resmi
+proje kapsamıyla karşılaştırıldığında (Bölüm 13), bunlara paralel/önce
+değerlendirilmesi gereken üç ayrı eksen daha var:
+- **Madde 40** (test altyapısı) — mümkünse madde 34 (Pi benchmark) ile birlikte en
+  başta ele alınmalı; ölçüm olmadan hiçbir hedefin karşılanıp karşılanmadığı bilinemez.
+- **Madde 39** (BLE/P2P mesh) — kapsam/süre açısından danışmanla ayrı bir konuşma
+  gerektiren, listedeki diğer her şeyden bağımsız, büyük bir iş paketi.
+- **Madde 41-44** (uydu ön işleme, change detection, yoğunluk ısı haritası,
+  ceza-katsayılı rota) — bunlar mevcut kodun "optimize edilmesiyle" değil, kısmen
+  sıfırdan yazılmasıyla kapanacak eksikler; madde 32'deki ("cloud'da eğit, Pi'ye
+  dağıt") modelin kapsamına bunların da girmesi gerekiyor.
+- **Madde 45** kod değil bir karar maddesi — JWT'nin proposal'da taahhüt edildiği
+  hâlde kodda/analizde göz ardı edilmiş olması, kullanıcıyla netleştirilmeden
+  kapatılmamalı.
