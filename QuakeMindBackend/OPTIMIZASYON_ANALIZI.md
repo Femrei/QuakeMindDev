@@ -9,6 +9,26 @@
 > referans vermeye devam edebiliriz); ilgili maddelerin altına **"📡 Pi/Offline Notu"**
 > eklendi, yeni bölümler (9-12) eklendi, öncelik sırası bu gerçeğe göre yeniden yazıldı.
 
+> **Revizyon notu 2 (donanım gerçeği):** Şu an elimizde fiziksel bir Raspberry Pi yok.
+> **Nihai dağıtım hedefi hâlâ Pi** — bu değişmedi — ama geliştirme, test ve arayüz
+> çalışması gerçekte **PC üzerinden** yürütülmek zorunda. Bu, raporun Pi'ye özgü
+> donanım varsayımlarının (ARM mimarisi, kısıtlı RAM, SD kart I/O, GPU yokluğu, headless
+> çalışma) bir kısmının **şu an fiilen doğrulanamadığı, ertelendiği** anlamına geliyor.
+> Bu nedenle rapor artık iki fazlı okunmalı:
+> - **Faz 1 (şimdi — Pi yok, PC üzerinde geliştirme/arayüz):** Donanımdan bağımsız
+>   mimari kararlar (offline-first tasarım, senkronizasyon/outbox, özellik matrisi,
+>   kod tekrarının giderilmesi, model persist etme) aynen geçerli ve **şimdi**
+>   ilerletilebilir/ilerletilmeli. Buna karşılık Pi'ye özgü donanım kısıtları (Bölüm 10)
+>   ve bunlara dayanan kararlar (ör. madde 18'deki kuantizasyon kararı, madde 23'teki
+>   ARM wheel doğrulaması) **PC'de test edilemez**, tahmine dayalı kalır ve gerçek
+>   donanım gelene kadar ⚠️ **"doğrulanamadı"** olarak işaretlenmelidir.
+> - **Faz 2 (Pi temin edildiğinde):** Bölüm 10'daki tüm ölçümler (madde 34) ve buna bağlı
+>   kararlar gerçek donanımda tekrar doğrulanmalı; PC'de alınmış hiçbir performans/RAM
+>   sonucu Pi için "kanıt" sayılmamalı, sadece yön gösterici bir taban çizgi (baseline)
+>   olarak kullanılmalı.
+> Faz 1/Faz 2 ayrımının pratik sonucu Bölüm 0 ve Bölüm 12'de somutlaştırıldı (özellikle
+> "PC üzerinde hangi arayüzle ilerleyeceğiz" sorusuna Bölüm 12'de doğrudan cevap var).
+
 Durum lejantı: 🔴 Kritik · 🟠 Önemli · 🟡 Orta · ⚪ Düşük · **Durum:** Bekliyor / Devam Ediyor / Tamamlandı / Reddedildi
 
 ---
@@ -54,6 +74,15 @@ Bunun kod/mimari üzerindeki etkileri, aşağıdaki maddelerde tek tek işleniyo
    "internet yok" ikiliğini bazı yerlerde (offline OSM modu) ele alıyor ama "internet
    geldiğinde merkezi sunucuyla veri alışverişi yap" diye bir mekanizma hiç yok
    (bkz. Bölüm 9 — yeni).
+5. **(yeni) Pi şu an elimizde yok — geliştirme/arayüz PC üzerinden ilerliyor, ama hedef
+   değişmedi.** Yukarıdaki diyagram hâlâ *nihai* mimari. Ama "Raspberry Pi" kutusunun
+   yerine bugün fiilen bir **geliştirici PC'si** koyup ilerlemek zorundayız — WiFi AP
+   yayını, ARM CPU, kısıtlı RAM/SD kart gibi Pi'ye özgü unsurlar PC'de ya hiç yok ya da
+   çok farklı davranıyor. Bu maddelerin her biri aşağıda tek tek işleniyor; kısa özet:
+   **mimari/yazılım kararları (offline-first, senkron, kod tekrarının giderilmesi) şimdi
+   de geçerli ve ilerletilmeli; donanım-bağımlı kararlar (Bölüm 10, madde 18/23) Pi
+   gelene kadar "doğrulanamadı" statüsünde bekler.** PC'de hangi arayüzle çalışılacağı
+   sorusunun somut cevabı **Bölüm 12**'de.
 
 ---
 
@@ -66,20 +95,30 @@ Kök `requirements.txt` içinde `ultralytics` hiç yok, ama `apps/camera_detecti
 "Kamera Tespiti" sekmesi) hem `apps/camera_detection/app.py` bunu çağırıyor. Şu an kurulu
 venv'de doğruladım: `import ultralytics` → `ModuleNotFoundError`.
 **Öneri:** `ultralytics`'i kök `requirements.txt`'e ekle (versiyon pinle, madde 23).
-**📡 Pi/Offline Notu:** Eklemeden önce madde 10 (Bölüm 10) kararını ver — iki YOLO
-modelini gerçek zamanlı Pi CPU'sunda aynı anda koşturmak muhtemelen gerçekçi değil;
-"eklemek" tek başına yeterli çözüm olmayabilir, modelin Pi'de gerçekten kullanılabilir
-olup olmadığını önce ölç.
+**📡 Pi/Offline Notu:** İki YOLO modelini gerçek zamanlı Pi CPU'sunda aynı anda
+koşturmak muhtemelen gerçekçi değil; Pi'de gerçekten kullanılabilir olup olmadığı
+madde 34'teki gerçek donanım ölçümü olmadan bilinemez.
+**💻 Faz 1 (PC) notu:** Bu madde Pi'yi beklemeden **şimdi** çözülebilir/çözülmeli —
+`ultralytics` eksikliği Pi'ye özgü bir sorun değil, PC'deki venv'de de kırık. PC'de
+(muhtemelen daha güçlü CPU, belki GPU) iki YOLO modelini aynı anda koşturmanın hiç
+sorun çıkarmaması olası, bu da "Pi'de olur mu" sorusunu ayrıca **belirsiz** bırakır —
+PC'de çalışması Pi'de çalışacağının kanıtı değildir. Paketi ekleyip PC'de geliştirmeye/
+teste devam et; Pi'ye özgü "ikisi aynı anda gerçek zamanlı sığar mı" kararını madde 34
+ile ertele.
 
 ### 2. 🔴 Earthquake Risk masaüstü GUI'si (`customtkinter`) kök requirements'ta yok
 **Durum:** Bekliyor
-**📡 Pi/Offline Notu:** Bu madde artık **önemsiz/kaldırılabilir** — `customtkinter`
-bir masaüstü (X11/Wayland) GUI kütüphanesi. Pi başsız (headless) bir sunucu olarak
-çalışacaksa (muhtemel senaryo: Pi'ye monitör/klavye takılı değil, sadece kutu içinde
-WiFi yayını yapan bir cihaz), bu GUI'nin Pi'de hiç çalıştırılma ihtimali yok. **Öneri
-değişti:** `apps/earthquake_risk/gui_app.py` + `main.py` (tkinter masaüstü giriş noktası)
-prod kapsamından tamamen çıkarılmalı, sadece "geliştirici kendi PC'sinde debug ediyor"
-senaryosunda kalmalı — kök requirements'a hiç eklenmemeli.
+**📡 Pi/Offline Notu:** Bu madde Pi *dağıtımı* için **önemsiz/kaldırılabilir** kalıyor —
+`customtkinter` bir masaüstü (X11/Wayland) GUI kütüphanesi, Pi başsız çalışacaksa bu
+GUI'nin Pi'de hiç çalıştırılma ihtimali yok. `apps/earthquake_risk/gui_app.py` +
+`main.py` (tkinter giriş noktası) **Pi'ye giden `requirements.txt`'e hiç girmemeli.**
+**💻 Faz 1 (PC) notu:** Ama Pi yokken çalıştığımız yer zaten PC — yani bu madde şu an
+"kaldır" değil, "kök `requirements.txt`'ten ayır" maddesi olarak okunmalı. `customtkinter`
+(ve varsa diğer sadece-PC bağımlılıkları) `requirements-dev.txt`'e taşınmalı; böylece
+(a) geliştirici PC'sinde bu GUI hâlâ çalışır ve debug/demo için kullanılabilir, (b) kök
+`requirements.txt` şimdiden Pi'ye gidecek "temiz" listeye yaklaşır. Bu ayrım, madde 24
+ve Bölüm 12'deki karara doğrudan bağlı — orada nihai olarak hangi arayüzün Pi'ye,
+hangisinin sadece PC'ye ait kalacağı netleştiriliyor.
 
 ### 3. 🔴 `QUAKEMIND_OFFLINE_ONLY` process-genelinde global env var — çoklu kullanıcıda birbirini eziyor
 **Durum:** Bekliyor
@@ -236,6 +275,15 @@ duyulacağı an) devrede. Öncelik yükseltildi.
 - BERTurk sınıflandırma + NER modelleri için `distilbert`/daha küçük bir Türkçe model
   varyantına geçmek (mümkünse) veya mevcut modeli `optimum`/ONNX ile kuantize etmek
   ciddi kazanç sağlar.
+**💻 Faz 1 (PC) notu:** Bu maddede **dikkat edilmesi gereken bir tuzak** var: eğer
+geliştirme PC'sinde GPU varsa, `torch.autocast("cuda", ...)` PC'de gerçekten işe
+yarar ve cazip görünebilir — ama bu kazanım **Pi'ye taşınmaz** (Pi'de CUDA yok).
+PC'de "GPU ile hızlandırdık" diye rahatlayıp bu maddeyi kapatılmış saymayın; Pi için
+tek geçerli yol yukarıdaki ONNX/ncnn/TFLite + INT8 kuantizasyon hattı. Şimdiden
+yapılabilecek: ONNX export adımlarını PC'de (CPU modunda, GPU'suz) deneyip modelin
+doğruluğunu (accuracy/mAP farkı var mı) PC'de doğrulamak — bu, Pi'ye özgü hız kazancını
+ölçmez ama "kuantize model hâlâ doğru tahmin ediyor mu" sorusunu donanımdan bağımsız
+şimdi cevaplar.
 
 ### 19. 🟡 Zeyrek lemmatization kelime bazlı cache'lenmiyor
 **Durum:** Bekliyor
@@ -299,6 +347,17 @@ kurulmalı.
 - **Bunu erken bir aşamada, gerçek bir Raspberry Pi üzerinde bizzat doğrula** —
   şu an bu risk teorik, ama masaüstünde her şey "sorunsuz" göründüğü için Pi'ye
   geçilene kadar fark edilmeme ihtimali yüksek (tıpkı Windows/cykhash gibi).
+**💻 Faz 1 (PC) notu:** Pi olmadan bu maddenin "doğrulama" kısmı **yapılamaz** —
+piwheels.org'ta bir paketin ARM64 wheel'inin var olup olmadığı web üzerinden kontrol
+edilebilir (bu bir ön-araştırma, gerçek kurulum testi değil) ama "gerçekten kurulur mu,
+gerçekten çalışır mı" sorusunun tek cevabı fiziksel/emüle Pi'de `pip install` denemek.
+Şimdiden yapılabilecekler: (a) hedef paket listesini (`numpy`, `pandas`, `scipy`,
+`shapely`, `pyproj`, `opencv-python`, `torch` + versiyonları) netleştirip piwheels.org'ta
+tek tek ARM64 desteğini web'den kontrol ederek bir ön-risk listesi çıkar; (b) alternatif
+olarak QEMU ile ARM64 emülasyonu (`docker run --platform linux/arm64`) üzerinden bir
+kurulum denemesi yapılabilir — bu gerçek Pi'nin yerini tutmaz ama en azından "wheel yok,
+kaynaktan derleme gerekiyor" tespitini Pi gelmeden önce yakalayabilir ve saha ziyareti
+riskini azaltır.
 
 ### 24. 🟡 4 ayrı requirements.txt birbiriyle senkron değil, "kaynak of truth" belirsiz
 **Durum:** Bekliyor
@@ -405,11 +464,20 @@ uyarısı göstermek için kullanılabilir.
 
 ## Bölüm 10 — (YENİ) Raspberry Pi Kaynak Bütçesi ve Model Uygunluğu
 
+> **⚠️ Faz durumu:** Bu bölümdeki her şey Pi donanımı **gerektirir** ve şu an elimizde
+> Pi olmadığı için **hiçbiri fiilen doğrulanamıyor**. Aşağıdaki madde 34-36, Pi temin
+> edilene kadar teorik/tahmini kalacak — bunları "PC'de aynı testi yapıp Pi'ye eşliyoruz"
+> gibi bir kısayolla kapatmaya çalışmayın, PC'nin x86_64 CPU'su (muhtemelen çok daha
+> güçlü, muhtemelen farklı komut seti — SIMD/NEON farkları dahil) Pi'nin ARM CPU'suna
+> performans açısından **güvenilir bir vekil değil**. Yine de aşağıda her maddeye,
+> Pi gelene kadar **şimdiden** yapılabilecek bir "Faz 1 hazırlığı" eklendi — amaç,
+> Pi ulaştığında bocalamadan doğrudan ölçüme geçebilmek.
+
 ### 34. 🔴 (yeni) Gerçek Pi donanımında erken benchmark yapılmadı (varsayım: yapılmadı)
-**Durum:** Bekliyor
+**Durum:** Bekliyor — **⚠️ şu an bloklu, Pi donanımı yok**
 Şu ana kadarki tüm performans varsayımları muhtemelen x86_64 geliştirici makinesinde
-ölçüldü/varsayıldı. **Öncelik #1 olmalı:** Hedef Pi modelini (Pi 4 4GB/8GB mi, Pi 5 mi?)
-netleştirip üzerinde şu ölçümleri erken yap:
+ölçüldü/varsayıldı. Pi temin edildiğinde **öncelik #1 olmalı:** Hedef Pi modelini
+(Pi 4 4GB/8GB mi, Pi 5 mi?) netleştirip üzerinde şu ölçümleri erken yap:
 - BERTurk sınıflandırma + NER: tek istek başına gerçek gecikme (ms).
 - Segformer mit_b4: tek 512x512 patch başına ve tam bir uydu görüntüsü (birden fazla
   patch, %50 overlap) için gerçek süre.
@@ -419,9 +487,18 @@ netleştirip üzerinde şu ölçümleri erken yap:
 Bu ölçümler olmadan Bölüm 4'teki (madde 18) kuantizasyon/ONNX önerilerinin ne kadar
 gerekli olduğu bile netleşmez — belki bazı modeller Pi'de zaten kabul edilebilir
 hızda çalışır, belki hiçbiri çalışmaz. **Varsayımla ilerlemek yerine ölç.**
+**💻 Faz 1 (PC) notu:** Pi yokken elde edilebilecek tek şey **PC üzerinde göreli bir
+taban çizgi** — yukarıdaki aynı beş ölçümü PC'de de kaydedin (özellikle "aynı anda
+3-5 istek" eşzamanlılık testi PC'de de anlamlı, çünkü FastAPI'nin sync/async/worker
+davranışı donanımdan bağımsız). Bu sayılar Pi'de "kaç kat yavaş olur" sorusuna cevap
+vermez ama en azından hangi modülün PC'de bile en yavaş/en ağır olduğunu (görece
+sıralama) gösterir ve madde 18/35 için hazırlık sağlar. Ayrıca **Pi modelini şimdiden
+netleştirmek** (Pi 4 4GB mi, 8GB mi, Pi 5 mi olacak — satın alma kararı) bu maddenin
+önündeki en büyük belirsizlik; donanım seçimi netleşmeden "hangi model sığar" sorusu
+zaten cevaplanamaz.
 
 ### 35. 🟠 (yeni) RAM bütçesi planlaması yok
-**Durum:** Bekliyor
+**Durum:** Bekliyor — **⚠️ kesin sayılar Pi'de doğrulanmalı**
 Pi 4 (4GB varsayımıyla, işletim sistemi + diğer servisler ~500MB-1GB alır) kullanılabilir
 RAM ~3-3.5GB civarı. Yüklenmesi düşünülen modeller: BERTurk sınıflandırma (~500MB-1GB
 fp32), BERTurk/harici NER modeli (~500MB-1GB), Segformer mit_b4 (encoder büyük, muhtemelen
@@ -433,6 +510,12 @@ düşük-RAM Pi modelleri için "hangi modüller aktif" konusunda bir yapıland�
 (ör. `.env` ile `ENABLE_CAMERA_DETECTION=false` gibi) sunmayı düşün — her Pi'nin her
 özelliği aynı anda çalıştırması şart olmayabilir (saha ihtiyacına göre bir Pi sadece
 "NLP + Risk", başka bir Pi "+ Road Damage" çalıştırabilir).
+**💻 Faz 1 (PC) notu:** Model boyutları (fp32 disk/checkpoint boyutu) donanımdan
+bağımsız ölçülebilir — PC'de her modelin `du -h`/dosya boyutu ve process RSS'i (ör.
+`psutil` ile) şimdiden kaydedilebilir, bu yukarıdaki tahmini sayıları gerçek verilerle
+değiştirir. Lazy-load + LRU tahliye mimarisi de PC'de tasarlanıp yazılabilir/test
+edilebilir; sadece "tetiklenme eşiği" (kaç MB'ta tahliye başlasın) Pi'nin gerçek RAM
+bütçesi netleşince ayarlanacak bir parametre olarak bırakılmalı.
 
 ### 36. 🟡 (yeni) SD kart aşınması ve I/O yavaşlığı
 **Durum:** Bekliyor
@@ -444,6 +527,13 @@ dahil — dikkatli tasarlanmalı, "her istekte diske yaz" değil "toplu/aralıkl
 **Öneri:** Mümkünse Pi'ye harici bir USB SSD bağlanıp gerçek veritabanı/cache orada
 tutulmalı (SD kart sadece OS + salt-okunur statik varlıklar için); en azından sık
 yazılan geçici veriler (`/tmp` benzeri) `tmpfs` (RAM-disk) üzerinde tutulmalı.
+**💻 Faz 1 (PC) notu:** PC'de bu madde neredeyse hiç görünmez — normal bir SSD/HDD'nin
+aşınma/hız profili SD kartla kıyaslanamayacak kadar iyi, yani PC'de "gereksiz sık yazma"
+davranışını fark etmeden geliştirme yapmak kolay. Tam bu yüzden risk var: kod PC'de
+"sorunsuz" görünüp Pi'ye gidince I/O darboğazı sürpriz olabilir. Öneri: `query.csv`'yi
+SQLite'a taşıma (madde 16) ve "toplu/aralıklı yaz" prensibi PC'de bile **şimdiden**
+uygulanmalı — bunlar Pi'ye özel değil, genel olarak daha doğru bir tasarım; sadece
+Pi'de faydası çok daha somut ortaya çıkacak.
 
 ---
 
@@ -471,12 +561,40 @@ aramadan doğrudan arayüzle karşılaşmasını sağlar. Bu bir altyapı (hosta
 
 ---
 
-## Bölüm 12 — (YENİ) Streamlit Kararı — Ne İle Değiştirelim?
+## Bölüm 12 — (YENİ) Streamlit Kararı — Ne İle Değiştirelim? / PC'de Hangi Arayüzle İlerleyelim?
 
-Sorduğun soruya doğrudan cevap: **Evet, Streamlit'i prod/Pi dağıtımından tamamen
-çıkarmanı öneririm.** Gerekçe ve alternatif:
+> **⚠️ Bu bölüm, Pi elimizde olmadığı için şu an en çok "gündelik karar"a dönüşen
+> bölüm — "PC üzerinde bir arayüzden ilerleme" ihtiyacının doğrudan cevabı burada.**
+> Aşağıdaki analiz **iki ayrı soruyu** birbirinden ayırıyor: (1) *Pi'ye nihayetinde ne
+> deploy edilecek* (bu, alttaki orijinal analizde değişmedi) ve (2) *Pi yokken, şimdi,
+> PC üzerinde hangi arayüzle çalışacağız* (bu, aşağıda yeni eklenen "Faz 1" kısmı).
 
-**Neden Streamlit bu senaryoda yanlış araç:**
+### Faz 1 (şimdi — Pi yok, PC üzerinden ilerleme)
+
+Pi olmadığı sürece Streamlit'in yukarıdaki tüm dezavantajları (rerun-on-interaction
+maliyeti, tek-worker session-state) **önemsiz** — bunlar Pi'nin kısıtlı CPU/RAM'i ve
+"aynı anda çok sayıda telefon" senaryosu yüzünden sorun; PC'de tek geliştirici/birkaç
+test kullanıcısı için Streamlit'in maliyeti fark edilmez. Dolayısıyla:
+- **Streamlit'i (main.py + apps/*/app.py) şimdilik atmaya gerek yok.** PC'de model/
+  algoritma denemesi, demo, iç değerlendirme için kullanmaya devam edilebilir —
+  bu, "PC üzerinde bir arayüzden ilerleme" ihtiyacını bugün en az efor ile karşılayan
+  yol (zaten yazılmış, çalışıyor).
+- **Tek şart:** Bu Faz 1 kullanımının **iş mantığını Streamlit'in içine sızdırmaması**
+  — madde 7 ve 9'daki "aynı mantık 3-4 yerde kopyalanmış" sorunu tam olarak böyle
+  büyüyor. Streamlit dosyaları sadece `fastapi_app.py`'nin (+ ortak modüllerin)
+  **ince bir istemcisi/görünümü** olarak kalmalı; risk hesaplama, NLP, road-damage gibi
+  gerçek işi hep FastAPI/ortak modüller yapmalı. Böylece Pi geldiğinde arayüz katmanı
+  değişse bile alttaki mantık zaten tek yerde, taşınabilir durumda olur.
+- Bu Faz 1 kararı, madde 2'deki `customtkinter` GUI için de geçerli: PC'de debug/demo
+  aracı olarak kalabilir, sadece kök `requirements.txt`'e değil `requirements-dev.txt`'e
+  girmeli (bkz. madde 2, madde 24).
+
+### Faz 2 (Pi temin edildiğinde) — orijinal analiz, değişmedi
+
+Pi eline geçtiğinde geçerli olacak nihai karar hâlâ şu: **Evet, Streamlit'i prod/Pi
+dağıtımından tamamen çıkar.** Gerekçe ve alternatif:
+
+**Neden Streamlit Pi senaryosunda yanlış araç:**
 - Her tarayıcı sekmesi/kullanıcısı için **tam bir Python script'i yeniden çalıştırma**
   modeli var (rerun-on-interaction) — Pi'nin kısıtlı CPU'sunda birden fazla telefon
   aynı anda bağlıyken bu model orantısız pahalı.
@@ -503,16 +621,21 @@ Sorduğun soruya doğrudan cevap: **Evet, Streamlit'i prod/Pi dağıtımından t
    - Statik dosya servisi, Streamlit'in aksine Pi'de neredeyse sıfır ek CPU/RAM
      maliyetiyle çalışır (dosya okuyup gönderiyor, Python script koşturmuyor).
    - Aynı anda bağlanan çok sayıda telefon için doğal olarak çok daha hafif.
+   - Faz 1'de Flutter Web build'ini **PC'de de** deneyip erken doğrulamak mümkün —
+     bu adımın Pi'yi beklemesi gerekmiyor, PC'de `flutter build web` + FastAPI
+     static serve zaten bugün test edilebilir.
 
    *Alternatif (Flutter Web istenmezse):* Çok basit, framework'süz bir statik
    HTML/JS sayfası (fetch ile `fastapi_app.py` endpoint'lerini çağıran) da yeterli
    olur — durumun karmaşıklığına göre.
 
-**Streamlit'i tamamen atmak istemiyorsan (geliştirme/demo amaçlı elde tutmak
-istiyorsan):** O zaman en azından **açıkça "sadece geliştirici masaüstü için,
+**Streamlit'i Faz 2'de de tamamen atmak istemezsen (geliştirme/demo amaçlı elde
+tutmak istiyorsan):** O zaman en azından **açıkça "sadece geliştirici masaüstü için,
 asla Pi'ye deploy edilmez"** diye işaretleyip `dev-tools/` gibi ayrı bir klasöre
 taşı; kök `requirements.txt`'ten Streamlit'i çıkarıp `requirements-dev.txt`'e taşı
-ki Pi imajı yanlışlıkla Streamlit'i de kurmasın.
+ki Pi imajı yanlışlıkla Streamlit'i de kurmasın. Faz 1'de zaten bu şekilde
+kullanılıyor olacağı için, Faz 2'ye geçiş fiilen sadece "kök requirements'tan çıkar
++ klasör taşı" işlemine indirgenmiş olur — kod yeniden yazmaya gerek kalmaz.
 
 ---
 
@@ -653,6 +776,42 @@ bu parçalar hiç var olmadığı sürece zaten teorik kalıyor.
 
 ## Öncelik Sırası (Pi/offline-first bağlamına göre yeniden yazıldı)
 
+> **⚠️ Bu sıralama, Pi donanımının elde olduğu varsayımıyla yazılmıştı.** Şu an
+> geçerli olmadığı için aşağıda önce **Faz 1 (Pi yokken, şimdi PC'de yapılabilecekler)**
+> sıralaması var; orijinal 8 maddelik sıralama onun altında **Faz 2 (Pi temin
+> edildiğinde)** olarak korundu — Pi eline geçtiğinde doğrudan o listeye geç.
+
+### Faz 1 — şimdi, Pi yokken, PC üzerinde yapılabilecekler (öncelik sırasıyla)
+
+1. **Madde 1, 3, 4, 6, 7, 9** — donanımdan tamamen bağımsız kod/mimari düzeltmeleri:
+   `ultralytics` eksikliğini gider, global `QUAKEMIND_OFFLINE_ONLY` env var'ını kaldır,
+   çift-import/çift-model-yükleme sorununu çöz, unutulmuş `nlp_bridge_server.py`'yi
+   temizle, kod tekrarını (madde 7) azalt, "hangi dosya gerçek backend" belirsizliğini
+   (madde 9) `fastapi_app.py` lehine netleştir. Bunların hiçbiri Pi beklemiyor, PC'de
+   bugün bitebilir ve Pi geldiğinde üzerine inşa edilecek temel bunlar.
+2. **Madde 15 + 16** — CatBoost modelini diske persist et, `query.csv`'yi SQLite'a
+   taşı. Donanımdan bağımsız, PC'de tamamen tamamlanabilir; Faz 2'de "Pi'ye önceden
+   eğitilmiş model gömülü gelsin" hedefinin ön koşulu zaten bu.
+3. **Madde 31 + 32** — Senkronizasyon (outbox) mimarisi ve "cloud'da eğit, Pi'ye
+   dağıt" modelinin **tasarımı ve kod iskeleti**. Pi olmadan uçtan uca test edilemez
+   (gerçek "iki cihaz arası senkron" senaryosu) ama mimari/kod PC'de yazılıp iki ayrı
+   PC-process/iki ayrı port ile simüle edilebilir.
+4. **Madde 3 + 20 + 33** — Offline/online otomatik algılama, yerel geocoding tablosu,
+   özellik matrisi. Bunlar da donanımdan bağımsız; PC'de WiFi'yi kapatıp açarak
+   "internet var/yok" geçişleri simüle edilebilir.
+5. **Madde 12 (Faz 1 kısmı)** — PC'de hangi arayüzle ilerlenileceği: Streamlit'i
+   Faz 1'de koru, ama iş mantığını FastAPI'ye sızdırmadan ince istemci olarak kullan
+   (yukarıdaki Bölüm 12'ye bkz.).
+6. **Madde 23 (kısmi)** — Pi'de gerçek kurulum testi yapılamasa da, hedef paket
+   listesinin piwheels.org'ta ARM64 desteğini şimdiden araştırıp bir risk listesi
+   çıkar; mümkünse QEMU/ARM64 emülasyonuyla ön-deneme yap.
+7. **Madde 40 (kısmi)** — Test altyapısının PC'de kurulabilecek kısmı (CatBoost/YOLO/
+   Segformer için `eval/` script seti, API endpoint testleri) — bunlar donanımdan
+   bağımsız, Pi beklemeden şimdi yazılabilir; sadece "Pi'de <500ms" gibi donanıma
+   bağlı hedefler Faz 2'yi bekler.
+
+### Faz 2 — Pi temin edildiğinde (orijinal sıralama, korunmuştur)
+
 1. **Madde 34** — Gerçek Pi donanımında erken benchmark. Bunu yapmadan diğer birçok
    karar (madde 18 kuantizasyon, madde 35 RAM bütçesi, hatta madde 1'in "ultralytics
    ekle" kararı) varsayıma dayalı kalır.
@@ -672,6 +831,10 @@ bu parçalar hiç var olmadığı sürece zaten teorik kalıyor.
 7. **Madde 4 + 35** — RAM bütçesi ve modül tekilleştirme (OOM riskini azaltmak).
 8. Geri kalan performans/güvenlik/kod-kalitesi maddeleri (11-14, 17-22, 25-30,
    36-38) bu temeller oturunca çok daha az riskli ve hızlı ilerler.
+
+**Not:** Faz 1'deki maddeler (1-7 numaralı Faz 1 listesi) Faz 2'nin önünü açacak
+şekilde seçildi — yani Faz 1'i bitirmek, Faz 2'ye geçildiğinde madde 34/23 dışındaki
+çoğu işin zaten yapılmış olması anlamına gelir.
 
 **Bölüm 13 eklendikten sonra revize edilmiş not:** Yukarıdaki 8 maddelik sıralama
 hâlâ geçerli ama sadece "mevcut kodu Pi'de optimize etme" eksenini kapsıyor. Resmi
