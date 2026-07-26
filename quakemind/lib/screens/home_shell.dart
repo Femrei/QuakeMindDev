@@ -7,10 +7,12 @@ import '../data/mock_data.dart';
 import '../models/nlp_module_result.dart';
 import '../models/risk_module_result.dart';
 import '../models/road_damage_result.dart';
+import '../models/sos_alert_result.dart';
 import '../services/nlp_module_service.dart';
 import '../services/risk_module_service.dart';
 import '../services/road_damage_service.dart';
 import '../services/server_status_service.dart';
+import '../services/sos_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
 import '../widgets/ip_config_dialog.dart';
@@ -64,6 +66,7 @@ class _HomeShellState extends State<HomeShell> {
         onSampleChanged: (value) => setState(() => _selectedSample = value!),
       ),
       const _CameraPage(),
+      const _SosPage(),
     ];
 
     return Scaffold(
@@ -167,6 +170,10 @@ class _HomeShellState extends State<HomeShell> {
                   NavigationDestination(
                     icon: Icon(Icons.videocam),
                     label: 'Kamera',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.sos),
+                    label: 'SOS',
                   ),
                 ],
               ),
@@ -2071,6 +2078,260 @@ class _CameraPageState extends State<_CameraPage> {
         return const Color(0xFFF59F00);
       default:
         return AppTheme.teal;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SOS Page
+// ---------------------------------------------------------------------------
+
+enum _SosStatus { idle, locating, sending, sent, locationError, sendError }
+
+class _SosPage extends StatefulWidget {
+  const _SosPage();
+
+  @override
+  State<_SosPage> createState() => _SosPageState();
+}
+
+class _SosPageState extends State<_SosPage> {
+  static const _service = SosService();
+
+  _SosStatus _status = _SosStatus.idle;
+  Position? _position;
+  String? _errorMessage;
+  SosAlertResult? _lastAlert;
+
+  Future<void> _triggerSos() async {
+    setState(() {
+      _status = _SosStatus.locating;
+      _errorMessage = null;
+    });
+
+    final position = await _resolveCurrentPosition();
+    if (position == null) return;
+
+    setState(() {
+      _position = position;
+      _status = _SosStatus.sending;
+    });
+
+    try {
+      final result = await _service.sendAlert(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracy: position.accuracy,
+      );
+      if (!mounted) return;
+      setState(() {
+        _lastAlert = result;
+        _status = _SosStatus.sent;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _status = _SosStatus.sendError;
+      });
+    }
+  }
+
+  Future<Position?> _resolveCurrentPosition() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _errorMessage = 'Konum servisi kapali. Lutfen GPS\'i acin.';
+          _status = _SosStatus.locationError;
+        });
+        return null;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          _errorMessage =
+              'Konum izni verilmedi. Ayarlardan konum iznini acmalisin.';
+          _status = _SosStatus.locationError;
+        });
+        return null;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      return position;
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Konum alinirken hata: $e';
+        _status = _SosStatus.locationError;
+      });
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isBusy =
+        _status == _SosStatus.locating || _status == _SosStatus.sending;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
+      children: [
+        const _AppHeader(
+          title: 'Acil Durum SOS',
+          subtitle:
+              'Butona bastiginda konumun otomatik alinir, haritada gosterilir ve backend\'e gonderilir.',
+        ),
+        const SizedBox(height: 24),
+        Center(
+          child: GestureDetector(
+            onTap: isBusy ? null : _triggerSos,
+            child: Container(
+              width: 190,
+              height: 190,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFE15B64).withValues(
+                  alpha: isBusy ? 0.45 : 0.92,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFE15B64).withValues(alpha: 0.45),
+                    blurRadius: 36,
+                    spreadRadius: 4,
+                  ),
+                ],
+                border: Border.all(color: Colors.white, width: 4),
+              ),
+              alignment: Alignment.center,
+              child: isBusy
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.sos, color: Colors.white, size: 46),
+                        SizedBox(height: 8),
+                        Text(
+                          'SOS',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Center(
+          child: Text(
+            _statusLabel(),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ),
+        const SizedBox(height: 24),
+        if (_status == _SosStatus.locationError ||
+            _status == _SosStatus.sendError)
+          _ErrorState(
+            title: _status == _SosStatus.locationError
+                ? 'Konum alinamadi'
+                : 'Uyari gonderilemedi',
+            error: _errorMessage ?? 'Bilinmeyen hata',
+            onRetry: _triggerSos,
+          ),
+        if (_status == _SosStatus.sent && _lastAlert != null) ...[
+          SectionCard(
+            color: const Color(0xFF1C3A2E),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: AppTheme.teal),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'SOS uyarin sunucuya ulasti',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text('Uyari ID: ${_lastAlert!.id}'),
+                Text('Alinma zamani: ${_lastAlert!.receivedAt}'),
+                Text(
+                  'Bu oturumda toplam kayitli uyari: ${_lastAlert!.totalAlerts}',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+        ],
+        if (_position != null) ...[
+          GeoPointsMapPanel(
+            title: 'Gonderilen Konum',
+            subtitle: 'GPS\'ten alinan enlem/boylam haritada isaretlendi.',
+            markers: [
+              GeoMarkerData(
+                latitude: _position!.latitude,
+                longitude: _position!.longitude,
+                label:
+                    '${_position!.latitude.toStringAsFixed(5)}, ${_position!.longitude.toStringAsFixed(5)}',
+                highlight: true,
+              ),
+            ],
+            height: 340,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Koordinat: ${_position!.latitude.toStringAsFixed(6)}, ${_position!.longitude.toStringAsFixed(6)}'
+            ' (dogruluk ~${_position!.accuracy.toStringAsFixed(0)} m)',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ] else if (!isBusy && _status == _SosStatus.idle)
+          const SectionCard(
+            child: Column(
+              children: [
+                Icon(Icons.location_searching, size: 38, color: AppTheme.teal),
+                SizedBox(height: 14),
+                Text(
+                  'SOS butonuna bastiginda konumun alinir ve burada haritada gosterilir.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _statusLabel() {
+    switch (_status) {
+      case _SosStatus.idle:
+        return 'Acil durumda butona bas. Konumun otomatik olarak alinir.';
+      case _SosStatus.locating:
+        return 'Konumun aliniyor...';
+      case _SosStatus.sending:
+        return 'Konum haritada isaretlendi, sunucuya gonderiliyor...';
+      case _SosStatus.sent:
+        return 'Uyari basariyla gonderildi.';
+      case _SosStatus.locationError:
+        return 'Konum alinamadi.';
+      case _SosStatus.sendError:
+        return 'Konum alindi ama sunucuya gonderilemedi. Konum yine de asagida gorunur.';
     }
   }
 }

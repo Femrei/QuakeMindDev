@@ -5,6 +5,8 @@ import os
 import site
 import importlib
 import time
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from contextlib import contextmanager
 from typing import Optional
@@ -138,10 +140,23 @@ try:
 except Exception:
     pass
 
+# In-memory SOS alert store. Intentionally not persisted: alerts reset whenever
+# the server restarts, matching the PoC requirement of session-only storage.
+sos_alerts: list[dict] = []
+sos_lock = Lock()
+
 app = FastAPI(title="QuakeMind API", version="1.0.0")
 
 class NLPRequest(BaseModel):
     text: str
+
+
+class SOSAlertRequest(BaseModel):
+    latitude: float
+    longitude: float
+    accuracy: Optional[float] = None
+    message: Optional[str] = None
+    userId: Optional[str] = None
 
 class RiskRequest(BaseModel):
     city: str
@@ -492,6 +507,35 @@ def analyze_road_damage(req: RoadDamageRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/sos/alert")
+def create_sos_alert(req: SOSAlertRequest):
+    if not (-90.0 <= req.latitude <= 90.0) or not (-180.0 <= req.longitude <= 180.0):
+        raise HTTPException(status_code=422, detail="Gecersiz koordinat.")
+
+    alert = {
+        "id": str(uuid.uuid4()),
+        "latitude": req.latitude,
+        "longitude": req.longitude,
+        "accuracy": req.accuracy,
+        "message": req.message,
+        "userId": req.userId,
+        "receivedAt": datetime.now(timezone.utc).isoformat(),
+    }
+
+    with sos_lock:
+        sos_alerts.append(alert)
+        total = len(sos_alerts)
+
+    return {**alert, "totalAlerts": total}
+
+
+@app.get("/api/sos/alerts")
+def list_sos_alerts():
+    with sos_lock:
+        alerts = list(sos_alerts)
+    return {"alerts": alerts, "totalAlerts": len(alerts)}
 
 
 @app.get("/api/status")
