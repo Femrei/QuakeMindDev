@@ -3,3 +3,16 @@ venv/
 **/venv/
 **/.venv/
 .git_backup_*
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+__pycache__/
+**/__pycache__/
+*.log
+*.pth
+*.pt
+*.onnx
+*.safetensors
+models/
+**/models/

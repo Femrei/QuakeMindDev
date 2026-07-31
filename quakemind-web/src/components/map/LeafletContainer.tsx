@@ -1,0 +1,159 @@
+"use client";
+
+import { useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet Default Icon issue in Next.js
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+});
+
+const redIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const greenIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const blueIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+export interface MapMarkerItem {
+  id: string;
+  lat: number;
+  lng: number;
+  title: string;
+  type?: "sos" | "shelter" | "quake" | "damage";
+  popupText?: string;
+  magnitude?: number;
+}
+
+export interface MapPolylineItem {
+  id: string;
+  coords: [number, number][];
+  color: string;
+  weight?: number;
+  opacity?: number;
+  label?: string;
+}
+
+interface LeafletContainerProps {
+  center: [number, number];
+  zoom?: number;
+  markers?: MapMarkerItem[];
+  polylines?: MapPolylineItem[];
+  className?: string;
+}
+
+function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
+  return null;
+}
+
+export default function LeafletContainer({
+  center,
+  zoom = 13,
+  markers = [],
+  polylines = [],
+  className = "w-full h-full min-h-[400px]",
+}: LeafletContainerProps) {
+  return (
+    <div className={`relative overflow-hidden rounded-xl border border-slate-800 ${className}`}>
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        scrollWheelZoom={true}
+        className="w-full h-full min-h-[400px]"
+        style={{ background: "#0b0f17" }}
+      >
+        <ChangeView center={center} zoom={zoom} />
+        
+        {/* Dark Matter CartoDB Base Layer */}
+        <TileLayer
+          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        />
+
+        {/* Polylines (Roads, Routes, Fault Lines) */}
+        {polylines.map((poly) => (
+          <Polyline
+            key={poly.id}
+            positions={poly.coords}
+            pathOptions={{
+              color: poly.color || "#3b82f6",
+              weight: poly.weight || 4,
+              opacity: poly.opacity || 0.85,
+            }}
+          />
+        ))}
+
+        {/* Markers */}
+        {markers.map((marker) => {
+          let customIcon = blueIcon;
+          if (marker.type === "sos") customIcon = redIcon;
+          if (marker.type === "shelter") customIcon = greenIcon;
+
+          if (marker.type === "quake") {
+            const mag = marker.magnitude || 3.0;
+            let circleColor = "#10b981"; // green
+            if (mag >= 4.0) circleColor = "#f59e0b"; // orange
+            if (mag >= 5.0) circleColor = "#ef4444"; // red
+            if (mag >= 6.0) circleColor = "#881337"; // dark red
+
+            return (
+              <CircleMarker
+                key={marker.id}
+                center={[marker.lat, marker.lng]}
+                radius={Math.max(4, mag * 2.5)}
+                pathOptions={{
+                  color: circleColor,
+                  fillColor: circleColor,
+                  fillOpacity: 0.75,
+                }}
+              >
+                <Popup>
+                  <div className="text-sm font-semibold">{marker.title}</div>
+                  <div className="text-xs text-slate-300">{marker.popupText || `Büyüklük: ${mag}`}</div>
+                </Popup>
+              </CircleMarker>
+            );
+          }
+
+          return (
+            <Marker key={marker.id} position={[marker.lat, marker.lng]} icon={customIcon}>
+              <Popup>
+                <div className="text-sm font-bold text-slate-900">{marker.title}</div>
+                {marker.popupText && <div className="text-xs text-slate-700 mt-1">{marker.popupText}</div>}
+              </Popup>
+            </Marker>
+          );
+        })}
+      </MapContainer>
+    </div>
+  );
+}
