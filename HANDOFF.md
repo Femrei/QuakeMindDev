@@ -33,28 +33,27 @@ Bu doküman, **QuakeMind** projesinin mevcut mimarisini, yapılan tüm geliştir
 
 ## 🚀 3. Gelecek Planlar ve Not Alınan Geliştirmeler (Phase 2 Roadmap)
 
-### 💬 1. Çift Modlu (Online / Offline P2P) Ekip Taktik Mesajlaşma Sistemi
-- **Özellik:** Arama-kurtarma ekiplerinin saha şartlarında internet olsa da olmasa da haberleşmesini sağlayan **Taktik Chat Konsolu** (`/command/chat`).
-- **İnternetsiz (Offline / Mesh) Çalışma Mimarisi (Store-and-Forward):**
-  - İnternet kesildiğinde mesajlar yerelde (IndexedDB / SQLite) saklanır.
-  - Ekip üyesi yerel Hotspot menziline (`10.42.0.1:8000`) girdiğinde veya Bluetooth P2P Mesh bağlantısı kurulduğunda mesajlar **otomatik senkronize edilir**.
-- **İnternetli (Online) Çalışma Mimarisi:**
-  - FastAPI WebSockets / Firebase Realtime DB ile anlık canlı sohbet ve konum paylaşımı.
-  - Kanallar: `#sahagenel` (Saha Genel), `#taktik-ekip-1`, `#acil-sevk`.
+### 🧠 1. Geliştirici & Admin MLOps Modülü (Model Registry & Versiyonlama)
+- **Ekran:** `/command/admin` (Developer MLOps & Model Yönetim Paneli).
+- **Özellikler:**
+  - **Eğitim Parametreleri & Hiperparametreler:** Learning Rate, Batch Size, Epochs, Loss Fonksiyonları (Focal + Dice Loss vb.).
+  - **Başarım Metrikleri Grafikleri (Recharts):** mIoU %, Dice Skoru, Accuracy %, Macro F1, Precision, Recall, Confusion Matrix.
+  - **Model Versiyonlama & Geriye Dönük Seçim:** Segformer v1.0, v2.1 veya BERTurk v1.2 versiyonları arasında sunucuyu yeniden başlatmadan **canlı model sürümü değiştirme** (`POST /api/admin/models/activate`).
 
-### 🔐 2. Kullanıcı Kayıt & Kimlik Doğrulama (Auth System)
-- **FastAPI Endpoints:** `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`.
-- **Next.js Frontend:** Rol bazlı kayıt (`/register`) ve giriş (`/login`) ekranlarının bağlanması.
+### 💬 2. Çift Modlu (Online / Offline P2P) Ekip Mesajlaşma Sistemi
+- **Ekran:** `/command/chat` (Taktik Ekip Sohbet Konsolu).
+- **İnternetsiz (Store-and-Forward):** Cihaz hafızasında saklanan mesajların Hotspot (`10.42.0.1:8000`) veya P2P Mesh menziline girince otomatik senkronize edilmesi.
 
-### 🔥 3. Firebase Entegrasyonu (Auth & Push Bildirimleri)
-- Firebase Auth (SMS OTP ile Telefon Numarası Doğrulaması).
-- Firebase Cloud Messaging (FCM): Yeni Kritik SOS ve M>4.5 deprem anlarında canlı push bildirim.
+### 🔐 3. Kullanıcı Kayıt & Kimlik Doğrulama (Auth System)
+- `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me` endpoints & Next.js `/register` arayüzü.
 
-### 🐘 4. PostGIS & Mekânsal Veritabanı Katmanı
+### 🔥 4. Firebase Entegrasyonu (Auth & Push Bildirimleri)
+- Firebase Auth (SMS OTP ile Telefon Numarası Doğrulaması) ve FCM Canlı Push İkaz Bildirimleri.
+
+### 🐘 5. PostGIS & Mekânsal Veritabanı Katmanı
 - PostgreSQL 16 + PostGIS 3 + `pgRouting` entegrasyonu (`pgr_dijkstra` çevrimdışı rota hesabı).
-- En yakın SOS kayıtları için `<->` KNN ve `ST_DWithin` sorguları.
 
-### ⚡ 5. Backend Performans & Hız Optimizasyonları
+### ⚡ 6. Backend Performans & Hız Optimizasyonları
 - API önbellekleme (`lru_cache`), async paralel çıkarım ve JSON serialization hızlandırmaları.
 
 ---
