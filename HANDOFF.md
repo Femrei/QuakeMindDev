@@ -33,22 +33,28 @@ Bu doküman, **QuakeMind** projesinin mevcut mimarisini, yapılan tüm geliştir
 
 ## 🚀 3. Gelecek Planlar ve Not Alınan Geliştirmeler (Phase 2 Roadmap)
 
-### 🔐 1. Kullanıcı Kayıt & Kimlik Doğrulama (Auth System)
-- **FastAPI Endpoints:**
-  - `POST /api/auth/register`: Kullanıcı Kaydı (Ad Soyad, E-posta, Şifre, Rol [`survivor` / `responder`], Şehir, Telefon Numarası).
-  - `POST /api/auth/login`: Kullanıcı Girişi & JWT Token üretimi.
-  - `GET /api/auth/me`: Aktif kullanıcı profili.
-- **Next.js Frontend:** `/register` ve `/login` sayfalarının JWT & Firebase Auth altyapısına bağlanması.
+### 💬 1. Çift Modlu (Online / Offline P2P) Ekip Taktik Mesajlaşma Sistemi
+- **Özellik:** Arama-kurtarma ekiplerinin saha şartlarında internet olsa da olmasa da haberleşmesini sağlayan **Taktik Chat Konsolu** (`/command/chat`).
+- **İnternetsiz (Offline / Mesh) Çalışma Mimarisi (Store-and-Forward):**
+  - İnternet kesildiğinde mesajlar yerelde (IndexedDB / SQLite) saklanır.
+  - Ekip üyesi yerel Hotspot menziline (`10.42.0.1:8000`) girdiğinde veya Bluetooth P2P Mesh bağlantısı kurulduğunda mesajlar **otomatik senkronize edilir**.
+- **İnternetli (Online) Çalışma Mimarisi:**
+  - FastAPI WebSockets / Firebase Realtime DB ile anlık canlı sohbet ve konum paylaşımı.
+  - Kanallar: `#sahagenel` (Saha Genel), `#taktik-ekip-1`, `#acil-sevk`.
 
-### 🔥 2. Firebase Entegrasyonu (Auth & Push Bildirimleri)
+### 🔐 2. Kullanıcı Kayıt & Kimlik Doğrulama (Auth System)
+- **FastAPI Endpoints:** `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`.
+- **Next.js Frontend:** Rol bazlı kayıt (`/register`) ve giriş (`/login`) ekranlarının bağlanması.
+
+### 🔥 3. Firebase Entegrasyonu (Auth & Push Bildirimleri)
 - Firebase Auth (SMS OTP ile Telefon Numarası Doğrulaması).
-- Firebase Cloud Messaging (FCM): Yeni Kritik SOS ve M>4.5 deprem anlarında mobil ve web tarayıcılarına canlı sesli push bildirim gönderimi.
+- Firebase Cloud Messaging (FCM): Yeni Kritik SOS ve M>4.5 deprem anlarında canlı push bildirim.
 
-### 🐘 3. PostGIS & Mekânsal Veritabanı Katmanı
-- PostgreSQL 16 + PostGIS 3 + `pgRouting` entegrasyonu (`pgr_dijkstra` ile çevrimdışı rota hesabı).
+### 🐘 4. PostGIS & Mekânsal Veritabanı Katmanı
+- PostgreSQL 16 + PostGIS 3 + `pgRouting` entegrasyonu (`pgr_dijkstra` çevrimdışı rota hesabı).
 - En yakın SOS kayıtları için `<->` KNN ve `ST_DWithin` sorguları.
 
-### ⚡ 4. Backend Performans & Hız Optimizasyonları
+### ⚡ 5. Backend Performans & Hız Optimizasyonları
 - API önbellekleme (`lru_cache`), async paralel çıkarım ve JSON serialization hızlandırmaları.
 
 ---

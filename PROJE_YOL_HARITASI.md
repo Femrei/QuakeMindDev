@@ -5,31 +5,34 @@
 
 ---
 
-## 🔐 1. Kayıt Olma (Register) & Kimlik Doğrulama Katmanı
+## 💬 1. Çift Modlu (Online / Offline P2P) Ekip Mesajlaşma Sistemi
+
+### 🛰️ Çalışma Prensipleri
+- **Taktik Sohbet Ekranı (`/command/chat`):** Arama-kurtarma ekiplerinin, komutanların ve saha devriyelerinin anlık haberleşme kanalı.
+- **İnternetsiz (Offline Store-and-Forward Mimarisi):**
+  - İnternet veya bağlantı olmadığında mesajlar cihaz hafızasında güvenle saklanır.
+  - Cihaz bir Hotspot noktasına (`10.42.0.1:8000`) veya yakındaki başka bir P2P Mesh düğümüne bağlandığı an biriken mesajlar arka planda **otomatik senkronize (Sync)** edilir.
+- **İnternetli (Online WebSockets / Firebase) Mimarisi:**
+  - Canlı sesli not gönderme, anlık konum paylaşımı ve kanal yönetimi (`#sahagenel`, `#acil-sevk`).
+
+---
+
+## 🔐 2. Kayıt Olma (Register) & Kimlik Doğrulama Katmanı
 
 ### ⚙️ FastAPI Backend Endpoints
-- `POST /api/auth/register`: 
-  - Gelen Veri: `fullName`, `email`, `password`, `role` (`survivor` | `responder`), `city`, `phone`.
-  - İşlem: Şifrenin güvenli hash'lenmesi (`passlib`/`bcrypt`), veritabanına kayıt ve JWT token üretimi.
-- `POST /api/auth/login`:
-  - E-posta/Şifre doğrulama ve JWT erişim token'ı döndürme.
-- `GET /api/auth/me`:
-  - Token ile aktif kullanıcı profil bilgilerini getirme.
-
-### 🖥️ Next.js Frontend Entegrasyonu
-- **`/register` Sayfası:** Rol seçimi (`Afetzede` veya `Arama-Kurtarma Ekibi`), Telefon Numarası, Şehir ve Şifre içeren modern Shadcn UI kayıt formu.
-- **`/login` Sayfası:** Kayıt olma sayfasına bağlantı ve JWT / Firebase Auth entegrasyonu.
+- `POST /api/auth/register`: Kullanıcı Kaydı (Ad Soyad, E-posta, Şifre, Rol [`survivor` | `responder`], Şehir, Telefon).
+- `POST /api/auth/login`: E-posta/Şifre doğrulama ve JWT erişim token'ı döndürme.
+- `GET /api/auth/me`: Token ile aktif profil çekme.
 
 ---
 
-## ⚡ 2. Backend Performans & Hız Optimizasyonları
+## ⚡ 3. Backend Performans & Hız Optimizasyonları
 
-1. **API Önbellekleme (`lru_cache`):** Sık çağrılan fay hatları GeoJSON ve tarihsel deprem verilerinin RAM'den anında sunulması.
-2. **Async Paralel İşlem:** Harita indirme ve yapay zeka model tahmini adımlarının eşzamanlı çalıştırılması.
+1. **API Önbellekleme (`lru_cache`):** Fay hatları GeoJSON ve deprem verilerinin RAM'den milisaniyede sunulması.
+2. **Async Paralel İşlem:** Harita indirme ve yapay zeka çıkarım adımlarının eşzamanlı çalıştırılması.
 
 ---
 
-## 🐘 3. PostGIS & Mekânsal Veritabanı Katmanı (Phase 2)
+## 🐘 4. PostGIS & Mekânsal Veritabanı Katmanı (Phase 2)
 
-- PostgreSQL 16 + PostGIS 3 + `pgRouting` entegrasyonu.
-- `pgr_dijkstra` ile milisaniyelik çevrimdışı rota hesabı ve `<->` KNN en yakın SOS sorguları.
+- PostgreSQL 16 + PostGIS 3 + `pgRouting` entegrasyonu (`pgr_dijkstra` çevrimdışı rota hesabı ve `<->` KNN sorguları).
