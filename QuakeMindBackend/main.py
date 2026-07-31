@@ -14,6 +14,8 @@ from pathlib import Path
 
 import streamlit as st
 
+from apps.sos_management.ui import render_sos_screen
+
 
 BASE_DIR = Path(__file__).resolve().parent
 APPS_DIR = BASE_DIR / "apps"
@@ -1797,7 +1799,13 @@ def main():
         st.title("QuakeMind")
         selected_module = st.radio(
             "Modul Secin",
-            ["Afet Metin Analizi", "Uydu Yol Hasar Analizi", "Deprem Risk Paneli", "Kamera Tespiti"],
+            [
+                "Afet Metin Analizi",
+                "Uydu Yol Hasar Analizi",
+                "Deprem Risk Paneli",
+                "Kamera Tespiti",
+                "SOS Yönetimi",
+            ],
             key="selected_module",
         )
         st.caption("Tum alt projeler tek Streamlit arayuzunde birlestirildi.")
@@ -1810,8 +1818,10 @@ def main():
         render_road_screen()
     elif selected_module == "Deprem Risk Paneli":
         render_risk_screen()
-    else:
+    elif selected_module == "Kamera Tespiti":
         render_camera_screen()
+    else:
+        render_sos_screen()
 
 
 if __name__ == "__main__":
