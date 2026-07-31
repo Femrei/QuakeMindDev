@@ -37,18 +37,19 @@ def _clean_value(value):
 def _category_from_row(row):
     category = _clean_value(row.get("category"))
     if category:
-        priority = int(row.get("priority", 1) or 1)
+        priority_val = row.get("priority")
+        priority = int(priority_val) if priority_val is not None and not pd.isna(priority_val) else 1
         return category, priority
 
     emergency = _clean_value(row.get("emergency"))
     leisure = _clean_value(row.get("leisure"))
     landuse = _clean_value(row.get("landuse"))
 
-    if emergency == "assembly_point":
+    if "assembly_point" in emergency:
         return "OSM resmi toplanma alanı", 0
-    if leisure in {"park", "garden"}:
+    if "park" in leisure or "garden" in leisure:
         return "Aday park/bahçe", 1
-    if landuse in {"recreation_ground", "village_green", "grass"}:
+    if "recreation_ground" in landuse or "village_green" in landuse or "grass" in landuse:
         return "Aday açık alan", 2
     return "Aday açık alan", 2
 

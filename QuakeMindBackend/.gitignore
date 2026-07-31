@@ -21,3 +21,4 @@ catboost_info/
 apps/disaster_nlp/models/2kveri/model.safetensors
 apps/road_damage/models/optimized_mitb4_focal_dice30.pth
 apps/road_damage/models/210926_deneme_18epoch_mitb4_imagenet_focalanddiceloss.pth
+\n# Offline OSM Data (Hosted on HuggingFace)\napps/road_damage/data/osm/*.gpkg\napps/road_damage/data/osm/*.geojson
