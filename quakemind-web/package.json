@@ -9,9 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/leaflet-draw": "^1.0.13",
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.11",
     "leaflet": "^1.9.4",
+    "leaflet-draw": "^1.0.4",
+    "leaflet-side-by-side": "^2.2.0",
     "lucide-react": "^0.454.0",
     "next": "^14.2.15",
     "react": "^18.3.1",

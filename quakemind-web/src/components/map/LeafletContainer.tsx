@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import DrawControl from "./DrawControl";
 
 // Fix Leaflet Default Icon issue in Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -65,6 +66,12 @@ interface LeafletContainerProps {
   markers?: MapMarkerItem[];
   polylines?: MapPolylineItem[];
   className?: string;
+  satelliteTileUrl?: string;
+  satelliteAttribution?: string;
+  onMapClick?: (lat: number, lng: number) => void;
+  enableDraw?: boolean;
+  onBoundsSelected?: (bbox: [number, number, number, number]) => void;
+  onDrawCleared?: () => void;
 }
 
 function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
@@ -75,12 +82,27 @@ function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }
   return null;
 }
 
+function ClickHandler({ onClick }: { onClick?: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click(e) {
+      onClick?.(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+}
+
 export default function LeafletContainer({
   center,
   zoom = 13,
   markers = [],
   polylines = [],
   className = "w-full h-full min-h-[400px]",
+  satelliteTileUrl,
+  satelliteAttribution,
+  onMapClick,
+  enableDraw = false,
+  onBoundsSelected,
+  onDrawCleared,
 }: LeafletContainerProps) {
   return (
     <div className={`relative overflow-hidden rounded-xl border border-slate-800 ${className}`}>
@@ -92,12 +114,22 @@ export default function LeafletContainer({
         style={{ background: "#0b0f17" }}
       >
         <ChangeView center={center} zoom={zoom} />
-        
-        {/* Dark Matter CartoDB Base Layer */}
-        <TileLayer
-          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
+        <ClickHandler onClick={onMapClick} />
+        {enableDraw && <DrawControl onBoundsSelected={onBoundsSelected} onCleared={onDrawCleared} />}
+
+        {satelliteTileUrl ? (
+          <TileLayer
+            key={satelliteTileUrl}
+            attribution={satelliteAttribution ? `&copy; ${satelliteAttribution}` : undefined}
+            url={satelliteTileUrl}
+          />
+        ) : (
+          /* Dark Matter CartoDB Base Layer */
+          <TileLayer
+            attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          />
+        )}
 
         {/* Polylines (Roads, Routes, Fault Lines) */}
         {polylines.map((poly) => (

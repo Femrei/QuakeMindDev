@@ -29,6 +29,12 @@ interface InteractiveMapProps {
   polylines?: MapPolylineItem[];
   className?: string;
   heatData?: [number, number, number][];
+  satelliteTileUrl?: string;
+  satelliteAttribution?: string;
+  onMapClick?: (lat: number, lng: number) => void;
+  enableDraw?: boolean;
+  onBoundsSelected?: (bbox: [number, number, number, number]) => void;
+  onDrawCleared?: () => void;
 }
 
 const DynamicMap = dynamic(() => import("./LeafletContainer"), {

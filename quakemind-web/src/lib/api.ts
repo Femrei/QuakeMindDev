@@ -38,6 +38,7 @@ export interface RiskResponse {
 
 export interface RoadDamageResponse {
   city: string;
+  analysisId: string;
   damageRate: number;
   openRoads: number;
   blockedRoads: number;
@@ -55,6 +56,13 @@ export interface RoadDamageResponse {
   blockedRoadSegments: number[][][];
   satelliteSource: string;
   satelliteTileUrl: string;
+  satelliteAttribution?: string;
+  imageOriginalB64?: string;
+  imageDamageOverlayB64?: string;
+  imageDamageMaskB64?: string;
+  imageRoadMaskB64?: string;
+  imageIntersectionB64?: string;
+  imageSegmentationOverlayB64?: string;
 }
 
 export interface SOSAlert {
@@ -107,6 +115,11 @@ export async function analyzeRoadDamage(params: {
   source?: string;
   damageBooster?: number;
   threshold?: number;
+  waybackId?: string;
+  oamTileUrl?: string;
+  useImagenetNorm?: boolean;
+  postProcessLevel?: number;
+  bbox?: [number, number, number, number]; // [west, south, east, north]
 }): Promise<RoadDamageResponse> {
   const res = await fetch(`${API_BASE_URL}/api/road_damage/analyze`, {
     method: "POST",
@@ -118,10 +131,137 @@ export async function analyzeRoadDamage(params: {
       source: params.source || "google",
       damageBooster: params.damageBooster || 3.5,
       threshold: params.threshold || 0.4,
+      waybackId: params.waybackId,
+      oamTileUrl: params.oamTileUrl,
+      useImagenetNorm: params.useImagenetNorm ?? true,
+      postProcessLevel: params.postProcessLevel ?? 2,
+      bboxWest: params.bbox?.[0],
+      bboxSouth: params.bbox?.[1],
+      bboxEast: params.bbox?.[2],
+      bboxNorth: params.bbox?.[3],
     }),
   });
-  if (!res.ok) throw new Error("Uydu yol hasar analizi başarısız.");
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "Uydu yol hasar analizi başarısız.");
+  }
   return res.json();
+}
+
+export interface RouteResult {
+  routeCoords: [number, number][];
+  distanceMeters: number;
+}
+
+export async function getRouteBetweenPoints(
+  analysisId: string,
+  start: { lat: number; lng: number },
+  end: { lat: number; lng: number }
+): Promise<RouteResult> {
+  const res = await fetch(`${API_BASE_URL}/api/road_damage/route`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      analysisId,
+      startLat: start.lat,
+      startLon: start.lng,
+      endLat: end.lat,
+      endLon: end.lng,
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "Rota hesaplanamadı.");
+  }
+  return res.json();
+}
+
+export interface AssemblyRecord {
+  toplanma_alani: string;
+  lat: number;
+  lon: number;
+  display_lat: number;
+  display_lon: number;
+  category: string;
+  source: string;
+  note: string;
+  priority: number;
+}
+
+export interface AssemblyResponse {
+  records: AssemblyRecord[];
+  activeDataSource: string;
+  osmError: string | null;
+  nearest: AssemblyRecord | null;
+  nearestAirM: number | null;
+  routeCoords: [number, number][] | null;
+  routeLengthM: number | null;
+  routeError: string | null;
+}
+
+export async function getAssemblyAreas(params: {
+  latitude: number;
+  longitude: number;
+  radiusKm?: number;
+  includeCandidates?: boolean;
+  dataSource?: "auto" | "local" | "online";
+  allowOnlineFallback?: boolean;
+}): Promise<AssemblyResponse> {
+  const query = new URLSearchParams({
+    latitude: String(params.latitude),
+    longitude: String(params.longitude),
+    radiusKm: String(params.radiusKm ?? 8),
+    includeCandidates: String(params.includeCandidates ?? true),
+    dataSource: params.dataSource || "auto",
+    allowOnlineFallback: String(params.allowOnlineFallback ?? true),
+  });
+  const res = await fetch(`${API_BASE_URL}/api/road_damage/assembly?${query.toString()}`);
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "Toplanma alanları verisi alınamadı.");
+  }
+  return res.json();
+}
+
+export interface WaybackVersion {
+  date: string;
+  id: string;
+  label: string;
+}
+
+export async function getWaybackVersions(): Promise<WaybackVersion[]> {
+  const res = await fetch(`${API_BASE_URL}/api/road_damage/wayback_versions`);
+  if (!res.ok) throw new Error("Esri Wayback sürümleri alınamadı.");
+  const data = await res.json();
+  return data.versions || [];
+}
+
+export interface OamImage {
+  id: string;
+  title: string;
+  provider: string;
+  date: string;
+  tms_url: string;
+  bbox?: number[];
+}
+
+export async function searchOamImages(params: {
+  latitude: number;
+  longitude: number;
+  dateStart?: string;
+  dateEnd?: string;
+}): Promise<OamImage[]> {
+  const query = new URLSearchParams({
+    latitude: String(params.latitude),
+    longitude: String(params.longitude),
+  });
+  if (params.dateStart) query.set("dateStart", params.dateStart);
+  if (params.dateEnd) query.set("dateEnd", params.dateEnd);
+
+  const res = await fetch(`${API_BASE_URL}/api/road_damage/oam_search?${query.toString()}`);
+  if (!res.ok) throw new Error("OpenAerialMap görüntüleri aranamadı.");
+  const data = await res.json();
+  return data.images || [];
 }
 
 export async function sendSOSAlert(payload: {

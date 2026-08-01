@@ -97,7 +97,19 @@ def _load_road_runtime():
             search_oam_images,
         )
         from utils.inference import load_simple_model, run_inference
-        from utils.network import analyze_road_network_graph
+        from utils.network import analyze_road_network_graph, calculate_route
+        from utils.assembly import (
+            bbox_from_center,
+            fetch_osm_safety_areas,
+            find_nearest_assembly,
+            shortest_walk_route,
+        )
+        from utils.local_osm import (
+            has_local_roads_dataset,
+            has_local_safety_dataset,
+            load_local_safety_areas,
+            shortest_route_from_local_roads,
+        )
 
         model_path = str(ROAD_ROOT / "models" / "optimized_mitb4_focal_dice30.pth")
         model, device = load_simple_model(model_path)
@@ -111,6 +123,15 @@ def _load_road_runtime():
             "search_oam_images": search_oam_images,
             "run_inference": run_inference,
             "analyze_road_network_graph": analyze_road_network_graph,
+            "calculate_route": calculate_route,
+            "bbox_from_center": bbox_from_center,
+            "fetch_osm_safety_areas": fetch_osm_safety_areas,
+            "find_nearest_assembly": find_nearest_assembly,
+            "shortest_walk_route": shortest_walk_route,
+            "has_local_roads_dataset": has_local_roads_dataset,
+            "has_local_safety_dataset": has_local_safety_dataset,
+            "load_local_safety_areas": load_local_safety_areas,
+            "shortest_route_from_local_roads": shortest_route_from_local_roads,
             "model": model,
             "device": device,
         }
@@ -145,6 +166,24 @@ except Exception:
 # the server restarts, matching the PoC requirement of session-only storage.
 sos_alerts: list[dict] = []
 sos_lock = Lock()
+
+# In-memory road-damage analysis session store: keeps the routable "safe roads"
+# graph around so a later /route call can compute a real path without re-running
+# the whole satellite fetch + inference pipeline. Bounded FIFO eviction since
+# networkx graphs are memory-heavy and this is PoC/process-only state.
+road_damage_sessions: "dict[str, dict]" = {}
+road_damage_sessions_order: list = []
+road_damage_sessions_lock = Lock()
+ROAD_DAMAGE_SESSION_LIMIT = 20
+
+
+def _store_road_damage_session(analysis_id, data):
+    with road_damage_sessions_lock:
+        road_damage_sessions[analysis_id] = data
+        road_damage_sessions_order.append(analysis_id)
+        while len(road_damage_sessions_order) > ROAD_DAMAGE_SESSION_LIMIT:
+            oldest = road_damage_sessions_order.pop(0)
+            road_damage_sessions.pop(oldest, None)
 
 app = FastAPI(title="QuakeMind API", version="1.0.0")
 
@@ -187,6 +226,16 @@ class RoadDamageRequest(BaseModel):
     bboxEast: Optional[float] = None
     bboxNorth: Optional[float] = None
     oamPreferredTitle: Optional[str] = None
+    waybackId: Optional[str] = None
+    oamTileUrl: Optional[str] = None
+
+
+class RoadDamageRouteRequest(BaseModel):
+    analysisId: str
+    startLat: float
+    startLon: float
+    endLat: float
+    endLon: float
 
 
 def _compact_segment_coords(line, max_points=28):
@@ -213,6 +262,77 @@ def _serialize_segments(edges, max_segments=500):
         if compact:
             serialized.append(compact)
     return serialized
+
+
+def _image_array_to_b64(image_arr):
+    """Encode an RGB numpy array (or single-channel mask) as a base64 PNG data URI."""
+    import io
+    import base64
+    from PIL import Image
+    import numpy as np
+
+    arr = image_arr
+    if arr.dtype != np.uint8:
+        arr = arr.astype(np.uint8)
+    img = Image.fromarray(arr)
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
+
+
+def _build_damage_overlay(original_img, road_mask, pred_mask, intersection):
+    """Reproduce the Streamlit RDA color overlay: cyan=open road, yellow=debris, red=debris-on-road."""
+    import cv2
+    import numpy as np
+
+    vis_img = original_img.copy()
+
+    yellow_overlay = np.zeros_like(vis_img)
+    yellow_overlay[:] = [255, 255, 0]
+    red_overlay = np.zeros_like(vis_img)
+    red_overlay[:] = [255, 0, 0]
+    cyan_overlay = np.zeros_like(vis_img)
+    cyan_overlay[:] = [0, 255, 255]
+
+    cyan_idx = (road_mask == 1) & (intersection == 0)
+    blended_cyan = cv2.addWeighted(vis_img, 0.3, cyan_overlay, 0.7, 0)
+    vis_img[cyan_idx] = blended_cyan[cyan_idx]
+
+    mask_idx = (pred_mask == 1) & (intersection == 0)
+    blended_yellow = cv2.addWeighted(vis_img, 0.5, yellow_overlay, 0.5, 0)
+    vis_img[mask_idx] = blended_yellow[mask_idx]
+
+    kernel = np.ones((9, 9), np.uint8)
+    thick_intersection = cv2.dilate(intersection, kernel, iterations=2)
+    intersection_idx = thick_intersection == 1
+    blended_red = cv2.addWeighted(vis_img, 0.1, red_overlay, 0.9, 0)
+    vis_img[intersection_idx] = blended_red[intersection_idx]
+
+    return vis_img
+
+
+def _haversine_m(lat1, lon1, lat2, lon2):
+    import math
+    radius_m = 6371000
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    d_phi = math.radians(lat2 - lat1)
+    d_lambda = math.radians(lon2 - lon1)
+    a = math.sin(d_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2) ** 2
+    return radius_m * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _build_segmentation_overlay(original_img, pred_mask):
+    import cv2
+    import numpy as np
+
+    seg_overlay = original_img.copy()
+    damage_color = np.zeros_like(seg_overlay)
+    damage_color[:] = [255, 50, 50]
+    damage_idx = pred_mask == 1
+    blended = cv2.addWeighted(seg_overlay, 0.4, damage_color, 0.6, 0)
+    seg_overlay[damage_idx] = blended[damage_idx]
+    return seg_overlay
 
 @app.get("/")
 def health_check():
@@ -260,6 +380,50 @@ def predict_risk(req: RiskRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/road_damage/wayback_versions")
+def road_damage_wayback_versions():
+    try:
+        runtime = _get_road_runtime()
+    except Exception:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Road Damage runtime yuklenemedi: {road_runtime_error or 'bilinmeyen hata'}",
+        )
+    get_wayback_versions = runtime["get_wayback_versions"]
+    versions = get_wayback_versions()
+    versions.sort(key=lambda v: v.get("date", ""), reverse=True)
+    return {"versions": versions}
+
+
+@app.get("/api/road_damage/oam_search")
+def road_damage_oam_search(
+    latitude: float,
+    longitude: float,
+    dateStart: Optional[str] = None,
+    dateEnd: Optional[str] = None,
+    bboxWest: Optional[float] = None,
+    bboxSouth: Optional[float] = None,
+    bboxEast: Optional[float] = None,
+    bboxNorth: Optional[float] = None,
+):
+    try:
+        runtime = _get_road_runtime()
+    except Exception:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Road Damage runtime yuklenemedi: {road_runtime_error or 'bilinmeyen hata'}",
+        )
+    search_oam_images = runtime["search_oam_images"]
+
+    if bboxWest is not None and bboxSouth is not None and bboxEast is not None and bboxNorth is not None:
+        bbox = (bboxWest, bboxSouth, bboxEast, bboxNorth)
+    else:
+        bbox = (longitude - 0.03, latitude - 0.03, longitude + 0.03, latitude + 0.03)
+
+    images = search_oam_images(bbox, date_start=dateStart, date_end=dateEnd, limit=25)
+    return {"images": images}
+
+
 @app.post("/api/road_damage/analyze")
 def analyze_road_damage(req: RoadDamageRequest):
     try:
@@ -300,105 +464,121 @@ def analyze_road_damage(req: RoadDamageRequest):
         source_label = "Google Maps (Latest / High Res)"
 
         if "esri" in source_text or "wayback" in source_text:
-            versions = get_wayback_versions()
-            if versions:
+            if req.waybackId:
                 prov_code = "esri"
-                wayback_id = versions[0].get("id")
+                wayback_id = req.waybackId
                 source_note = f"Esri Wayback secildi (id={wayback_id})."
                 satellite_tile_url = f"https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{wayback_id}/{{z}}/{{y}}/{{x}}"
                 satellite_attribution = "Esri"
                 source_label = "Esri Wayback (Historical)"
             else:
-                source_note = "Esri Wayback surumu bulunamadi, Google'a geri donuldu."
-        elif "oam" in source_text or "openaerial" in source_text:
-            oam_bbox = bbox if bbox is not None else (
-                req.longitude - 0.03,
-                req.latitude - 0.03,
-                req.longitude + 0.03,
-                req.latitude + 0.03,
-            )
-            oam_images = search_oam_images(oam_bbox, limit=25)
-            if oam_images:
-                preferred_title = (req.oamPreferredTitle or "").strip().lower()
-                selected_oam = None
-
-                def _bbox_center(item):
-                    raw_bbox = item.get("bbox")
-                    if not isinstance(raw_bbox, (list, tuple)) or len(raw_bbox) < 4:
-                        return None
-                    try:
-                        west = float(raw_bbox[0])
-                        south = float(raw_bbox[1])
-                        east = float(raw_bbox[2])
-                        north = float(raw_bbox[3])
-                        return ((south + north) / 2.0, (west + east) / 2.0)
-                    except Exception:
-                        return None
-
-                def _pick_closest(items):
-                    if not items:
-                        return None
-                    with_center = []
-                    for item in items:
-                        center = _bbox_center(item)
-                        if center is None:
-                            continue
-                        dlat = center[0] - req.latitude
-                        dlon = center[1] - req.longitude
-                        with_center.append((dlat * dlat + dlon * dlon, item))
-                    if with_center:
-                        with_center.sort(key=lambda x: x[0])
-                        return with_center[0][1]
-                    return items[0]
-
-                if preferred_title:
-                    preferred_matches = [
-                        item
-                        for item in oam_images
-                        if preferred_title in (item.get("title", "").lower())
-                    ]
-                    selected_oam = _pick_closest(preferred_matches)
-
-                # Known stable Antakya sample used in Streamlit UI.
-                if selected_oam is None:
-                    known_matches = [
-                        item
-                        for item in oam_images
-                        if "2023-02-09" in item.get("title", "")
-                        and "help.ngo" in item.get("title", "").lower()
-                    ]
-                    selected_oam = _pick_closest(known_matches)
-
-                if selected_oam is None:
-                    selected_oam = _pick_closest(oam_images)
-
-                tms_url = (selected_oam.get("tms_url") or "").strip()
-                oam_result_bbox = selected_oam.get("bbox")
-                if (
-                    isinstance(oam_result_bbox, (list, tuple))
-                    and len(oam_result_bbox) >= 4
-                ):
-                    try:
-                        bbox = (
-                            float(oam_result_bbox[0]),
-                            float(oam_result_bbox[1]),
-                            float(oam_result_bbox[2]),
-                            float(oam_result_bbox[3]),
-                        )
-                    except Exception:
-                        pass
-
-                if "{x}" in tms_url and "{y}" in tms_url:
-                    prov_code = "custom"
-                    custom_url = tms_url
-                    source_note = f"OpenAerialMap secildi: {selected_oam.get('title', 'isimsiz goruntu')}"
-                    satellite_tile_url = tms_url
-                    satellite_attribution = "OpenAerialMap"
-                    source_label = "OpenAerialMap (Event Specific)"
+                versions = get_wayback_versions()
+                if versions:
+                    prov_code = "esri"
+                    wayback_id = versions[0].get("id")
+                    source_note = f"Esri Wayback secildi (id={wayback_id})."
+                    satellite_tile_url = f"https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{wayback_id}/{{z}}/{{y}}/{{x}}"
+                    satellite_attribution = "Esri"
+                    source_label = "Esri Wayback (Historical)"
                 else:
-                    source_note = "OpenAerialMap tms URL formati uyumsuz, Google'a geri donuldu."
+                    source_note = "Esri Wayback surumu bulunamadi, Google'a geri donuldu."
+        elif "oam" in source_text or "openaerial" in source_text:
+            if req.oamTileUrl:
+                prov_code = "custom"
+                custom_url = req.oamTileUrl
+                source_note = "OpenAerialMap (secilen goruntu) kullanildi."
+                satellite_tile_url = req.oamTileUrl
+                satellite_attribution = "OpenAerialMap"
+                source_label = "OpenAerialMap (Event Specific)"
             else:
-                source_note = "OpenAerialMap kaydi bulunamadi, Google'a geri donuldu."
+                oam_bbox = bbox if bbox is not None else (
+                    req.longitude - 0.03,
+                    req.latitude - 0.03,
+                    req.longitude + 0.03,
+                    req.latitude + 0.03,
+                )
+                oam_images = search_oam_images(oam_bbox, limit=25)
+                if oam_images:
+                    preferred_title = (req.oamPreferredTitle or "").strip().lower()
+                    selected_oam = None
+
+                    def _bbox_center(item):
+                        raw_bbox = item.get("bbox")
+                        if not isinstance(raw_bbox, (list, tuple)) or len(raw_bbox) < 4:
+                            return None
+                        try:
+                            west = float(raw_bbox[0])
+                            south = float(raw_bbox[1])
+                            east = float(raw_bbox[2])
+                            north = float(raw_bbox[3])
+                            return ((south + north) / 2.0, (west + east) / 2.0)
+                        except Exception:
+                            return None
+
+                    def _pick_closest(items):
+                        if not items:
+                            return None
+                        with_center = []
+                        for item in items:
+                            center = _bbox_center(item)
+                            if center is None:
+                                continue
+                            dlat = center[0] - req.latitude
+                            dlon = center[1] - req.longitude
+                            with_center.append((dlat * dlat + dlon * dlon, item))
+                        if with_center:
+                            with_center.sort(key=lambda x: x[0])
+                            return with_center[0][1]
+                        return items[0]
+
+                    if preferred_title:
+                        preferred_matches = [
+                            item
+                            for item in oam_images
+                            if preferred_title in (item.get("title", "").lower())
+                        ]
+                        selected_oam = _pick_closest(preferred_matches)
+
+                    # Known stable Antakya sample used in Streamlit UI.
+                    if selected_oam is None:
+                        known_matches = [
+                            item
+                            for item in oam_images
+                            if "2023-02-09" in item.get("title", "")
+                            and "help.ngo" in item.get("title", "").lower()
+                        ]
+                        selected_oam = _pick_closest(known_matches)
+
+                    if selected_oam is None:
+                        selected_oam = _pick_closest(oam_images)
+
+                    tms_url = (selected_oam.get("tms_url") or "").strip()
+                    oam_result_bbox = selected_oam.get("bbox")
+                    if (
+                        isinstance(oam_result_bbox, (list, tuple))
+                        and len(oam_result_bbox) >= 4
+                    ):
+                        try:
+                            bbox = (
+                                float(oam_result_bbox[0]),
+                                float(oam_result_bbox[1]),
+                                float(oam_result_bbox[2]),
+                                float(oam_result_bbox[3]),
+                            )
+                        except Exception:
+                            pass
+
+                    if "{x}" in tms_url and "{y}" in tms_url:
+                        prov_code = "custom"
+                        custom_url = tms_url
+                        source_note = f"OpenAerialMap secildi: {selected_oam.get('title', 'isimsiz goruntu')}"
+                        satellite_tile_url = tms_url
+                        satellite_attribution = "OpenAerialMap"
+                        source_label = "OpenAerialMap (Event Specific)"
+                    else:
+                        source_note = "OpenAerialMap tms URL formati uyumsuz, Google'a geri donuldu."
+                else:
+                    source_note = "OpenAerialMap kaydi bulunamadi, Google'a geri donuldu."
 
         img, bounds = fetch_satellite_area(
             lat=req.latitude,
@@ -453,14 +633,16 @@ def analyze_road_damage(req: RoadDamageRequest):
         blocked_count = 0
         safe_segments = []
         blocked_segments = []
+        analysis_id = str(uuid.uuid4())
         try:
-            G, safe_edges, blocked_edges = analyze_road_network_graph(bounds, w, h, intersection)
+            G, safe_G, safe_edges, blocked_edges = analyze_road_network_graph(bounds, w, h, intersection)
             if G is not None:
                 safe_count = len(safe_edges) if safe_edges else 0
                 blocked_count = len(blocked_edges) if blocked_edges else 0
                 safe_segments = _serialize_segments(safe_edges)
                 blocked_segments = _serialize_segments(blocked_edges)
                 log_lines.append(f"Lojistik: {safe_count} acik, {blocked_count} kapali sokak")
+                _store_road_damage_session(analysis_id, {"safe_G": safe_G, "bounds": bounds})
         except Exception:
             log_lines.append("Lojistik analiz opsiyonel - OSMnx mevcut degil veya hata olustu")
         logistics_ms = (time.perf_counter() - t3) * 1000.0
@@ -479,8 +661,23 @@ def analyze_road_damage(req: RoadDamageRequest):
         else:
             recommended = "Bolge genel olarak erisilebilir durumda."
 
+        try:
+            damage_overlay = _build_damage_overlay(img_np, road_mask_binary, pred_mask_binary, intersection)
+            segmentation_overlay = _build_segmentation_overlay(img_np, pred_mask_binary)
+            diagnostic_images = {
+                "imageOriginalB64": _image_array_to_b64(img_np),
+                "imageDamageOverlayB64": _image_array_to_b64(damage_overlay),
+                "imageDamageMaskB64": _image_array_to_b64(pred_mask_binary * 255),
+                "imageRoadMaskB64": _image_array_to_b64(road_mask_binary * 255),
+                "imageIntersectionB64": _image_array_to_b64(intersection * 255),
+                "imageSegmentationOverlayB64": _image_array_to_b64(segmentation_overlay),
+            }
+        except Exception:
+            diagnostic_images = {}
+
         return {
             "city": req.city,
+            "analysisId": analysis_id,
             "damageRate": round(damage_rate, 4),
             "openRoads": safe_count,
             "blockedRoads": blocked_count,
@@ -503,6 +700,7 @@ def analyze_road_damage(req: RoadDamageRequest):
             "satelliteSource": source_label,
             "satelliteTileUrl": satellite_tile_url,
             "satelliteAttribution": satellite_attribution,
+            **diagnostic_images,
             "timingsMs": {
                 "satellite": round(satellite_fetch_ms, 1),
                 "roads": round(overpass_ms, 1),
@@ -516,6 +714,129 @@ def analyze_road_damage(req: RoadDamageRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/road_damage/route")
+def road_damage_route(req: RoadDamageRouteRequest):
+    with road_damage_sessions_lock:
+        session = road_damage_sessions.get(req.analysisId)
+    if session is None:
+        raise HTTPException(status_code=422, detail="Analiz oturumu bulunamadi veya suresi doldu. Once analizi tekrar calistirin.")
+
+    try:
+        runtime = _get_road_runtime()
+    except Exception:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Road Damage runtime yuklenemedi: {road_runtime_error or 'bilinmeyen hata'}",
+        )
+
+    calculate_route = runtime["calculate_route"]
+    safe_G = session["safe_G"]
+
+    try:
+        dijkstra_coords, _astar_coords = calculate_route(safe_G, req.startLat, req.startLon, req.endLat, req.endLon)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Rota hesaplanamadi: {e}")
+
+    if not dijkstra_coords:
+        raise HTTPException(status_code=422, detail="Bu iki nokta arasinda guvenli bir baglanti bulunamadi. Yol tamamen kapali olabilir.")
+
+    distance_m = 0.0
+    for (lat1, lon1), (lat2, lon2) in zip(dijkstra_coords[:-1], dijkstra_coords[1:]):
+        distance_m += _haversine_m(lat1, lon1, lat2, lon2)
+
+    return {
+        "routeCoords": [[float(lat), float(lon)] for lat, lon in dijkstra_coords],
+        "distanceMeters": round(distance_m, 1),
+    }
+
+
+@app.get("/api/road_damage/assembly")
+def road_damage_assembly(
+    latitude: float,
+    longitude: float,
+    radiusKm: float = 8.0,
+    includeCandidates: bool = True,
+    dataSource: str = "auto",
+    allowOnlineFallback: bool = True,
+):
+    try:
+        runtime = _get_road_runtime()
+    except Exception:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Road Damage runtime yuklenemedi: {road_runtime_error or 'bilinmeyen hata'}",
+        )
+
+    bbox_from_center = runtime["bbox_from_center"]
+    fetch_osm_safety_areas = runtime["fetch_osm_safety_areas"]
+    find_nearest_assembly = runtime["find_nearest_assembly"]
+    shortest_walk_route = runtime["shortest_walk_route"]
+    has_local_roads_dataset = runtime["has_local_roads_dataset"]
+    has_local_safety_dataset = runtime["has_local_safety_dataset"]
+    load_local_safety_areas = runtime["load_local_safety_areas"]
+    shortest_route_from_local_roads = runtime["shortest_route_from_local_roads"]
+
+    bbox = bbox_from_center(latitude, longitude, radiusKm)
+
+    local_ready = has_local_safety_dataset()
+    should_use_local = dataSource in {"auto", "local"} and local_ready
+    should_use_online = dataSource == "online" or (dataSource == "auto" and not should_use_local)
+
+    osm_error = None
+    if should_use_local:
+        records = load_local_safety_areas(bbox, includeCandidates)
+        active_source = "Local dataset"
+    elif should_use_online:
+        records, osm_error = fetch_osm_safety_areas(bbox, includeCandidates)
+        active_source = "Online OSM"
+    else:
+        records = []
+        active_source = "Local dataset bulunamadi"
+        osm_error = "Local guvenli bolge dataset bulunamadi."
+
+    if osm_error:
+        records = []
+
+    official_records = [item for item in records if item.get("priority") == 0]
+    route_pool = official_records or records
+
+    nearest = None
+    nearest_air_m = None
+    route_coords = None
+    route_length_m = None
+    route_error = osm_error
+
+    if route_pool:
+        nearest, nearest_air_m = find_nearest_assembly(latitude, longitude, route_pool)
+        if nearest:
+            dest_lat = nearest.get("display_lat", nearest["lat"])
+            dest_lon = nearest.get("display_lon", nearest["lon"])
+            if nearest_air_m <= 30000:
+                if has_local_roads_dataset():
+                    route_coords, route_length_m, route_error = shortest_route_from_local_roads(
+                        latitude, longitude, dest_lat, dest_lon
+                    )
+                if route_coords is None and allowOnlineFallback:
+                    route_coords, route_length_m, route_error = shortest_walk_route(
+                        latitude, longitude, dest_lat, dest_lon
+                    )
+                elif route_coords is None and route_error is None:
+                    route_error = "Local rota bulunamadi ve online fallback kapali."
+            else:
+                route_error = "En yakin alan 30 km'den uzak; rota hesaplanmadi."
+
+    return {
+        "records": records,
+        "activeDataSource": active_source,
+        "osmError": osm_error,
+        "nearest": nearest,
+        "nearestAirM": round(nearest_air_m, 1) if nearest_air_m is not None else None,
+        "routeCoords": [[float(lat), float(lon)] for lat, lon in route_coords] if route_coords else None,
+        "routeLengthM": round(route_length_m, 1) if route_length_m else None,
+        "routeError": route_error,
+    }
 
 
 @app.post("/api/sos/alert")
