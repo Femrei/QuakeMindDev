@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Shield, Navigation, AlertTriangle, CheckCircle2, Layers, Compass } from "lucide-react";
+import "leaflet/dist/leaflet.css";
 
 interface SafeEvacuationMapProps {
   role?: "survivor" | "command";
@@ -10,26 +11,21 @@ interface SafeEvacuationMapProps {
   onShelterSelect?: (shelterName: string) => void;
 }
 
-// Sample GIS Data for Evacuation & Road Status (Hatay/Antakya Region)
 const OPEN_ROADS: [number, number][][] = [
-  // Atatürk Cad. Open Corridor
   [[36.2025, 36.1600], [36.2050, 36.1640], [36.2080, 36.1680], [36.2120, 36.1730]],
-  // Çevre Yolu Safe Route
   [[36.1980, 36.1550], [36.2000, 36.1700], [36.2150, 36.1800]],
 ];
 
 const BLOCKED_ROADS: [number, number][][] = [
-  // Cebrail Mah. Blocked / Collapsed Road
   [[36.2050, 36.1640], [36.2040, 36.1670], [36.2020, 36.1690]],
-  // 600 Evler Damage Zone
   [[36.2100, 36.1700], [36.2090, 36.1740]],
 ];
 
 const SAFE_ROUTE: [number, number][] = [
-  [36.2025, 36.1600], // Start (User GPS / Base)
+  [36.2025, 36.1600],
   [36.2050, 36.1640],
-  [36.2080, 36.1680], // Bypasses Cebrail blockage via Atatürk Cd.
-  [36.2120, 36.1730], // Arrives at Safe Shelter
+  [36.2080, 36.1680],
+  [36.2120, 36.1730],
 ];
 
 const SHELTERS = [
@@ -38,15 +34,13 @@ const SHELTERS = [
   { id: 3, name: "Primemall Açık Park Sığınağı", coords: [36.1980, 36.1550] as [number, number], capacity: "400 / 1000 Kişi", status: "Güvenli - Jeneratör Aktif", distance: "1.2 km" },
 ];
 
-function MapContent({ role, onShelterSelect }: SafeEvacuationMapProps) {
-  const { MapContainer, TileLayer, Polyline, Marker, Popup, Tooltip, useMap } = require("react-leaflet");
+function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
+  const { MapContainer, TileLayer, Polyline, Marker, Popup, Tooltip } = require("react-leaflet");
   const L = require("leaflet");
-  require("leaflet/dist/leaflet.css");
 
   const [selectedShelter, setSelectedShelter] = useState(SHELTERS[0]);
   const [showBlocked, setShowBlocked] = useState(true);
 
-  // Custom Icon Builders
   const greenShieldIcon = L.divIcon({
     className: "custom-shelter-icon",
     html: `<div style="background:#10b981; border:2px solid #ffffff; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow: 0 0 15px rgba(16,185,129,0.8);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>`,
@@ -70,7 +64,6 @@ function MapContent({ role, onShelterSelect }: SafeEvacuationMapProps) {
 
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-800">
-      {/* MAP OVERLAY LEGEND & CONTROLS */}
       <div className="absolute top-4 right-4 z-[1000] glass-panel p-3 rounded-2xl border border-slate-700/60 bg-slate-950/80 backdrop-blur-md text-xs space-y-2 max-w-xs">
         <div className="flex items-center justify-between font-bold text-slate-200 border-b border-slate-800 pb-1.5">
           <span className="flex items-center gap-1.5"><Layers className="w-4 h-4 text-emerald-400" /> HARİTA KATMANLARI</span>
@@ -98,7 +91,6 @@ function MapContent({ role, onShelterSelect }: SafeEvacuationMapProps) {
         </div>
       </div>
 
-      {/* ROLE OVERLAY BANNER */}
       <div className="absolute bottom-4 left-4 z-[1000] glass-panel p-3.5 rounded-2xl border border-slate-700/60 bg-slate-950/90 backdrop-blur-md flex items-center gap-3">
         <div className={`p-2.5 rounded-xl ${role === 'survivor' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-cyan-500/20 text-cyan-400'}`}>
           {role === 'survivor' ? <Navigation className="w-5 h-5 animate-pulse" /> : <Compass className="w-5 h-5" />}
@@ -114,19 +106,16 @@ function MapContent({ role, onShelterSelect }: SafeEvacuationMapProps) {
         </div>
       </div>
 
-      {/* LEAFLET CONTAINER */}
       <MapContainer center={[36.2050, 36.1650]} zoom={14} className="w-full h-full">
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; QuakeMind GIS'
+          attribution='&copy; CARTO &copy; QuakeMind GIS'
         />
 
-        {/* OPEN ROADS (GREEN) */}
         {OPEN_ROADS.map((road, idx) => (
           <Polyline key={`open-${idx}`} positions={road} pathOptions={{ color: "#10b981", weight: 5, opacity: 0.8 }} />
         ))}
 
-        {/* BLOCKED ROADS (RED DASHED) */}
         {showBlocked && BLOCKED_ROADS.map((road, idx) => (
           <React.Fragment key={`blocked-${idx}`}>
             <Polyline positions={road} pathOptions={{ color: "#ef4444", weight: 6, dashArray: "8, 8", opacity: 0.9 }} />
@@ -141,20 +130,14 @@ function MapContent({ role, onShelterSelect }: SafeEvacuationMapProps) {
           </React.Fragment>
         ))}
 
-        {/* SAFE ANIMATED ROUTE (BLUE) */}
-        <Polyline 
-          positions={SAFE_ROUTE} 
-          pathOptions={{ color: "#06b6d4", weight: 6, opacity: 0.95 }} 
-        />
+        <Polyline positions={SAFE_ROUTE} pathOptions={{ color: "#06b6d4", weight: 6, opacity: 0.95 }} />
 
-        {/* USER / BASE GPS START */}
         <Marker position={SAFE_ROUTE[0]} icon={userGpsIcon}>
           <Tooltip permanent direction="top" offset={[0, -10]}>
             <span className="font-bold text-[10px] text-blue-600">KONUMUNUZ (BAŞLANGIÇ)</span>
           </Tooltip>
         </Marker>
 
-        {/* SAFE SHELTER MARKERS */}
         {SHELTERS.map((s) => (
           <Marker 
             key={s.id} 
@@ -191,20 +174,15 @@ function MapContent({ role, onShelterSelect }: SafeEvacuationMapProps) {
   );
 }
 
+const DynamicSafeEvacuationMap = dynamic(() => Promise.resolve(InnerEvacuationMap), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full min-h-[350px] bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-center text-slate-400 font-mono text-xs">
+      Afet Güvenlik & Rota Haritası Yükleniyor...
+    </div>
+  ),
+});
+
 export default function SafeEvacuationMap(props: SafeEvacuationMapProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div className="w-full h-full min-h-[350px] bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-center text-slate-400 font-mono text-xs">
-        Afet Güvenlik & Rota Haritası Yükleniyor...
-      </div>
-    );
-  }
-
-  return <MapContent {...props} />;
+  return <DynamicSafeEvacuationMap {...props} />;
 }
