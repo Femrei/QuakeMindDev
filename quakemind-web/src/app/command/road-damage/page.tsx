@@ -283,9 +283,10 @@ function DamageAnalysisTab() {
       polylines.push({
         id: "computed-route",
         coords: routeCoords,
-        color: "#00FFFF",
-        weight: 7,
+        color: "#ff2d55",
+        weight: 6,
         opacity: 1.0,
+        casing: true,
       });
     }
   }
@@ -619,7 +620,7 @@ function DamageAnalysisTab() {
                 <button
                   onClick={handleCalculateRoute}
                   disabled={routeLoading}
-                  className="w-full py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center justify-center gap-2"
                 >
                   {routeLoading ? (
                     <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -631,7 +632,7 @@ function DamageAnalysisTab() {
               )}
               {routeError && <p className="text-[11px] text-red-300">{routeError}</p>}
               {routeCoords && routeDistanceM != null && (
-                <p className="text-[11px] text-cyan-300">Rota mesafesi: {(routeDistanceM / 1000).toFixed(2)} km</p>
+                <p className="text-[11px] text-rose-300">Rota mesafesi: {(routeDistanceM / 1000).toFixed(2)} km</p>
               )}
             </div>
           </div>
@@ -652,8 +653,8 @@ function DamageAnalysisTab() {
               <span className="flex items-center gap-1 text-red-400">
                 <span className="w-3 h-1 bg-red-500 rounded" /> Hasarlı Yollar
               </span>
-              <span className="flex items-center gap-1 text-cyan-400">
-                <span className="w-3 h-1 bg-cyan-400 rounded" /> Hesaplanan Rota
+              <span className="flex items-center gap-1 text-rose-400">
+                <span className="w-3 h-1 bg-rose-500 rounded" /> Hesaplanan Rota
               </span>
             </div>
           </div>
@@ -811,7 +812,9 @@ function AssemblyAreasTab() {
       lng: rec.display_lon,
       title: rec.toplanma_alani,
       type: rec.priority === 0 ? "shelter" : undefined,
-      popupText: `${rec.category} • ${rec.source}`,
+      popupText: `${rec.category} • ${rec.source}${
+        rec.distanceM != null ? ` • ${(rec.distanceM / 1000).toFixed(2)} km` : ""
+      }`,
     });
   });
   markers.push({
@@ -830,7 +833,8 @@ function AssemblyAreasTab() {
       coords: assemblyResult.routeCoords,
       color: "#0077ff",
       weight: 6,
-      opacity: 0.85,
+      opacity: 0.9,
+      casing: true,
     });
   } else if (assemblyResult?.nearest) {
     polylines.push({
@@ -867,6 +871,29 @@ function AssemblyAreasTab() {
             )}
             {geoLoading ? "Konum alınıyor..." : "Konumumu Kullan"}
           </button>
+
+          <div>
+            <label className="text-xs font-bold text-slate-300 block mb-1.5">Veya Bir Şehir Seç</label>
+            <select
+              value=""
+              onChange={(e) => {
+                const cityName = e.target.value as keyof typeof CITIES;
+                if (!cityName) return;
+                const coords = CITIES[cityName];
+                setUserLat(coords.lat);
+                setUserLon(coords.lng);
+                setLocationSource(`Şehir seçimi: ${cityName}`);
+                runFetch(coords.lat, coords.lng);
+              }}
+              className="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:border-blue-500"
+            >
+              <option value="">Şehir seçin...</option>
+              {Object.keys(CITIES).map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
           <p className="text-[11px] text-slate-500">Kaynak: {locationSource}</p>
 
           <div className="grid grid-cols-2 gap-2">

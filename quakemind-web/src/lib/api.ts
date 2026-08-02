@@ -11,29 +11,72 @@ export interface StatusResponse {
 
 export interface NLPResponse {
   kategori?: string;
-  güven?: number;
-  aciliyet_p5?: number;
-  adres?: string;
-  koordinat?: [number, number];
+  guven_skoru?: number;
+  aciliyet?: number;
+  konum_metin?: string | null;
+  konum?: [number, number] | null;
+  konum_adaylari?: string[];
   raw_tweet?: string;
   status?: string;
   reason?: string;
 }
 
+export interface RiskMapEvent {
+  label: string;
+  latitude: number;
+  longitude: number;
+  magnitude: number;
+  timeLabel: string;
+}
+
+export interface RiskTechnicalQuake {
+  time: string;
+  place: string;
+  magnitude: number;
+  depth: number;
+  distanceKm: number;
+  latitude: number;
+  longitude: number;
+}
+
+export interface RiskFaultLine {
+  name: string;
+  points: Array<{ latitude: number; longitude: number }>;
+}
+
 export interface RiskResponse {
   city: string;
-  score: number;
-  level: string;
-  recentQuakesCount: number;
-  maxMagnitude: number;
-  faultDistanceKm: number;
-  historicalQuakes: Array<{
-    time: string;
-    latitude: number;
-    longitude: number;
-    depth: number;
-    mag: number;
-  }>;
+  coordinates: { lat: number; lon: number };
+  summary: string;
+  riskScore: number;
+  riskLevel: string;
+  lastUpdate: string;
+  nearbyFaults: string[];
+  recentEvents: string[];
+  factors: Record<string, number>;
+  metrics: {
+    shortRisk: number;
+    longHazard: number;
+    faultScore: number;
+    faultDistanceKm: number;
+    nearbyQuakeCount: number;
+    maxMagnitude: number;
+    averageDepth: number;
+    heatSampleCount: number;
+    totalFaultFeatures: number;
+  };
+  mapEvents: RiskMapEvent[];
+  heatmapEvents: RiskMapEvent[];
+  faultLines: RiskFaultLine[];
+  technicalQuakes: RiskTechnicalQuake[];
+  usedManualCoordinates: boolean;
+  refreshMessage: string;
+  source: string;
+}
+
+export interface FaultLinesResponse {
+  faultLines: RiskFaultLine[];
+  count: number;
 }
 
 export interface RoadDamageResponse {
@@ -104,7 +147,67 @@ export async function predictRisk(city: string, manualLat?: number, manualLon?: 
       refreshData: false,
     }),
   });
-  if (!res.ok) throw new Error("Deprem riski hesaplanamadı.");
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "Deprem riski hesaplanamadı.");
+  }
+  return res.json();
+}
+
+export async function getFaultLines(): Promise<FaultLinesResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/risk/fault_lines`);
+  if (!res.ok) throw new Error("Fay hattı verisi alınamadı.");
+  return res.json();
+}
+
+export interface ObservatoryQuake {
+  time: string;
+  place: string;
+  magnitude: number;
+  depth: number | null;
+  latitude: number;
+  longitude: number;
+  status: string;
+}
+
+export interface AllQuakesResponse {
+  quakes: ObservatoryQuake[];
+  totalMatched: number;
+  returned: number;
+  datasetStart: string;
+  datasetEnd: string;
+  datasetTotal: number;
+}
+
+export async function getAllQuakes(params: {
+  minMagnitude?: number;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  sortBy?: "time" | "magnitude";
+}): Promise<AllQuakesResponse> {
+  const query = new URLSearchParams({
+    minMagnitude: String(params.minMagnitude ?? 0),
+    limit: String(params.limit ?? 500),
+    sortBy: params.sortBy || "time",
+  });
+  if (params.startDate) query.set("startDate", params.startDate);
+  if (params.endDate) query.set("endDate", params.endDate);
+
+  const res = await fetch(`${API_BASE_URL}/api/risk/all_quakes?${query.toString()}`);
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "Deprem kataloğu alınamadı.");
+  }
+  return res.json();
+}
+
+export async function refreshLiveEarthquakeData(): Promise<{ message: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/risk/refresh_live_data`, { method: "POST" });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "Canlı veri güncellenemedi.");
+  }
   return res.json();
 }
 
@@ -186,6 +289,7 @@ export interface AssemblyRecord {
   source: string;
   note: string;
   priority: number;
+  distanceM?: number;
 }
 
 export interface AssemblyResponse {

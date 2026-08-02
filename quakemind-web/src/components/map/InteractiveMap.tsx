@@ -20,6 +20,8 @@ export interface MapPolylineItem {
   weight?: number;
   opacity?: number;
   label?: string;
+  /** Draws a dark outline underneath so the line stands out against any tile background. */
+  casing?: boolean;
 }
 
 interface InteractiveMapProps {
