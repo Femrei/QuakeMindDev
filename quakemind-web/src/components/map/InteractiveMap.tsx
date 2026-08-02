@@ -2,27 +2,9 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import type { MapMarkerItem, MapPolylineItem } from "./LeafletContainer";
 
-export interface MapMarkerItem {
-  id: string;
-  lat: number;
-  lng: number;
-  title: string;
-  type?: "sos" | "shelter" | "quake" | "damage";
-  popupText?: string;
-  magnitude?: number;
-}
-
-export interface MapPolylineItem {
-  id: string;
-  coords: [number, number][];
-  color: string;
-  weight?: number;
-  opacity?: number;
-  label?: string;
-  /** Draws a dark outline underneath so the line stands out against any tile background. */
-  casing?: boolean;
-}
+export type { MapMarkerItem, MapPolylineItem };
 
 interface InteractiveMapProps {
   center: [number, number];

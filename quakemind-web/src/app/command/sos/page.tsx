@@ -4,9 +4,11 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem } from "@/components/map/InteractiveMap";
 import { getSOSAlerts, sendSOSAlert, SOSAlert } from "@/lib/api";
+import { useMapLayers } from "@/context/MapLayersContext";
 import { Siren, ShieldAlert, CheckCircle2, Clock, UserCheck, Plus, Filter } from "lucide-react";
 
 export default function SOSDispatchPage() {
+  const { setSosAlerts } = useMapLayers();
   const [alerts, setAlerts] = useState<SOSAlert[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<SOSAlert | null>(null);
   const [filter, setFilter] = useState<"ALL" | "OPEN" | "EN_ROUTE" | "RESOLVED">("ALL");
@@ -46,6 +48,10 @@ export default function SOSDispatchPage() {
         ]);
       });
   }, []);
+
+  useEffect(() => {
+    setSosAlerts(alerts);
+  }, [alerts, setSosAlerts]);
 
   const updateStatus = (id: string, newStatus: "OPEN" | "EN_ROUTE" | "RESOLVED") => {
     setAlerts((prev) =>

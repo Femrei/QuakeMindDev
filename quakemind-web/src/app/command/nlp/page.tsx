@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem } from "@/components/map/InteractiveMap";
 import { analyzeNLP, NLPResponse } from "@/lib/api";
+import { useMapLayers } from "@/context/MapLayersContext";
 import { FileText, MapPin, Send, Layers, AlertTriangle } from "lucide-react";
 
 const SAMPLES = [
@@ -16,6 +17,7 @@ const SAMPLES = [
 const DEFAULT_MAP_CENTER: [number, number] = [37.5, 36.5];
 
 export default function NLPPage() {
+  const { addNlpIncident } = useMapLayers();
   const [text, setText] = useState(SAMPLES[0]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<NLPResponse | null>(null);
@@ -28,6 +30,20 @@ export default function NLPPage() {
     try {
       const data = await analyzeNLP(text);
       setResult(data);
+      if (data.konum) {
+        addNlpIncident({
+          marker: {
+            id: `nlp-${Date.now()}`,
+            lat: data.konum[0],
+            lng: data.konum[1],
+            title: data.konum_metin || "Tespit Edilen Konum",
+            type: "sos",
+            popupText: data.kategori,
+          },
+          kategori: data.kategori,
+          aciliyet: data.aciliyet,
+        });
+      }
     } catch (err: any) {
       setError(err?.message || "NLP analizi başarısız oldu. Backend çalışıyor mu kontrol edin.");
     } finally {

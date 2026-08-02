@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, Pane, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import Link from "next/link";
 import DrawControl from "./DrawControl";
 
 // Fix Leaflet Default Icon issue in Next.js
@@ -49,6 +50,9 @@ export interface MapMarkerItem {
   type?: "sos" | "shelter" | "quake" | "damage";
   popupText?: string;
   magnitude?: number;
+  /** Optional deep-link shown in the popup, e.g. "Detaya git" back to the module that produced this marker. */
+  linkHref?: string;
+  linkLabel?: string;
 }
 
 export interface MapPolylineItem {
@@ -221,6 +225,11 @@ export default function LeafletContainer({
                 <Popup>
                   <div className="text-sm font-semibold">{marker.title}</div>
                   <div className="text-xs text-slate-300">{marker.popupText || `Büyüklük: ${mag}`}</div>
+                  {marker.linkHref && (
+                    <Link href={marker.linkHref} className="text-xs text-blue-600 font-semibold underline block mt-1">
+                      {marker.linkLabel || "Detaya git"}
+                    </Link>
+                  )}
                 </Popup>
               </CircleMarker>
             );
@@ -231,6 +240,11 @@ export default function LeafletContainer({
               <Popup>
                 <div className="text-sm font-bold text-slate-900">{marker.title}</div>
                 {marker.popupText && <div className="text-xs text-slate-700 mt-1">{marker.popupText}</div>}
+                {marker.linkHref && (
+                  <Link href={marker.linkHref} className="text-xs text-blue-600 font-semibold underline block mt-1">
+                    {marker.linkLabel || "Detaya git"}
+                  </Link>
+                )}
               </Popup>
             </Marker>
           );

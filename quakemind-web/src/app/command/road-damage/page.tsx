@@ -16,6 +16,7 @@ import {
   OamImage,
   AssemblyResponse,
 } from "@/lib/api";
+import { useMapLayers } from "@/context/MapLayersContext";
 import {
   Map as MapIcon,
   Sliders,
@@ -92,6 +93,7 @@ export default function RoadDamagePage() {
 }
 
 function DamageAnalysisTab() {
+  const { addRoadDamageAnalysis } = useMapLayers();
   const [selectedCity, setSelectedCity] = useState<keyof typeof CITIES>("Antakya (Hatay)");
   const [source, setSource] = useState("google");
   const [booster, setBooster] = useState(3.5);
@@ -213,6 +215,13 @@ function DamageAnalysisTab() {
         bbox: selectionMode === "draw" && drawnBbox ? drawnBbox : undefined,
       });
       setResult(data);
+      addRoadDamageAnalysis({
+        analysisId: data.analysisId,
+        city: data.city,
+        safeRoadSegments: data.safeRoadSegments,
+        blockedRoadSegments: data.blockedRoadSegments,
+        bounds: data.bounds,
+      });
     } catch (err: any) {
       setError(err?.message || "Analiz başarısız oldu. Backend çalışıyor mu kontrol edin.");
       setResult(null);
@@ -726,6 +735,7 @@ function DamageAnalysisTab() {
 }
 
 function AssemblyAreasTab() {
+  const { setAssemblyAreas } = useMapLayers();
   const [userLat, setUserLat] = useState(36.202);
   const [userLon, setUserLon] = useState(36.161);
   const [locationSource, setLocationSource] = useState("Seçili şehir merkezi");
@@ -755,6 +765,7 @@ function AssemblyAreasTab() {
         allowOnlineFallback,
       });
       setAssemblyResult(data);
+      setAssemblyAreas(data.records);
     } catch (err: any) {
       setAssemblyError(err?.message || "Toplanma alanları verisi alınamadı.");
       setAssemblyResult(null);

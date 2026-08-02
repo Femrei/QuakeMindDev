@@ -12,6 +12,7 @@ import {
   RiskFaultLine,
   ObservatoryQuake,
 } from "@/lib/api";
+import { useMapLayers } from "@/context/MapLayersContext";
 import { Activity, AlertTriangle, Layers, RefreshCw, Telescope, Gauge, Search } from "lucide-react";
 
 // Tum 81 il — Nominatim ile "<il>, Turkey" olarak geocode edilir.
@@ -113,6 +114,7 @@ export default function EarthquakeRiskPage() {
 }
 
 function RiskAnalysisTab() {
+  const { setRiskResult, setAllFaultLines: publishFaultLines } = useMapLayers();
   const [selectedCity, setSelectedCity] = useState("Hatay");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RiskResponse | null>(null);
@@ -126,10 +128,13 @@ function RiskAnalysisTab() {
 
   useEffect(() => {
     getFaultLines()
-      .then((data) => setAllFaultLines(data.faultLines))
+      .then((data) => {
+        setAllFaultLines(data.faultLines);
+        publishFaultLines(data.faultLines);
+      })
       .catch(() => setAllFaultLines([]))
       .finally(() => setFaultLinesLoading(false));
-  }, []);
+  }, [publishFaultLines]);
 
   const handlePredict = async () => {
     setLoading(true);
@@ -137,6 +142,7 @@ function RiskAnalysisTab() {
     try {
       const data = await predictRisk(selectedCity);
       setResult(data);
+      setRiskResult(data);
     } catch (err: any) {
       setError(err?.message || "Deprem riski hesaplanamadı. Backend çalışıyor mu kontrol edin.");
       setResult(null);

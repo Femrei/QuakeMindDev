@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { MapLayersProvider } from "@/context/MapLayersContext";
 import Navbar from "@/components/layout/Navbar";
 
 export const metadata: Metadata = {
@@ -18,8 +19,10 @@ export default function RootLayout({
     <html lang="tr" className="dark">
       <body className="bg-[#0b0f17] text-slate-100 antialiased min-h-screen flex flex-col selection:bg-red-500 selection:text-white">
         <AuthProvider>
-          <Navbar />
-          <div className="flex-1 flex overflow-hidden">{children}</div>
+          <MapLayersProvider>
+            <Navbar />
+            <div className="flex-1 flex overflow-hidden">{children}</div>
+          </MapLayersProvider>
         </AuthProvider>
       </body>
     </html>
