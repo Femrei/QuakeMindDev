@@ -7,12 +7,13 @@ import { analyzeCameraFrame, CameraAnalysisResponse } from "@/lib/api";
 
 export default function SurvivorCameraPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
 
   const [inputMode, setInputMode] = useState<"camera" | "upload">("camera");
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [selectedModel, setSelectedModel] = useState<"catlak" | "bina" | "hybrid">("hybrid");
+  
+  const [capturedPhotoB64, setCapturedPhotoB64] = useState<string | null>(null);
   const [uploadedImageB64, setUploadedImageB64] = useState<string | null>(null);
 
   const [analyzing, setAnalyzing] = useState(false);
@@ -69,7 +70,9 @@ export default function SurvivorCameraPage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
     ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.85);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+    setCapturedPhotoB64(dataUrl);
+    return dataUrl;
   };
 
   const handleRunAnalysis = async () => {
@@ -79,7 +82,7 @@ export default function SurvivorCameraPage() {
     if (inputMode === "upload" && uploadedImageB64) {
       imagePayload = uploadedImageB64;
     } else if (inputMode === "camera") {
-      imagePayload = captureFrameFromVideo() || undefined;
+      imagePayload = captureFrameFromVideo() || capturedPhotoB64 || undefined;
     }
 
     try {
@@ -107,6 +110,14 @@ export default function SurvivorCameraPage() {
       });
     } finally {
       setAnalyzing(false);
+    }
+  };
+
+  const resetCapture = () => {
+    setCapturedPhotoB64(null);
+    setResult(null);
+    if (inputMode === "camera") {
+      startCamera();
     }
   };
 
@@ -141,28 +152,28 @@ export default function SurvivorCameraPage() {
         {/* INPUT MODE TOGGLE */}
         <div className="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between gap-2 bg-slate-900/90">
           <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
-            <Layers className="w-4 h-4 text-cyan-400" /> GİRİŞ MODU:
+            <Layers className="w-4 h-4 text-cyan-400" /> KULLANIM YÖNTEMİ:
           </span>
           <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={() => setInputMode("camera")}
+              onClick={() => { setInputMode("camera"); resetCapture(); }}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 inputMode === "camera"
                   ? "bg-cyan-600 text-white border border-cyan-400 shadow-md shadow-cyan-600/30"
                   : "glass-button text-slate-400"
               }`}
             >
-              <Video className="w-4 h-4" /> Canlı Yayın (60 FPS)
+              <Camera className="w-4 h-4" /> Canlı Kamera Çekimi
             </button>
             <button
-              onClick={() => setInputMode("upload")}
+              onClick={() => { setInputMode("upload"); resetCapture(); }}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 inputMode === "upload"
                   ? "bg-cyan-600 text-white border border-cyan-400 shadow-md shadow-cyan-600/30"
                   : "glass-button text-slate-400"
               }`}
             >
-              <Camera className="w-4 h-4" /> Fotoğraf Çek / Yükle
+              <ImageIcon className="w-4 h-4" /> Galeriden Yükle
             </button>
           </div>
         </div>
@@ -213,8 +224,8 @@ export default function SurvivorCameraPage() {
         <div className="lg:col-span-7 glass-panel p-6 rounded-3xl border border-slate-800 space-y-4 flex flex-col h-[520px]">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
-              {inputMode === "camera" ? <Video className="w-4 h-4 text-cyan-400" /> : <Camera className="w-4 h-4 text-cyan-400" />}
-              {inputMode === "camera" ? "CANLI VİDEO AKIŞI (60 FPS)" : "FOTOĞRAF ANALİZ TUVALİ"}
+              {inputMode === "camera" ? <Camera className="w-4 h-4 text-cyan-400" /> : <ImageIcon className="w-4 h-4 text-cyan-400" />}
+              {inputMode === "camera" ? "CANLI WEBCAM & ANINDA FOTOĞRAF ÇEKİMİ" : "GALERİDEN FOTOĞRAF SEÇİMİ"}
             </span>
             <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2.5 py-0.5 rounded-full font-bold">
               YOLO INTEGRATED
@@ -229,25 +240,14 @@ export default function SurvivorCameraPage() {
               uploadedImageB64 ? (
                 <img src={uploadedImageB64} alt="Uploaded Wall" className="w-full h-full object-contain" />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-slate-400 space-y-4">
-                  <Camera className="w-12 h-12 text-cyan-400 animate-bounce" />
+                <div 
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-slate-400 space-y-3 cursor-pointer hover:bg-slate-900/60 transition-colors"
+                >
+                  <Upload className="w-12 h-12 text-cyan-400 animate-bounce" />
                   <div className="space-y-1">
-                    <p className="font-bold text-white text-sm">Fotoğraf Çekin veya Galeriden Yükleyin</p>
-                    <p className="text-xs text-slate-500">Aşağıdaki butonları kullanarak kamerayı açın veya galerinizi seçin</p>
-                  </div>
-                  <div className="flex items-center gap-3 pt-2">
-                    <button
-                      onClick={() => cameraInputRef.current?.click()}
-                      className="px-4 py-2.5 rounded-xl bg-cyan-600 text-white font-bold text-xs shadow hover:bg-cyan-500 flex items-center gap-1.5"
-                    >
-                      <Camera className="w-4 h-4" /> Anında Fotoğraf Çek
-                    </button>
-                    <button
-                      onClick={() => galleryInputRef.current?.click()}
-                      className="px-4 py-2.5 rounded-xl glass-button text-slate-300 font-bold text-xs hover:bg-slate-800 flex items-center gap-1.5"
-                    >
-                      <ImageIcon className="w-4 h-4" /> Galeriden Seç
-                    </button>
+                    <p className="font-bold text-white text-sm">Galerinizden Fotoğraf Yüklemek İçin Tıklayın</p>
+                    <p className="text-xs text-slate-500">Bilgisayar veya telefonunuzdaki JPG, PNG formatındaki fotoğraflar</p>
                   </div>
                 </div>
               )
@@ -255,44 +255,63 @@ export default function SurvivorCameraPage() {
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
             )}
 
-            {/* HIDDEN INPUTS */}
-            <input type="file" ref={cameraInputRef} accept="image/*" capture="environment" onChange={handleFileUpload} className="hidden" />
+            {/* HIDDEN GALLERY FILE INPUT */}
             <input type="file" ref={galleryInputRef} accept="image/*" onChange={handleFileUpload} className="hidden" />
           </div>
 
+          {/* ACTION BUTTONS */}
           <div className="flex items-center gap-3">
-            {inputMode === "upload" && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => cameraInputRef.current?.click()}
-                  className="px-4 py-3 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-1.5 shadow"
-                >
-                  <Camera className="w-4 h-4" /> Fotoğraf Çek
-                </button>
+            {inputMode === "camera" ? (
+              <button
+                onClick={handleRunAnalysis}
+                disabled={analyzing}
+                className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-sm shadow-xl shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {analyzing ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin" /> `catlak.pt` & `bina.pt` YOLO Çıkarımı Yapılıyor...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-5 h-5" /> 📸 ANINDA FOTOĞRAF ÇEK VE ANALİZ ET
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 w-full">
                 <button
                   onClick={() => galleryInputRef.current?.click()}
-                  className="px-4 py-3 rounded-2xl glass-button text-xs font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-1.5"
+                  className="px-5 py-4 rounded-2xl glass-button text-xs font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-2"
                 >
                   <ImageIcon className="w-4 h-4" /> Galeriden Seç
+                </button>
+                <button
+                  onClick={handleRunAnalysis}
+                  disabled={analyzing || !uploadedImageB64}
+                  className="flex-1 py-4 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm shadow-xl shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {analyzing ? (
+                    <>
+                      <RefreshCw className="w-5 h-5 animate-spin" /> Analiz Ediliyor...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-5 h-5" /> FOTOĞRAFI YOLO İLE ANALİZ ET
+                    </>
+                  )}
                 </button>
               </div>
             )}
 
-            <button
-              onClick={handleRunAnalysis}
-              disabled={analyzing}
-              className="flex-1 py-4 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm shadow-xl shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {analyzing ? (
-                <>
-                  <RefreshCw className="w-5 h-5 animate-spin" /> `catlak.pt` & `bina.pt` YOLO Çıkarımı Yapılıyor...
-                </>
-              ) : (
-                <>
-                  <Zap className="w-5 h-5" /> YOLO MODELLERİ İLE ANALİZ ET
-                </>
-              )}
-            </button>
+            {result && (
+              <button
+                onClick={resetCapture}
+                className="px-4 py-4 rounded-2xl glass-button text-slate-300 hover:text-white text-xs font-bold"
+                title="Yeni Çekim Yap"
+              >
+                <RefreshCw className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -365,7 +384,7 @@ export default function SurvivorCameraPage() {
               ) : (
                 <div className="p-8 text-center text-slate-500 space-y-3 font-mono text-xs my-auto">
                   <Camera className="w-12 h-12 text-slate-700 mx-auto animate-pulse" />
-                  <p>Kamera karesi yakalayın veya fotoğraf çekip/yükleyip &quot;YOLO MODELLERİ İLE ANALİZ ET&quot; butonuna basınız.</p>
+                  <p>Canlı kameranız aktif! Duvarı/binayı hizalayıp &quot;📸 ANINDA FOTOĞRAF ÇEK VE ANALİZ ET&quot; butonuna basınız.</p>
                 </div>
               )}
             </div>
@@ -373,7 +392,7 @@ export default function SurvivorCameraPage() {
             {/* FOOTER INFO */}
             <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400 space-y-1">
               <span className="font-bold text-slate-300 block">ℹ️ PyTorch YOLO Bilgisi:</span>
-              <p>`catlak.pt` (`crack`) ve `bina.pt` (`0_NoDamage`, `1_ModerateDamage`, `2_VeryHeavyDamage`) modelleri ile gerçek zamanlı çıkarım yapılır.</p>
+              <p>`catlak.pt` (`crack`) ve `bina.pt` (`0_NoDamage`, `1_ModerateDamage`, `2_VeryHeavyDamage`) modelleri ile anlık kare dondurularak çıkarım yapılır.</p>
             </div>
           </div>
         </div>
