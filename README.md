@@ -27,6 +27,7 @@ Ayrıca `QuakeMindBackend/main.py` ve `apps/` altında, backend modüllerinin te
 9. [Model Kaynakları](#-model-kaynakları)
 10. [Sorun Giderme](#-sorun-giderme)
 11. [Yol Haritası (Phase 2)](#-yol-haritası-phase-2)
+12. [Lisans](#-lisans)
 
 ---
 
@@ -414,3 +415,13 @@ Detaylar için `PROJE_YOL_HARITASI.md` ve `HANDOFF.md` dosyalarına bakın. Öne
 - `PROJE_YOL_HARITASI.md` — Phase 2 mimari planlama
 - `QuakeMindBackend/README.md` — Bağımsız Streamlit modülleri için İngilizce teknik doküman
 - `QuakeMindBackend/OPTIMIZASYON_ANALIZI.md` — Backend performans analizi notları
+
+---
+
+## ⚖️ Lisans
+
+Bu proje **tescillidir ve tüm hakları saklıdır** (All Rights Reserved). Açık kaynak bir lisans **değildir**.
+
+Telif hakkı sahibinin önceden yazılı izni olmaksızın bu depodaki kodun, belgelerin, model dosyalarının veya herhangi bir materyalin kopyalanması, dağıtılması, değiştirilmesi veya herhangi bir amaçla (ticari veya değil) kullanılması **yasaktır**.
+
+Ayrıntılar için bkz. [`LICENSE`](./LICENSE).
