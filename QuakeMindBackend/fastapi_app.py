@@ -77,6 +77,16 @@ try:
 except Exception as e:
     print(f"Failed to load NLP: {e}", flush=True)
 
+try:
+    clear_module_cache(["risk_engine"])
+    with temporary_sys_path(RISK_ROOT), temporary_cwd(RISK_ROOT):
+        risk_module = importlib.import_module("risk_engine")
+        RISK_CSV = RISK_ROOT / "data" / "query.csv"
+        risk_engine = risk_module.EarthquakeRiskEngine(csv_path=str(RISK_CSV.resolve()))
+    print("Risk Engine loaded.", flush=True)
+except Exception as e:
+    print(f"Failed to load Risk Engine: {e}", flush=True)
+
 yolo_catlak = None
 yolo_bina = None
 
