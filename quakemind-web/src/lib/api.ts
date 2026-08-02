@@ -284,3 +284,30 @@ export async function getSOSAlerts(): Promise<{ alerts: SOSAlert[]; totalAlerts:
   if (!res.ok) throw new Error("SOS kayıtları çekilemedi.");
   return res.json();
 }
+
+export interface CameraDetection {
+  label: string;
+  confidence: number;
+  model: string;
+  box: number[];
+  severity: "CRITICAL" | "SAFE";
+}
+
+export interface CameraAnalysisResponse {
+  status: "CRITICAL_EVACUATE" | "SAFE_SURFACE";
+  modelType: string;
+  activeModels: string[];
+  detections: CameraDetection[];
+  advice: string;
+  timestamp: string;
+}
+
+export async function analyzeCameraFrame(modelType: string = "hybrid", imageBase64?: string): Promise<CameraAnalysisResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/camera/analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ modelType, imageBase64 }),
+  });
+  if (!res.ok) throw new Error("Kamera analizi başarısız.");
+  return res.json();
+}
