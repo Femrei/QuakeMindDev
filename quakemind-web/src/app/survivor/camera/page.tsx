@@ -7,7 +7,8 @@ import { analyzeCameraFrame, CameraAnalysisResponse } from "@/lib/api";
 
 export default function SurvivorCameraPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
 
   const [inputMode, setInputMode] = useState<"camera" | "upload">("camera");
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -85,7 +86,7 @@ export default function SurvivorCameraPage() {
       const res = await analyzeCameraFrame(selectedModel, imagePayload);
       setResult(res);
     } catch (e) {
-      console.warn("Backend API offline, mock result fallback:", e);
+      console.warn("Backend API offline fallback:", e);
       setResult({
         status: selectedModel === "bina" ? "CRITICAL_EVACUATE" : "SAFE_SURFACE",
         modelType: selectedModel,
@@ -140,7 +141,7 @@ export default function SurvivorCameraPage() {
         {/* INPUT MODE TOGGLE */}
         <div className="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between gap-2 bg-slate-900/90">
           <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
-            <Layers className="w-4 h-4 text-cyan-400" /> GİRİŞ MODU SEÇİMİ:
+            <Layers className="w-4 h-4 text-cyan-400" /> GİRİŞ MODU:
           </span>
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -151,7 +152,7 @@ export default function SurvivorCameraPage() {
                   : "glass-button text-slate-400"
               }`}
             >
-              <Video className="w-4 h-4" /> Canlı Kamera
+              <Video className="w-4 h-4" /> Canlı Yayın (60 FPS)
             </button>
             <button
               onClick={() => setInputMode("upload")}
@@ -161,7 +162,7 @@ export default function SurvivorCameraPage() {
                   : "glass-button text-slate-400"
               }`}
             >
-              <Upload className="w-4 h-4" /> Fotoğraf Yükle
+              <Camera className="w-4 h-4" /> Fotoğraf Çek / Yükle
             </button>
           </div>
         </div>
@@ -212,8 +213,8 @@ export default function SurvivorCameraPage() {
         <div className="lg:col-span-7 glass-panel p-6 rounded-3xl border border-slate-800 space-y-4 flex flex-col h-[520px]">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
-              {inputMode === "camera" ? <Video className="w-4 h-4 text-cyan-400" /> : <ImageIcon className="w-4 h-4 text-cyan-400" />}
-              {inputMode === "camera" ? "CANLI KAMERA AKIŞI (60 FPS)" : "FOTOĞRAF ANALİZ TUVALİ"}
+              {inputMode === "camera" ? <Video className="w-4 h-4 text-cyan-400" /> : <Camera className="w-4 h-4 text-cyan-400" />}
+              {inputMode === "camera" ? "CANLI VİDEO AKIŞI (60 FPS)" : "FOTOĞRAF ANALİZ TUVALİ"}
             </span>
             <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2.5 py-0.5 rounded-full font-bold">
               YOLO INTEGRATED
@@ -228,14 +229,25 @@ export default function SurvivorCameraPage() {
               uploadedImageB64 ? (
                 <img src={uploadedImageB64} alt="Uploaded Wall" className="w-full h-full object-contain" />
               ) : (
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-slate-400 space-y-3 cursor-pointer hover:bg-slate-900/60 transition-colors"
-                >
-                  <Upload className="w-12 h-12 text-cyan-400 animate-bounce" />
+                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-slate-400 space-y-4">
+                  <Camera className="w-12 h-12 text-cyan-400 animate-bounce" />
                   <div className="space-y-1">
-                    <p className="font-bold text-white text-sm">Fotoğraf Yüklemek İçin Tıklayın</p>
-                    <p className="text-xs text-slate-500">JPG, PNG formatında bina veya duvar fotoğrafı seçin</p>
+                    <p className="font-bold text-white text-sm">Fotoğraf Çekin veya Galeriden Yükleyin</p>
+                    <p className="text-xs text-slate-500">Aşağıdaki butonları kullanarak kamerayı açın veya galerinizi seçin</p>
+                  </div>
+                  <div className="flex items-center gap-3 pt-2">
+                    <button
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="px-4 py-2.5 rounded-xl bg-cyan-600 text-white font-bold text-xs shadow hover:bg-cyan-500 flex items-center gap-1.5"
+                    >
+                      <Camera className="w-4 h-4" /> Anında Fotoğraf Çek
+                    </button>
+                    <button
+                      onClick={() => galleryInputRef.current?.click()}
+                      className="px-4 py-2.5 rounded-xl glass-button text-slate-300 font-bold text-xs hover:bg-slate-800 flex items-center gap-1.5"
+                    >
+                      <ImageIcon className="w-4 h-4" /> Galeriden Seç
+                    </button>
                   </div>
                 </div>
               )
@@ -243,17 +255,27 @@ export default function SurvivorCameraPage() {
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
             )}
 
-            <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileUpload} className="hidden" />
+            {/* HIDDEN INPUTS */}
+            <input type="file" ref={cameraInputRef} accept="image/*" capture="environment" onChange={handleFileUpload} className="hidden" />
+            <input type="file" ref={galleryInputRef} accept="image/*" onChange={handleFileUpload} className="hidden" />
           </div>
 
           <div className="flex items-center gap-3">
             {inputMode === "upload" && (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="px-5 py-3.5 rounded-2xl glass-button text-xs font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-2"
-              >
-                <Upload className="w-4 h-4" /> Başka Fotoğraf Seç
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="px-4 py-3 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-1.5 shadow"
+                >
+                  <Camera className="w-4 h-4" /> Fotoğraf Çek
+                </button>
+                <button
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="px-4 py-3 rounded-2xl glass-button text-xs font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-1.5"
+                >
+                  <ImageIcon className="w-4 h-4" /> Galeriden Seç
+                </button>
+              </div>
             )}
 
             <button
@@ -343,7 +365,7 @@ export default function SurvivorCameraPage() {
               ) : (
                 <div className="p-8 text-center text-slate-500 space-y-3 font-mono text-xs my-auto">
                   <Camera className="w-12 h-12 text-slate-700 mx-auto animate-pulse" />
-                  <p>Kamera karesi yakalayın veya fotoğraf yükleyip &quot;YOLO MODELLERİ İLE ANALİZ ET&quot; butonuna basınız.</p>
+                  <p>Kamera karesi yakalayın veya fotoğraf çekip/yükleyip &quot;YOLO MODELLERİ İLE ANALİZ ET&quot; butonuna basınız.</p>
                 </div>
               )}
             </div>
