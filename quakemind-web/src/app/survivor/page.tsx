@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import InteractiveMap, { MapMarkerItem, MapPolylineItem } from "@/components/map/InteractiveMap";
+import SafeEvacuationMap from "@/components/map/SafeEvacuationMap";
 import { sendSOSAlert } from "@/lib/api";
 import { ShieldAlert, MapPin, Navigation, Package, CheckCircle2, AlertCircle, Heart, PhoneCall } from "lucide-react";
 
 const ANTAKYA_COORDS: [number, number] = [36.202, 36.161];
 
-const SHELTERS: MapMarkerItem[] = [
+const SHELTERS = [
   {
     id: "sh-1",
     lat: 36.208,
@@ -78,28 +78,7 @@ export default function SurvivorPortalPage() {
     }
   };
 
-  const markers: MapMarkerItem[] = [
-    {
-      id: "user-loc",
-      lat: userLocation[0],
-      lng: userLocation[1],
-      title: "Konumunuz (Siz)",
-      type: "sos",
-      popupText: "SOS Sinyali Gönderilecek Nokta",
-    },
-    ...SHELTERS,
-  ];
 
-  // Route from User to Shelter
-  const polylines: MapPolylineItem[] = [
-    {
-      id: "route-to-shelter",
-      coords: [userLocation, [36.208, 36.165]],
-      color: "#10b981",
-      weight: 5,
-      opacity: 0.9,
-    },
-  ];
 
   return (
     <div className="flex-1 w-full min-h-screen bg-[#090d14] text-slate-100 p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
@@ -306,9 +285,9 @@ export default function SurvivorPortalPage() {
               </div>
             </div>
 
-            {/* INTERACTIVE MAP */}
+            {/* INTERACTIVE SAFE EVACUATION MAP */}
             <div className="flex-1 min-h-[420px] rounded-2xl overflow-hidden border border-slate-800">
-              <InteractiveMap center={userLocation} zoom={14} markers={markers} polylines={polylines} />
+              <SafeEvacuationMap role="survivor" />
             </div>
 
             {/* SHELTER DETAILS LIST */}

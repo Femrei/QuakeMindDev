@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapPolylineItem, MapMarkerItem } from "@/components/map/InteractiveMap";
+import SafeEvacuationMap from "@/components/map/SafeEvacuationMap";
 import CompareMap from "@/components/map/CompareMap";
 import {
   analyzeRoadDamage,
