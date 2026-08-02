@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { Shield, Navigation, AlertTriangle, CheckCircle2, Layers, Compass, Crosshair, RefreshCw, MapPin, Footprints, Zap } from "lucide-react";
+import { Shield, Navigation, AlertTriangle, Layers, Compass, Crosshair, RefreshCw, MapPin, Footprints, Zap } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { getEvacuationAssemblyData, calculateCustomRoute, EvacuationAssemblyRecord, EvacuationAssemblyResponse } from "@/lib/api";
 
@@ -76,45 +76,45 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
   const fetchAssemblyAndInitialRoute = async (lat: number, lon: number) => {
     setLoading(true);
     try {
-      const data = await getEvacuationAssemblyData(lat, lon, 8.0);
+      const data = await getEvacuationAssemblyData(lat, lon, 10.0);
       setAssemblyData(data);
       if (data.nearest) {
         setSelectedShelter(data.nearest);
         if (data.routeCoords && data.routeCoords.length > 0) {
           setCustomRouteCoords(data.routeCoords);
-          setCustomDistanceM(data.routeLengthM || 950);
-          setCustomWalkMinutes(Math.max(1, Math.round((data.routeLengthM || 950) / 80)));
+          setCustomDistanceM(data.routeLengthM || 450);
+          setCustomWalkMinutes(Math.max(1, Math.round((data.routeLengthM || 450) / 80)));
         }
       }
     } catch (e) {
       console.warn("Backend toplanma alanı API offline, yerel AFAD veri seti kullanılıyor:", e);
       const mockRecords: EvacuationAssemblyRecord[] = [
-        { name: "Antakya Şehir Stadyumu Toplanma Alanı", lat: 36.2120, lon: 36.1730, ilce: "Antakya", mahalle: "Atatürk Mah.", capacity: "2,000 Kişi", status: "Güvenli - Su & Gıda Var", priority: 0 },
-        { name: "Fuar Alanı Güvenli Çadır Kenti", lat: 36.2150, lon: 36.1800, ilce: "Antakya", mahalle: "Aksaray Mah.", capacity: "3,000 Kişi", status: "Güvenli - Sağlık Ekibi Mevcut", priority: 0 },
-        { name: "Primemall Açık Park Sığınağı", lat: 36.1980, lon: 36.1550, ilce: "Defne", mahalle: "Harbiye", capacity: "1,000 Kişi", status: "Güvenli - Jeneratör Aktif", priority: 0 },
+        { name: "Yeni Cami AFAD Toplanma Alanı", lat: 36.2058, lon: 36.1655, ilce: "Antakya", mahalle: "Yeni Cami Mah.", capacity: "2,000 Kişi", status: "Güvenli AFAD Toplanma Alanı", priority: 0 },
+        { name: "Habib-i Neccar AFAD Toplanma Alanı", lat: 36.2080, lon: 36.1680, ilce: "Antakya", mahalle: "Habib-i Neccar", capacity: "3,000 Kişi", status: "Güvenli AFAD Toplanma Alanı", priority: 0 },
+        { name: "Meydan AFAD Toplanma Alanı", lat: 36.2020, lon: 36.1610, ilce: "Antakya", mahalle: "Meydan", capacity: "1,500 Kişi", status: "Güvenli AFAD Toplanma Alanı", priority: 0 },
       ];
       setAssemblyData({
         records: mockRecords,
         activeDataSource: "Çevrimdışı AFAD Veri Seti",
         nearest: mockRecords[0],
-        nearestAirM: 950,
+        nearestAirM: 350,
         routeCoords: [
           [lat, lon],
-          [36.2050, 36.1640],
-          [36.2080, 36.1680],
-          [36.2120, 36.1730],
+          [36.2052, 36.1651],
+          [36.2055, 36.1653],
+          [36.2058, 36.1655],
         ],
-        routeLengthM: 1250,
+        routeLengthM: 450,
       });
       setSelectedShelter(mockRecords[0]);
       setCustomRouteCoords([
         [lat, lon],
-        [36.2050, 36.1640],
-        [36.2080, 36.1680],
-        [36.2120, 36.1730],
+        [36.2052, 36.1651],
+        [36.2055, 36.1653],
+        [36.2058, 36.1655],
       ]);
-      setCustomDistanceM(1250);
-      setCustomWalkMinutes(15);
+      setCustomDistanceM(450);
+      setCustomWalkMinutes(5);
     } finally {
       setLoading(false);
     }
@@ -136,15 +136,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
         setCustomWalkMinutes(res.estWalkMinutes);
       }
     } catch (e) {
-      console.warn("Rota hesaplama API hatası, doğrudan interpolasyon yapılıyor:", e);
-      const fallbackPath: [number, number][] = [
-        [userLocation[0], userLocation[1]],
-        [userLocation[0] + (destLat - userLocation[0]) * 0.5, userLocation[1] + (destLon - userLocation[1]) * 0.5],
-        [destLat, destLon],
-      ];
-      setCustomRouteCoords(fallbackPath);
-      setCustomDistanceM(1100);
-      setCustomWalkMinutes(14);
+      console.warn("Rota hesaplama API hatası:", e);
     } finally {
       setRoutingLoading(false);
     }
@@ -156,10 +148,11 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
       click(e: any) {
         const { lat, lng } = e.latlng;
         drawRouteToTarget(lat, lng, {
-          name: `Özel Seçilen Güvenli Nokta (${lat.toFixed(3)}, ${lng.toFixed(3)})`,
+          toplanma_alani: `Seçilen Rota Hedefi (${lat.toFixed(3)}, ${lng.toFixed(3)})`,
+          name: `Seçilen Rota Hedefi (${lat.toFixed(3)}, ${lng.toFixed(3)})`,
           lat: lat,
           lon: lng,
-          status: "Kullanıcı Seçimli Hedef",
+          status: "Kullanıcı Tarafından Seçilen Rota Hedefi",
         });
       },
     });
@@ -193,77 +186,71 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
     : [[userLocation[0], userLocation[1]], selectedShelter ? [selectedShelter.lat || selectedShelter.display_lat!, selectedShelter.lon || selectedShelter.display_lon!] : [DEFAULT_LAT, DEFAULT_LON]];
 
   return (
-    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-800">
-      {/* GPS DETECT BUTTON & STATUS */}
-      <div className="absolute top-4 left-4 z-[1000] flex items-center gap-2">
+    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-800 bg-[#080c14]">
+      {/* HEADER CONTROLS (CLEAN NON-OVERLAPPING BAR) */}
+      <div className="absolute top-3 left-3 z-[1000] flex items-center gap-2 flex-wrap max-w-[calc(100%-180px)]">
         <button
           onClick={detectUserGPS}
           disabled={loading}
-          className="glass-panel px-3.5 py-2.5 rounded-2xl border border-cyan-500/40 bg-slate-950/85 backdrop-blur-md text-xs font-bold text-cyan-300 hover:text-white flex items-center gap-2 shadow-lg hover:bg-cyan-950/50 transition-all"
+          className="glass-panel px-3.5 py-2 rounded-xl border border-cyan-500/40 bg-slate-950/90 text-xs font-bold text-cyan-300 hover:text-white flex items-center gap-2 shadow-lg hover:bg-cyan-950/60 transition-all"
         >
           <Crosshair className={`w-4 h-4 text-cyan-400 ${loading ? "animate-spin" : ""}`} />
-          <span>{gpsStatus === "success" ? "GPS KONUMU AKTİF" : "🎯 KONUMUMU BUL"}</span>
+          <span>{gpsStatus === "success" ? "GPS AKTİF" : "🎯 KONUMUMU BUL"}</span>
         </button>
 
-        <span className="glass-panel px-3 py-2 rounded-2xl border border-slate-800 bg-slate-950/80 backdrop-blur-md text-[10px] font-mono text-slate-300">
+        <span className="glass-panel px-3 py-2 rounded-xl border border-slate-800 bg-slate-950/90 text-[11px] font-mono text-emerald-400 font-bold">
           AFAD RESMİ ALANLARI ({assemblyData?.records?.length || 0})
         </span>
       </div>
 
-      {/* MAP OVERLAY LEGEND & CONTROLS */}
-      <div className="absolute top-4 right-4 z-[1000] glass-panel p-3.5 rounded-2xl border border-slate-700/60 bg-slate-950/85 backdrop-blur-md text-xs space-y-2 max-w-xs">
-        <div className="flex items-center justify-between font-bold text-slate-200 border-b border-slate-800 pb-1.5">
-          <span className="flex items-center gap-1.5"><Layers className="w-4 h-4 text-emerald-400" /> HARİTA KATMANLARI</span>
-          <button 
-            onClick={() => setShowBlocked(!showBlocked)}
-            className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${showBlocked ? "bg-red-500/20 text-red-400 border border-red-500/40" : "bg-slate-800 text-slate-400"}`}
-          >
-            {showBlocked ? "KAPALI YOLLAR AÇIK" : "GİZLİ"}
-          </button>
+      {/* MAP OVERLAY LEGEND & CONTROLS (TOP RIGHT) */}
+      <div className="absolute top-3 right-3 z-[1000] glass-panel p-3 rounded-2xl border border-slate-700/60 bg-slate-950/90 text-xs space-y-2 max-w-[200px] shadow-xl">
+        <div className="flex items-center justify-between font-bold text-slate-200 border-b border-slate-800 pb-1">
+          <span className="flex items-center gap-1.5 text-[11px]"><Layers className="w-3.5 h-3.5 text-emerald-400" /> HARİTA KATMANLARI</span>
         </div>
 
-        <div className="space-y-1.5 text-[11px]">
-          <div className="flex items-center gap-2 text-emerald-400 font-medium">
-            <span className="w-4 h-1 bg-emerald-500 rounded-full inline-block"></span>
-            <span>Açık / Güvenli Yollar</span>
+        <div className="space-y-1 text-[10px] font-mono">
+          <div className="flex items-center gap-2 text-emerald-400">
+            <span className="w-3 h-1 bg-emerald-500 rounded-full inline-block"></span>
+            <span>Açık Yollar</span>
           </div>
-          <div className="flex items-center gap-2 text-red-400 font-medium">
-            <span className="w-4 h-1 bg-red-500 border border-dashed rounded-full inline-block"></span>
-            <span>Kapalı / Hasarlı Yollar</span>
+          <div className="flex items-center gap-2 text-red-400">
+            <span className="w-3 h-1 bg-red-500 border border-dashed rounded-full inline-block"></span>
+            <span>Hasarlı Yollar</span>
           </div>
           <div className="flex items-center gap-2 text-cyan-300 font-bold">
-            <span className="w-4 h-1.5 bg-cyan-400 rounded-full inline-block shadow-[0_0_10px_#22d3ee]"></span>
-            <span>Dijkstra En Kısa Güvenli Rota</span>
+            <span className="w-3 h-1.5 bg-cyan-400 rounded-full inline-block shadow-[0_0_10px_#22d3ee]"></span>
+            <span>OSM Sokak Rotası</span>
           </div>
         </div>
       </div>
 
-      {/* ROLE OVERLAY BANNER WITH LIVE ROUTE STATS */}
-      <div className="absolute bottom-4 left-4 z-[1000] glass-panel p-4 rounded-2xl border border-slate-700/60 bg-slate-950/95 backdrop-blur-md flex items-center gap-3.5 max-w-md shadow-2xl">
-        <div className={`p-3 rounded-2xl ${role === 'survivor' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'}`}>
-          {routingLoading ? <RefreshCw className="w-6 h-6 animate-spin text-cyan-400" /> : role === 'survivor' ? <Navigation className="w-6 h-6 animate-pulse" /> : <Compass className="w-6 h-6" />}
+      {/* FOOTER INFO CARD (BOTTOM LEFT) */}
+      <div className="absolute bottom-3 left-3 z-[1000] glass-panel p-3.5 rounded-2xl border border-slate-700/60 bg-slate-950/95 flex items-center gap-3 max-w-sm shadow-2xl">
+        <div className={`p-2.5 rounded-xl ${role === 'survivor' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'}`}>
+          {routingLoading ? <RefreshCw className="w-5 h-5 animate-spin text-cyan-400" /> : <Navigation className="w-5 h-5 animate-pulse" />}
         </div>
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5" />
-            {role === 'survivor' ? 'SEÇİLİ GÜVENLİ HEDEF & CANLI ROTA' : 'EKİP TAKTİK MÜDAHALE KORİDORU'}
+          <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1">
+            <Shield className="w-3 h-3" />
+            {role === 'survivor' ? 'CANLI AFAD SOKAK ROTASI' : 'EKİP TAKTİK MÜDAHALE KORİDORU'}
           </div>
-          <div className="text-sm font-black text-white font-mono flex items-center gap-2 mt-0.5">
+          <div className="text-xs font-black text-white font-mono flex items-center gap-2 mt-0.5 truncate max-w-[240px]">
             <span>{selectedShelter?.toplanma_alani || selectedShelter?.name || "AFAD Güvenli Bölge"}</span>
           </div>
-          <div className="flex items-center gap-3 text-xs text-cyan-300 font-mono mt-1">
+          <div className="flex items-center gap-3 text-[11px] text-cyan-300 font-mono mt-0.5">
             <span className="flex items-center gap-1 font-bold">
-              <MapPin className="w-3.5 h-3.5 text-cyan-400" /> {customDistanceM ? `${customDistanceM} m` : "Hesaplanıyor..."}
+              <MapPin className="w-3 h-3 text-cyan-400" /> {customDistanceM ? `${customDistanceM} m` : "Hesaplanıyor..."}
             </span>
             <span className="flex items-center gap-1 font-bold text-emerald-400">
-              <Footprints className="w-3.5 h-3.5 text-emerald-400" /> ~{customWalkMinutes || 5} Dk Yürüme
+              <Footprints className="w-3 h-3 text-emerald-400" /> ~{customWalkMinutes || 5} Dk Yürüme
             </span>
           </div>
         </div>
       </div>
 
-      {/* LEAFLET CONTAINER */}
-      <MapContainer center={userLocation} zoom={14} className="w-full h-full">
+      {/* LEAFLET CONTAINER (DISABLE DEFAULT OVERLAPPING ZOOM CONTROL) */}
+      <MapContainer center={userLocation} zoom={15} zoomControl={false} className="w-full h-full">
         <MapClickHandler />
 
         <TileLayer
@@ -291,7 +278,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
           </React.Fragment>
         ))}
 
-        {/* DIJKSTRA / OSM SHORT SAFE ROUTE (CYAN) */}
+        {/* OSM STREET ROUTE (CYAN POLYLINE FOLLOWING STREET TURNS) */}
         {activeRoute.length > 1 && (
           <Polyline 
             positions={activeRoute} 
@@ -331,7 +318,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
                     <Shield className="w-4 h-4 text-emerald-600" /> {s.toplanma_alani || s.name}
                   </div>
                   <div className="text-xs text-slate-600 font-medium">
-                    Konum: <b>{s.ilce || "Merkez"} / {s.mahalle || "AFAD Bölgesi"}</b>
+                    Konum: <b>{s.ilce || "Antakya"} / {s.mahalle || "AFAD Bölgesi"}</b>
                   </div>
                   <div className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
                     {s.status || "🟢 Güvenli AFAD Toplanma Alanı"}
@@ -340,7 +327,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
                     onClick={() => drawRouteToTarget(lat, lon, s)}
                     className="w-full mt-2 bg-cyan-600 text-white font-bold text-xs py-2 rounded-lg shadow hover:bg-cyan-700 transition-colors flex items-center justify-center gap-1.5"
                   >
-                    <Zap className="w-3.5 h-3.5" /> ⚡ Buraya En Kısa Rotayı Çiz
+                    <Zap className="w-3.5 h-3.5" /> ⚡ Buraya Sokak Rotası Çiz
                   </button>
                 </div>
               </Popup>

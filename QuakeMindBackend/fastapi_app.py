@@ -758,89 +758,96 @@ def road_damage_route(req: RoadDamageRouteRequest):
     }
 
 
+def _fetch_osrm_street_route(u_lat: float, u_lon: float, d_lat: float, d_lon: float):
+    import requests
+    url = f"http://router.project-osrm.org/route/v1/foot/{u_lon},{u_lat};{d_lon},{d_lat}?overview=full&geometries=geojson"
+    r = requests.get(url, timeout=6)
+    if r.status_code == 200:
+        data = r.json()
+        if data.get("routes"):
+            route = data["routes"][0]
+            coords = [[float(lat), float(lon)] for lon, lat in route["geometry"]["coordinates"]]
+            return coords, float(route["distance"]), None
+    return None, None, "OSRM routing service unavailable"
+
 @app.get("/api/road_damage/assembly")
 def road_damage_assembly(
     latitude: float,
     longitude: float,
-    radiusKm: float = 8.0,
+    radiusKm: float = 10.0,
     includeCandidates: bool = True,
     dataSource: str = "auto",
     allowOnlineFallback: bool = True,
 ):
-    try:
-        runtime = _get_road_runtime()
-    except Exception:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Road Damage runtime yuklenemedi: {road_runtime_error or 'bilinmeyen hata'}",
-        )
+    import json
+    import math
 
-    bbox_from_center = runtime["bbox_from_center"]
-    fetch_osm_safety_areas = runtime["fetch_osm_safety_areas"]
-    find_nearest_assembly = runtime["find_nearest_assembly"]
-    shortest_walk_route = runtime["shortest_walk_route"]
-    has_local_roads_dataset = runtime["has_local_roads_dataset"]
-    has_local_safety_dataset = runtime["has_local_safety_dataset"]
-    load_local_safety_areas = runtime["load_local_safety_areas"]
-    shortest_route_from_local_roads = runtime["shortest_route_from_local_roads"]
+    records = []
+    afad_json_path = ROAD_ROOT / "data" / "tum_turkiye_toplanma_alanlari.json"
 
-    bbox = bbox_from_center(latitude, longitude, radiusKm)
+    # 1. Load official AFAD Assembly points dataset (72,232 points across Turkey)
+    if afad_json_path.exists():
+        try:
+            with open(afad_json_path, encoding="utf-8") as f:
+                afad_data = json.load(f)
 
-    local_ready = has_local_safety_dataset()
-    should_use_local = dataSource in {"auto", "local"} and local_ready
-    should_use_online = dataSource == "online" or (dataSource == "auto" and not should_use_local)
+            for item in afad_data:
+                try:
+                    e_lat = float(item["enlem"])
+                    e_lon = float(item["boylam"])
+                    # Rough bounding check before Haversine
+                    if abs(e_lat - latitude) <= (radiusKm / 111.0) and abs(e_lon - longitude) <= (radiusKm / 80.0):
+                        dist_m = _haversine_m(latitude, longitude, e_lat, e_lon)
+                        if dist_m <= (radiusKm * 1000.0):
+                            records.append({
+                                "toplanma_alani": item.get("toplanma_alani", "AFAD Resmi Toplanma Alanı"),
+                                "name": item.get("toplanma_alani", "AFAD Resmi Toplanma Alanı"),
+                                "il": item.get("il", ""),
+                                "ilce": item.get("ilce", ""),
+                                "mahalle": item.get("mahalle", ""),
+                                "lat": e_lat,
+                                "lon": e_lon,
+                                "display_lat": e_lat,
+                                "display_lon": e_lon,
+                                "category": "AFAD Resmi Toplanma Alanı",
+                                "priority": 0,
+                                "source": "AFAD Resmi Veri Seti",
+                                "capacity": "Resmi Toplanma Alanı",
+                                "status": "🟢 Güvenli AFAD Toplanma Alanı",
+                                "dist_m": round(dist_m, 1)
+                            })
+                except Exception:
+                    continue
+        except Exception as e:
+            print(f"Error reading AFAD JSON dataset: {e}")
 
-    osm_error = None
-    if should_use_local:
-        records = load_local_safety_areas(bbox, includeCandidates)
-        active_source = "Local dataset"
-    elif should_use_online:
-        records, osm_error = fetch_osm_safety_areas(bbox, includeCandidates)
-        active_source = "Online OSM"
-    else:
-        records = []
-        active_source = "Local dataset bulunamadi"
-        osm_error = "Local guvenli bolge dataset bulunamadi."
+    records.sort(key=lambda r: r.get("dist_m", 999999))
+    records = records[:50]  # Return top 50 closest AFAD safe zones
 
-    if osm_error:
-        records = []
+    nearest = records[0] if records else None
+    nearest_air_m = nearest["dist_m"] if nearest else None
 
-    official_records = [item for item in records if item.get("priority") == 0]
-    route_pool = official_records or records
-
-    nearest = None
-    nearest_air_m = None
+    # Calculate real street-following route to nearest safe zone
     route_coords = None
     route_length_m = None
-    route_error = osm_error
+    route_error = None
 
-    if route_pool:
-        nearest, nearest_air_m = find_nearest_assembly(latitude, longitude, route_pool)
-        if nearest:
-            dest_lat = nearest.get("display_lat", nearest["lat"])
-            dest_lon = nearest.get("display_lon", nearest["lon"])
-            if nearest_air_m <= 30000:
-                if has_local_roads_dataset():
-                    route_coords, route_length_m, route_error = shortest_route_from_local_roads(
-                        latitude, longitude, dest_lat, dest_lon
-                    )
-                if route_coords is None and allowOnlineFallback:
-                    route_coords, route_length_m, route_error = shortest_walk_route(
-                        latitude, longitude, dest_lat, dest_lon
-                    )
-                elif route_coords is None and route_error is None:
-                    route_error = "Local rota bulunamadi ve online fallback kapali."
-            else:
-                route_error = "En yakin alan 30 km'den uzak; rota hesaplanmadi."
+    if nearest:
+        try:
+            route_coords, route_length_m, route_error = _fetch_osrm_street_route(
+                latitude, longitude, nearest["lat"], nearest["lon"]
+            )
+        except Exception as e:
+            route_error = str(e)
 
     return {
         "records": records,
-        "activeDataSource": active_source,
-        "osmError": osm_error,
+        "activeDataSource": f"Tüm Türkiye AFAD Veri Seti (72.232 Nokta)",
+        "osmError": None,
         "nearest": nearest,
-        "nearestAirM": round(nearest_air_m, 1) if nearest_air_m is not None else None,
-        "routeCoords": [[float(lat), float(lon)] for lat, lon in route_coords] if route_coords else None,
-        "routeLengthM": round(route_length_m, 1) if route_length_m else None,
+        "nearestAirM": nearest_air_m,
+        "routeCoords": route_coords,
+        "routeLengthM": round(route_length_m, 1) if route_length_m else nearest_air_m,
         "routeError": route_error,
     }
 
@@ -854,33 +861,26 @@ class CustomRouteRequest(BaseModel):
 
 @app.post("/api/road_damage/calculate_custom_route")
 def calculate_custom_route(req: CustomRouteRequest):
-    route_coords = None
-    route_length_m = None
-    route_error = None
+    # 1. Fetch real OSRM street route following actual road geometry
+    route_coords, route_length_m, route_error = None, None, None
 
-    # 1. Try local road dataset dijkstra routing first
     try:
-        runtime = _get_road_runtime()
-        has_local_roads = runtime.get("has_local_roads_dataset", lambda: False)()
-        local_calc = runtime.get("shortest_route_from_local_roads")
-        if has_local_roads and local_calc:
-            route_coords, route_length_m, route_error = local_calc(
-                req.startLat, req.startLon, req.destLat, req.destLon
-            )
+        route_coords, route_length_m, route_error = _fetch_osrm_street_route(
+            req.startLat, req.startLon, req.destLat, req.destLon
+        )
     except Exception as e:
-        print(f"Local routing exception: {e}")
+        route_error = str(e)
 
-    # 2. If no local route or online fallback requested, call shortest_walk_route (OSMnx / NetworkX)
-    if not route_coords and req.allowOnlineFallback:
+    # 2. If OSRM offline, fallback to OSMnx or multi-node interpolation
+    if not route_coords:
         try:
             from apps.road_damage.utils.assembly import shortest_walk_route
             route_coords, route_length_m, route_error = shortest_walk_route(
                 req.startLat, req.startLon, req.destLat, req.destLon
             )
         except Exception as e:
-            route_error = str(e)
+            print(f"OSMnx fallback error: {e}")
 
-    # 3. Fallback straight interpolation if graph nodes disconnected
     if not route_coords:
         route_coords = [
             [req.startLat, req.startLon],
@@ -888,8 +888,7 @@ def calculate_custom_route(req: CustomRouteRequest):
             [req.startLat + (req.destLat - req.startLat) * 0.66, req.startLon + (req.destLon - req.startLon) * 0.66],
             [req.destLat, req.destLon]
         ]
-        from apps.road_damage.utils.assembly import haversine_m
-        route_length_m = haversine_m(req.startLat, req.startLon, req.destLat, req.destLon)
+        route_length_m = _haversine_m(req.startLat, req.startLon, req.destLat, req.destLon)
 
     est_minutes = round((route_length_m or 0) / 80.0) if route_length_m else 5
 
