@@ -48,12 +48,12 @@ def calculate_route(G, start_lat, start_lon, end_lat, end_lon):
         
     return get_route_line(path_dijkstra), get_route_line(path_astar)
 
-def analyze_road_network_graph(bounds, w, h, blockage_mask):
+def analyze_road_network_graph(bounds, w, h, blockage_mask, network_type='drive'):
     """Fetches OSM graph, evaluates blockages, and returns safe/blocked lists."""
     west, south, east, north = bounds
     try:
-        # 'drive' kullanarak sadece araç yollarını çekiyoruz, graph boyutu küçülüyor ve hızlanıyor
-        G = ox.graph_from_bbox(bbox=bounds, network_type='drive', simplify=True)
+        # 'drive' varsayılanı araç lojistiği için; yaya tahliye rotası 'walk' geçer
+        G = ox.graph_from_bbox(bbox=bounds, network_type=network_type, simplify=True)
     except Exception as e:
         print("OSMnx error:", e)
         return None, None, None, None

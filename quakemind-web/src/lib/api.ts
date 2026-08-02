@@ -120,6 +120,7 @@ export async function analyzeRoadDamage(params: {
   useImagenetNorm?: boolean;
   postProcessLevel?: number;
   bbox?: [number, number, number, number]; // [west, south, east, north]
+  networkType?: string; // "drive" (default, vehicle logistics) or "walk" (pedestrian evacuation)
 }): Promise<RoadDamageResponse> {
   const res = await fetch(`${API_BASE_URL}/api/road_damage/analyze`, {
     method: "POST",
@@ -139,6 +140,7 @@ export async function analyzeRoadDamage(params: {
       bboxSouth: params.bbox?.[1],
       bboxEast: params.bbox?.[2],
       bboxNorth: params.bbox?.[3],
+      networkType: params.networkType,
     }),
   });
   if (!res.ok) {

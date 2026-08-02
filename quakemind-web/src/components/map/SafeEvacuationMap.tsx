@@ -4,7 +4,14 @@ import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Shield, Navigation, AlertTriangle, Layers, Compass, Crosshair, RefreshCw, MapPin, Footprints, Zap } from "lucide-react";
 import "leaflet/dist/leaflet.css";
-import { getEvacuationAssemblyData, calculateCustomRoute, EvacuationAssemblyRecord, EvacuationAssemblyResponse } from "@/lib/api";
+import {
+  getEvacuationAssemblyData,
+  calculateCustomRoute,
+  analyzeRoadDamage,
+  getRouteBetweenPoints,
+  EvacuationAssemblyRecord,
+  EvacuationAssemblyResponse,
+} from "@/lib/api";
 
 interface SafeEvacuationMapProps {
   role?: "survivor" | "command";
@@ -16,16 +23,48 @@ interface SafeEvacuationMapProps {
 const DEFAULT_LAT = 36.2050;
 const DEFAULT_LON = 36.1650;
 
-// Sample Road Blockages & Open Corridors in Region
-const DEFAULT_OPEN_ROADS: [number, number][][] = [
-  [[36.2025, 36.1600], [36.2050, 36.1640], [36.2080, 36.1680], [36.2120, 36.1730]],
-  [[36.1980, 36.1550], [36.2000, 36.1700], [36.2150, 36.1800]],
-];
+interface DamageBounds {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
 
-const DEFAULT_BLOCKED_ROADS: [number, number][][] = [
-  [[36.2050, 36.1640], [36.2040, 36.1670], [36.2020, 36.1690]],
-  [[36.2100, 36.1700], [36.2090, 36.1740]],
-];
+interface DamageAnalysisState {
+  analysisId: string;
+  bounds: DamageBounds;
+  safeRoadSegments: number[][][];
+  blockedRoadSegments: number[][][];
+}
+
+// True if (lat, lon) sits at least marginDeg inside every edge of bounds —
+// OSMnx can clip/drop edges right at the bbox boundary, so routing near the
+// raw edge is unreliable.
+function boundsContainPoint(bounds: DamageBounds, lat: number, lon: number, marginDeg: number): boolean {
+  return (
+    lat >= bounds.south + marginDeg &&
+    lat <= bounds.north - marginDeg &&
+    lon >= bounds.west + marginDeg &&
+    lon <= bounds.east - marginDeg
+  );
+}
+
+// Bbox covering both points with generous padding so nearby alternate shelters
+// stay inside the same cached analysis. Returns null if the pair is too far
+// apart for a single bounded damage analysis to be worthwhile.
+function computeBboxForPair(userLat: number, userLon: number, destLat: number, destLon: number): DamageBounds | null {
+  const lonSpan = Math.abs(destLon - userLon);
+  const latSpan = Math.abs(destLat - userLat);
+  if (lonSpan > 0.06 || latSpan > 0.06) return null;
+
+  const padding = Math.min(0.05, Math.max(0.02, lonSpan * 0.5, latSpan * 0.5));
+  return {
+    west: Math.min(userLon, destLon) - padding,
+    south: Math.min(userLat, destLat) - padding,
+    east: Math.max(userLon, destLon) + padding,
+    north: Math.max(userLat, destLat) + padding,
+  };
+}
 
 function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
   const { MapContainer, TileLayer, Polyline, Marker, Popup, Tooltip, useMapEvents } = require("react-leaflet");
@@ -43,6 +82,11 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
   const [loading, setLoading] = useState(false);
   const [routingLoading, setRoutingLoading] = useState(false);
   const [showBlocked, setShowBlocked] = useState(true);
+
+  const [damageAnalysis, setDamageAnalysis] = useState<DamageAnalysisState | null>(null);
+  const [damageAnalysisLoading, setDamageAnalysisLoading] = useState(false);
+  const [routeMode, setRouteMode] = useState<"idle" | "damage-aware" | "fallback">("idle");
+  const [routeErrorMsg, setRouteErrorMsg] = useState<string | null>(null);
 
   // Detect User GPS on Load
   useEffect(() => {
@@ -84,6 +128,13 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
           setCustomRouteCoords(data.routeCoords);
           setCustomDistanceM(data.routeLengthM || 450);
           setCustomWalkMinutes(Math.max(1, Math.round((data.routeLengthM || 450) / 80)));
+          setRouteMode("fallback");
+        }
+        const nearestLat = data.nearest.lat || data.nearest.display_lat;
+        const nearestLon = data.nearest.lon || data.nearest.display_lon;
+        if (nearestLat != null && nearestLon != null) {
+          // Upgrade the provisional OSRM route to a damage-aware one in the background.
+          drawRouteToTarget(nearestLat, nearestLon, data.nearest, [lat, lon]);
         }
       }
     } catch (e) {
@@ -115,28 +166,108 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
       ]);
       setCustomDistanceM(450);
       setCustomWalkMinutes(5);
+      setRouteMode("fallback");
     } finally {
       setLoading(false);
     }
   };
 
+  // Runs (or reuses a cached) satellite damage analysis for the origin/destination
+  // pair, then computes a real Dijkstra route over the damage-pruned road graph.
+  // Returns null on any failure so the caller can fall back to plain OSRM routing.
+  const runDamageAwareRoute = async (originLat: number, originLon: number, destLat: number, destLon: number) => {
+    let analysis = damageAnalysis;
+    const marginDeg = 0.005;
+
+    const cacheValid =
+      !!analysis &&
+      boundsContainPoint(analysis.bounds, originLat, originLon, marginDeg) &&
+      boundsContainPoint(analysis.bounds, destLat, destLon, marginDeg);
+
+    if (!cacheValid) {
+      const bbox = computeBboxForPair(originLat, originLon, destLat, destLon);
+      if (!bbox) return null;
+
+      setDamageAnalysisLoading(true);
+      try {
+        const result = await analyzeRoadDamage({
+          city: "Sokak Rotası Bölgesi",
+          latitude: (originLat + destLat) / 2,
+          longitude: (originLon + destLon) / 2,
+          bbox: [bbox.west, bbox.south, bbox.east, bbox.north],
+          networkType: "walk",
+        });
+        analysis = {
+          analysisId: result.analysisId,
+          bounds: result.bounds,
+          safeRoadSegments: result.safeRoadSegments,
+          blockedRoadSegments: result.blockedRoadSegments,
+        };
+        setDamageAnalysis(analysis);
+      } catch (e) {
+        console.warn("Hasar analizi başarısız, genel rotaya geçiliyor:", e);
+        return null;
+      } finally {
+        setDamageAnalysisLoading(false);
+      }
+    }
+
+    if (!analysis) return null;
+
+    try {
+      return await getRouteBetweenPoints(
+        analysis.analysisId,
+        { lat: originLat, lng: originLon },
+        { lat: destLat, lng: destLon }
+      );
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "";
+      if (message.includes("Analiz oturumu")) {
+        // Backend session expired/restarted — drop the stale cache so the next attempt re-analyzes.
+        setDamageAnalysis(null);
+      }
+      console.warn("Hasar-farkında rota hesaplanamadı:", e);
+      return null;
+    }
+  };
+
   // ROUTE DRAWING TO ANY CLICKED SHELTER OR MAP POINT
-  const drawRouteToTarget = async (destLat: number, destLon: number, shelterObj?: EvacuationAssemblyRecord) => {
+  // originOverride lets fetchAssemblyAndInitialRoute pass the freshly-detected GPS
+  // fix directly, since userLocation state may not have re-rendered yet at that point.
+  const drawRouteToTarget = async (
+    destLat: number,
+    destLon: number,
+    shelterObj?: EvacuationAssemblyRecord,
+    originOverride?: [number, number]
+  ) => {
+    const origin = originOverride || userLocation;
     setRoutingLoading(true);
+    setRouteErrorMsg(null);
     if (shelterObj) {
       setSelectedShelter(shelterObj);
       if (onShelterSelect) onShelterSelect(shelterObj.toplanma_alani || shelterObj.name || "Güvenli Bölge");
     }
 
     try {
-      const res = await calculateCustomRoute(userLocation[0], userLocation[1], destLat, destLon);
+      const damageRoute = await runDamageAwareRoute(origin[0], origin[1], destLat, destLon);
+      if (damageRoute && damageRoute.routeCoords && damageRoute.routeCoords.length > 0) {
+        setCustomRouteCoords(damageRoute.routeCoords);
+        setCustomDistanceM(damageRoute.distanceMeters);
+        setCustomWalkMinutes(Math.max(1, Math.round(damageRoute.distanceMeters / 80)));
+        setRouteMode("damage-aware");
+        return;
+      }
+
+      const res = await calculateCustomRoute(origin[0], origin[1], destLat, destLon);
       if (res.routeCoords && res.routeCoords.length > 0) {
         setCustomRouteCoords(res.routeCoords);
         setCustomDistanceM(res.routeLengthM);
         setCustomWalkMinutes(res.estWalkMinutes);
+        setRouteMode("fallback");
       }
     } catch (e) {
       console.warn("Rota hesaplama API hatası:", e);
+      setRouteErrorMsg("Rota hesaplanamadı, lütfen tekrar deneyin.");
     } finally {
       setRoutingLoading(false);
     }
@@ -185,6 +316,15 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
     ? customRouteCoords
     : [[userLocation[0], userLocation[1]], selectedShelter ? [selectedShelter.lat || selectedShelter.display_lat!, selectedShelter.lon || selectedShelter.display_lon!] : [DEFAULT_LAT, DEFAULT_LON]];
 
+  const routeStatusMeta =
+    role !== "survivor"
+      ? { label: "EKİP TAKTİK MÜDAHALE KORİDORU", colorClass: "text-cyan-400", Icon: Shield }
+      : routeMode === "damage-aware"
+      ? { label: "HASAR-FARKINDA GÜVENLİ ROTA", colorClass: "text-emerald-400", Icon: Shield }
+      : routeMode === "fallback"
+      ? { label: "GENEL ROTA (Hasar Verisi Yok)", colorClass: "text-amber-400", Icon: AlertTriangle }
+      : { label: "CANLI AFAD SOKAK ROTASI", colorClass: "text-emerald-400", Icon: Shield };
+
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-800 bg-[#080c14]">
       {/* HEADER CONTROLS (CLEAN NON-OVERLAPPING BAR) */}
@@ -201,6 +341,13 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
         <span className="glass-panel px-3 py-2 rounded-xl border border-slate-800 bg-slate-950/90 text-[11px] font-mono text-emerald-400 font-bold">
           AFAD RESMİ ALANLARI ({assemblyData?.records?.length || 0})
         </span>
+
+        {damageAnalysisLoading && (
+          <span className="glass-panel px-3 py-2 rounded-xl border border-amber-500/40 bg-slate-950/90 text-[11px] font-mono text-amber-300 font-bold flex items-center gap-2">
+            <Compass className="w-3.5 h-3.5 animate-spin" />
+            🛰️ Uydu &amp; hasar analizi çalışıyor... (10-30 sn)
+          </span>
+        )}
       </div>
 
       {/* MAP OVERLAY LEGEND & CONTROLS (TOP RIGHT) */}
@@ -231,9 +378,9 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
           {routingLoading ? <RefreshCw className="w-5 h-5 animate-spin text-cyan-400" /> : <Navigation className="w-5 h-5 animate-pulse" />}
         </div>
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1">
-            <Shield className="w-3 h-3" />
-            {role === 'survivor' ? 'CANLI AFAD SOKAK ROTASI' : 'EKİP TAKTİK MÜDAHALE KORİDORU'}
+          <div className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 ${routeStatusMeta.colorClass}`}>
+            <routeStatusMeta.Icon className="w-3 h-3" />
+            {routeStatusMeta.label}
           </div>
           <div className="text-xs font-black text-white font-mono flex items-center gap-2 mt-0.5 truncate max-w-[240px]">
             <span>{selectedShelter?.toplanma_alani || selectedShelter?.name || "AFAD Güvenli Bölge"}</span>
@@ -246,6 +393,9 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
               <Footprints className="w-3 h-3 text-emerald-400" /> ~{customWalkMinutes || 5} Dk Yürüme
             </span>
           </div>
+          {routeErrorMsg && (
+            <div className="text-[10px] text-red-400 font-bold mt-1">{routeErrorMsg}</div>
+          )}
         </div>
       </div>
 
@@ -258,25 +408,35 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
           attribution='&copy; CARTO &copy; AFAD / QuakeMind GIS'
         />
 
-        {/* OPEN ROADS (GREEN) */}
-        {DEFAULT_OPEN_ROADS.map((road, idx) => (
-          <Polyline key={`open-${idx}`} positions={road} pathOptions={{ color: "#10b981", weight: 5, opacity: 0.8 }} />
+        {/* OPEN ROADS (GREEN) - real segments from the satellite damage analysis */}
+        {damageAnalysis?.safeRoadSegments.map((road, idx) => (
+          <Polyline
+            key={`open-${idx}`}
+            positions={road as [number, number][]}
+            pathOptions={{ color: "#10b981", weight: 5, opacity: 0.8 }}
+          />
         ))}
 
-        {/* BLOCKED ROADS (RED DASHED) */}
-        {showBlocked && DEFAULT_BLOCKED_ROADS.map((road, idx) => (
-          <React.Fragment key={`blocked-${idx}`}>
-            <Polyline positions={road} pathOptions={{ color: "#ef4444", weight: 6, dashArray: "8, 8", opacity: 0.9 }} />
-            <Marker position={road[1]} icon={hazardIcon}>
-              <Popup>
-                <div className="text-slate-900 text-xs font-sans space-y-1 p-1">
-                  <div className="font-bold text-red-600 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5"/> HASARLI / KAPALI YOL</div>
-                  <div>Yapı çökmesi nedeniyle yol araç ve yaya trafiğine kapatılmıştır.</div>
-                </div>
-              </Popup>
-            </Marker>
-          </React.Fragment>
-        ))}
+        {/* BLOCKED ROADS (RED DASHED) - real segments from the satellite damage analysis */}
+        {showBlocked &&
+          damageAnalysis?.blockedRoadSegments.map((road, idx) => (
+            <React.Fragment key={`blocked-${idx}`}>
+              <Polyline
+                positions={road as [number, number][]}
+                pathOptions={{ color: "#ef4444", weight: 6, dashArray: "8, 8", opacity: 0.9 }}
+              />
+              {road.length > 1 && (
+                <Marker position={road[Math.floor(road.length / 2)] as [number, number]} icon={hazardIcon}>
+                  <Popup>
+                    <div className="text-slate-900 text-xs font-sans space-y-1 p-1">
+                      <div className="font-bold text-red-600 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5"/> HASARLI / KAPALI YOL</div>
+                      <div>Uydu görüntüsü hasar analizine göre bu yol segmenti kapalı olarak tespit edildi.</div>
+                    </div>
+                  </Popup>
+                </Marker>
+              )}
+            </React.Fragment>
+          ))}
 
         {/* OSM STREET ROUTE (CYAN POLYLINE FOLLOWING STREET TURNS) */}
         {activeRoute.length > 1 && (

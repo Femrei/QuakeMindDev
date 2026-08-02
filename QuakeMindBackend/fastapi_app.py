@@ -234,6 +234,7 @@ class RoadDamageRequest(BaseModel):
     oamPreferredTitle: Optional[str] = None
     waybackId: Optional[str] = None
     oamTileUrl: Optional[str] = None
+    networkType: Optional[str] = None
 
 
 class RoadDamageRouteRequest(BaseModel):
@@ -641,7 +642,9 @@ def analyze_road_damage(req: RoadDamageRequest):
         blocked_segments = []
         analysis_id = str(uuid.uuid4())
         try:
-            G, safe_G, safe_edges, blocked_edges = analyze_road_network_graph(bounds, w, h, intersection)
+            G, safe_G, safe_edges, blocked_edges = analyze_road_network_graph(
+                bounds, w, h, intersection, network_type=req.networkType or "drive"
+            )
             if G is not None:
                 safe_count = len(safe_edges) if safe_edges else 0
                 blocked_count = len(blocked_edges) if blocked_edges else 0
@@ -770,6 +773,17 @@ def _fetch_osrm_street_route(u_lat: float, u_lon: float, d_lat: float, d_lon: fl
             return coords, float(route["distance"]), None
     return None, None, "OSRM routing service unavailable"
 
+@app.get("/api/postgis/status")
+def postgis_status():
+    from utils.postgis_manager import postgis_engine
+    is_connected = postgis_engine.check_connection()
+    return {
+        "postgisConnected": is_connected,
+        "dbUrl": postgis_engine.db_url.split("@")[-1] if is_connected else "Offline",
+        "hybridFallbackActive": True,
+        "message": "PostgreSQL/PostGIS eklentisi aktif. GIST R-Tree mekânsal indeksleme kullanılıyor." if is_connected else "PostgreSQL/PostGIS çevrimdışı. Sistem otomatik çevrimdışı AFAD veri seti fallback modunda çalışıyor."
+    }
+
 @app.get("/api/road_damage/assembly")
 def road_damage_assembly(
     latitude: float,
@@ -781,12 +795,17 @@ def road_damage_assembly(
 ):
     import json
     import math
+    from utils.postgis_manager import postgis_engine
 
     records = []
-    afad_json_path = ROAD_ROOT / "data" / "tum_turkiye_toplanma_alanlari.json"
 
-    # 1. Load official AFAD Assembly points dataset (72,232 points across Turkey)
-    if afad_json_path.exists():
+    # 1. Try querying PostGIS first if connected
+    if postgis_engine.check_connection():
+        records = postgis_engine.query_nearby_postgis(latitude, longitude, radiusKm * 1000.0)
+
+    # 2. Fallback to local AFAD JSON dataset (72,232 points across Turkey)
+    afad_json_path = ROAD_ROOT / "data" / "tum_turkiye_toplanma_alanlari.json"
+    if not records and afad_json_path.exists():
         try:
             with open(afad_json_path, encoding="utf-8") as f:
                 afad_data = json.load(f)
@@ -795,7 +814,6 @@ def road_damage_assembly(
                 try:
                     e_lat = float(item["enlem"])
                     e_lon = float(item["boylam"])
-                    # Rough bounding check before Haversine
                     if abs(e_lat - latitude) <= (radiusKm / 111.0) and abs(e_lon - longitude) <= (radiusKm / 80.0):
                         dist_m = _haversine_m(latitude, longitude, e_lat, e_lon)
                         if dist_m <= (radiusKm * 1000.0):
@@ -811,7 +829,7 @@ def road_damage_assembly(
                                 "display_lon": e_lon,
                                 "category": "AFAD Resmi Toplanma Alanı",
                                 "priority": 0,
-                                "source": "AFAD Resmi Veri Seti",
+                                "source": "AFAD Resmi Veri Seti (Offline Fallback)",
                                 "capacity": "Resmi Toplanma Alanı",
                                 "status": "🟢 Güvenli AFAD Toplanma Alanı",
                                 "dist_m": round(dist_m, 1)
