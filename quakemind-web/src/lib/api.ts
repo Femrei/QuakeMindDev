@@ -312,3 +312,43 @@ export async function analyzeCameraFrame(modelType: string = "hybrid", imageBase
   if (!res.ok) throw new Error("Kamera analizi başarısız.");
   return res.json();
 }
+
+export interface EvacuationAssemblyRecord {
+  toplanma_alani?: string;
+  name?: string;
+  il?: string;
+  ilce?: string;
+  mahalle?: string;
+  lat: number;
+  lon: number;
+  display_lat?: number;
+  display_lon?: number;
+  category?: string;
+  priority?: number;
+  source?: string;
+  capacity?: string;
+  status?: string;
+}
+
+export interface EvacuationAssemblyResponse {
+  records: EvacuationAssemblyRecord[];
+  activeDataSource: string;
+  osmError?: string | null;
+  nearest?: EvacuationAssemblyRecord | null;
+  nearestAirM?: number | null;
+  routeCoords?: [number, number][] | null;
+  routeLengthM?: number | null;
+  routeError?: string | null;
+}
+
+export async function getEvacuationAssemblyData(
+  latitude: number,
+  longitude: number,
+  radiusKm: number = 8.0
+): Promise<EvacuationAssemblyResponse> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/road_damage/assembly?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`
+  );
+  if (!res.ok) throw new Error("Tahliye toplanma alanları ve rota alınamadı.");
+  return res.json();
+}
