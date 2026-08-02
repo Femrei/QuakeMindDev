@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Shield, Navigation, AlertTriangle, Layers, Compass, Crosshair, RefreshCw, MapPin, Footprints, Zap } from "lucide-react";
 import "leaflet/dist/leaflet.css";
@@ -87,6 +87,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
   const [damageAnalysisLoading, setDamageAnalysisLoading] = useState(false);
   const [routeMode, setRouteMode] = useState<"idle" | "damage-aware" | "fallback">("idle");
   const [routeErrorMsg, setRouteErrorMsg] = useState<string | null>(null);
+  const routeRequestIdRef = useRef(0);
 
   // Detect User GPS on Load
   useEffect(() => {
@@ -234,6 +235,11 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
   // ROUTE DRAWING TO ANY CLICKED SHELTER OR MAP POINT
   // originOverride lets fetchAssemblyAndInitialRoute pass the freshly-detected GPS
   // fix directly, since userLocation state may not have re-rendered yet at that point.
+  //
+  // Draws a fast fallback route immediately (OSRM, ~1-2s) so the user always sees
+  // something right away, then upgrades to the damage-aware route in the background
+  // once/if that (much slower, satellite+AI) analysis resolves. routeRequestIdRef
+  // guards against a slow in-flight upgrade overwriting a newer click's result.
   const drawRouteToTarget = async (
     destLat: number,
     destLon: number,
@@ -241,6 +247,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
     originOverride?: [number, number]
   ) => {
     const origin = originOverride || userLocation;
+    const requestId = ++routeRequestIdRef.current;
     setRoutingLoading(true);
     setRouteErrorMsg(null);
     if (shelterObj) {
@@ -249,16 +256,8 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
     }
 
     try {
-      const damageRoute = await runDamageAwareRoute(origin[0], origin[1], destLat, destLon);
-      if (damageRoute && damageRoute.routeCoords && damageRoute.routeCoords.length > 0) {
-        setCustomRouteCoords(damageRoute.routeCoords);
-        setCustomDistanceM(damageRoute.distanceMeters);
-        setCustomWalkMinutes(Math.max(1, Math.round(damageRoute.distanceMeters / 80)));
-        setRouteMode("damage-aware");
-        return;
-      }
-
       const res = await calculateCustomRoute(origin[0], origin[1], destLat, destLon);
+      if (requestId !== routeRequestIdRef.current) return; // a newer click superseded this one
       if (res.routeCoords && res.routeCoords.length > 0) {
         setCustomRouteCoords(res.routeCoords);
         setCustomDistanceM(res.routeLengthM);
@@ -266,10 +265,25 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
         setRouteMode("fallback");
       }
     } catch (e) {
-      console.warn("Rota hesaplama API hatası:", e);
-      setRouteErrorMsg("Rota hesaplanamadı, lütfen tekrar deneyin.");
+      if (requestId === routeRequestIdRef.current) {
+        console.warn("Rota hesaplama API hatası:", e);
+        setRouteErrorMsg("Rota hesaplanamadı, lütfen tekrar deneyin.");
+      }
     } finally {
-      setRoutingLoading(false);
+      if (requestId === routeRequestIdRef.current) setRoutingLoading(false);
+    }
+
+    try {
+      const damageRoute = await runDamageAwareRoute(origin[0], origin[1], destLat, destLon);
+      if (requestId !== routeRequestIdRef.current) return;
+      if (damageRoute && damageRoute.routeCoords && damageRoute.routeCoords.length > 0) {
+        setCustomRouteCoords(damageRoute.routeCoords);
+        setCustomDistanceM(damageRoute.distanceMeters);
+        setCustomWalkMinutes(Math.max(1, Math.round(damageRoute.distanceMeters / 80)));
+        setRouteMode("damage-aware");
+      }
+    } catch (e) {
+      console.warn("Hasar-farkında rota hesaplanamadı:", e);
     }
   };
 
@@ -345,7 +359,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
         {damageAnalysisLoading && (
           <span className="glass-panel px-3 py-2 rounded-xl border border-amber-500/40 bg-slate-950/90 text-[11px] font-mono text-amber-300 font-bold flex items-center gap-2">
             <Compass className="w-3.5 h-3.5 animate-spin" />
-            🛰️ Uydu &amp; hasar analizi çalışıyor... (10-30 sn)
+            🛰️ Uydu &amp; hasar analizi çalışıyor... (sunucu yoğunluğuna göre biraz sürebilir)
           </span>
         )}
       </div>
