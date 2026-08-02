@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { Shield, Navigation, AlertTriangle, CheckCircle2, Layers, Compass, Crosshair, RefreshCw, MapPin } from "lucide-react";
+import { Shield, Navigation, AlertTriangle, CheckCircle2, Layers, Compass, Crosshair, RefreshCw, MapPin, Footprints, Zap } from "lucide-react";
 import "leaflet/dist/leaflet.css";
-import { getEvacuationAssemblyData, EvacuationAssemblyRecord, EvacuationAssemblyResponse } from "@/lib/api";
+import { getEvacuationAssemblyData, calculateCustomRoute, EvacuationAssemblyRecord, EvacuationAssemblyResponse } from "@/lib/api";
 
 interface SafeEvacuationMapProps {
   role?: "survivor" | "command";
@@ -28,14 +28,20 @@ const DEFAULT_BLOCKED_ROADS: [number, number][][] = [
 ];
 
 function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
-  const { MapContainer, TileLayer, Polyline, Marker, Popup, Tooltip, useMap } = require("react-leaflet");
+  const { MapContainer, TileLayer, Polyline, Marker, Popup, Tooltip, useMapEvents } = require("react-leaflet");
   const L = require("leaflet");
 
   const [userLocation, setUserLocation] = useState<[number, number]>([DEFAULT_LAT, DEFAULT_LON]);
   const [gpsStatus, setGpsStatus] = useState<"detecting" | "success" | "fallback">("detecting");
   const [assemblyData, setAssemblyData] = useState<EvacuationAssemblyResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  
   const [selectedShelter, setSelectedShelter] = useState<EvacuationAssemblyRecord | null>(null);
+  const [customRouteCoords, setCustomRouteCoords] = useState<[number, number][] | null>(null);
+  const [customDistanceM, setCustomDistanceM] = useState<number | null>(null);
+  const [customWalkMinutes, setCustomWalkMinutes] = useState<number | null>(null);
+
+  const [loading, setLoading] = useState(false);
+  const [routingLoading, setRoutingLoading] = useState(false);
   const [showBlocked, setShowBlocked] = useState(true);
 
   // Detect User GPS on Load
@@ -52,32 +58,36 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
           const lon = pos.coords.longitude;
           setUserLocation([lat, lon]);
           setGpsStatus("success");
-          fetchAssemblyAndRoute(lat, lon);
+          fetchAssemblyAndInitialRoute(lat, lon);
         },
         (err) => {
           console.warn("GPS okunamadı, varsayılan deprem merkez üssüne geçiliyor:", err);
           setGpsStatus("fallback");
-          fetchAssemblyAndRoute(DEFAULT_LAT, DEFAULT_LON);
+          fetchAssemblyAndInitialRoute(DEFAULT_LAT, DEFAULT_LON);
         },
         { timeout: 8000, enableHighAccuracy: true }
       );
     } else {
       setGpsStatus("fallback");
-      fetchAssemblyAndRoute(DEFAULT_LAT, DEFAULT_LON);
+      fetchAssemblyAndInitialRoute(DEFAULT_LAT, DEFAULT_LON);
     }
   };
 
-  const fetchAssemblyAndRoute = async (lat: number, lon: number) => {
+  const fetchAssemblyAndInitialRoute = async (lat: number, lon: number) => {
     setLoading(true);
     try {
       const data = await getEvacuationAssemblyData(lat, lon, 8.0);
       setAssemblyData(data);
       if (data.nearest) {
         setSelectedShelter(data.nearest);
+        if (data.routeCoords && data.routeCoords.length > 0) {
+          setCustomRouteCoords(data.routeCoords);
+          setCustomDistanceM(data.routeLengthM || 950);
+          setCustomWalkMinutes(Math.max(1, Math.round((data.routeLengthM || 950) / 80)));
+        }
       }
     } catch (e) {
       console.warn("Backend toplanma alanı API offline, yerel AFAD veri seti kullanılıyor:", e);
-      // Fallback local AFAD Assembly points
       const mockRecords: EvacuationAssemblyRecord[] = [
         { name: "Antakya Şehir Stadyumu Toplanma Alanı", lat: 36.2120, lon: 36.1730, ilce: "Antakya", mahalle: "Atatürk Mah.", capacity: "2,000 Kişi", status: "Güvenli - Su & Gıda Var", priority: 0 },
         { name: "Fuar Alanı Güvenli Çadır Kenti", lat: 36.2150, lon: 36.1800, ilce: "Antakya", mahalle: "Aksaray Mah.", capacity: "3,000 Kişi", status: "Güvenli - Sağlık Ekibi Mevcut", priority: 0 },
@@ -97,10 +107,64 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
         routeLengthM: 1250,
       });
       setSelectedShelter(mockRecords[0]);
+      setCustomRouteCoords([
+        [lat, lon],
+        [36.2050, 36.1640],
+        [36.2080, 36.1680],
+        [36.2120, 36.1730],
+      ]);
+      setCustomDistanceM(1250);
+      setCustomWalkMinutes(15);
     } finally {
       setLoading(false);
     }
   };
+
+  // ROUTE DRAWING TO ANY CLICKED SHELTER OR MAP POINT
+  const drawRouteToTarget = async (destLat: number, destLon: number, shelterObj?: EvacuationAssemblyRecord) => {
+    setRoutingLoading(true);
+    if (shelterObj) {
+      setSelectedShelter(shelterObj);
+      if (onShelterSelect) onShelterSelect(shelterObj.toplanma_alani || shelterObj.name || "Güvenli Bölge");
+    }
+
+    try {
+      const res = await calculateCustomRoute(userLocation[0], userLocation[1], destLat, destLon);
+      if (res.routeCoords && res.routeCoords.length > 0) {
+        setCustomRouteCoords(res.routeCoords);
+        setCustomDistanceM(res.routeLengthM);
+        setCustomWalkMinutes(res.estWalkMinutes);
+      }
+    } catch (e) {
+      console.warn("Rota hesaplama API hatası, doğrudan interpolasyon yapılıyor:", e);
+      const fallbackPath: [number, number][] = [
+        [userLocation[0], userLocation[1]],
+        [userLocation[0] + (destLat - userLocation[0]) * 0.5, userLocation[1] + (destLon - userLocation[1]) * 0.5],
+        [destLat, destLon],
+      ];
+      setCustomRouteCoords(fallbackPath);
+      setCustomDistanceM(1100);
+      setCustomWalkMinutes(14);
+    } finally {
+      setRoutingLoading(false);
+    }
+  };
+
+  // Click Handler for Map Component
+  function MapClickHandler() {
+    useMapEvents({
+      click(e: any) {
+        const { lat, lng } = e.latlng;
+        drawRouteToTarget(lat, lng, {
+          name: `Özel Seçilen Güvenli Nokta (${lat.toFixed(3)}, ${lng.toFixed(3)})`,
+          lat: lat,
+          lon: lng,
+          status: "Kullanıcı Seçimli Hedef",
+        });
+      },
+    });
+    return null;
+  }
 
   // Custom Icon Builders
   const greenShieldIcon = L.divIcon({
@@ -124,9 +188,9 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
     iconAnchor: [13, 13],
   });
 
-  const activeRoute = assemblyData?.routeCoords && assemblyData.routeCoords.length > 0
-    ? assemblyData.routeCoords
-    : [[userLocation[0], userLocation[1]], selectedShelter ? [selectedShelter.lat, selectedShelter.lon] : [DEFAULT_LAT, DEFAULT_LON]];
+  const activeRoute = customRouteCoords && customRouteCoords.length > 0
+    ? customRouteCoords
+    : [[userLocation[0], userLocation[1]], selectedShelter ? [selectedShelter.lat || selectedShelter.display_lat!, selectedShelter.lon || selectedShelter.display_lon!] : [DEFAULT_LAT, DEFAULT_LON]];
 
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-800">
@@ -174,29 +238,34 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
         </div>
       </div>
 
-      {/* ROLE OVERLAY BANNER */}
+      {/* ROLE OVERLAY BANNER WITH LIVE ROUTE STATS */}
       <div className="absolute bottom-4 left-4 z-[1000] glass-panel p-4 rounded-2xl border border-slate-700/60 bg-slate-950/95 backdrop-blur-md flex items-center gap-3.5 max-w-md shadow-2xl">
         <div className={`p-3 rounded-2xl ${role === 'survivor' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'}`}>
-          {role === 'survivor' ? <Navigation className="w-6 h-6 animate-pulse" /> : <Compass className="w-6 h-6" />}
+          {routingLoading ? <RefreshCw className="w-6 h-6 animate-spin text-cyan-400" /> : role === 'survivor' ? <Navigation className="w-6 h-6 animate-pulse" /> : <Compass className="w-6 h-6" />}
         </div>
         <div>
           <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5" />
-            {role === 'survivor' ? 'EN YAKIN GÜVENLİ AFAD ALANI & ROTA' : 'EKİP TAKTİK MÜDAHALE KORİDORU'}
+            {role === 'survivor' ? 'SEÇİLİ GÜVENLİ HEDEF & CANLI ROTA' : 'EKİP TAKTİK MÜDAHALE KORİDORU'}
           </div>
           <div className="text-sm font-black text-white font-mono flex items-center gap-2 mt-0.5">
             <span>{selectedShelter?.toplanma_alani || selectedShelter?.name || "AFAD Güvenli Bölge"}</span>
-            {assemblyData?.routeLengthM && (
-              <span className="text-xs text-cyan-300 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-700/50">
-                ({assemblyData.routeLengthM}m Rota)
-              </span>
-            )}
+          </div>
+          <div className="flex items-center gap-3 text-xs text-cyan-300 font-mono mt-1">
+            <span className="flex items-center gap-1 font-bold">
+              <MapPin className="w-3.5 h-3.5 text-cyan-400" /> {customDistanceM ? `${customDistanceM} m` : "Hesaplanıyor..."}
+            </span>
+            <span className="flex items-center gap-1 font-bold text-emerald-400">
+              <Footprints className="w-3.5 h-3.5 text-emerald-400" /> ~{customWalkMinutes || 5} Dk Yürüme
+            </span>
           </div>
         </div>
       </div>
 
       {/* LEAFLET CONTAINER */}
       <MapContainer center={userLocation} zoom={14} className="w-full h-full">
+        <MapClickHandler />
+
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; CARTO &copy; AFAD / QuakeMind GIS'
@@ -215,14 +284,14 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
               <Popup>
                 <div className="text-slate-900 text-xs font-sans space-y-1 p-1">
                   <div className="font-bold text-red-600 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5"/> HASARLI / KAPALI YOL</div>
-                  <div>Yapı çökmesi nedeniyle yol araç trafiğine kapatılmıştır.</div>
+                  <div>Yapı çökmesi nedeniyle yol araç ve yaya trafiğine kapatılmıştır.</div>
                 </div>
               </Popup>
             </Marker>
           </React.Fragment>
         ))}
 
-        {/* DIJKSTRA SHORT SAFE ROUTE (CYAN) */}
+        {/* DIJKSTRA / OSM SHORT SAFE ROUTE (CYAN) */}
         {activeRoute.length > 1 && (
           <Polyline 
             positions={activeRoute} 
@@ -244,7 +313,6 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
           const lat = s.lat || s.display_lat;
           const lon = s.lon || s.display_lon;
           if (!lat || !lon) return null;
-          const isSelected = selectedShelter?.toplanma_alani === s.toplanma_alani || selectedShelter?.name === s.name;
 
           return (
             <Marker 
@@ -253,9 +321,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
               icon={greenShieldIcon}
               eventHandlers={{
                 click: () => {
-                  setSelectedShelter(s);
-                  if (onShelterSelect) onShelterSelect(s.toplanma_alani || s.name || "Güvenli Bölge");
-                  fetchAssemblyAndRoute(userLocation[0], userLocation[1]);
+                  drawRouteToTarget(lat, lon, s);
                 }
               }}
             >
@@ -271,13 +337,10 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
                     {s.status || "🟢 Güvenli AFAD Toplanma Alanı"}
                   </div>
                   <button 
-                    onClick={() => {
-                      setSelectedShelter(s);
-                      fetchAssemblyAndRoute(userLocation[0], userLocation[1]);
-                    }}
-                    className="w-full mt-2 bg-emerald-600 text-white font-bold text-xs py-1.5 rounded-lg shadow hover:bg-emerald-700 transition-colors"
+                    onClick={() => drawRouteToTarget(lat, lon, s)}
+                    className="w-full mt-2 bg-cyan-600 text-white font-bold text-xs py-2 rounded-lg shadow hover:bg-cyan-700 transition-colors flex items-center justify-center gap-1.5"
                   >
-                    ⚡ Buraya En Kısa Rotayı Çiz
+                    <Zap className="w-3.5 h-3.5" /> ⚡ Buraya En Kısa Rotayı Çiz
                   </button>
                 </div>
               </Popup>

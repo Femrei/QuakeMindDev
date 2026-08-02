@@ -352,3 +352,27 @@ export async function getEvacuationAssemblyData(
   if (!res.ok) throw new Error("Tahliye toplanma alanları ve rota alınamadı.");
   return res.json();
 }
+
+export interface CustomRouteResponse {
+  start: [number, number];
+  destination: [number, number];
+  routeCoords: [number, number][];
+  routeLengthM: number;
+  estWalkMinutes: number;
+  routeError?: string | null;
+}
+
+export async function calculateCustomRoute(
+  startLat: number,
+  startLon: number,
+  destLat: number,
+  destLon: number
+): Promise<CustomRouteResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/road_damage/calculate_custom_route`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ startLat, startLon, destLat, destLon }),
+  });
+  if (!res.ok) throw new Error("Rota hesaplanamadı.");
+  return res.json();
+}

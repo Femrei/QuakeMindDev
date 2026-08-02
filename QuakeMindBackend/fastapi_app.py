@@ -845,6 +845,64 @@ def road_damage_assembly(
     }
 
 
+class CustomRouteRequest(BaseModel):
+    startLat: float
+    startLon: float
+    destLat: float
+    destLon: float
+    allowOnlineFallback: bool = True
+
+@app.post("/api/road_damage/calculate_custom_route")
+def calculate_custom_route(req: CustomRouteRequest):
+    route_coords = None
+    route_length_m = None
+    route_error = None
+
+    # 1. Try local road dataset dijkstra routing first
+    try:
+        runtime = _get_road_runtime()
+        has_local_roads = runtime.get("has_local_roads_dataset", lambda: False)()
+        local_calc = runtime.get("shortest_route_from_local_roads")
+        if has_local_roads and local_calc:
+            route_coords, route_length_m, route_error = local_calc(
+                req.startLat, req.startLon, req.destLat, req.destLon
+            )
+    except Exception as e:
+        print(f"Local routing exception: {e}")
+
+    # 2. If no local route or online fallback requested, call shortest_walk_route (OSMnx / NetworkX)
+    if not route_coords and req.allowOnlineFallback:
+        try:
+            from apps.road_damage.utils.assembly import shortest_walk_route
+            route_coords, route_length_m, route_error = shortest_walk_route(
+                req.startLat, req.startLon, req.destLat, req.destLon
+            )
+        except Exception as e:
+            route_error = str(e)
+
+    # 3. Fallback straight interpolation if graph nodes disconnected
+    if not route_coords:
+        route_coords = [
+            [req.startLat, req.startLon],
+            [req.startLat + (req.destLat - req.startLat) * 0.33, req.startLon + (req.destLon - req.startLon) * 0.33],
+            [req.startLat + (req.destLat - req.startLat) * 0.66, req.startLon + (req.destLon - req.startLon) * 0.66],
+            [req.destLat, req.destLon]
+        ]
+        from apps.road_damage.utils.assembly import haversine_m
+        route_length_m = haversine_m(req.startLat, req.startLon, req.destLat, req.destLon)
+
+    est_minutes = round((route_length_m or 0) / 80.0) if route_length_m else 5
+
+    return {
+        "start": [req.startLat, req.startLon],
+        "destination": [req.destLat, req.destLon],
+        "routeCoords": [[float(lat), float(lon)] for lat, lon in route_coords],
+        "routeLengthM": round(route_length_m, 1) if route_length_m else 0,
+        "estWalkMinutes": max(1, est_minutes),
+        "routeError": route_error
+    }
+
+
 @app.post("/api/sos/alert")
 def create_sos_alert(req: SOSAlertRequest):
     if not (-90.0 <= req.latitude <= 90.0) or not (-180.0 <= req.longitude <= 180.0):
