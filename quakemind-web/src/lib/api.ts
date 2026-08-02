@@ -298,6 +298,7 @@ export interface CameraAnalysisResponse {
   modelType: string;
   activeModels: string[];
   detections: CameraDetection[];
+  annotatedImage?: string | null;
   advice: string;
   timestamp: string;
 }

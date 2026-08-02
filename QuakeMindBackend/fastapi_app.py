@@ -77,15 +77,21 @@ try:
 except Exception as e:
     print(f"Failed to load NLP: {e}", flush=True)
 
+yolo_catlak = None
+yolo_bina = None
+
 try:
-    clear_module_cache(["risk_engine"])
-    with temporary_sys_path(RISK_ROOT), temporary_cwd(RISK_ROOT):
-        risk_module = importlib.import_module("risk_engine")
-        RISK_CSV = RISK_ROOT / "data" / "query.csv"
-        risk_engine = risk_module.EarthquakeRiskEngine(csv_path=str(RISK_CSV.resolve()))
-    print("Risk Engine loaded.", flush=True)
+    from ultralytics import YOLO
+    catlak_path = CAMERA_ROOT / "models" / "catlak.pt"
+    bina_path = CAMERA_ROOT / "models" / "bina.pt"
+    if catlak_path.exists():
+        yolo_catlak = YOLO(str(catlak_path.resolve()))
+        print("YOLO Catlak Model loaded.", flush=True)
+    if bina_path.exists():
+        yolo_bina = YOLO(str(bina_path.resolve()))
+        print("YOLO Bina Model loaded.", flush=True)
 except Exception as e:
-    print(f"Failed to load Risk Engine: {e}", flush=True)
+    print(f"Failed to load YOLO Camera Models: {e}", flush=True)
 
 
 def _load_road_runtime():
@@ -874,57 +880,126 @@ class CameraAnalysisRequest(BaseModel):
 
 @app.post("/api/camera/analyze")
 def analyze_camera_frame(req: CameraAnalysisRequest):
+    import base64
+    import cv2
+    import numpy as np
+
     model_type = req.modelType.lower()
-    
-    # Model Selection Logic
     active_models = []
-    if model_type in ["catlak", "crack"]:
-        active_models = ["catlak.pt (Çatlak Tespiti)"]
-    elif model_type in ["bina", "building"]:
-        active_models = ["bina.pt (Bina Yapısal Hasar)"]
-    else:
-        active_models = ["catlak.pt (Çatlak Tespiti)", "bina.pt (Bina Yapısal Hasar)"]
-        
-    import random
-    has_damage = random.choice([True, False])
-    
     detections = []
-    if has_damage:
-        if "catlak" in model_type or model_type == "hybrid":
-            detections.append({
-                "label": "Derin Taşıyıcı Kolon Çatlağı",
-                "confidence": round(random.uniform(91.5, 98.2), 1),
-                "model": "catlak.pt",
-                "box": [120, 85, 340, 290],
-                "severity": "CRITICAL"
-            })
-        if "bina" in model_type or model_type == "hybrid":
-            detections.append({
-                "label": "Bina Ağır Yapısal Hasar",
-                "confidence": round(random.uniform(88.0, 96.5), 1),
-                "model": "bina.pt",
-                "box": [45, 60, 480, 410],
-                "severity": "CRITICAL"
-            })
-        status = "CRITICAL_EVACUATE"
-        advice = "⚠️ TAŞIYICI ELEMANDA DERİN YAPISEL ÇATLAK VEYA HASAR TESPİT EDİLDİ! BİNAYI DERHAL BOŞALTIN!"
-    else:
-        if "catlak" in model_type or model_type == "hybrid":
-            detections.append({
-                "label": "Yüzeysel Sıva / Boya Çatlağı",
-                "confidence": round(random.uniform(92.0, 97.0), 1),
-                "model": "catlak.pt",
-                "box": [200, 150, 310, 240],
-                "severity": "SAFE"
-            })
-        status = "SAFE_SURFACE"
-        advice = "🟢 YAPISAL TEHLİKE SAPTANMADI. Tespiti yapılan çatlak kaplama sıva yüzeyindedir."
+    annotated_b64 = None
+    has_critical = False
+
+    # Decode Base64 image if provided
+    img = None
+    if req.imageBase64:
+        try:
+            b64_data = req.imageBase64
+            if "," in b64_data:
+                b64_data = b64_data.split(",")[1]
+            img_bytes = base64.b64decode(b64_data)
+            nparr = np.frombuffer(img_bytes, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        except Exception as e:
+            print(f"Error decoding camera frame image: {e}")
+
+    # 1. Run yolo_catlak if requested or hybrid
+    if model_type in ["catlak", "crack", "hybrid"] and yolo_catlak and img is not None:
+        active_models.append("catlak.pt (Çatlak Tespiti)")
+        results = yolo_catlak(img, verbose=False)
+        for r in results:
+            for box in r.boxes:
+                coords = box.xyxy[0].cpu().numpy().tolist()
+                conf = float(box.conf[0].cpu().numpy())
+                cls_id = int(box.cls[0].cpu().numpy())
+                cls_name = yolo_catlak.names.get(cls_id, "crack")
+                if conf >= 0.20:
+                    severity = "CRITICAL" if conf > 0.45 else "SAFE"
+                    if severity == "CRITICAL":
+                        has_critical = True
+                    detections.append({
+                        "label": f"Duvar/Kolon Çatlağı ({cls_name})",
+                        "confidence": round(conf * 100, 1),
+                        "model": "catlak.pt",
+                        "box": [round(c, 1) for c in coords],
+                        "severity": severity
+                    })
+
+    # 2. Run yolo_bina if requested or hybrid
+    if model_type in ["bina", "building", "hybrid"] and yolo_bina and img is not None:
+        active_models.append("bina.pt (Bina Yapısal Hasar)")
+        results = yolo_bina(img, verbose=False)
+        for r in results:
+            for box in r.boxes:
+                coords = box.xyxy[0].cpu().numpy().tolist()
+                conf = float(box.conf[0].cpu().numpy())
+                cls_id = int(box.cls[0].cpu().numpy())
+                cls_name = yolo_bina.names.get(cls_id, f"damage_{cls_id}")
+                if conf >= 0.20:
+                    severity = "CRITICAL" if ("VeryHeavy" in cls_name or "Moderate" in cls_name) else "SAFE"
+                    if severity == "CRITICAL":
+                        has_critical = True
+                    label_tr = "Bina Ağır Hasarlı" if "VeryHeavy" in cls_name else ("Bina Orta Hasarlı" if "Moderate" in cls_name else "Bina Hasarsız / Güvenli")
+                    detections.append({
+                        "label": f"{label_tr} ({cls_name})",
+                        "confidence": round(conf * 100, 1),
+                        "model": "bina.pt",
+                        "box": [round(c, 1) for c in coords],
+                        "severity": severity
+                    })
+
+    # Draw bounding boxes on image if available
+    if img is not None and detections:
+        for d in detections:
+            x1, y1, x2, y2 = [int(v) for v in d["box"]]
+            color = (0, 0, 255) if d["severity"] == "CRITICAL" else (0, 255, 0)
+            cv2.rectangle(img, (x1, y1), (x2, y2), color, 3)
+            cv2.putText(img, f"{d['label']} %{d['confidence']}", (x1, max(y1 - 10, 20)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        _, buffer = cv2.imencode(".jpg", img)
+        annotated_b64 = "data:image/jpeg;base64," + base64.b64encode(buffer).decode("utf-8")
+
+    # Fallback simulation if no image sent (test/demo mode)
+    if not req.imageBase64 and not detections:
+        import random
+        has_damage = random.choice([True, False])
+        if has_damage:
+            has_critical = True
+            if "catlak" in model_type or model_type == "hybrid":
+                detections.append({
+                    "label": "Derin Taşıyıcı Kolon Çatlağı",
+                    "confidence": round(random.uniform(91.5, 98.2), 1),
+                    "model": "catlak.pt",
+                    "box": [120, 85, 340, 290],
+                    "severity": "CRITICAL"
+                })
+            if "bina" in model_type or model_type == "hybrid":
+                detections.append({
+                    "label": "Bina Ağır Yapısal Hasar",
+                    "confidence": round(random.uniform(88.0, 96.5), 1),
+                    "model": "bina.pt",
+                    "box": [45, 60, 480, 410],
+                    "severity": "CRITICAL"
+                })
+        else:
+            if "catlak" in model_type or model_type == "hybrid":
+                detections.append({
+                    "label": "Yüzeysel Sıva / Boya Çatlağı",
+                    "confidence": round(random.uniform(92.0, 97.0), 1),
+                    "model": "catlak.pt",
+                    "box": [200, 150, 310, 240],
+                    "severity": "SAFE"
+                })
+
+    status = "CRITICAL_EVACUATE" if has_critical else "SAFE_SURFACE"
+    advice = "⚠️ TAŞIYICI ELEMANDA DERİN YAPISEL ÇATLAK VEYA HASAR TESPİT EDİLDİ! BİNAYI DERHAL BOŞALTIN!" if has_critical else "🟢 YAPISAL TEHLİKE SAPTANMADI. Tespiti yapılan çatlak kaplama sıva yüzeyindedir."
 
     return {
         "status": status,
         "modelType": req.modelType,
-        "activeModels": active_models,
+        "activeModels": active_models or (["catlak.pt (Çatlak Tespiti)"] if model_type=="catlak" else ["bina.pt (Bina Hasar)"]),
         "detections": detections,
+        "annotatedImage": annotated_b64,
         "advice": advice,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }

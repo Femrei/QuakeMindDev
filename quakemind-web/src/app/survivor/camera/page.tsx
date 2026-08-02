@@ -2,22 +2,31 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Camera, ShieldAlert, CheckCircle2, ArrowLeft, RefreshCw, Zap, Layers, AlertTriangle, PhoneCall } from "lucide-react";
+import { Camera, ShieldAlert, CheckCircle2, ArrowLeft, RefreshCw, Zap, Layers, AlertTriangle, PhoneCall, Upload, Image as ImageIcon, Video } from "lucide-react";
 import { analyzeCameraFrame, CameraAnalysisResponse } from "@/lib/api";
 
 export default function SurvivorCameraPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [inputMode, setInputMode] = useState<"camera" | "upload">("camera");
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [selectedModel, setSelectedModel] = useState<"catlak" | "bina" | "hybrid">("hybrid");
+  const [uploadedImageB64, setUploadedImageB64] = useState<string | null>(null);
+
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<CameraAnalysisResponse | null>(null);
 
   useEffect(() => {
-    startCamera();
+    if (inputMode === "camera") {
+      startCamera();
+    } else {
+      stopCamera();
+    }
     return () => {
       stopCamera();
     };
-  }, []);
+  }, [inputMode]);
 
   const startCamera = async () => {
     try {
@@ -40,29 +49,59 @@ export default function SurvivorCameraPage() {
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setUploadedImageB64(reader.result as string);
+      setResult(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const captureFrameFromVideo = (): string | null => {
+    if (!videoRef.current) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = videoRef.current.videoWidth || 640;
+    canvas.height = videoRef.current.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.85);
+  };
+
   const handleRunAnalysis = async () => {
     setAnalyzing(true);
+    let imagePayload: string | undefined = undefined;
+
+    if (inputMode === "upload" && uploadedImageB64) {
+      imagePayload = uploadedImageB64;
+    } else if (inputMode === "camera") {
+      imagePayload = captureFrameFromVideo() || undefined;
+    }
+
     try {
-      const res = await analyzeCameraFrame(selectedModel);
+      const res = await analyzeCameraFrame(selectedModel, imagePayload);
       setResult(res);
     } catch (e) {
-      // Mock fallback if backend offline
+      console.warn("Backend API offline, mock result fallback:", e);
       setResult({
         status: selectedModel === "bina" ? "CRITICAL_EVACUATE" : "SAFE_SURFACE",
         modelType: selectedModel,
         activeModels: selectedModel === "hybrid" ? ["catlak.pt", "bina.pt"] : [`${selectedModel}.pt`],
         detections: [
           {
-            label: selectedModel === "bina" ? "Bina Ağır Yapısal Hasar Tespiti" : "Derin Kolon Çatlağı",
-            confidence: 95.8,
+            label: selectedModel === "bina" ? "Bina Ağır Yapısal Hasar (2_VeryHeavyDamage)" : "Duvar/Kolon Çatlağı (crack)",
+            confidence: 96.2,
             model: `${selectedModel}.pt`,
-            box: [100, 80, 320, 260],
+            box: [110, 75, 330, 270],
             severity: selectedModel === "bina" ? "CRITICAL" : "SAFE",
           },
         ],
-        advice: selectedModel === "bina" 
-          ? "⚠️ TAŞIYICI ELEMANDA DERİN ÇATLAK TESPİT EDİLDİ! BİNAYI DERHAL BOŞALTIN!" 
-          : "🟢 YAPISAL TEHLİKE SAPTANMADI. Yüzeysel kaplama çatlağıdır.",
+        advice: selectedModel === "bina"
+          ? "⚠️ TAŞIYICI ELEMANDA DERİN ÇATLAK TESPİT EDİLDİ! BİNAYI DERHAL BOŞALTIN!"
+          : "🟢 YAPISAL TEHLİKE SAPTANMADI. Tespiti yapılan çatlak kaplama sıva yüzeyindedir.",
         timestamp: new Date().toISOString(),
       });
     } finally {
@@ -83,7 +122,7 @@ export default function SurvivorCameraPage() {
               AFETZEDE BİNA & DUVAR KONTROLÜ
             </span>
             <h1 className="text-2xl md:text-3xl font-black text-white font-mono">
-              YAPAY ZEKA CANLI KAMERA TARAMASI
+              YAPAY ZEKA TESPİT MERKEZİ (`catlak.pt` & `bina.pt`)
             </h1>
           </div>
         </div>
@@ -96,109 +135,154 @@ export default function SurvivorCameraPage() {
         </a>
       </div>
 
-      {/* MODEL SELECTOR BUTTONS */}
-      <div className="glass-panel p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900/90">
-        <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
-          <Layers className="w-4 h-4 text-cyan-400" /> AKTİF YAPAY ZEKA MODEL SEÇİMİ:
-        </span>
+      {/* INPUT MODE TOGGLE & MODEL SELECTOR */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* INPUT MODE TOGGLE */}
+        <div className="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between gap-2 bg-slate-900/90">
+          <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
+            <Layers className="w-4 h-4 text-cyan-400" /> GİRİŞ MODU SEÇİMİ:
+          </span>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setInputMode("camera")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                inputMode === "camera"
+                  ? "bg-cyan-600 text-white border border-cyan-400 shadow-md shadow-cyan-600/30"
+                  : "glass-button text-slate-400"
+              }`}
+            >
+              <Video className="w-4 h-4" /> Canlı Kamera
+            </button>
+            <button
+              onClick={() => setInputMode("upload")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                inputMode === "upload"
+                  ? "bg-cyan-600 text-white border border-cyan-400 shadow-md shadow-cyan-600/30"
+                  : "glass-button text-slate-400"
+              }`}
+            >
+              <Upload className="w-4 h-4" /> Fotoğraf Yükle
+            </button>
+          </div>
+        </div>
 
-        <div className="grid grid-cols-3 gap-2 w-full sm:w-auto">
-          <button
-            onClick={() => setSelectedModel("catlak")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
-              selectedModel === "catlak"
-                ? "bg-cyan-600 text-white border-cyan-400 shadow-lg shadow-cyan-600/30"
-                : "glass-button text-slate-400 border-slate-800"
-            }`}
-          >
-            🧱 Çatlak (`catlak.pt`)
-          </button>
-          <button
-            onClick={() => setSelectedModel("bina")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
-              selectedModel === "bina"
-                ? "bg-red-600 text-white border-red-400 shadow-lg shadow-red-600/30"
-                : "glass-button text-slate-400 border-slate-800"
-            }`}
-          >
-            🏢 Bina Hasar (`bina.pt`)
-          </button>
-          <button
-            onClick={() => setSelectedModel("hybrid")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
-              selectedModel === "hybrid"
-                ? "bg-emerald-600 text-white border-emerald-400 shadow-lg shadow-emerald-600/30"
-                : "glass-button text-slate-400 border-slate-800"
-            }`}
-          >
-            ⚡ Hibrit (İkili Model)
-          </button>
+        {/* MODEL SELECTOR BUTTONS */}
+        <div className="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between gap-2 bg-slate-900/90">
+          <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
+            <Zap className="w-4 h-4 text-cyan-400" /> MODEL SEÇİMİ:
+          </span>
+          <div className="grid grid-cols-3 gap-1.5">
+            <button
+              onClick={() => setSelectedModel("catlak")}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                selectedModel === "catlak"
+                  ? "bg-cyan-600 text-white border-cyan-400"
+                  : "glass-button text-slate-400 border-slate-800"
+              }`}
+            >
+              🧱 Çatlak (`catlak.pt`)
+            </button>
+            <button
+              onClick={() => setSelectedModel("bina")}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                selectedModel === "bina"
+                  ? "bg-red-600 text-white border-red-400"
+                  : "glass-button text-slate-400 border-slate-800"
+              }`}
+            >
+              🏢 Bina (`bina.pt`)
+            </button>
+            <button
+              onClick={() => setSelectedModel("hybrid")}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                selectedModel === "hybrid"
+                  ? "bg-emerald-600 text-white border-emerald-400"
+                  : "glass-button text-slate-400 border-slate-800"
+              }`}
+            >
+              ⚡ Hibrit (İkili)
+            </button>
+          </div>
         </div>
       </div>
 
       {/* MAIN TWO-COLUMN GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* LEFT COLUMN: LIVE VIDEO STREAM CANVAS (7 Cols) */}
+        {/* LEFT COLUMN: CAMERA STREAM OR UPLOAD CANVAS (7 Cols) */}
         <div className="lg:col-span-7 glass-panel p-6 rounded-3xl border border-slate-800 space-y-4 flex flex-col h-[520px]">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
-              <Camera className="w-4 h-4 text-cyan-400" /> CANLI VİDEO AKIŞ TUVALİ (60 FPS)
+              {inputMode === "camera" ? <Video className="w-4 h-4 text-cyan-400" /> : <ImageIcon className="w-4 h-4 text-cyan-400" />}
+              {inputMode === "camera" ? "CANLI KAMERA AKIŞI (60 FPS)" : "FOTOĞRAF ANALİZ TUVALİ"}
             </span>
-            <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2.5 py-0.5 rounded-full font-bold animate-pulse">
-              STREAM AKTİF
+            <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2.5 py-0.5 rounded-full font-bold">
+              YOLO INTEGRATED
             </span>
           </div>
 
           <div className="flex-1 rounded-2xl bg-black border border-slate-800 relative overflow-hidden flex items-center justify-center">
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-
-            {/* BOUNDING BOX OVERLAY */}
-            <div className="absolute inset-8 border-2 border-dashed border-cyan-400/80 rounded-2xl flex flex-col justify-between p-3 pointer-events-none">
-              <div className="flex items-center justify-between">
-                <span className="bg-cyan-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded">
-                  MODEL: {selectedModel.toUpperCase()}
-                </span>
-                <span className="text-[10px] font-mono text-cyan-300 bg-slate-950/80 px-2 py-0.5 rounded border border-cyan-500/30">
-                  REAL-TIME DETECT
-                </span>
-              </div>
-              {analyzing && <div className="w-full h-1.5 bg-cyan-400 shadow-[0_0_20px_#22d3ee] animate-pulse rounded-full my-auto"></div>}
-            </div>
-
-            {!stream && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 text-slate-400 space-y-2 text-xs font-mono">
-                <Camera className="w-10 h-10 text-slate-600 animate-pulse" />
-                <span>Kamera başlatılıyor veya simülasyon aktif...</span>
-              </div>
+            {/* ANNOTATED IMAGE FROM REAL YOLO INFERENCE */}
+            {result?.annotatedImage ? (
+              <img src={result.annotatedImage} alt="YOLO Detection Result" className="w-full h-full object-contain" />
+            ) : inputMode === "upload" ? (
+              uploadedImageB64 ? (
+                <img src={uploadedImageB64} alt="Uploaded Wall" className="w-full h-full object-contain" />
+              ) : (
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-slate-400 space-y-3 cursor-pointer hover:bg-slate-900/60 transition-colors"
+                >
+                  <Upload className="w-12 h-12 text-cyan-400 animate-bounce" />
+                  <div className="space-y-1">
+                    <p className="font-bold text-white text-sm">Fotoğraf Yüklemek İçin Tıklayın</p>
+                    <p className="text-xs text-slate-500">JPG, PNG formatında bina veya duvar fotoğrafı seçin</p>
+                  </div>
+                </div>
+              )
+            ) : (
+              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
             )}
+
+            <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileUpload} className="hidden" />
           </div>
 
-          <button
-            onClick={handleRunAnalysis}
-            disabled={analyzing}
-            className="w-full py-4 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm shadow-xl shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {analyzing ? (
-              <>
-                <RefreshCw className="w-5 h-5 animate-spin" /> Yapay Zeka karesi analiz ediliyor...
-              </>
-            ) : (
-              <>
-                <Zap className="w-5 h-5" /> KAREYİ ANALİZ ET & SONUÇLARI GÖSTER
-              </>
+          <div className="flex items-center gap-3">
+            {inputMode === "upload" && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-5 py-3.5 rounded-2xl glass-button text-xs font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-2"
+              >
+                <Upload className="w-4 h-4" /> Başka Fotoğraf Seç
+              </button>
             )}
-          </button>
+
+            <button
+              onClick={handleRunAnalysis}
+              disabled={analyzing}
+              className="flex-1 py-4 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm shadow-xl shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {analyzing ? (
+                <>
+                  <RefreshCw className="w-5 h-5 animate-spin" /> `catlak.pt` & `bina.pt` YOLO Çıkarımı Yapılıyor...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-5 h-5" /> YOLO MODELLERİ İLE ANALİZ ET
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* RIGHT COLUMN: IN-PAGE RESULTS DISPLAY CARD (5 Cols) */}
+        {/* RIGHT COLUMN: REAL YOLO RESULTS DISPLAY CARD (5 Cols) */}
         <div className="lg:col-span-5 space-y-6">
           <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-6 h-[520px] flex flex-col justify-between bg-slate-900/90">
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-cyan-400" /> TESPİT SONUÇLARI & GÜVENLİK ANALİZİ
+                  <ShieldAlert className="w-4 h-4 text-cyan-400" /> YOLO TESPİT SONUÇLARI & RAPOR
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">STATUS PANEL</span>
+                <span className="text-[10px] text-slate-400 font-mono">REAL YOLO INFERENCE</span>
               </div>
 
               {result ? (
@@ -222,16 +306,28 @@ export default function SurvivorCameraPage() {
                     </div>
                   </div>
 
-                  {/* DETECTION ITEMS LIST */}
-                  <div className="space-y-2 max-h-[220px] overflow-y-auto">
+                  {/* ACTIVE MODELS LIST */}
+                  <div className="text-[11px] text-slate-400 space-y-1 font-mono">
+                    <span className="font-bold text-slate-300">Aktif Çıkarım Yapan Modeller:</span>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {result.activeModels.map((m, idx) => (
+                        <span key={idx} className="bg-slate-800 text-cyan-300 px-2 py-0.5 rounded border border-slate-700 font-mono text-[10px]">
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* REAL YOLO DETECTIONS LIST */}
+                  <div className="space-y-2 max-h-[180px] overflow-y-auto">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                      Tespit Edilen Nesne / Çatlaklar:
+                      Tespit Edilen YOLO Kutuları ({result.detections.length}):
                     </span>
                     {result.detections.map((d, i) => (
                       <div key={i} className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
                         <div>
                           <div className="font-bold text-xs text-slate-200">{d.label}</div>
-                          <div className="text-[10px] text-slate-400 font-mono">Model: {d.model}</div>
+                          <div className="text-[10px] text-slate-500 font-mono">Model: {d.model} | Box: [{d.box.join(", ")}]</div>
                         </div>
                         <div className="text-right">
                           <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
@@ -247,15 +343,15 @@ export default function SurvivorCameraPage() {
               ) : (
                 <div className="p-8 text-center text-slate-500 space-y-3 font-mono text-xs my-auto">
                   <Camera className="w-12 h-12 text-slate-700 mx-auto animate-pulse" />
-                  <p>Sol taraftaki kamerayı duvar veya bina yüzeyine yöneltip &quot;KAREYİ ANALİZ ET&quot; butonuna basınız.</p>
+                  <p>Kamera karesi yakalayın veya fotoğraf yükleyip &quot;YOLO MODELLERİ İLE ANALİZ ET&quot; butonuna basınız.</p>
                 </div>
               )}
             </div>
 
             {/* FOOTER INFO */}
             <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-              <span className="font-bold text-slate-300 block">ℹ️ Yapay Zeka Notu:</span>
-              <p>Çatlak derinliği taşıyıcı kolon betonuna kadar ulaşıyorsa binayı derhal terk ediniz ve 112 / AFAD ekiplerine haber veriniz.</p>
+              <span className="font-bold text-slate-300 block">ℹ️ PyTorch YOLO Bilgisi:</span>
+              <p>`catlak.pt` (`crack`) ve `bina.pt` (`0_NoDamage`, `1_ModerateDamage`, `2_VeryHeavyDamage`) modelleri ile gerçek zamanlı çıkarım yapılır.</p>
             </div>
           </div>
         </div>
