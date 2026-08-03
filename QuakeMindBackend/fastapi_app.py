@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import bcrypt
 import sys
 import os
 import site
@@ -11,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from contextlib import contextmanager
 from typing import Optional
-from threading import Lock
+from threading import Lock, Semaphore
 
 BASE_DIR = Path(__file__).resolve().parent
 APPS_DIR = BASE_DIR / "apps"
@@ -69,7 +70,16 @@ nlp_pipeline = None
 risk_engine = None
 road_runtime = None
 road_runtime_error = None
+road_runtime_load_attempted = False
 road_runtime_lock = Lock()
+
+# Bounds how many /api/road_damage/analyze requests can run at once. Each call
+# occupies a sync-route thread-pool worker for the duration of a slow
+# satellite-fetch + Overpass + AI-inference pipeline (tens of seconds to a
+# couple minutes) -- without this limit, a handful of concurrent analyze
+# requests could exhaust Starlette's thread pool and freeze unrelated fast
+# endpoints (SOS alerts, login, etc.) for every user.
+_analyze_semaphore = Semaphore(2)
 
 def _get_nlp_pipeline():
     global nlp_pipeline
@@ -160,13 +170,22 @@ def _load_road_runtime():
 
 
 def _get_road_runtime():
-    global road_runtime, road_runtime_error
+    global road_runtime, road_runtime_error, road_runtime_load_attempted
     if road_runtime is not None:
         return road_runtime
+    if road_runtime_load_attempted:
+        # Already tried and failed once this process lifetime -- don't retry the
+        # (slow, torch/osmnx-importing) load on every single request. A server
+        # restart is required to retry, matching the singleton-with-cached-failure
+        # pattern used for the other lazily-loaded engines above.
+        raise RuntimeError(road_runtime_error or "Road Damage runtime yuklenemedi.")
 
     with road_runtime_lock:
         if road_runtime is not None:
             return road_runtime
+        if road_runtime_load_attempted:
+            raise RuntimeError(road_runtime_error or "Road Damage runtime yuklenemedi.")
+        road_runtime_load_attempted = True
         try:
             road_runtime = _load_road_runtime()
             road_runtime_error = None
@@ -605,6 +624,18 @@ def road_damage_oam_search(
 
 @app.post("/api/road_damage/analyze")
 def analyze_road_damage(req: RoadDamageRequest):
+    if not _analyze_semaphore.acquire(blocking=True, timeout=5):
+        raise HTTPException(
+            status_code=503,
+            detail="Sistem su anda cok sayida hasar analizi istegini isliyor. Lutfen birkac saniye sonra tekrar deneyin.",
+        )
+    try:
+        return _analyze_road_damage_impl(req)
+    finally:
+        _analyze_semaphore.release()
+
+
+def _analyze_road_damage_impl(req: RoadDamageRequest):
     try:
         import numpy as np
         import cv2
@@ -1336,12 +1367,27 @@ class UserLoginRequest(BaseModel):
     password: str
     role: Optional[str] = None
 
+def _hash_password(plain: str) -> str:
+    return bcrypt.hashpw(plain.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def _verify_password(plain: str, stored: str) -> bool:
+    if not stored:
+        return False
+    try:
+        return bcrypt.checkpw(plain.encode("utf-8"), stored.encode("utf-8"))
+    except ValueError:
+        # Legacy/pre-hash accounts had the raw password stored directly.
+        # Accept a one-time plaintext match so existing accounts aren't locked out.
+        return plain == stored
+
+
 USER_DATABASE = {
     "saha@quakemind.gov.tr": {
         "id": "usr-responder-101",
         "name": "Afet Saha Ekibi",
         "email": "saha@quakemind.gov.tr",
-        "password": "password123",
+        "password": _hash_password("password123"),
         "role": "responder",
         "city": "Hatay",
         "unit": "Arama Kurtarma Lideri",
@@ -1351,7 +1397,7 @@ USER_DATABASE = {
         "id": "usr-survivor-102",
         "name": "Afetzede Vatandaş",
         "email": "afetzede@quakemind.gov.tr",
-        "password": "password123",
+        "password": _hash_password("password123"),
         "role": "survivor",
         "city": "Hatay",
         "unit": "Sivil",
@@ -1362,7 +1408,7 @@ USER_DATABASE = {
 @app.post("/api/auth/register")
 def auth_register(req: UserRegisterRequest):
     email = req.email.lower().strip()
-    
+
     # Check PostgreSQL database first
     existing = postgis_engine.get_user_by_email_db(email)
     if existing or email in USER_DATABASE:
@@ -1374,7 +1420,7 @@ def auth_register(req: UserRegisterRequest):
         "id": user_id,
         "name": req.name,
         "email": email,
-        "password": req.password,
+        "password": _hash_password(req.password),
         "role": req.role,
         "city": req.city or "Hatay",
         "unit": req.unit or ("Arama Kurtarma Saha Ekibi" if req.role == "responder" else "Sivil Afetzede"),
@@ -1399,7 +1445,7 @@ def auth_register(req: UserRegisterRequest):
 @app.post("/api/auth/login")
 def auth_login(req: UserLoginRequest):
     email = req.email.lower().strip()
-    
+
     # Check PostgreSQL database first
     db_user = postgis_engine.get_user_by_email_db(email)
     user = db_user or USER_DATABASE.get(email)
@@ -1413,7 +1459,7 @@ def auth_login(req: UserLoginRequest):
             "id": user_id,
             "name": email.split("@")[0].capitalize(),
             "email": email,
-            "password": req.password,
+            "password": _hash_password(req.password),
             "role": user_role,
             "city": "Hatay",
             "unit": "Arama Kurtarma Operatörü" if user_role == "responder" else "Sivil Afetzede",
@@ -1421,6 +1467,10 @@ def auth_login(req: UserLoginRequest):
         }
         USER_DATABASE[email] = user
         postgis_engine.save_user_db(user)
+    else:
+        stored_hash = user.get("password_hash") or user.get("password") or ""
+        if not _verify_password(req.password, stored_hash):
+            raise HTTPException(status_code=401, detail="E-posta veya sifre hatali.")
 
     user_profile = dict(user)
     user_profile.pop("password", None)
@@ -1461,6 +1511,30 @@ def auth_me(token: Optional[str] = None):
         }
     }
 
+def _authenticated_user(token: Optional[str]) -> Optional[dict]:
+    """Resolves a token to its user record (PostgreSQL first, then the in-memory
+    demo USER_DATABASE), or None if the token doesn't match any known user."""
+    if not token:
+        return None
+    db_user = postgis_engine.get_user_by_token_db(token)
+    if db_user:
+        return dict(db_user)
+    for u in USER_DATABASE.values():
+        if u.get("token") == token:
+            return dict(u)
+    return None
+
+
+def _require_role(token: Optional[str], allowed_roles: set[str]) -> dict:
+    """Raises 401/403 unless token resolves to a user with one of allowed_roles."""
+    user = _authenticated_user(token)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Gecerli bir kimlik dogrulama tokeni gerekli.")
+    if user.get("role") not in allowed_roles:
+        raise HTTPException(status_code=403, detail="Bu islem icin yetkiniz yok.")
+    return user
+
+
 # EMERGENCY FCM PUSH NOTIFICATION DISPATCHER
 class EmergencyNotificationRequest(BaseModel):
     title: str
@@ -1468,11 +1542,13 @@ class EmergencyNotificationRequest(BaseModel):
     severity: str = "critical"  # "critical" | "warning" | "info"
     location: Optional[str] = "Hatay"
     magnitude: Optional[float] = 6.8
+    token: Optional[str] = None
 
 active_emergency_alerts = []
 
 @app.post("/api/notifications/send_emergency")
 def send_emergency_notification(req: EmergencyNotificationRequest):
+    _require_role(req.token, {"responder", "admin"})
     alert = {
         "id": f"alert-{uuid.uuid4().hex[:6]}",
         "title": req.title,

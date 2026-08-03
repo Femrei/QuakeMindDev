@@ -82,18 +82,11 @@ export default function LoginPage() {
     setErrorMsg(null);
 
     try {
-      let firebaseUser: any = null;
-      if (confirmationResult && confirmationResult.confirm) {
-        const res = await confirmationResult.confirm(otpCode);
-        firebaseUser = res.user;
-      } else {
-        firebaseUser = {
-          uid: "usr-sms-" + Math.random().toString(36).substring(2, 8),
-          phoneNumber: phone,
-          displayName: "Afetzede Vatandaş (SMS OTP)",
-          email: `sms_${phone.replace(/\D/g, '')}@quakemind.gov.tr`
-        };
+      if (!confirmationResult || !confirmationResult.confirm) {
+        throw new Error("SMS doğrulama oturumu bulunamadı. Lütfen kodu tekrar gönderin.");
       }
+      const res = await confirmationResult.confirm(otpCode);
+      const firebaseUser = res.user;
 
       const profile = {
         id: firebaseUser.uid || "usr-sms-101",
@@ -178,18 +171,8 @@ export default function LoginPage() {
         }, 500);
       }
     } catch (err: any) {
-      console.warn("Auth API hatası, yerel oturuma geçiliyor:", err);
-      // Local fallback for instant offline testing
-      const fallbackProfile = {
-        id: "usr-" + Math.random().toString(36).substring(2, 8),
-        name: name.trim() || (selectedRole === "responder" ? "Afet Saha Ekibi" : "Afetzede Vatandaş"),
-        email: email.trim() || (selectedRole === "responder" ? "saha@quakemind.gov.tr" : "afetzede@quakemind.gov.tr"),
-        role: selectedRole,
-        city: city || "Hatay",
-        unit: unit || (selectedRole === "responder" ? "Arama Kurtarma Lideri" : "Sivil"),
-      };
-      loginWithProfile(fallbackProfile, "local-demo-token");
-      router.push(selectedRole === "survivor" ? "/survivor" : "/command");
+      // Auth must fail closed: show the real error, never fabricate a session.
+      setErrorMsg(err.message || "Giriş başarısız. Bilgilerinizi kontrol edip tekrar deneyin.");
     } finally {
       setLoading(false);
     }
@@ -197,23 +180,17 @@ export default function LoginPage() {
 
   const handleDemoLogin = (role: "survivor" | "responder") => {
     setLoading(true);
+    setErrorMsg(null);
     const email = role === "responder" ? "saha@quakemind.gov.tr" : "afetzede@quakemind.gov.tr";
     loginUser({ email, password: "password123", role })
       .then((res) => {
         loginWithProfile(res.user, res.token);
         router.push(role === "survivor" ? "/survivor" : "/command");
       })
-      .catch(() => {
-        const demoProfile = {
-          id: role === "responder" ? "usr-responder-101" : "usr-survivor-102",
-          name: role === "responder" ? "Afet Saha Ekibi" : "Afetzede Vatandaş",
-          email,
-          role,
-          city: "Hatay",
-          unit: role === "responder" ? "Arama Kurtarma Lideri" : "Sivil",
-        };
-        loginWithProfile(demoProfile, "demo-token");
-        router.push(role === "survivor" ? "/survivor" : "/command");
+      .catch((err: any) => {
+        // Fail closed: a demo-login failure must surface as an error, not a
+        // fabricated session, so a backend rejection can never be bypassed.
+        setErrorMsg(err.message || "Demo giriş başarısız. Backend'e ulaşılamıyor.");
       })
       .finally(() => setLoading(false));
   };

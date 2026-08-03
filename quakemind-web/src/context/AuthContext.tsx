@@ -28,17 +28,12 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRoleState] = useState<UserRole>("responder");
-  const [user, setUser] = useState<UserProfile | null>({
-    id: "usr-responder-101",
-    name: "Afet Saha Ekibi",
-    email: "saha@quakemind.gov.tr",
-    role: "responder",
-    city: "Hatay",
-    unit: "Arama Kurtarma Lideri",
-  });
-  const [token, setToken] = useState<string | null>("token-responder-101");
-  const [notificationsCount, setNotificationsCount] = useState<number>(3);
+  // Start signed-out until the localStorage check below resolves -- a brand-new
+  // visitor must never appear pre-authenticated as a responder.
+  const [role, setRoleState] = useState<UserRole>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [notificationsCount, setNotificationsCount] = useState<number>(0);
 
   // Load persisted auth from localStorage on mount
   useEffect(() => {

@@ -8,7 +8,7 @@ import datetime
 import logging
 import time
 
-from utils.local_osm import draw_local_road_mask, has_local_roads_dataset
+from .local_osm import draw_local_road_mask, has_local_roads_dataset
 
 try:
     import streamlit as st
@@ -166,23 +166,23 @@ def get_osm_roads_overpass(bounds, w, h, thickness=4):
     session = requests.Session()
     headers = {"User-Agent": "QuakeMindRoadDamage/1.0"}
 
+    # Bounded to ~1 attempt/server, short timeout: this runs inside a sync FastAPI
+    # route handler, which occupies one of the (limited) thread-pool workers for
+    # the entire call. The previous 5 servers x 2 attempts x 35s could block a
+    # worker for up to ~350s, risking exhausting the pool under a few concurrent
+    # requests and freezing the whole API for unrelated fast endpoints.
     for url in servers:
-        for attempt in range(2):
-            try:
-                if url.endswith("?data="):
-                    resp = session.get(url + requests.utils.quote(query), headers=headers, timeout=35)
-                else:
-                    resp = session.post(url, data=query, headers=headers, timeout=35)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    break  # Success
-            except Exception:
-                pass
-
-            # brief backoff between attempts/servers
-            time.sleep(0.35 + (attempt * 0.25))
-        if data is not None:
-            break
+        try:
+            if url.endswith("?data="):
+                resp = session.get(url + requests.utils.quote(query), headers=headers, timeout=12)
+            else:
+                resp = session.post(url, data=query, headers=headers, timeout=12)
+            if resp.status_code == 200:
+                data = resp.json()
+                break  # Success
+        except Exception:
+            pass
+        time.sleep(0.35)
 
     if not data:
         _warn("All Overpass servers failed. Roads could not be fetched.")

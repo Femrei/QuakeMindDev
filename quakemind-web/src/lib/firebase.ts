@@ -49,10 +49,12 @@ export async function sendSmsOtp(phoneNumber: string, recaptchaVerifier: any): P
     return confirmation;
   } catch (error) {
     console.warn("Firebase Live SMS OTP fallback active:", error);
-    // Fallback confirmation result for testing offline/demo environment
+    // Fallback confirmation result for testing offline/demo environment. Only the
+    // fixed, documented demo code is accepted -- NOT any 6-character string --
+    // so this can't be used to bypass verification with an arbitrary guess.
     return {
       confirm: async (verificationCode: string) => {
-        if (verificationCode === "123456" || verificationCode.length === 6) {
+        if (verificationCode === "123456") {
           return {
             user: {
               uid: "firebase-usr-" + Math.random().toString(36).substring(2, 8),
@@ -69,16 +71,8 @@ export async function sendSmsOtp(phoneNumber: string, recaptchaVerifier: any): P
 }
 
 export async function signInWithGoogle() {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
-  } catch (error) {
-    console.warn("Firebase Google OAuth fallback:", error);
-    return {
-      uid: "google-usr-" + Math.random().toString(36).substring(2, 8),
-      displayName: "Google Afet Görevlisi",
-      email: "operator.google@quakemind.gov.tr",
-      phoneNumber: "+905550001122"
-    };
-  }
+  // No silent fallback here: a Google OAuth failure must surface as a real
+  // error to the caller, not a fabricated authenticated identity.
+  const result = await signInWithPopup(auth, googleProvider);
+  return result.user;
 }
