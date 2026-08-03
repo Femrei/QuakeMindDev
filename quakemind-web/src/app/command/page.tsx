@@ -5,6 +5,7 @@ import Link from "next/link";
 import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem, MapPolylineItem } from "@/components/map/InteractiveMap";
 import { getSOSAlerts, fetchServerStatus, SOSAlert } from "@/lib/api";
+import { deriveUrgencyTier, urgencyLabel, urgencyTextClass } from "@/lib/urgency";
 import { 
   ShieldAlert, 
   Siren, 
@@ -201,8 +202,8 @@ export default function CommandDashboardPage() {
                   className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2 hover:border-slate-700 transition-all"
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-red-400 flex items-center gap-1">
-                      <AlertTriangle className="w-3.5 h-3.5" /> {a.urgency || "KRİTİK"}
+                    <span className={`font-bold flex items-center gap-1 ${urgencyTextClass(deriveUrgencyTier(a))}`}>
+                      <AlertTriangle className="w-3.5 h-3.5" /> {urgencyLabel(deriveUrgencyTier(a))}
                     </span>
                     <span className="text-[10px] text-slate-500">{new Date(a.receivedAt).toLocaleTimeString()}</span>
                   </div>

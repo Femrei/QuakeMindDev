@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AlertTriangle, Bell, BellOff, Volume2, VolumeX, X, Navigation, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 export interface EmergencyAlert {
   id: string;
@@ -21,11 +22,6 @@ export default function EmergencyNotificationBanner() {
   const [activeAlert, setActiveAlert] = useState<EmergencyAlert | null>(null);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
 
-  // Hide notification siren banner on login page for clean UI
-  if (pathname === "/login") {
-    return null;
-  }
-
   // Check notification permission state on mount
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
@@ -37,7 +33,7 @@ export default function EmergencyNotificationBanner() {
   useEffect(() => {
     const fetchLatestAlert = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/notifications/active");
+        const res = await fetch(`${API_BASE_URL}/api/notifications/active`);
         if (res.ok) {
           const data = await res.json();
           if (data.activeAlert) {
@@ -92,10 +88,14 @@ export default function EmergencyNotificationBanner() {
     }
   };
 
+  if (pathname === "/login") {
+    return null;
+  }
+
   return (
     <div className="w-full relative z-40">
-      {/* PERMISSION REQUEST BANNER IF NOT GRANTED */}
-      {!permissionGranted && (
+      {/* PERMISSION REQUEST BANNER IF NOT GRANTED (hidden during a live alert to avoid overlap) */}
+      {!permissionGranted && !activeAlert && (
         <div className="bg-gradient-to-r from-amber-950/90 via-slate-900/90 to-blue-950/90 border-b border-amber-500/30 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-200">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-amber-400 animate-bounce flex-shrink-0" />
@@ -112,7 +112,11 @@ export default function EmergencyNotificationBanner() {
               <span>Bildirim İznini Aç</span>
             </button>
             <button
-              onClick={triggerDemoEmergency}
+              onClick={() => {
+                if (window.confirm("Bu, gerçek bir alarmla aynı görünen bir TEST uyarısı gösterecek. Devam edilsin mi?")) {
+                  triggerDemoEmergency();
+                }
+              }}
               className="px-3 py-1.5 rounded-lg bg-red-600/80 hover:bg-red-500 text-white font-bold transition-all flex items-center gap-1"
             >
               <ShieldAlert className="w-3.5 h-3.5" />
@@ -122,9 +126,12 @@ export default function EmergencyNotificationBanner() {
         </div>
       )}
 
-      {/* ACTIVE EMERGENCY CRITICAL ALERT BANNER */}
+      {/* ACTIVE EMERGENCY CRITICAL ALERT BANNER -- fixed overlay (not in normal document
+          flow) so it never changes total header height: every page in the app assumes a
+          fixed calc(100vh-65px) content area based on the Navbar alone, and this banner's
+          height varies with message length, which would otherwise clip page content. */}
       {activeAlert && (
-        <div className={`w-full p-4 border-b transition-all animate-pulse ${
+        <div className={`fixed top-[65px] left-0 right-0 z-50 p-4 border-b transition-all animate-pulse ${
           activeAlert.severity === "critical"
             ? "bg-red-950/95 border-red-500 text-red-100 shadow-2xl shadow-red-600/40"
             : "bg-amber-950/95 border-amber-500 text-amber-100"

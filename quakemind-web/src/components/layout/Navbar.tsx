@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { fetchServerStatus } from "@/lib/api";
 import { Bell, ShieldAlert, Activity, User, LogOut, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, role, setRole, logout, notificationsCount } = useAuth();
   const [serverOk, setServerOk] = useState<boolean | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -127,25 +128,29 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* User Profile Badge & Direct Login Link */}
+          {/* User Profile Badge & Logout */}
           {user ? (
             <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-              <Link href="/login" className="flex items-center gap-2 group hover:opacity-90 transition-opacity">
+              <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 border border-blue-400 flex items-center justify-center text-xs font-bold text-white shadow-md shadow-blue-500/20">
                   {user.name ? user.name.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
                 </div>
                 <div className="hidden lg:block text-left text-xs">
-                  <p className="font-semibold text-slate-200 leading-tight group-hover:text-cyan-400 transition-colors">{user.name}</p>
+                  <p className="font-semibold text-slate-200 leading-tight">{user.name}</p>
                   <p className="text-[10px] text-slate-400">{user.unit || user.city}</p>
                 </div>
-              </Link>
-              <Link 
-                href="/login" 
-                className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-600/20 transition-all flex items-center gap-1.5 ml-1"
+              </div>
+              <button
+                onClick={() => {
+                  logout();
+                  router.push("/");
+                }}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-600/80 text-slate-300 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 ml-1"
+                title="Çıkış Yap"
               >
-                <User className="w-3.5 h-3.5" />
-                <span>Giriş / Kayıt</span>
-              </Link>
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Çıkış Yap</span>
+              </button>
             </div>
           ) : (
             <Link href="/login" className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-blue-600/30 transition-all flex items-center gap-1.5">

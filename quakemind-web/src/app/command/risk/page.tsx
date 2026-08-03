@@ -31,11 +31,11 @@ const PROVINCES = [
 ];
 
 // Backend'deki risk_engine._risk_category ile ayni esikler.
-function riskCategory(score: number): { label: string; color: string; bar: string } {
-  if (score < 0.25) return { label: "DÜŞÜK", color: "text-emerald-400", bar: "bg-emerald-500" };
-  if (score < 0.5) return { label: "ORTA", color: "text-yellow-400", bar: "bg-yellow-500" };
-  if (score < 0.75) return { label: "YÜKSEK", color: "text-orange-400", bar: "bg-orange-500" };
-  return { label: "ÇOK YÜKSEK", color: "text-red-400", bar: "bg-red-500" };
+function riskCategory(score: number): { label: string; color: string; bar: string; badge: string } {
+  if (score < 0.25) return { label: "DÜŞÜK", color: "text-emerald-400", bar: "bg-emerald-500", badge: "bg-emerald-500/20 text-emerald-400" };
+  if (score < 0.5) return { label: "ORTA", color: "text-yellow-400", bar: "bg-yellow-500", badge: "bg-yellow-500/20 text-yellow-400" };
+  if (score < 0.75) return { label: "YÜKSEK", color: "text-orange-400", bar: "bg-orange-500", badge: "bg-orange-500/20 text-orange-400" };
+  return { label: "ÇOK YÜKSEK", color: "text-red-400", bar: "bg-red-500", badge: "bg-red-500/20 text-red-400" };
 }
 
 function RiskComponentRow({ label, sublabel, value }: { label: string; sublabel: string; value: number }) {
@@ -237,7 +237,7 @@ function RiskAnalysisTab() {
                 <div className="text-center space-y-1">
                   <span className="text-xs text-slate-400 uppercase font-bold tracking-widest">Deprem Risk Skoru</span>
                   <div className="text-5xl font-black text-amber-400 font-mono">{result.riskScore}/100</div>
-                  <div className="inline-block px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-bold mt-1">
+                  <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold mt-1 ${riskCategory(result.riskScore / 100).badge}`}>
                     {result.riskLevel}
                   </div>
                 </div>

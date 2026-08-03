@@ -84,7 +84,7 @@ export default function SurvivorPortalPage() {
 
 
   return (
-    <div className="flex-1 w-full min-h-screen bg-[#090d14] text-slate-100 p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex-1 w-full min-h-screen overflow-y-auto max-h-[calc(100vh-65px)] bg-[#090d14] text-slate-100 p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
       {/* HEADER BANNER */}
       <div className="glass-panel p-6 rounded-3xl border border-red-500/30 flex flex-col md:flex-row items-center justify-between gap-4 bg-gradient-to-r from-red-950/40 via-slate-900 to-slate-950">
         <div className="flex items-center gap-4">

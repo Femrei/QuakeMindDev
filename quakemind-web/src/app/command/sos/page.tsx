@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem } from "@/components/map/InteractiveMap";
 import { getSOSAlerts, sendSOSAlert, SOSAlert } from "@/lib/api";
+import { deriveUrgencyTier, urgencyLabel, urgencyBadgeClass, urgencyTextClass } from "@/lib/urgency";
 import { useMapLayers } from "@/context/MapLayersContext";
 import { Siren, ShieldAlert, CheckCircle2, Clock, UserCheck, Plus, Filter } from "lucide-react";
 
@@ -126,8 +127,8 @@ export default function SOSDispatchPage() {
                   }`}
                 >
                   <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="font-bold text-red-400 flex items-center gap-1">
-                      <ShieldAlert className="w-3.5 h-3.5" /> {alert.urgency || "KRİTİK"}
+                    <span className={`font-bold flex items-center gap-1 ${urgencyTextClass(deriveUrgencyTier(alert))}`}>
+                      <ShieldAlert className="w-3.5 h-3.5" /> {urgencyLabel(deriveUrgencyTier(alert))}
                     </span>
                     <span className="text-[10px] text-slate-500">{new Date(alert.receivedAt).toLocaleTimeString()}</span>
                   </div>
@@ -177,8 +178,8 @@ export default function SOSDispatchPage() {
                     <h3 className="text-sm font-bold text-white">Vaka Detayı & Ekip Atama</h3>
                     <p className="text-xs text-slate-400">ID: {selectedAlert.id}</p>
                   </div>
-                  <span className="text-xs font-bold text-red-400 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
-                    {selectedAlert.urgency || "KRİTİK"}
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full border border-current/20 ${urgencyBadgeClass(deriveUrgencyTier(selectedAlert))}`}>
+                    {urgencyLabel(deriveUrgencyTier(selectedAlert))}
                   </span>
                 </div>
 

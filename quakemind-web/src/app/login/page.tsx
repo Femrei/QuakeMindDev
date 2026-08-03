@@ -196,7 +196,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex-1 w-full min-h-screen flex items-center justify-center p-4 md:p-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0b0f17] to-black">
+    <div className="flex-1 w-full min-h-screen overflow-y-auto max-h-[calc(100vh-65px)] flex items-center justify-center p-4 md:p-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0b0f17] to-black">
       <div className="max-w-xl w-full glass-panel p-6 md:p-8 rounded-3xl border border-slate-800 space-y-6 relative z-10 shadow-2xl bg-slate-950/90">
         
         {/* HEADER BRANDING */}
