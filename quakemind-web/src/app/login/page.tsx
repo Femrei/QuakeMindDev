@@ -430,7 +430,7 @@ export default function LoginPage() {
           </div>
 
           {tab === "register" && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-bold text-slate-300 block mb-1">Şehir / İl</label>
                 <div className="relative">
@@ -444,19 +444,29 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Birim / Unvan</label>
-                <div className="relative">
-                  <Briefcase className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
-                  <input
-                    type="text"
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                    placeholder={selectedRole === "responder" ? "Arama Kurtarma Lideri" : "Sivil"}
-                    className="w-full py-3 pl-9 pr-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
-                  />
+
+              {selectedRole === "responder" && (
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">Bağlı Bulunan Kurum</label>
+                  <div className="relative">
+                    <Briefcase className="w-4 h-4 text-blue-400 absolute left-3 top-3.5" />
+                    <select
+                      value={unit || "AFAD"}
+                      onChange={(e) => setUnit(e.target.value)}
+                      className="w-full py-3 pl-9 pr-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="AFAD (Afet ve Acil Durum Yön.)">AFAD (Afet ve Acil Durum Yön.)</option>
+                      <option value="AKUT (Arama Kurtarma Derneği)">AKUT (Arama Kurtarma Derneği)</option>
+                      <option value="KIZILAY (Türk Kızılay)">KIZILAY (Türk Kızılay Afet)</option>
+                      <option value="UMKE (Ulusal Medikal Kurtarma)">UMKE (Ulusal Medikal Kurtarma)</option>
+                      <option value="İTFAİYE (Arama Kurtarma)">İTFAİYE (Arama Kurtarma)</option>
+                      <option value="EGM / JANDARMA (Asayiş Ekipleri)">EGM / JANDARMA (Asayiş Ekipleri)</option>
+                      <option value="TBB / BELEDİYE (Lojistik)">TBB / BELEDİYE (Lojistik)</option>
+                      <option value="Özel Arama Kurtarma Kuruluşu">Özel Arama Kurtarma Kuruluşu</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
