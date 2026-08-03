@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import SafeEvacuationMap from "@/components/map/SafeEvacuationMap";
 import SurvivorCameraScanner from "@/components/camera/SurvivorCameraScanner";
 import { sendSOSAlert } from "@/lib/api";
@@ -101,12 +102,12 @@ export default function SurvivorPortalPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowCameraModal(true)}
+          <Link
+            href="/survivor/camera"
             className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm shadow-lg shadow-cyan-600/30 transition-all hover:scale-105"
           >
             <Camera className="w-4 h-4" /> BİNA / DUVAR HASAR TARA
-          </button>
+          </Link>
           <a
             href="tel:112"
             className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm shadow-lg shadow-red-600/40 transition-all hover:scale-105"
