@@ -505,3 +505,60 @@ export async function calculateCustomRoute(
   if (!res.ok) throw new Error("Rota hesaplanamadı.");
   return res.json();
 }
+
+export interface AuthUserResponse {
+  status: string;
+  message?: string;
+  token?: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: "survivor" | "responder" | "admin";
+    city?: string;
+    unit?: string;
+  };
+}
+
+export async function registerUser(params: {
+  name: string;
+  email: string;
+  password: string;
+  role: "survivor" | "responder";
+  city?: string;
+  unit?: string;
+}): Promise<AuthUserResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || "Kayıt işlemi başarısız.");
+  }
+  return res.json();
+}
+
+export async function loginUser(params: {
+  email: string;
+  password: string;
+  role?: "survivor" | "responder";
+}): Promise<AuthUserResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || "Giriş işlemi başarısız.");
+  }
+  return res.json();
+}
+
+export async function fetchCurrentUserProfile(token?: string): Promise<AuthUserResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/me${token ? `?token=${encodeURIComponent(token)}` : ''}`);
+  if (!res.ok) throw new Error("Kullanıcı profili alınamadı.");
+  return res.json();
+}

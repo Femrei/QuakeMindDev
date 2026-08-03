@@ -17,41 +17,90 @@ interface AuthContextType {
   user: UserProfile | null;
   role: UserRole;
   setRole: (role: UserRole) => void;
-  login: (role: UserRole, email?: string) => void;
+  login: (role: UserRole, email?: string, name?: string) => void;
+  loginWithProfile: (profile: UserProfile, token?: string) => void;
   logout: () => void;
   notificationsCount: number;
   setNotificationsCount: React.Dispatch<React.SetStateAction<number>>;
+  token: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRole] = useState<UserRole>("responder");
+  const [role, setRoleState] = useState<UserRole>("responder");
   const [user, setUser] = useState<UserProfile | null>({
-    id: "user-101",
+    id: "usr-responder-101",
     name: "Afet Saha Ekibi",
     email: "saha@quakemind.gov.tr",
     role: "responder",
     city: "Hatay",
     unit: "Arama Kurtarma Lideri",
   });
+  const [token, setToken] = useState<string | null>("token-responder-101");
   const [notificationsCount, setNotificationsCount] = useState<number>(3);
 
-  const login = (newRole: UserRole, email = "user@quakemind.org") => {
-    setRole(newRole);
-    setUser({
-      id: "usr-" + Math.random().toString(36).substr(2, 6),
-      name: newRole === "survivor" ? "Afetzede Kullanıcı" : "Arama Kurtarma Ekibi",
+  // Load persisted auth from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem("quakemind_user");
+      const savedRole = localStorage.getItem("quakemind_role") as UserRole;
+      const savedToken = localStorage.getItem("quakemind_token");
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        setRoleState(parsed.role || savedRole || "responder");
+      }
+      if (savedToken) setToken(savedToken);
+    } catch (e) {
+      console.warn("Error loading persisted auth state:", e);
+    }
+  }, []);
+
+  const setRole = (newRole: UserRole) => {
+    setRoleState(newRole);
+    if (user) {
+      const updated = { ...user, role: newRole };
+      setUser(updated);
+      try {
+        localStorage.setItem("quakemind_user", JSON.stringify(updated));
+        if (newRole) localStorage.setItem("quakemind_role", newRole);
+      } catch (e) {}
+    }
+  };
+
+  const loginWithProfile = (profile: UserProfile, newToken?: string) => {
+    setUser(profile);
+    setRoleState(profile.role);
+    if (newToken) setToken(newToken);
+    try {
+      localStorage.setItem("quakemind_user", JSON.stringify(profile));
+      if (profile.role) localStorage.setItem("quakemind_role", profile.role);
+      if (newToken) localStorage.setItem("quakemind_token", newToken);
+    } catch (e) {}
+  };
+
+  const login = (newRole: UserRole, email = "user@quakemind.org", name?: string) => {
+    const profile: UserProfile = {
+      id: "usr-" + Math.random().toString(36).substring(2, 8),
+      name: name || (newRole === "survivor" ? "Afetzede Vatandaş" : "Arama Kurtarma Ekibi"),
       email: email,
       role: newRole,
       city: "Hatay",
-      unit: newRole === "responder" ? "Operasyon Merkezi" : "Sivil",
-    });
+      unit: newRole === "responder" ? "Arama Kurtarma Operatörü" : "Sivil Afetzede",
+    };
+    loginWithProfile(profile, "demo-token-" + profile.id);
   };
 
   const logout = () => {
     setUser(null);
-    setRole(null);
+    setRoleState(null);
+    setToken(null);
+    try {
+      localStorage.removeItem("quakemind_user");
+      localStorage.removeItem("quakemind_role");
+      localStorage.removeItem("quakemind_token");
+    } catch (e) {}
   };
 
   return (
@@ -61,9 +110,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role,
         setRole,
         login,
+        loginWithProfile,
         logout,
         notificationsCount,
         setNotificationsCount,
+        token,
       }}
     >
       {children}

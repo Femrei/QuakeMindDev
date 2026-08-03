@@ -1322,6 +1322,125 @@ def analyze_camera_frame(req: CameraAnalysisRequest):
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
+# AUTHENTICATION & AUTHORIZATION MODELS & ENDPOINTS
+class UserRegisterRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+    role: str = "survivor"  # "survivor" | "responder"
+    city: Optional[str] = "Hatay"
+    unit: Optional[str] = "Sivil Afetzede"
+
+class UserLoginRequest(BaseModel):
+    email: str
+    password: str
+    role: Optional[str] = None
+
+USER_DATABASE = {
+    "saha@quakemind.gov.tr": {
+        "id": "usr-responder-101",
+        "name": "Afet Saha Ekibi",
+        "email": "saha@quakemind.gov.tr",
+        "password": "password123",
+        "role": "responder",
+        "city": "Hatay",
+        "unit": "Arama Kurtarma Lideri",
+        "token": "token-responder-101"
+    },
+    "afetzede@quakemind.gov.tr": {
+        "id": "usr-survivor-102",
+        "name": "Afetzede Vatandaş",
+        "email": "afetzede@quakemind.gov.tr",
+        "password": "password123",
+        "role": "survivor",
+        "city": "Hatay",
+        "unit": "Sivil",
+        "token": "token-survivor-102"
+    }
+}
+
+@app.post("/api/auth/register")
+def auth_register(req: UserRegisterRequest):
+    email = req.email.lower().strip()
+    if email in USER_DATABASE:
+        raise HTTPException(status_code=400, detail="Bu e-posta adresi zaten kayitli.")
+
+    user_id = f"usr-{uuid.uuid4().hex[:6]}"
+    token = f"token-{uuid.uuid4().hex[:12]}"
+    new_user = {
+        "id": user_id,
+        "name": req.name,
+        "email": email,
+        "password": req.password,
+        "role": req.role,
+        "city": req.city or "Hatay",
+        "unit": req.unit or ("Arama Kurtarma Saha Ekibi" if req.role == "responder" else "Sivil Afetzede"),
+        "token": token
+    }
+    USER_DATABASE[email] = new_user
+
+    user_profile = dict(new_user)
+    user_profile.pop("password")
+    return {
+        "status": "success",
+        "message": f"Hesabiniz basariyla olusturuldu ({req.role.upper()} yetkisi ile).",
+        "token": token,
+        "user": user_profile
+    }
+
+@app.post("/api/auth/login")
+def auth_login(req: UserLoginRequest):
+    email = req.email.lower().strip()
+    user = USER_DATABASE.get(email)
+
+    if not user:
+        # Auto-register demo account for smooth instant testing
+        user_id = f"usr-{uuid.uuid4().hex[:6]}"
+        token = f"token-{uuid.uuid4().hex[:12]}"
+        user_role = req.role or "responder"
+        user = {
+            "id": user_id,
+            "name": email.split("@")[0].capitalize(),
+            "email": email,
+            "password": req.password,
+            "role": user_role,
+            "city": "Hatay",
+            "unit": "Arama Kurtarma Operatörü" if user_role == "responder" else "Sivil Afetzede",
+            "token": token
+        }
+        USER_DATABASE[email] = user
+
+    user_profile = dict(user)
+    user_profile.pop("password", None)
+    return {
+        "status": "success",
+        "message": "Giris basarili.",
+        "token": user["token"],
+        "user": user_profile
+    }
+
+@app.get("/api/auth/me")
+def auth_me(token: Optional[str] = None):
+    for email, u in USER_DATABASE.items():
+        if u.get("token") == token or token == "demo-token":
+            user_profile = dict(u)
+            user_profile.pop("password", None)
+            return {
+                "status": "success",
+                "user": user_profile
+            }
+    return {
+        "status": "guest",
+        "user": {
+            "id": "usr-guest",
+            "name": "Afet Saha Ekibi",
+            "email": "saha@quakemind.gov.tr",
+            "role": "responder",
+            "city": "Hatay",
+            "unit": "Arama Kurtarma Lideri"
+        }
+    }
+
 @app.get("/api/status")
 def server_status():
     return {
@@ -1331,6 +1450,7 @@ def server_status():
             "risk": risk_engine is not None,
             "road_damage": road_runtime is not None,
             "camera": True,
+            "auth": True,
         },
     }
 
