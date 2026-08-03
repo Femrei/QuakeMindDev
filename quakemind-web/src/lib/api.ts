@@ -173,6 +173,11 @@ export async function getNearestDebrisForTeams(lat: number, lon: number, limit: 
   return res.json();
 }
 
+export interface RouteResult {
+  routeCoords: [number, number][];
+  distanceMeters: number;
+}
+
 export async function getRouteBetweenPoints(
   analysisId: string,
   start: { lat: number; lng: number },
