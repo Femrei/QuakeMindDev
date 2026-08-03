@@ -13,7 +13,8 @@ import {
   Settings,
   Compass,
   Radio,
-  Layers
+  Layers,
+  UserCheck
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -27,6 +28,7 @@ export default function Sidebar() {
     { name: "Deprem Risk & Fay Hattı", href: "/command/risk", icon: Activity },
     { name: "Afet Metin NLP", href: "/command/nlp", icon: FileText },
     { name: "Kamera ile Çatlak Tespiti", href: "/command/camera", icon: Camera },
+    { name: "Giriş & Kayıt Merkezi", href: "/login", icon: UserCheck, badge: "AUTH" },
   ];
 
   return (
