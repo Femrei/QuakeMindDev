@@ -288,8 +288,21 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
     }
   };
 
-  // Click Handler for Map Component
-  function MapClickHandler() {
+  const moveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchAssemblyPointsForCenter = async (lat: number, lon: number) => {
+    try {
+      const data = await getEvacuationAssemblyData(lat, lon, 15.0);
+      if (data && data.records && data.records.length > 0) {
+        setAssemblyData(data);
+      }
+    } catch (e) {
+      console.warn("Dinamik AFAD toplanma alanı güncelleme hatası:", e);
+    }
+  };
+
+  // Click & Move Events Handler for Map Component
+  function MapEventsHandler() {
     useMapEvents({
       click(e: any) {
         const { lat, lng } = e.latlng;
@@ -300,6 +313,14 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
           lon: lng,
           status: "Kullanıcı Tarafından Seçilen Rota Hedefi",
         });
+      },
+      moveend(e: any) {
+        const mapInstance = e.target;
+        const center = mapInstance.getCenter();
+        if (moveTimerRef.current) clearTimeout(moveTimerRef.current);
+        moveTimerRef.current = setTimeout(() => {
+          fetchAssemblyPointsForCenter(center.lat, center.lng);
+        }, 350);
       },
     });
     return null;
@@ -414,7 +435,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
 
       {/* LEAFLET CONTAINER (DISABLE DEFAULT OVERLAPPING ZOOM CONTROL) */}
       <MapContainer center={userLocation} zoom={15} zoomControl={false} className="w-full h-full">
-        <MapClickHandler />
+        <MapEventsHandler />
 
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
