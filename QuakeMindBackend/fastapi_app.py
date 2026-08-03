@@ -102,52 +102,51 @@ except Exception as e:
 
 
 def _load_road_runtime():
-    with temporary_sys_path(ROAD_ROOT), temporary_cwd(ROAD_ROOT):
-        from utils.fetcher import (
-            fetch_satellite_area,
-            get_osm_roads_overpass,
-            get_wayback_versions,
-            search_oam_images,
-        )
-        from utils.inference import load_simple_model, run_inference
-        from utils.network import analyze_road_network_graph, calculate_route
-        from utils.assembly import (
-            bbox_from_center,
-            fetch_osm_safety_areas,
-            find_nearest_assembly,
-            shortest_walk_route,
-        )
-        from utils.local_osm import (
-            has_local_roads_dataset,
-            has_local_safety_dataset,
-            load_local_safety_areas,
-            shortest_route_from_local_roads,
-        )
+    from apps.road_damage.utils.fetcher import (
+        fetch_satellite_area,
+        get_osm_roads_overpass,
+        get_wayback_versions,
+        search_oam_images,
+    )
+    from apps.road_damage.utils.inference import load_simple_model, run_inference
+    from apps.road_damage.utils.network import analyze_road_network_graph, calculate_route
+    from apps.road_damage.utils.assembly import (
+        bbox_from_center,
+        fetch_osm_safety_areas,
+        find_nearest_assembly,
+        shortest_walk_route,
+    )
+    from apps.road_damage.utils.local_osm import (
+        has_local_roads_dataset,
+        has_local_safety_dataset,
+        load_local_safety_areas,
+        shortest_route_from_local_roads,
+    )
 
-        model_path = str(ROAD_ROOT / "models" / "optimized_mitb4_focal_dice30.pth")
-        model, device = load_simple_model(model_path)
-        if model is None:
-            raise RuntimeError("Segformer modeli yuklenemedi.")
+    model_path = str(ROAD_ROOT / "models" / "optimized_mitb4_focal_dice30.pth")
+    model, device = load_simple_model(model_path)
+    if model is None:
+        raise RuntimeError("Segformer modeli yuklenemedi.")
 
-        return {
-            "fetch_satellite_area": fetch_satellite_area,
-            "get_osm_roads_overpass": get_osm_roads_overpass,
-            "get_wayback_versions": get_wayback_versions,
-            "search_oam_images": search_oam_images,
-            "run_inference": run_inference,
-            "analyze_road_network_graph": analyze_road_network_graph,
-            "calculate_route": calculate_route,
-            "bbox_from_center": bbox_from_center,
-            "fetch_osm_safety_areas": fetch_osm_safety_areas,
-            "find_nearest_assembly": find_nearest_assembly,
-            "shortest_walk_route": shortest_walk_route,
-            "has_local_roads_dataset": has_local_roads_dataset,
-            "has_local_safety_dataset": has_local_safety_dataset,
-            "load_local_safety_areas": load_local_safety_areas,
-            "shortest_route_from_local_roads": shortest_route_from_local_roads,
-            "model": model,
-            "device": device,
-        }
+    return {
+        "fetch_satellite_area": fetch_satellite_area,
+        "get_osm_roads_overpass": get_osm_roads_overpass,
+        "get_wayback_versions": get_wayback_versions,
+        "search_oam_images": search_oam_images,
+        "run_inference": run_inference,
+        "analyze_road_network_graph": analyze_road_network_graph,
+        "calculate_route": calculate_route,
+        "bbox_from_center": bbox_from_center,
+        "fetch_osm_safety_areas": fetch_osm_safety_areas,
+        "find_nearest_assembly": find_nearest_assembly,
+        "shortest_walk_route": shortest_walk_route,
+        "has_local_roads_dataset": has_local_roads_dataset,
+        "has_local_safety_dataset": has_local_safety_dataset,
+        "load_local_safety_areas": load_local_safety_areas,
+        "shortest_route_from_local_roads": shortest_route_from_local_roads,
+        "model": model,
+        "device": device,
+    }
 
 
 def _get_road_runtime():
@@ -917,6 +916,15 @@ def calculate_custom_route(req: CustomRouteRequest):
         route_length_m = _haversine_m(req.startLat, req.startLon, req.destLat, req.destLon)
 
     est_minutes = round((route_length_m or 0) / 80.0) if route_length_m else 5
+
+    return {
+        "start": [req.startLat, req.startLon],
+        "destination": [req.destLat, req.destLon],
+        "routeCoords": [[float(lat), float(lon)] for lat, lon in route_coords],
+        "routeLengthM": round(route_length_m, 1) if route_length_m else 0,
+        "estWalkMinutes": max(1, est_minutes),
+        "routeError": route_error
+    }
 
 class RoadBlockageRequest(BaseModel):
     startLat: float
