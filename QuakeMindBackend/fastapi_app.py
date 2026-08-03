@@ -1362,7 +1362,10 @@ USER_DATABASE = {
 @app.post("/api/auth/register")
 def auth_register(req: UserRegisterRequest):
     email = req.email.lower().strip()
-    if email in USER_DATABASE:
+    
+    # Check PostgreSQL database first
+    existing = postgis_engine.get_user_by_email_db(email)
+    if existing or email in USER_DATABASE:
         raise HTTPException(status_code=400, detail="Bu e-posta adresi zaten kayitli.")
 
     user_id = f"usr-{uuid.uuid4().hex[:6]}"
@@ -1379,19 +1382,27 @@ def auth_register(req: UserRegisterRequest):
     }
     USER_DATABASE[email] = new_user
 
+    # Save permanently to PostgreSQL / PostGIS Database
+    saved_to_db = postgis_engine.save_user_db(new_user)
+    db_status_text = "PostgreSQL DB'ye Kaydedildi" if saved_to_db else "Hafızaya Kaydedildi"
+
     user_profile = dict(new_user)
-    user_profile.pop("password")
+    user_profile.pop("password", None)
     return {
         "status": "success",
-        "message": f"Hesabiniz basariyla olusturuldu ({req.role.upper()} yetkisi ile).",
+        "message": f"Hesabiniz basariyla olusturuldu ({req.role.upper()} yetkisi ile - {db_status_text}).",
         "token": token,
-        "user": user_profile
+        "user": user_profile,
+        "savedToPostgres": saved_to_db
     }
 
 @app.post("/api/auth/login")
 def auth_login(req: UserLoginRequest):
     email = req.email.lower().strip()
-    user = USER_DATABASE.get(email)
+    
+    # Check PostgreSQL database first
+    db_user = postgis_engine.get_user_by_email_db(email)
+    user = db_user or USER_DATABASE.get(email)
 
     if not user:
         # Auto-register demo account for smooth instant testing
@@ -1409,9 +1420,11 @@ def auth_login(req: UserLoginRequest):
             "token": token
         }
         USER_DATABASE[email] = user
+        postgis_engine.save_user_db(user)
 
     user_profile = dict(user)
     user_profile.pop("password", None)
+    user_profile.pop("password_hash", None)
     return {
         "status": "success",
         "message": "Giris basarili.",
@@ -1421,6 +1434,13 @@ def auth_login(req: UserLoginRequest):
 
 @app.get("/api/auth/me")
 def auth_me(token: Optional[str] = None):
+    if token:
+        db_user = postgis_engine.get_user_by_token_db(token)
+        if db_user:
+            user_profile = dict(db_user)
+            user_profile.pop("password_hash", None)
+            return {"status": "success", "user": user_profile}
+
     for email, u in USER_DATABASE.items():
         if u.get("token") == token or token == "demo-token":
             user_profile = dict(u)

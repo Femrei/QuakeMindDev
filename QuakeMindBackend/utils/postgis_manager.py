@@ -105,9 +105,26 @@ class PostGISManager:
                 CREATE INDEX IF NOT EXISTS idx_osm_poly_gist ON osm_safety_polygons USING GIST (geom);
             """)
 
+            # 5. Users Authentication Table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id VARCHAR(64) PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    role VARCHAR(50) NOT NULL DEFAULT 'survivor',
+                    city VARCHAR(100) DEFAULT 'Hatay',
+                    unit VARCHAR(150) DEFAULT 'Sivil',
+                    token VARCHAR(128) UNIQUE NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
+                CREATE INDEX IF NOT EXISTS idx_users_token ON users (token);
+            """)
+
             cur.close()
             conn.close()
-            print("PostGIS GIST Mekansal indeksleri ve tablolari hazirlandi.")
+            print("PostGIS GIST Mekansal indeksleri, kullanıcılar tablosu ve veritabanı hazırlandı.")
             return True
         except Exception as e:
             print(f"PostGIS tablo olusturma hatasi: {e}")
@@ -251,6 +268,77 @@ class PostGISManager:
         except Exception as e:
             print(f"OSM PostGIS ingest hatasi: {e}")
             return 0
+
+    def save_user_db(self, user: Dict[str, Any]) -> bool:
+        """Kullanıcı kaydını PostgreSQL/PostGIS veritabanına kalıcı kaydeder."""
+        if not self.check_connection():
+            return False
+        try:
+            conn = psycopg2.connect(self.db_url)
+            conn.autocommit = True
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO users (id, name, email, password_hash, role, city, unit, token)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (email) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    password_hash = EXCLUDED.password_hash,
+                    role = EXCLUDED.role,
+                    city = EXCLUDED.city,
+                    unit = EXCLUDED.unit,
+                    token = EXCLUDED.token;
+            """, (
+                user["id"],
+                user["name"],
+                user["email"],
+                user.get("password", "password123"),
+                user["role"],
+                user.get("city", "Hatay"),
+                user.get("unit", "Sivil"),
+                user["token"]
+            ))
+            cur.close()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"PostgreSQL user save error: {e}")
+            return False
+
+    def get_user_by_email_db(self, email: str) -> Optional[Dict[str, Any]]:
+        """E-posta ile PostgreSQL'den kullanıcı kaydını getirir."""
+        if not self.check_connection():
+            return None
+        try:
+            conn = psycopg2.connect(self.db_url)
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT * FROM users WHERE LOWER(email) = LOWER(%s);", (email.strip(),))
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+            if row:
+                return dict(row)
+            return None
+        except Exception as e:
+            print(f"PostgreSQL user query error: {e}")
+            return None
+
+    def get_user_by_token_db(self, token: str) -> Optional[Dict[str, Any]]:
+        """Token ile PostgreSQL'den kullanıcı kaydını getirir."""
+        if not self.check_connection():
+            return None
+        try:
+            conn = psycopg2.connect(self.db_url)
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT * FROM users WHERE token = %s;", (token.strip(),))
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+            if row:
+                return dict(row)
+            return None
+        except Exception as e:
+            print(f"PostgreSQL user query error: {e}")
+            return None
 
 # Singleton Instance
 postgis_engine = PostGISManager()
