@@ -1134,45 +1134,22 @@ def analyze_camera_frame(req: CameraAnalysisRequest):
         _, buffer = cv2.imencode(".jpg", img)
         annotated_b64 = "data:image/jpeg;base64," + base64.b64encode(buffer).decode("utf-8")
 
-    # Fallback simulation if no image sent (test/demo mode)
-    if not req.imageBase64 and not detections:
-        import random
-        has_damage = random.choice([True, False])
-        if has_damage:
-            has_critical = True
-            if "catlak" in model_type or model_type == "hybrid":
-                detections.append({
-                    "label": "Derin Taşıyıcı Kolon Çatlağı",
-                    "confidence": round(random.uniform(91.5, 98.2), 1),
-                    "model": "catlak.pt",
-                    "box": [120, 85, 340, 290],
-                    "severity": "CRITICAL"
-                })
-            if "bina" in model_type or model_type == "hybrid":
-                detections.append({
-                    "label": "Bina Ağır Yapısal Hasar",
-                    "confidence": round(random.uniform(88.0, 96.5), 1),
-                    "model": "bina.pt",
-                    "box": [45, 60, 480, 410],
-                    "severity": "CRITICAL"
-                })
+    # Remove fake mock simulation — always return honest YOLO model output
+    if detections:
+        if has_critical:
+            status = "CRITICAL_EVACUATE"
+            advice = "⚠️ TAŞIYICI ELEMANDA DERİN YAPISAL ÇATLAK VEYA AĞIR HASAR TESPİT EDİLDİ! BİNAYI DERHAL BOŞALTIN VE EKİPLERE BİLDİRİN!"
         else:
-            if "catlak" in model_type or model_type == "hybrid":
-                detections.append({
-                    "label": "Yüzeysel Sıva / Boya Çatlağı",
-                    "confidence": round(random.uniform(92.0, 97.0), 1),
-                    "model": "catlak.pt",
-                    "box": [200, 150, 310, 240],
-                    "severity": "SAFE"
-                })
-
-    status = "CRITICAL_EVACUATE" if has_critical else "SAFE_SURFACE"
-    advice = "⚠️ TAŞIYICI ELEMANDA DERİN YAPISEL ÇATLAK VEYA HASAR TESPİT EDİLDİ! BİNAYI DERHAL BOŞALTIN!" if has_critical else "🟢 YAPISAL TEHLİKE SAPTANMADI. Tespiti yapılan çatlak kaplama sıva yüzeyindedir."
+            status = "SAFE_SURFACE"
+            advice = "🟡 YÜZEYSEL ÇATLAK VEYA HASARSIZ YAPISAL DURUM TESPİT EDİLDİ. Taşıyıcı kolon/kirişlerde kritik tehlike görülmüyor."
+    else:
+        status = "NO_DETECTION"
+        advice = "🟢 GÖRÜNTÜDE HERHANGİ BİR ÇATLAK VEYA BİNA HASARI SAPTANMADI. Modeller kamera karesinde riskli bir alan tespit etmedi."
 
     return {
         "status": status,
         "modelType": req.modelType,
-        "activeModels": active_models or (["catlak.pt (Çatlak Tespiti)"] if model_type=="catlak" else ["bina.pt (Bina Hasar)"]),
+        "activeModels": active_models or (["catlak.pt (Çatlak Tespiti)"] if model_type=="catlak" else (["bina.pt (Bina Hasar)"] if model_type=="bina" else ["catlak.pt", "bina.pt"])),
         "detections": detections,
         "annotatedImage": annotated_b64,
         "advice": advice,
