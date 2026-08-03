@@ -93,6 +93,18 @@ class PostGISManager:
                 CREATE INDEX IF NOT EXISTS idx_sos_gist_geom ON sos_alerts USING GIST (geom);
             """)
 
+            # 4. OSM Safety Polygons Table (Parks, Open Spaces, Stadiums)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS osm_safety_polygons (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(255),
+                    category VARCHAR(100),
+                    geom GEOMETRY(Geometry, 4326),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS idx_osm_poly_gist ON osm_safety_polygons USING GIST (geom);
+            """)
+
             cur.close()
             conn.close()
             print("PostGIS GIST Mekansal indeksleri ve tablolari hazirlandi.")
@@ -168,8 +180,8 @@ class PostGISManager:
             query = """
                 SELECT toplanma_alani AS name, toplanma_alani, il, ilce, mahalle,
                        ST_Y(geom) AS lat, ST_X(geom) AS lon, ST_Y(geom) AS display_lat, ST_X(geom) AS display_lon,
-                       'AFAD Resmi Toplanma Alanı' AS category, 0 AS priority,
-                       'PostgreSQL/PostGIS' AS source, '🟢 Güvenli AFAD Toplanma Alanı' AS status,
+                       'AFAD Resmi Toplanma Alani' AS category, 0 AS priority,
+                       'PostgreSQL/PostGIS' AS source, 'Guvenli AFAD Toplanma Alani' AS status,
                        ST_Distance(geom::geography, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography) AS dist_m
                 FROM afad_assembly_points
                 WHERE ST_DWithin(geom::geography, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography, %s)
@@ -181,8 +193,64 @@ class PostGISManager:
             conn.close()
             return [dict(r) for r in results]
         except Exception as e:
-            print(f"⚠️ PostGIS mekânsal sorgu hatası: {e}")
+            print(f"PostGIS mekansal sorgu hatasi: {e}")
             return []
+
+    def ingest_osm_data_to_postgis(self, lat: float, lon: float, radius_km: float = 10.0) -> int:
+        """Ingests OpenStreetMap parks, stadiums, and open assembly polygons into PostGIS."""
+        if not self.check_connection():
+            return 0
+
+        import requests
+        print(f"OSM verileri PostGIS'e cekiliyor... Lat: {lat}, Lon: {lon}, Radius: {radius_km}km")
+        
+        # Calculate Bounding Box
+        min_lat = lat - (radius_km / 111.0)
+        max_lat = lat + (radius_km / 111.0)
+        min_lon = lon - (radius_km / 80.0)
+        max_lon = lon + (radius_km / 80.0)
+
+        overpass_query = f'[out:json][timeout:25];(node["emergency"="assembly_point"]({min_lat},{min_lon},{max_lat},{max_lon});way["leisure"="park"]({min_lat},{min_lon},{max_lat},{max_lon});way["leisure"="stadium"]({min_lat},{min_lon},{max_lat},{max_lon}););out center;'
+
+        headers = {"User-Agent": "QuakeMind-GIS-App/1.0 (https://quakemind.org)"}
+        try:
+            r = requests.post("https://overpass-api.de/api/interpreter", data={"data": overpass_query}, headers=headers, timeout=15)
+            if r.status_code != 200:
+                print(f"OSM Overpass HTTP Hata: {r.status_code}")
+                return 0
+
+            elements = r.json().get("elements", [])
+            if not elements:
+                return 0
+
+            conn = psycopg2.connect(self.db_url)
+            conn.autocommit = True
+            cur = conn.cursor()
+
+            inserted = 0
+            for item in elements:
+                try:
+                    p_lat = item.get("lat") or item.get("center", {}).get("lat")
+                    p_lon = item.get("lon") or item.get("center", {}).get("lon")
+                    if not p_lat or not p_lon:
+                        continue
+
+                    tags = item.get("tags", {})
+                    name = tags.get("name") or tags.get("toplanma_alani") or "OSM Acik Alan / Park"
+                    category = "OSM Park/Bahce" if tags.get("leisure") == "park" else "OSM Toplanma Alani"
+
+                    cur.execute("INSERT INTO osm_safety_polygons (name, category, geom) VALUES (%s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326));", (name, category, p_lon, p_lat))
+                    inserted += 1
+                except Exception:
+                    continue
+
+            cur.close()
+            conn.close()
+            print(f"TEBRIKLER! {inserted} adet OSM acik alan poligonu PostGIS'e aktarildi!")
+            return inserted
+        except Exception as e:
+            print(f"OSM PostGIS ingest hatasi: {e}")
+            return 0
 
 # Singleton Instance
 postgis_engine = PostGISManager()
