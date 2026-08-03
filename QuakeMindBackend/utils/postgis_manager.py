@@ -36,7 +36,7 @@ class PostGISManager:
             cur.close()
             conn.close()
             self.connected = True
-            print(f"✅ PostGIS veritabanı aktif! Sürüm: {version[0]}")
+            print(f"PostGIS veritabani aktif! Surum: {version[0]}")
             return True
         except Exception as e:
             self.connected = False
@@ -95,10 +95,10 @@ class PostGISManager:
 
             cur.close()
             conn.close()
-            print("✅ PostGIS GIST Mekânsal indeksleri ve tabloları hazırlandı.")
+            print("PostGIS GIST Mekansal indeksleri ve tablolari hazirlandi.")
             return True
         except Exception as e:
-            print(f"⚠️ PostGIS tablo oluşturma hatası: {e}")
+            print(f"PostGIS tablo olusturma hatasi: {e}")
             return False
 
     def seed_afad_dataset_to_postgis(self, json_path: Path) -> int:
@@ -117,13 +117,15 @@ class PostGISManager:
             cur.execute("SELECT COUNT(*) FROM afad_assembly_points;")
             count = cur.fetchone()[0]
             if count >= 50000:
-                print(f"ℹ️ PostGIS AFAD tablosunda zaten {count} kayıt mevcut.")
+                print(f"PostGIS AFAD tablosunda zaten {count} kayit mevcut.")
                 cur.close()
                 conn.close()
                 return count
 
-            print("🚀 72.232 AFAD toplanma alanı PostGIS'e yükleniyor...")
-            inserted = 0
+            print("72.232 AFAD toplanma alani PostGIS'e yukleniyor...")
+            from psycopg2.extras import execute_values
+            
+            insert_rows = []
             for item in data:
                 try:
                     lat = float(item["enlem"])
@@ -132,22 +134,26 @@ class PostGISManager:
                     il = item.get("il", "")
                     ilce = item.get("ilce", "")
                     mahalle = item.get("mahalle", "")
-
-                    cur.execute("""
-                        INSERT INTO afad_assembly_points (toplanma_alani, il, ilce, mahalle, geom)
-                        VALUES (%s, %s, %s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326));
-                    """, (name, il, ilce, mahalle, lon, lat))
-                    inserted += 1
+                    insert_rows.append((name, il, ilce, mahalle, lon, lat))
                 except Exception:
                     continue
 
+            if insert_rows:
+                query = """
+                    INSERT INTO afad_assembly_points (toplanma_alani, il, ilce, mahalle, geom)
+                    VALUES %s;
+                """
+                template = "(%s, %s, %s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326))"
+                execute_values(cur, query, insert_rows, template=template, page_size=5000)
+
             conn.commit()
+            inserted = len(insert_rows)
             cur.close()
             conn.close()
-            print(f"✅ {inserted} adet AFAD resmi toplanma alanı PostGIS'e aktarıldı!")
+            print(f"TEBRIKLER! {inserted} adet AFAD resmi toplanma alani PostGIS'e aktarildi!")
             return inserted
         except Exception as e:
-            print(f"⚠️ PostGIS seed yükleme hatası: {e}")
+            print(f"PostGIS seed yukleme hatasi: {e}")
             return 0
 
     def query_nearby_postgis(self, lat: float, lon: float, radius_m: float = 10000.0) -> List[Dict[str, Any]]:
