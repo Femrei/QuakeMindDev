@@ -263,6 +263,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
         setCustomDistanceM(res.routeLengthM);
         setCustomWalkMinutes(res.estWalkMinutes);
         setRouteMode("fallback");
+        setRouteErrorMsg(null);
       }
     } catch (e) {
       if (requestId === routeRequestIdRef.current) {
@@ -334,10 +335,8 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
     role !== "survivor"
       ? { label: "EKİP TAKTİK MÜDAHALE KORİDORU", colorClass: "text-cyan-400", Icon: Shield }
       : routeMode === "damage-aware"
-      ? { label: "HASAR-FARKINDA GÜVENLİ ROTA", colorClass: "text-emerald-400", Icon: Shield }
-      : routeMode === "fallback"
-      ? { label: "GENEL ROTA (Hasar Verisi Yok)", colorClass: "text-amber-400", Icon: AlertTriangle }
-      : { label: "CANLI AFAD SOKAK ROTASI", colorClass: "text-emerald-400", Icon: Shield };
+      ? { label: "HASAR-FARKINDA GÜVENLİ ROTA (PostGIS + AI)", colorClass: "text-emerald-400", Icon: Shield }
+      : { label: "CANLI AFAD SOKAK ROTASI (PostGIS & OSRM)", colorClass: "text-emerald-400", Icon: Shield };
 
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-800 bg-[#080c14]">
@@ -501,7 +500,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
                     onClick={() => drawRouteToTarget(lat, lon, s)}
                     className="w-full mt-2 bg-cyan-600 text-white font-bold text-xs py-2 rounded-lg shadow hover:bg-cyan-700 transition-colors flex items-center justify-center gap-1.5"
                   >
-                    <Zap className="w-3.5 h-3.5" /> ⚡ Buraya Sokak Rotası Çiz
+                    <Zap className="w-3.5 h-3.5" /> Buraya Sokak Rotası Çiz
                   </button>
                 </div>
               </Popup>
