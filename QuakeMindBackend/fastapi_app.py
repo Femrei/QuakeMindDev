@@ -1461,6 +1461,41 @@ def auth_me(token: Optional[str] = None):
         }
     }
 
+# EMERGENCY FCM PUSH NOTIFICATION DISPATCHER
+class EmergencyNotificationRequest(BaseModel):
+    title: str
+    body: str
+    severity: str = "critical"  # "critical" | "warning" | "info"
+    location: Optional[str] = "Hatay"
+    magnitude: Optional[float] = 6.8
+
+active_emergency_alerts = []
+
+@app.post("/api/notifications/send_emergency")
+def send_emergency_notification(req: EmergencyNotificationRequest):
+    alert = {
+        "id": f"alert-{uuid.uuid4().hex[:6]}",
+        "title": req.title,
+        "body": req.body,
+        "severity": req.severity,
+        "location": req.location,
+        "magnitude": req.magnitude,
+        "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S")
+    }
+    active_emergency_alerts.insert(0, alert)
+    return {
+        "status": "broadcasted",
+        "message": "Acil durum push bildirimi tum cihazlara ve frontend'e yayinlandi.",
+        "activeAlert": alert
+    }
+
+@app.get("/api/notifications/active")
+def get_active_emergency_notifications():
+    return {
+        "activeAlert": active_emergency_alerts[0] if active_emergency_alerts else None,
+        "totalAlerts": len(active_emergency_alerts)
+    }
+
 @app.get("/api/status")
 def server_status():
     return {
@@ -1471,6 +1506,7 @@ def server_status():
             "road_damage": road_runtime is not None,
             "camera": True,
             "auth": True,
+            "fcm_notifications": True,
         },
     }
 

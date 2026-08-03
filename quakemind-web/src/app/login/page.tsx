@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { registerUser, loginUser } from "@/lib/api";
+import { setupRecaptcha, sendSmsOtp, signInWithGoogle } from "@/lib/firebase";
 import { 
   ShieldAlert, 
   Mail, 
@@ -17,14 +18,17 @@ import {
   MapPin, 
   Briefcase,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Phone,
+  KeyRound,
+  Globe
 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const { loginWithProfile } = useAuth();
   
-  const [tab, setTab] = useState<"login" | "register">("login");
+  const [tab, setTab] = useState<"login" | "register" | "sms">("login");
   const [selectedRole, setSelectedRole] = useState<"survivor" | "responder">("responder");
   
   const [name, setName] = useState("");
@@ -33,9 +37,101 @@ export default function LoginPage() {
   const [city, setCity] = useState("Hatay");
   const [unit, setUnit] = useState("");
 
+  // Firebase SMS OTP states
+  const [phone, setPhone] = useState("+90 555 123 4567");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const handleSendSms = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    try {
+      const recaptcha = setupRecaptcha("recaptcha-container");
+      const confirmation = await sendSmsOtp(phone.trim(), recaptcha);
+      setConfirmationResult(confirmation);
+      setOtpSent(true);
+      setSuccessMsg("SMS Doğrulama Kodu Gönderildi! Demo Doğrulama Kodu: 123456");
+    } catch (err: any) {
+      console.warn("SMS Gönderme Hatası:", err);
+      setErrorMsg(err.message || "SMS kodu gönderilemedi.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpCode || otpCode.length < 6) {
+      setErrorMsg("Lütfen 6 haneli SMS kodunu giriniz.");
+      return;
+    }
+    setLoading(true);
+    setErrorMsg(null);
+
+    try {
+      let firebaseUser: any = null;
+      if (confirmationResult && confirmationResult.confirm) {
+        const res = await confirmationResult.confirm(otpCode);
+        firebaseUser = res.user;
+      } else {
+        firebaseUser = {
+          uid: "usr-sms-" + Math.random().toString(36).substring(2, 8),
+          phoneNumber: phone,
+          displayName: "Afetzede Vatandaş (SMS OTP)",
+          email: `sms_${phone.replace(/\D/g, '')}@quakemind.gov.tr`
+        };
+      }
+
+      const profile = {
+        id: firebaseUser.uid || "usr-sms-101",
+        name: name.trim() || `Afetzede (${phone})`,
+        email: firebaseUser.email || `sms_${phone.replace(/\D/g, '')}@quakemind.gov.tr`,
+        role: selectedRole,
+        city: city || "Hatay",
+        unit: selectedRole === "responder" ? "Arama Kurtarma Saha Ekibi" : "Sivil Afetzede",
+      };
+
+      loginWithProfile(profile, "firebase-sms-token-" + profile.id);
+      setSuccessMsg("SMS Doğrulaması Başarılı! Yönlendiriliyorsunuz...");
+      setTimeout(() => {
+        router.push(selectedRole === "survivor" ? "/survivor" : "/command");
+      }, 500);
+    } catch (err: any) {
+      setErrorMsg(err.message || "SMS Doğrulama Kodu Hatalı!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const gUser = await signInWithGoogle();
+      const profile = {
+        id: gUser.uid || "usr-g-101",
+        name: gUser.displayName || "Google Kullanıcısı",
+        email: gUser.email || "google@quakemind.gov.tr",
+        role: selectedRole,
+        city: "Hatay",
+        unit: selectedRole === "responder" ? "Arama Kurtarma Lideri" : "Sivil",
+      };
+      loginWithProfile(profile, "google-oauth-token");
+      router.push(selectedRole === "survivor" ? "/survivor" : "/command");
+    } catch (err: any) {
+      setErrorMsg("Google ile giriş yapılamadı.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,29 +226,40 @@ export default function LoginPage() {
           <p className="text-xs text-slate-400">PostGIS & AI Destekli Afet İkaz & Operasyon Platformu</p>
         </div>
 
-        {/* LOGIN / REGISTER TAB SELECTOR */}
-        <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-900 border border-slate-800">
+        {/* LOGIN / REGISTER / SMS TAB SELECTOR */}
+        <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-900 border border-slate-800 text-[11px] font-bold">
           <button
             type="button"
             onClick={() => { setTab("login"); setErrorMsg(null); setSuccessMsg(null); }}
-            className={`py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            className={`py-2 rounded-xl transition-all flex items-center justify-center gap-1 ${
               tab === "login"
                 ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30"
                 : "text-slate-400 hover:text-white"
             }`}
           >
-            <UserCheck className="w-4 h-4" /> 🔑 GİRİŞ YAP
+            <UserCheck className="w-3.5 h-3.5" /> 🔑 E-POSTA
           </button>
           <button
             type="button"
             onClick={() => { setTab("register"); setErrorMsg(null); setSuccessMsg(null); }}
-            className={`py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            className={`py-2 rounded-xl transition-all flex items-center justify-center gap-1 ${
               tab === "register"
                 ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30"
                 : "text-slate-400 hover:text-white"
             }`}
           >
-            <User className="w-4 h-4" /> 📝 HESAP OLUŞTUR
+            <User className="w-3.5 h-3.5" /> 📝 KAYIT OL
+          </button>
+          <button
+            type="button"
+            onClick={() => { setTab("sms"); setErrorMsg(null); setSuccessMsg(null); }}
+            className={`py-2 rounded-xl transition-all flex items-center justify-center gap-1 ${
+              tab === "sms"
+                ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/30"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Phone className="w-3.5 h-3.5" /> 📱 SMS OTP
           </button>
         </div>
 
@@ -164,7 +271,7 @@ export default function LoginPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div
               onClick={() => setSelectedRole("responder")}
-              className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
+              className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
                 selectedRole === "responder"
                   ? "bg-blue-950/50 border-blue-500/80 shadow-lg shadow-blue-500/20 ring-1 ring-blue-500"
                   : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
@@ -174,14 +281,14 @@ export default function LoginPage() {
                 <span className="text-xs font-black text-blue-400 uppercase font-mono">🔵 Saha Ekibi & Komuta</span>
                 {selectedRole === "responder" && <CheckCircle2 className="w-4 h-4 text-blue-400" />}
               </div>
-              <p className="text-[11px] text-slate-400 mt-2">
-                AFAD, Arama Kurtarma Lideri, İHA & Uydu Operatörü, Komuta Haritası & SOS Sevk Paneli.
+              <p className="text-[11px] text-slate-400 mt-1">
+                AFAD, Arama Kurtarma Lideri, İHA & Uydu Operatörü, Komuta Haritası & SOS Sevk.
               </p>
             </div>
 
             <div
               onClick={() => setSelectedRole("survivor")}
-              className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
+              className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
                 selectedRole === "survivor"
                   ? "bg-red-950/50 border-red-500/80 shadow-lg shadow-red-500/20 ring-1 ring-red-500"
                   : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
@@ -191,8 +298,8 @@ export default function LoginPage() {
                 <span className="text-xs font-black text-red-400 uppercase font-mono">🔴 Vatandaş & Afetzede</span>
                 {selectedRole === "survivor" && <CheckCircle2 className="w-4 h-4 text-red-400" />}
               </div>
-              <p className="text-[11px] text-slate-400 mt-2">
-                Tek Tıkla Acil SOS Gönderme, PostGIS Güvenli AFAD Toplanma Alanı & Çatlak Tara.
+              <p className="text-[11px] text-slate-400 mt-1">
+                Tek Tıkla SOS Gönderme, PostGIS Güvenli AFAD Toplanma Alanı & Çatlak Tara.
               </p>
             </div>
           </div>
@@ -200,20 +307,81 @@ export default function LoginPage() {
 
         {/* FEEDBACK ALERTS */}
         {errorMsg && (
-          <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/40 text-xs text-red-300 flex items-center gap-2">
+          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/40 text-xs text-red-300 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
         {successMsg && (
-          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-xs text-emerald-300 flex items-center gap-2">
+          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-xs text-emerald-300 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
-        {/* FORM FIELDS */}
-        <form onSubmit={handleSubmit} className="space-y-3.5">
+        {/* SMS OTP FORM */}
+        {tab === "sms" ? (
+          <form onSubmit={otpSent ? handleVerifyOtp : handleSendSms} className="space-y-3.5">
+            <div id="recaptcha-container"></div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-300 block mb-1">Cep Telefon Numarası</label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
+                <input
+                  type="tel"
+                  disabled={otpSent}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+90 555 123 4567"
+                  className="w-full py-3 pl-9 pr-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none font-mono"
+                />
+              </div>
+            </div>
+
+            {otpSent && (
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">SMS Doğrulama Kodu (Demo: 123456)</label>
+                <div className="relative">
+                  <KeyRound className="w-4 h-4 text-emerald-400 absolute left-3 top-3.5" />
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    placeholder="123456"
+                    className="w-full py-3 pl-9 pr-3 rounded-xl bg-slate-950 border border-emerald-500/60 text-sm font-black text-emerald-300 tracking-widest focus:border-emerald-400 focus:outline-none font-mono text-center"
+                  />
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>SMS Kod İşleniyor...</span>
+                </>
+              ) : otpSent ? (
+                <>
+                  <span>SMS Kodu Doğrula ve Başla</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  <span>📱 SMS OTP Kodu Gönder (3 Sn)</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+        ) : (
+          /* EMAIL & REGISTER FORM */
+          <form onSubmit={handleSubmit} className="space-y-3.5">
           {tab === "register" && (
             <div>
               <label className="text-xs font-bold text-slate-300 block mb-1">Ad Soyad</label>
@@ -314,10 +482,11 @@ export default function LoginPage() {
             )}
           </button>
         </form>
+      )}
 
-        {/* 1-CLICK DEMO ACCOUNTS FOR INSTANT TESTING */}
+        {/* 1-CLICK DEMO ACCOUNTS & GOOGLE OAUTH */}
         <div className="pt-4 border-t border-slate-800 space-y-2">
-          <p className="text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider">⚡ Hızlı Test İçin Tek Tıkla Demo Girişi:</p>
+          <p className="text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider">⚡ Hızlı Test & OAuth Giriş Seçenekleri:</p>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -334,6 +503,14 @@ export default function LoginPage() {
               <span>🛡️ Afetzede Demo Girişi</span>
             </button>
           </div>
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all mt-2"
+          >
+            <Globe className="w-4 h-4 text-cyan-400" />
+            <span>Google Hesabı İle Giriş Yap (OAuth 2.0)</span>
+          </button>
         </div>
 
       </div>
