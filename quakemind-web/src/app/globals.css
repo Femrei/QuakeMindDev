@@ -68,3 +68,34 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #374151;
 }
+
+/* Leaflet Dark Map Tweaks */
+.leaflet-container {
+  background-color: #0b0f17 !important;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.75rem;
+}
+.leaflet-popup-content-wrapper {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+}
+.leaflet-popup-tip {
+  background: #1e293b !important;
+}
+
+/* Hero route styling: animated flowing dashes + glow, drawn over a solid dark casing
+   (added separately as its own Polyline) so the route reads clearly on any tile. */
+@keyframes qm-route-flow {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+.qm-route-line {
+  stroke-dasharray: 14 10;
+  stroke-linecap: round;
+  animation: qm-route-flow 0.9s linear infinite;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 10px rgba(0, 255, 255, 0.6));
+}

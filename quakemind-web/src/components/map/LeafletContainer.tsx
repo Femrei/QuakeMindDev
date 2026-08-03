@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMap, useMapEvents } from "react-leaflet";
+import React, { useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, Pane, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import Link from "next/link";
 import DrawControl from "./DrawControl";
 
 // Fix Leaflet Default Icon issue in Next.js
@@ -49,6 +50,9 @@ export interface MapMarkerItem {
   type?: "sos" | "shelter" | "quake" | "damage";
   popupText?: string;
   magnitude?: number;
+  /** Optional deep-link shown in the popup, e.g. "Detaya git" back to the module that produced this marker. */
+  linkHref?: string;
+  linkLabel?: string;
 }
 
 export interface MapPolylineItem {
@@ -58,6 +62,8 @@ export interface MapPolylineItem {
   weight?: number;
   opacity?: number;
   label?: string;
+  /** Draws a dark outline underneath so the line stands out against any tile background. */
+  casing?: boolean;
 }
 
 interface LeafletContainerProps {
@@ -118,11 +124,29 @@ export default function LeafletContainer({
         {enableDraw && <DrawControl onBoundsSelected={onBoundsSelected} onCleared={onDrawCleared} />}
 
         {satelliteTileUrl ? (
-          <TileLayer
-            key={satelliteTileUrl}
-            attribution={satelliteAttribution ? `&copy; ${satelliteAttribution}` : undefined}
-            url={satelliteTileUrl}
-          />
+          <>
+            <TileLayer
+              key={satelliteTileUrl}
+              attribution={satelliteAttribution ? `&copy; ${satelliteAttribution}` : undefined}
+              url={satelliteTileUrl}
+            />
+            {/* Transparent reference overlay so street lines + place labels stay
+                identifiable on top of raw satellite imagery (hybrid view, matching
+                the Streamlit tool). CartoDB's "only_labels" style provides text only,
+                so road linework comes from Esri's public transportation reference
+                layer instead; both sit in their own pane above the base tile but
+                below markers/routes. */}
+            <Pane name="labels-pane" style={{ zIndex: 350 }}>
+              <TileLayer
+                attribution="Yollar: Esri"
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}"
+              />
+              <TileLayer
+                attribution='Etiketler: &copy; <a href="https://carto.com/">CARTO</a>'
+                url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"
+              />
+            </Pane>
+          </>
         ) : (
           /* Dark Matter CartoDB Base Layer */
           <TileLayer
@@ -133,15 +157,45 @@ export default function LeafletContainer({
 
         {/* Polylines (Roads, Routes, Fault Lines) */}
         {polylines.map((poly) => (
-          <Polyline
-            key={poly.id}
-            positions={poly.coords}
-            pathOptions={{
-              color: poly.color || "#3b82f6",
-              weight: poly.weight || 4,
-              opacity: poly.opacity || 0.85,
-            }}
-          />
+          <React.Fragment key={poly.id}>
+            {poly.casing && (
+              <>
+                {/* Dark outline for contrast against any tile */}
+                <Polyline
+                  positions={poly.coords}
+                  pathOptions={{
+                    color: "#0b0f17",
+                    weight: (poly.weight || 4) + 8,
+                    opacity: 0.85,
+                    lineCap: "round",
+                    lineJoin: "round",
+                  }}
+                />
+                {/* Bright base stroke under the animated dashes */}
+                <Polyline
+                  positions={poly.coords}
+                  pathOptions={{
+                    color: "#ffffff",
+                    weight: (poly.weight || 4) + 3,
+                    opacity: 0.9,
+                    lineCap: "round",
+                    lineJoin: "round",
+                  }}
+                />
+              </>
+            )}
+            <Polyline
+              positions={poly.coords}
+              pathOptions={{
+                color: poly.color || "#3b82f6",
+                weight: poly.weight || 4,
+                opacity: poly.opacity || 0.85,
+                lineCap: "round",
+                lineJoin: "round",
+                className: poly.casing ? "qm-route-line" : undefined,
+              }}
+            />
+          </React.Fragment>
         ))}
 
         {/* Markers */}
@@ -171,6 +225,11 @@ export default function LeafletContainer({
                 <Popup>
                   <div className="text-sm font-semibold">{marker.title}</div>
                   <div className="text-xs text-slate-300">{marker.popupText || `Büyüklük: ${mag}`}</div>
+                  {marker.linkHref && (
+                    <Link href={marker.linkHref} className="text-xs text-blue-600 font-semibold underline block mt-1">
+                      {marker.linkLabel || "Detaya git"}
+                    </Link>
+                  )}
                 </Popup>
               </CircleMarker>
             );
@@ -181,6 +240,11 @@ export default function LeafletContainer({
               <Popup>
                 <div className="text-sm font-bold text-slate-900">{marker.title}</div>
                 {marker.popupText && <div className="text-xs text-slate-700 mt-1">{marker.popupText}</div>}
+                {marker.linkHref && (
+                  <Link href={marker.linkHref} className="text-xs text-blue-600 font-semibold underline block mt-1">
+                    {marker.linkLabel || "Detaya git"}
+                  </Link>
+                )}
               </Popup>
             </Marker>
           );

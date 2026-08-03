@@ -9,10 +9,11 @@ import {
   Map, 
   Activity, 
   FileText, 
-  Camera, 
-  Settings, 
+  Camera,
+  Settings,
   Compass,
-  Radio
+  Radio,
+  Layers
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -20,6 +21,7 @@ export default function Sidebar() {
 
   const navItems = [
     { name: "Komuta Merkezi", href: "/command", icon: LayoutDashboard },
+    { name: "Birleşik Komuta Haritası", href: "/command/map", icon: Layers },
     { name: "SOS İhbar Sevk", href: "/command/sos", icon: Siren, badge: "CANLI" },
     { name: "Uydu Yol & Rota Analizi", href: "/command/road-damage", icon: Map },
     { name: "Deprem Risk & Fay Hattı", href: "/command/risk", icon: Activity },

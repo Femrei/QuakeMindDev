@@ -84,6 +84,16 @@ def _get_nlp_pipeline():
             print(f"Failed to load NLP: {e}", flush=True)
     return nlp_pipeline
 
+try:
+    clear_module_cache(["risk_engine"])
+    with temporary_sys_path(RISK_ROOT), temporary_cwd(RISK_ROOT):
+        risk_module = importlib.import_module("risk_engine")
+        RISK_CSV = RISK_ROOT / "data" / "query.csv"
+        risk_engine = risk_module.EarthquakeRiskEngine(csv_path=str(RISK_CSV.resolve()))
+    print("Risk Engine loaded.", flush=True)
+except Exception as e:
+    print(f"Failed to load Risk Engine: {e}", flush=True)
+
 yolo_catlak = None
 yolo_bina = None
 
@@ -389,6 +399,162 @@ def predict_risk(req: RiskRequest):
             )
             return payload
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Turkey-wide fault line overlay: independent of the selected city (unlike the
+# per-prediction `faultLines`, which risk_bridge filters to ~180km of one city).
+# Sourced from the real GEM active-faults dataset (not the 6-segment approximation
+# in risk_engine.FAULT_LINES) and cached in memory since the source file is ~10MB.
+_turkey_fault_lines_cache = None
+_turkey_fault_lines_lock = Lock()
+TURKEY_BBOX = (25.0, 34.0, 45.5, 43.0)  # west, south, east, north
+
+
+def _iter_geometry_lines(geometry):
+    geom_type = geometry.get("type")
+    coords = geometry.get("coordinates", [])
+    if geom_type == "LineString":
+        line = [(c[0], c[1]) for c in coords if len(c) >= 2]
+        if len(line) >= 2:
+            yield line
+    elif geom_type == "MultiLineString":
+        for segment in coords:
+            line = [(c[0], c[1]) for c in segment if len(c) >= 2]
+            if len(line) >= 2:
+                yield line
+
+
+def _load_turkey_fault_lines():
+    import json
+
+    west, south, east, north = TURKEY_BBOX
+    path = RISK_ROOT / "data" / "fault_maps" / "fay_haritası" / "gem_active_faults_harmonized.geojson"
+    if not path.exists():
+        return []
+
+    with open(path, "r", encoding="utf-8") as handle:
+        geojson_data = json.load(handle)
+
+    lines = []
+    for feature in geojson_data.get("features", []):
+        geometry = feature.get("geometry") or {}
+        name = (feature.get("properties") or {}).get("name") or "Fay Hatti"
+        for line in _iter_geometry_lines(geometry):
+            if not any(west <= lon <= east and south <= lat <= north for lon, lat in line):
+                continue
+            lines.append({
+                "name": name,
+                "points": [{"latitude": lat, "longitude": lon} for lon, lat in line],
+            })
+    return lines
+
+
+def _get_turkey_fault_lines():
+    global _turkey_fault_lines_cache
+    if _turkey_fault_lines_cache is not None:
+        return _turkey_fault_lines_cache
+    with _turkey_fault_lines_lock:
+        if _turkey_fault_lines_cache is None:
+            _turkey_fault_lines_cache = _load_turkey_fault_lines()
+    return _turkey_fault_lines_cache
+
+
+@app.get("/api/risk/fault_lines")
+def risk_fault_lines():
+    lines = _get_turkey_fault_lines()
+    return {"faultLines": lines, "count": len(lines)}
+
+
+@app.get("/api/risk/all_quakes")
+def risk_all_quakes(
+    minMagnitude: float = 0.0,
+    startDate: Optional[str] = None,
+    endDate: Optional[str] = None,
+    limit: int = 500,
+    sortBy: str = "time",
+):
+    """Rasathane view: the full national catalog (query.csv, ~20k events back to
+    1933), independent of any selected city — unlike /predict's 150km-around-one-city
+    slice. Filterable/sortable/paginated so a browser never has to render 20k markers
+    at once."""
+    if not risk_engine:
+        raise HTTPException(status_code=503, detail="Risk model is not loaded.")
+
+    try:
+        import pandas as pd
+
+        with temporary_sys_path(RISK_ROOT), temporary_cwd(RISK_ROOT):
+            risk_engine._prepare_frames()
+            df = risk_engine.df_full.copy()
+
+        df = df[df["mag"] >= minMagnitude]
+        if startDate:
+            start_ts = pd.Timestamp(startDate)
+            if start_ts.tzinfo is None:
+                start_ts = start_ts.tz_localize("UTC")
+            df = df[df["time"] >= start_ts]
+        if endDate:
+            end_ts = pd.Timestamp(endDate)
+            if end_ts.tzinfo is None:
+                end_ts = end_ts.tz_localize("UTC")
+            df = df[df["time"] <= end_ts]
+
+        total_matched = int(len(df))
+
+        if sortBy == "magnitude":
+            df = df.sort_values(["mag", "time"], ascending=[False, False])
+        else:
+            df = df.sort_values("time", ascending=False)
+
+        capped_limit = max(1, min(int(limit), 2000))
+        df = df.head(capped_limit)
+
+        quakes = [
+            {
+                "time": str(row["time"]),
+                "place": row.get("place") or "Bilinmeyen konum",
+                "magnitude": float(row["mag"]),
+                "depth": float(row["depth"]) if pd.notna(row.get("depth")) else None,
+                "latitude": float(row["latitude"]),
+                "longitude": float(row["longitude"]),
+                "status": row.get("status") or "reviewed",
+            }
+            for _, row in df.iterrows()
+        ]
+
+        full_range = risk_engine.df_full["time"]
+        return {
+            "quakes": quakes,
+            "totalMatched": total_matched,
+            "returned": len(quakes),
+            "datasetStart": str(full_range.min()),
+            "datasetEnd": str(full_range.max()),
+            "datasetTotal": int(len(risk_engine.df_full)),
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/risk/refresh_live_data")
+def risk_refresh_live_data():
+    """Pulls fresh Kandilli (+ USGS gap-fill) data into query.csv and invalidates
+    the risk engine's in-memory frames/model so the next request re-reads it."""
+    if not risk_engine:
+        raise HTTPException(status_code=503, detail="Risk model is not loaded.")
+
+    try:
+        with temporary_sys_path(RISK_ROOT, MOBILE_TOOL_ROOT), temporary_cwd(RISK_ROOT):
+            from data_manager import fetch_and_update_data
+            message = fetch_and_update_data()
+
+        risk_engine.df_full = None
+        risk_engine.df_main = None
+        risk_engine.model = None
+
+        return {"message": message}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
