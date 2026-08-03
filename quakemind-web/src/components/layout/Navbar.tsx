@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { fetchServerStatus } from "@/lib/api";
 import { Bell, ShieldAlert, Activity, User, LogOut, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function Navbar() {
+  const pathname = usePathname();
   const { user, role, setRole, logout, notificationsCount } = useAuth();
   const [serverOk, setServerOk] = useState<boolean | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -16,6 +18,11 @@ export default function Navbar() {
       .then(() => setServerOk(true))
       .catch(() => setServerOk(false));
   }, []);
+
+  // Hide top Navbar completely on login screen for a clean, clutter-free authentication UI
+  if (pathname === "/login") {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-800/80 px-4 py-3">

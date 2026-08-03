@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AlertTriangle, Bell, BellOff, Volume2, VolumeX, X, Navigation, ShieldAlert, CheckCircle2 } from "lucide-react";
 
 export interface EmergencyAlert {
@@ -15,9 +16,15 @@ export interface EmergencyAlert {
 }
 
 export default function EmergencyNotificationBanner() {
+  const pathname = usePathname();
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
   const [activeAlert, setActiveAlert] = useState<EmergencyAlert | null>(null);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+
+  // Hide notification siren banner on login page for clean UI
+  if (pathname === "/login") {
+    return null;
+  }
 
   // Check notification permission state on mount
   useEffect(() => {

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { registerUser, loginUser } from "@/lib/api";
 import { setupRecaptcha, sendSmsOtp, signInWithGoogle } from "@/lib/firebase";
@@ -26,10 +26,15 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlRole = searchParams.get("role");
+
   const { loginWithProfile } = useAuth();
   
   const [tab, setTab] = useState<"login" | "register" | "sms">("login");
-  const [selectedRole, setSelectedRole] = useState<"survivor" | "responder">("responder");
+  const [selectedRole, setSelectedRole] = useState<"survivor" | "responder">(
+    urlRole === "survivor" ? "survivor" : "responder"
+  );
   
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
