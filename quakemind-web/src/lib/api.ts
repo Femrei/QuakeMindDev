@@ -150,9 +150,27 @@ export async function analyzeRoadDamage(params: {
   return res.json();
 }
 
-export interface RouteResult {
-  routeCoords: [number, number][];
-  distanceMeters: number;
+export async function reportRoadBlockage(
+  startLat: number,
+  startLon: number,
+  endLat: number,
+  endLon: number,
+  reason: string = "Uydu / İHA Tespitli Kapalı Yol",
+  severity: string = "Ağır Hasarlı"
+) {
+  const res = await fetch(`${API_BASE_URL}/api/road_damage/report_blockage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ startLat, startLon, endLat, endLon, reason, severity }),
+  });
+  if (!res.ok) throw new Error("Yol kapalılığı bildirimi başarısız.");
+  return res.json();
+}
+
+export async function getNearestDebrisForTeams(lat: number, lon: number, limit: number = 5) {
+  const res = await fetch(`${API_BASE_URL}/api/road_damage/nearest_debris?latitude=${lat}&longitude=${lon}&limit=${limit}`);
+  if (!res.ok) throw new Error("En yakın enkaz noktaları okunamadı.");
+  return res.json();
 }
 
 export async function getRouteBetweenPoints(
