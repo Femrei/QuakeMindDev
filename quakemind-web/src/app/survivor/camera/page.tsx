@@ -30,17 +30,31 @@ export default function SurvivorCameraPage() {
     };
   }, [inputMode]);
 
+  const [cameraError, setCameraError] = useState<string | null>(null);
+
   const startCamera = async () => {
+    setCameraError(null);
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
+      let mediaStream: MediaStream | null = null;
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+        });
+      } catch (e1) {
+        console.warn("Rear environment camera not found, falling back to standard video device:", e1);
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+      }
+
       setStream(mediaStream);
-      if (videoRef.current) {
+      if (videoRef.current && mediaStream) {
         videoRef.current.srcObject = mediaStream;
+        videoRef.current.play().catch((pErr) => console.warn("Auto video play error:", pErr));
       }
     } catch (err) {
-      console.warn("Kamera erişim izni yok veya simülasyon aktif:", err);
+      console.warn("Kamera erişim hatası:", err);
+      setCameraError("Kamera açılamadı veya cihazda aktif webcam bulunamadı. 'Galeriden Yükle' sekmesini kullanabilirsiniz.");
     }
   };
 
@@ -251,6 +265,14 @@ export default function SurvivorCameraPage() {
                   </div>
                 </div>
               )
+            ) : cameraError ? (
+              <div className="flex flex-col items-center justify-center p-6 text-center text-amber-300 space-y-3">
+                <AlertTriangle className="w-10 h-10 text-amber-400" />
+                <p className="text-xs font-bold">{cameraError}</p>
+                <button onClick={() => setInputMode("upload")} className="px-4 py-2 bg-cyan-600 text-white rounded-xl font-bold text-xs hover:bg-cyan-500 transition-all">
+                  📷 Galeriden Fotoğraf Yükle
+                </button>
+              </div>
             ) : (
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
             )}
