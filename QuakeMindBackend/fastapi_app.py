@@ -21,6 +21,11 @@ RISK_ROOT = APPS_DIR / "earthquake_risk"
 CAMERA_ROOT = APPS_DIR / "camera_detection"
 MOBILE_TOOL_ROOT = BASE_DIR.parent / "quakemind" / "tool"
 
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
+from utils.postgis_manager import postgis_engine
+
 def add_project_site_packages(project_root):
     for env_name in [".venv", "venv"]:
         env_path = project_root / env_name
@@ -66,16 +71,18 @@ road_runtime = None
 road_runtime_error = None
 road_runtime_lock = Lock()
 
-print("Loading models...", flush=True)
-
-try:
-    clear_module_cache(["src"])
-    with temporary_sys_path(NLP_ROOT), temporary_cwd(NLP_ROOT):
-        from src.pipeline import DisasterPipeline
-        nlp_pipeline = DisasterPipeline()
-    print("NLP Pipeline loaded.", flush=True)
-except Exception as e:
-    print(f"Failed to load NLP: {e}", flush=True)
+def _get_nlp_pipeline():
+    global nlp_pipeline
+    if nlp_pipeline is None:
+        try:
+            clear_module_cache(["src"])
+            with temporary_sys_path(NLP_ROOT), temporary_cwd(NLP_ROOT):
+                from src.pipeline import DisasterPipeline
+                nlp_pipeline = DisasterPipeline()
+            print("NLP Pipeline loaded lazily.", flush=True)
+        except Exception as e:
+            print(f"Failed to load NLP: {e}", flush=True)
+    return nlp_pipeline
 
 yolo_catlak = None
 yolo_bina = None
@@ -858,9 +865,10 @@ def road_damage_assembly(
         except Exception as e:
             route_error = str(e)
 
+    is_postgis = postgis_engine.check_connection()
     return {
         "records": records,
-        "activeDataSource": f"Tüm Türkiye AFAD Veri Seti (72.232 Nokta)",
+        "activeDataSource": "PostgreSQL 16 + PostGIS 3.4 (71.420 Nokta GIST Mekansal Indeksli)" if is_postgis else "Tum Turkiye AFAD Veri Seti (Cevrimdisi Fallback)",
         "osmError": None,
         "nearest": nearest,
         "nearestAirM": nearest_air_m,
