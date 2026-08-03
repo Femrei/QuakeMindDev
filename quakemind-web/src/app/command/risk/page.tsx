@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem, MapPolylineItem } from "@/components/map/InteractiveMap";
 import {
@@ -151,20 +151,18 @@ function RiskAnalysisTab() {
     }
   };
 
-  const markers: MapMarkerItem[] = [];
-  if (result) {
-    result.mapEvents.forEach((q, idx) => {
-      markers.push({
-        id: `q-${idx}`,
-        lat: q.latitude,
-        lng: q.longitude,
-        title: `${q.label} — M ${q.magnitude}`,
-        type: "quake",
-        magnitude: q.magnitude,
-        popupText: `Tarih: ${q.timeLabel.slice(0, 10)} | Büyüklük: ${q.magnitude}`,
-      });
-    });
-    markers.push({
+  const markers: MapMarkerItem[] = useMemo(() => {
+    if (!result) return [];
+    const items: MapMarkerItem[] = result.mapEvents.map((q, idx) => ({
+      id: `q-${idx}`,
+      lat: q.latitude,
+      lng: q.longitude,
+      title: `${q.label} — M ${q.magnitude}`,
+      type: "quake",
+      magnitude: q.magnitude,
+      popupText: `Tarih: ${q.timeLabel.slice(0, 10)} | Büyüklük: ${q.magnitude}`,
+    }));
+    items.push({
       id: "selected-city",
       lat: result.coordinates.lat,
       lng: result.coordinates.lon,
@@ -172,12 +170,16 @@ function RiskAnalysisTab() {
       type: "shelter",
       popupText: `Risk Skoru: ${result.riskScore} — ${result.riskLevel}`,
     });
-  }
+    return items;
+  }, [result]);
 
-  const polylines: MapPolylineItem[] = [
-    ...faultLinesToPolylines(allFaultLines, "#f59e0b", 1.5, 0.45),
-    ...(result ? faultLinesToPolylines(result.faultLines, "#ff5722", 3, 0.85) : []),
-  ];
+  const polylines: MapPolylineItem[] = useMemo(
+    () => [
+      ...faultLinesToPolylines(allFaultLines, "#f59e0b", 1.5, 0.45),
+      ...(result ? faultLinesToPolylines(result.faultLines, "#ff5722", 3, 0.85) : []),
+    ],
+    [allFaultLines, result]
+  );
 
   const mapCenter: [number, number] = result ? [result.coordinates.lat, result.coordinates.lon] : [38.9, 35.2];
   const mapZoom = result ? 7 : 6;
@@ -403,15 +405,19 @@ function ObservatoryTab() {
     }
   };
 
-  const markers: MapMarkerItem[] = quakes.map((q, idx) => ({
-    id: `obs-${idx}`,
-    lat: q.latitude,
-    lng: q.longitude,
-    title: `${q.place} — M ${q.magnitude}`,
-    type: "quake",
-    magnitude: q.magnitude,
-    popupText: `Tarih: ${q.time.slice(0, 16).replace("T", " ")} | Derinlik: ${q.depth != null ? q.depth.toFixed(1) + " km" : "?"}`,
-  }));
+  const markers: MapMarkerItem[] = useMemo(
+    () =>
+      quakes.map((q, idx) => ({
+        id: `obs-${idx}`,
+        lat: q.latitude,
+        lng: q.longitude,
+        title: `${q.place} — M ${q.magnitude}`,
+        type: "quake",
+        magnitude: q.magnitude,
+        popupText: `Tarih: ${q.time.slice(0, 16).replace("T", " ")} | Derinlik: ${q.depth != null ? q.depth.toFixed(1) + " km" : "?"}`,
+      })),
+    [quakes]
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

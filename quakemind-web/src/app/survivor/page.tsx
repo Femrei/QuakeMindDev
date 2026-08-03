@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import SafeEvacuationMap from "@/components/map/SafeEvacuationMap";
-import SurvivorCameraScanner from "@/components/camera/SurvivorCameraScanner";
 import { sendSOSAlert } from "@/lib/api";
 import { ShieldAlert, MapPin, Navigation, Package, CheckCircle2, AlertCircle, Heart, PhoneCall, Camera } from "lucide-react";
 
@@ -40,7 +39,6 @@ export default function SurvivorPortalPage() {
   const [note, setNote] = useState("");
   const [selectedAid, setSelectedAid] = useState<string[]>(["su", "gida"]);
   const [aidRequested, setAidRequested] = useState(false);
-  const [showCameraModal, setShowCameraModal] = useState(false);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -313,9 +311,6 @@ export default function SurvivorPortalPage() {
           </div>
         </div>
       </div>
-
-      {/* SURVIVOR CAMERA SCANNER MODAL */}
-      <SurvivorCameraScanner isOpen={showCameraModal} onClose={() => setShowCameraModal(false)} />
     </div>
   );
 }

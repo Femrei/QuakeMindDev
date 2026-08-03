@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import type { MapMarkerItem, MapPolylineItem } from "./LeafletContainer";
 
@@ -31,6 +31,13 @@ const DynamicMap = dynamic(() => import("./LeafletContainer"), {
   ),
 });
 
-export default function InteractiveMap(props: InteractiveMapProps) {
+// Memoized here (the outer static wrapper) rather than on the dynamically-
+// imported LeafletContainer itself: wrapping next/dynamic's lazy-loaded
+// target directly in React.memo breaks its Suspense/bailout-to-CSR handling.
+// This still skips re-rendering the (potentially ~2000-marker) Leaflet tree
+// when a parent re-renders with the same props (e.g. an unrelated slider drag).
+function InteractiveMap(props: InteractiveMapProps) {
   return <DynamicMap {...props} />;
 }
+
+export default memo(InteractiveMap);

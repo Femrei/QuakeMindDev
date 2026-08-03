@@ -219,7 +219,7 @@ export default function CameraDetectionPage() {
                 onClick={() => setSelectedModel("hybrid")}
                 className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
                   selectedModel === "hybrid"
-                    ? "bg-cyan-600 text-white border-cyan-400"
+                    ? "bg-emerald-600 text-white border-emerald-400"
                     : "glass-button text-slate-400 border-slate-800"
                 }`}
               >

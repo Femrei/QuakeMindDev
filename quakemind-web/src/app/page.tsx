@@ -1,10 +1,9 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { ShieldAlert, Users, Compass, Activity, ArrowRight, Zap, Radio, CheckCircle2, Lock, UserCheck, Shield } from "lucide-react";
+import { ShieldAlert, Users, ArrowRight, Zap, CheckCircle2 } from "lucide-react";
 
 export default function LandingGatePage() {
   const router = useRouter();
@@ -129,18 +128,6 @@ export default function LandingGatePage() {
             </div>
           </div>
         </div>
-
-        {/* BOTTOM AUTHENTICATION CENTER BUTTON */}
-        <div className="pt-6">
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold text-sm shadow-xl shadow-blue-500/20 transition-all hover:scale-105"
-          >
-            <UserCheck className="w-4 h-4" />
-            <span>🔑 DİREKT GİRİŞ & KAYIT MERKEZİNE GİT</span>
-          </Link>
-        </div>
-
       </div>
     </div>
   );

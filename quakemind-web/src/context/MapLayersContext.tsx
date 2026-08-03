@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { MapMarkerItem } from "@/components/map/LeafletContainer";
 import type {
   AssemblyRecord,
@@ -130,31 +130,52 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
     setLayerVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
 
-  return (
-    <MapLayersContext.Provider
-      value={{
-        sosAlerts,
-        setSosAlerts,
-        sosUpdatedAt,
-        nlpIncidents,
-        addNlpIncident,
-        riskLayer,
-        setRiskResult,
-        setAllFaultLines,
-        riskUpdatedAt,
-        faultLinesUpdatedAt,
-        roadDamageAnalyses,
-        addRoadDamageAnalysis,
-        assemblyAreas,
-        setAssemblyAreas,
-        assemblyUpdatedAt,
-        layerVisibility,
-        toggleLayer,
-      }}
-    >
-      {children}
-    </MapLayersContext.Provider>
+  // Bundling every layer's state into one object literal means any single
+  // layer updating (e.g. one new SOS alert) would otherwise hand every
+  // consumer a new context reference and force an app-wide re-render fan-out,
+  // even for consumers that only care about an unrelated layer.
+  const value = useMemo<MapLayersContextType>(
+    () => ({
+      sosAlerts,
+      setSosAlerts,
+      sosUpdatedAt,
+      nlpIncidents,
+      addNlpIncident,
+      riskLayer,
+      setRiskResult,
+      setAllFaultLines,
+      riskUpdatedAt,
+      faultLinesUpdatedAt,
+      roadDamageAnalyses,
+      addRoadDamageAnalysis,
+      assemblyAreas,
+      setAssemblyAreas,
+      assemblyUpdatedAt,
+      layerVisibility,
+      toggleLayer,
+    }),
+    [
+      sosAlerts,
+      setSosAlerts,
+      sosUpdatedAt,
+      nlpIncidents,
+      addNlpIncident,
+      riskLayer,
+      setRiskResult,
+      setAllFaultLines,
+      riskUpdatedAt,
+      faultLinesUpdatedAt,
+      roadDamageAnalyses,
+      addRoadDamageAnalysis,
+      assemblyAreas,
+      setAssemblyAreas,
+      assemblyUpdatedAt,
+      layerVisibility,
+      toggleLayer,
+    ]
   );
+
+  return <MapLayersContext.Provider value={value}>{children}</MapLayersContext.Provider>;
 }
 
 export function useMapLayers() {
