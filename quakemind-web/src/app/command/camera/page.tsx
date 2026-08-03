@@ -30,6 +30,13 @@ export default function CameraDetectionPage() {
     };
   }, [inputMode]);
 
+  useEffect(() => {
+    if (inputMode === "camera" && stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch((err) => console.warn("Video play error:", err));
+    }
+  }, [stream, result, inputMode]);
+
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   const startCamera = async () => {

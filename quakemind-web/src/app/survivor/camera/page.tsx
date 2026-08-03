@@ -30,6 +30,13 @@ export default function SurvivorCameraPage() {
     };
   }, [inputMode]);
 
+  useEffect(() => {
+    if (inputMode === "camera" && stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch((err) => console.warn("Video play error:", err));
+    }
+  }, [stream, result, inputMode]);
+
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   const startCamera = async () => {
@@ -284,21 +291,32 @@ export default function SurvivorCameraPage() {
           {/* ACTION BUTTONS */}
           <div className="flex items-center gap-3">
             {inputMode === "camera" ? (
-              <button
-                onClick={handleRunAnalysis}
-                disabled={analyzing}
-                className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-sm shadow-xl shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {analyzing ? (
-                  <>
-                    <RefreshCw className="w-5 h-5 animate-spin" /> `catlak.pt` & `bina.pt` YOLO Çıkarımı Yapılıyor...
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-5 h-5" /> 📸 ANINDA FOTOĞRAF ÇEK VE ANALİZ ET
-                  </>
+              <div className="flex items-center gap-2 w-full">
+                <button
+                  onClick={handleRunAnalysis}
+                  disabled={analyzing}
+                  className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-sm shadow-xl shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {analyzing ? (
+                    <>
+                      <RefreshCw className="w-5 h-5 animate-spin" /> `catlak.pt` & `bina.pt` YOLO Çıkarımı Yapılıyor...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="w-5 h-5" /> 📸 ANINDA FOTOĞRAF ÇEK VE ANALİZ ET
+                    </>
+                  )}
+                </button>
+                {result && (
+                  <button
+                    onClick={resetCapture}
+                    className="px-4 py-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-all flex items-center gap-2 border border-slate-700 shadow-md"
+                    title="Canlı Kameraya Dön"
+                  >
+                    <RefreshCw className="w-4 h-4 text-cyan-400" /> Canlı Kameraya Dön
+                  </button>
                 )}
-              </button>
+              </div>
             ) : (
               <div className="flex items-center gap-2 w-full">
                 <button
