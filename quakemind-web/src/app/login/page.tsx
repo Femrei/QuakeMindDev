@@ -178,10 +178,25 @@ function LoginPageContent() {
     }
   };
 
-  const handleDemoLogin = (role: "survivor" | "responder") => {
+  // Geliştirme aşamasında birden fazla hesapla test edebilmek için demo
+  // kullanıcı listesi. TODO: production'a çıkmadan önce kaldır / env flag'e bağla.
+  const DEMO_RESPONDERS = [
+    { email: "saha@quakemind.gov.tr", name: "Afet Saha Ekibi", unit: "Arama Kurtarma Lideri" },
+    { email: "saha2@quakemind.gov.tr", name: "Zeynep Arslan", unit: "AKUT Operatörü" },
+    { email: "saha3@quakemind.gov.tr", name: "Mehmet Demir", unit: "İHA & Uydu Operatörü" },
+    { email: "saha4@quakemind.gov.tr", name: "Elif Kaya", unit: "UMKE Sağlık Ekibi" },
+    { email: "saha5@quakemind.gov.tr", name: "Burak Öztürk", unit: "İtfaiye Arama Kurtarma" },
+  ];
+  const DEMO_SURVIVORS = [
+    { email: "afetzede@quakemind.gov.tr", name: "Afetzede Vatandaş", unit: "Sivil" },
+    { email: "afetzede2@quakemind.gov.tr", name: "Ali Yıldız", unit: "Sivil" },
+    { email: "afetzede3@quakemind.gov.tr", name: "Ayşe Şahin", unit: "Sivil" },
+  ];
+
+  const handleDemoLogin = (role: "survivor" | "responder", demoEmail?: string) => {
     setLoading(true);
     setErrorMsg(null);
-    const email = role === "responder" ? "saha@quakemind.gov.tr" : "afetzede@quakemind.gov.tr";
+    const email = demoEmail || (role === "responder" ? "saha@quakemind.gov.tr" : "afetzede@quakemind.gov.tr");
     loginUser({ email, password: "password123", role })
       .then((res) => {
         loginWithProfile(res.user, res.token);
@@ -476,25 +491,48 @@ function LoginPageContent() {
         </form>
       )}
 
-        {/* 1-CLICK DEMO ACCOUNTS & GOOGLE OAUTH */}
-        <div className="pt-4 border-t border-slate-800 space-y-2">
-          <p className="text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider">⚡ Hızlı Test & OAuth Giriş Seçenekleri:</p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleDemoLogin("responder")}
-              className="py-2.5 px-3 rounded-xl bg-blue-950/40 hover:bg-blue-900/60 border border-blue-500/30 text-blue-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-            >
-              <span>👤 Saha Ekibi Demo Girişi</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDemoLogin("survivor")}
-              className="py-2.5 px-3 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-            >
-              <span>🛡️ Afetzede Demo Girişi</span>
-            </button>
+        {/* MULTI-ACCOUNT DEMO LOGIN & GOOGLE OAUTH -- geliştirme/test amaçlı, henüz yeterli gerçek hesap yok */}
+        <div className="pt-4 border-t border-slate-800 space-y-3">
+          <p className="text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider">⚡ Demo Hesaplarla Hızlı Giriş (Test Amaçlı)</p>
+
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wide px-0.5">🔵 Saha Ekibi Hesapları</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {DEMO_RESPONDERS.map((acc) => (
+                <button
+                  key={acc.email}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleDemoLogin("responder", acc.email)}
+                  className="py-2 px-3 rounded-xl bg-blue-950/40 hover:bg-blue-900/60 border border-blue-500/30 text-blue-300 text-[11px] font-bold flex flex-col items-start gap-0.5 transition-all disabled:opacity-50 text-left"
+                >
+                  <span className="truncate w-full">👤 {acc.name}</span>
+                  <span className="text-[9px] text-blue-400/70 font-normal truncate w-full">{acc.unit}</span>
+                </button>
+              ))}
+            </div>
           </div>
+
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-bold text-red-400 uppercase tracking-wide px-0.5">🔴 Vatandaş Hesapları</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {DEMO_SURVIVORS.map((acc) => (
+                <button
+                  key={acc.email}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleDemoLogin("survivor", acc.email)}
+                  className="py-2 px-3 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-300 text-[11px] font-bold flex flex-col items-start gap-0.5 transition-all disabled:opacity-50 text-left"
+                >
+                  <span className="truncate w-full">🛡️ {acc.name}</span>
+                  <span className="text-[9px] text-red-400/70 font-normal truncate w-full">{acc.unit}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p className="text-[10px] text-slate-500 text-center">Tüm demo hesapların şifresi: <span className="font-mono text-slate-400">password123</span></p>
+
           <button
             type="button"
             onClick={handleGoogleLogin}

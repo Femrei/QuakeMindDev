@@ -562,3 +562,33 @@ export async function fetchCurrentUserProfile(token?: string): Promise<AuthUserR
   if (!res.ok) throw new Error("Kullanıcı profili alınamadı.");
   return res.json();
 }
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderUnit?: string;
+  text: string;
+  timestamp: string;
+}
+
+export async function sendChatMessage(token: string, text: string): Promise<ChatMessage> {
+  const res = await fetch(`${API_BASE_URL}/api/chat/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, text }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail || "Mesaj gönderilemedi.");
+  }
+  const data = await res.json();
+  return data.message;
+}
+
+export async function fetchChatMessages(token: string, limit: number = 50): Promise<ChatMessage[]> {
+  const res = await fetch(`${API_BASE_URL}/api/chat/messages?token=${encodeURIComponent(token)}&limit=${limit}`);
+  if (!res.ok) throw new Error("Sohbet mesajları alınamadı.");
+  const data = await res.json();
+  return data.messages || [];
+}

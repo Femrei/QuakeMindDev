@@ -1383,27 +1383,33 @@ def _verify_password(plain: str, stored: str) -> bool:
         return plain == stored
 
 
-USER_DATABASE = {
-    "saha@quakemind.gov.tr": {
-        "id": "usr-responder-101",
-        "name": "Afet Saha Ekibi",
-        "email": "saha@quakemind.gov.tr",
+def _demo_user(id_suffix, name, email, role, unit, city="Hatay"):
+    return {
+        "id": f"usr-{id_suffix}",
+        "name": name,
+        "email": email,
         "password": _hash_password("password123"),
-        "role": "responder",
-        "city": "Hatay",
-        "unit": "Arama Kurtarma Lideri",
-        "token": "token-responder-101"
-    },
-    "afetzede@quakemind.gov.tr": {
-        "id": "usr-survivor-102",
-        "name": "Afetzede Vatandaş",
-        "email": "afetzede@quakemind.gov.tr",
-        "password": _hash_password("password123"),
-        "role": "survivor",
-        "city": "Hatay",
-        "unit": "Sivil",
-        "token": "token-survivor-102"
+        "role": role,
+        "city": city,
+        "unit": unit,
+        "token": f"token-{id_suffix}",
     }
+
+# Demo accounts for development/testing -- multiple per role so team-chat and
+# multi-user flows can be tried without needing real registrations. TODO:
+# remove or gate behind an env flag before production.
+USER_DATABASE = {
+    u["email"]: u
+    for u in [
+        _demo_user("responder-101", "Afet Saha Ekibi", "saha@quakemind.gov.tr", "responder", "Arama Kurtarma Lideri"),
+        _demo_user("responder-103", "Zeynep Arslan", "saha2@quakemind.gov.tr", "responder", "AKUT Arama Kurtarma Operatörü"),
+        _demo_user("responder-104", "Mehmet Demir", "saha3@quakemind.gov.tr", "responder", "İHA & Uydu Operatörü"),
+        _demo_user("responder-105", "Elif Kaya", "saha4@quakemind.gov.tr", "responder", "UMKE Sağlık Ekibi Lideri"),
+        _demo_user("responder-106", "Burak Öztürk", "saha5@quakemind.gov.tr", "responder", "İtfaiye Arama Kurtarma"),
+        _demo_user("survivor-102", "Afetzede Vatandaş", "afetzede@quakemind.gov.tr", "survivor", "Sivil"),
+        _demo_user("survivor-103", "Ali Yıldız", "afetzede2@quakemind.gov.tr", "survivor", "Sivil"),
+        _demo_user("survivor-104", "Ayşe Şahin", "afetzede3@quakemind.gov.tr", "survivor", "Sivil"),
+    ]
 }
 
 @app.post("/api/auth/register")
@@ -1572,6 +1578,40 @@ def get_active_emergency_notifications():
         "activeAlert": active_emergency_alerts[0] if active_emergency_alerts else None,
         "totalAlerts": len(active_emergency_alerts)
     }
+
+
+# TEAM CHAT (internal messaging between logged-in responder/admin accounts)
+class ChatMessageRequest(BaseModel):
+    token: Optional[str] = None
+    text: str
+
+team_chat_messages: list[dict] = []
+_TEAM_CHAT_LIMIT = 200
+
+@app.post("/api/chat/send")
+def send_team_chat_message(req: ChatMessageRequest):
+    user = _require_role(req.token, {"responder", "admin"})
+    text = req.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Mesaj boş olamaz.")
+    message = {
+        "id": f"msg-{uuid.uuid4().hex[:10]}",
+        "senderId": user.get("id"),
+        "senderName": user.get("name") or user.get("email") or "Ekip Üyesi",
+        "senderUnit": user.get("unit"),
+        "text": text[:2000],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    team_chat_messages.append(message)
+    if len(team_chat_messages) > _TEAM_CHAT_LIMIT:
+        del team_chat_messages[: len(team_chat_messages) - _TEAM_CHAT_LIMIT]
+    return {"status": "sent", "message": message}
+
+@app.get("/api/chat/messages")
+def get_team_chat_messages(token: Optional[str] = None, limit: int = 50):
+    _require_role(token, {"responder", "admin"})
+    capped_limit = max(1, min(limit, _TEAM_CHAT_LIMIT))
+    return {"messages": team_chat_messages[-capped_limit:]}
 
 @app.get("/api/status")
 def server_status():
