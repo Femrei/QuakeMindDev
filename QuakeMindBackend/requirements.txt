@@ -25,3 +25,4 @@ uvicorn
 segmentation-models-pytorch
 ultralytics
 bcrypt
+psycopg2-binary

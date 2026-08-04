@@ -382,12 +382,13 @@ def health_check():
 
 @app.post("/api/nlp/analyze")
 def analyze_nlp(req: NLPRequest):
-    if not nlp_pipeline:
+    pipeline = _get_nlp_pipeline()
+    if not pipeline:
         raise HTTPException(status_code=503, detail="NLP model is not loaded.")
-    
+
     try:
         with temporary_sys_path(NLP_ROOT), temporary_cwd(NLP_ROOT):
-            result = nlp_pipeline.process_tweet(req.text)
+            result = pipeline.process_tweet(req.text)
         return result if result else {"status": "ignored", "reason": "Not related to disaster"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -1000,11 +1001,10 @@ def road_damage_assembly(
     import math
     from utils.postgis_manager import postgis_engine
 
-    records = []
-
-    # 1. Try querying PostGIS first if connected
-    if postgis_engine.check_connection():
-        records = postgis_engine.query_nearby_postgis(latitude, longitude, radiusKm * 1000.0)
+    # 1. Try PostGIS first -- query_nearby_postgis already checks connectivity
+    # internally and returns [] on any failure, so no separate check here.
+    records = postgis_engine.query_nearby_postgis(latitude, longitude, radiusKm * 1000.0)
+    records_from_postgis = bool(records)
 
     # 2. Fallback to local AFAD JSON dataset (72,232 points across Turkey)
     afad_json_path = ROAD_ROOT / "data" / "tum_turkiye_toplanma_alanlari.json"
@@ -1061,10 +1061,9 @@ def road_damage_assembly(
         except Exception as e:
             route_error = str(e)
 
-    is_postgis = postgis_engine.check_connection()
     return {
         "records": records,
-        "activeDataSource": "PostgreSQL 16 + PostGIS 3.4 (71.420 Nokta GIST Mekansal Indeksli)" if is_postgis else "Tum Turkiye AFAD Veri Seti (Cevrimdisi Fallback)",
+        "activeDataSource": "PostgreSQL 16 + PostGIS 3.4 (71.420 Nokta GIST Mekansal Indeksli)" if records_from_postgis else "Tum Turkiye AFAD Veri Seti (Cevrimdisi Fallback)",
         "osmError": None,
         "nearest": nearest,
         "nearestAirM": nearest_air_m,
@@ -1166,22 +1165,10 @@ def report_road_blockage(req: RoadBlockageRequest):
     }
     LIVE_ROAD_BLOCKAGES.append(new_blk)
 
-    # Persist in PostGIS if connected
-    if postgis_engine.check_connection():
-        try:
-            import psycopg2
-            conn = psycopg2.connect(postgis_engine.db_url)
-            conn.autocommit = True
-            cur = conn.cursor()
-            wkt = f"LINESTRING({req.startLon} {req.startLat}, {req.endLon} {req.endLat})"
-            cur.execute("""
-                INSERT INTO road_blockages (id, title, severity, geom)
-                VALUES (%s, %s, %s, ST_SetSRID(ST_GeomFromText(%s), 4326));
-            """, (blockage_id, req.reason, req.severity, wkt))
-            cur.close()
-            conn.close()
-        except Exception as e:
-            print(f"PostGIS blockage insert error: {e}")
+    # Persist in PostGIS (save_road_blockage no-ops safely if unreachable)
+    postgis_engine.save_road_blockage(
+        blockage_id, req.reason, req.severity, req.startLat, req.startLon, req.endLat, req.endLon
+    )
 
     return {
         "status": "success",
