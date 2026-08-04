@@ -382,12 +382,13 @@ def health_check():
 
 @app.post("/api/nlp/analyze")
 def analyze_nlp(req: NLPRequest):
-    if not nlp_pipeline:
+    pipeline = _get_nlp_pipeline()
+    if not pipeline:
         raise HTTPException(status_code=503, detail="NLP model is not loaded.")
-    
+
     try:
         with temporary_sys_path(NLP_ROOT), temporary_cwd(NLP_ROOT):
-            result = nlp_pipeline.process_tweet(req.text)
+            result = pipeline.process_tweet(req.text)
         return result if result else {"status": "ignored", "reason": "Not related to disaster"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
