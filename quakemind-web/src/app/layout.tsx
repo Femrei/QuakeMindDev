@@ -4,6 +4,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { MapLayersProvider } from "@/context/MapLayersContext";
 import Navbar from "@/components/layout/Navbar";
 import EmergencyNotificationBanner from "@/components/notifications/EmergencyNotificationBanner";
+import TeamChatWidget from "@/components/chat/TeamChatWidget";
 
 export const metadata: Metadata = {
   title: "QuakeMind - Afet İkaz & Operasyon Merkezi",
@@ -23,6 +24,7 @@ export default function RootLayout({
             <Navbar />
             <EmergencyNotificationBanner />
             <div className="flex-1 flex overflow-hidden">{children}</div>
+            <TeamChatWidget />
           </MapLayersProvider>
         </AuthProvider>
       </body>

@@ -7,6 +7,7 @@ from PIL import Image
 import datetime
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor, wait as futures_wait
 
 from .local_osm import draw_local_road_mask, has_local_roads_dataset
 
@@ -54,8 +55,8 @@ def fetch_satellite_area(lat, lon, bbox=None, zoom_level=18, wayback_id=None, pr
         if not bbox:
             xt = int((lon + 180.0) / 360.0 * n)
             yt = int((1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * n)
-            lat_n, lon_w = num2deg(xt, yt, z)
-            lat_s, lon_e = num2deg(xt + 2, yt + 2, z)
+            lat_n, lon_w = num2deg(xt - 5, yt - 5, z)
+            lat_s, lon_e = num2deg(xt + 6, yt + 6, z)
             b = (lon_w, lat_s, lon_e, lat_n)
         else:
             b = bbox
@@ -66,40 +67,78 @@ def fetch_satellite_area(lat, lon, bbox=None, zoom_level=18, wayback_id=None, pr
         ytile_max = int((1.0 - math.asinh(math.tan(math.radians(lat_min))) / math.pi) / 2.0 * n)
         ytile_min = int((1.0 - math.asinh(math.tan(math.radians(lat_max))) / math.pi) / 2.0 * n)
         
-        if (xtile_max - xtile_min + 1) * (ytile_max - ytile_min + 1) > 36:
+        # Backstop cap on total downloaded tiles. The caller now picks `z`
+        # (via `_zoom_for_radius` in fastapi_app.py) so a requested bbox
+        # normally resolves to a small, bounded tile grid regardless of the
+        # analysis radius -- this cap only guards against edge cases (e.g. an
+        # explicit bbox from the caller). Keep it modest: CPU Segformer
+        # inference runs over overlapping 512px patches, so pixel count (not
+        # just download time) drives request latency -- an 8x8 grid (2048px)
+        # already costs ~2x a 6x6 grid's inference time.
+        if (xtile_max - xtile_min + 1) * (ytile_max - ytile_min + 1) > 64:
             xt_c = (xtile_min + xtile_max) // 2
             yt_c = (ytile_min + ytile_max) // 2
-            xtile_min = max(xtile_min, xt_c - 2); xtile_max = min(xtile_max, xt_c + 3)
-            ytile_min = max(ytile_min, yt_c - 2); ytile_max = min(ytile_max, yt_c + 3)
+            xtile_min = max(xtile_min, xt_c - 3); xtile_max = min(xtile_max, xt_c + 4)
+            ytile_min = max(ytile_min, yt_c - 3); ytile_max = min(ytile_max, yt_c + 4)
 
         nx_tiles = xtile_max - xtile_min + 1
         ny_tiles = ytile_max - ytile_min + 1
         stitched_img = Image.new('RGB', (nx_tiles * 256, ny_tiles * 256))
         headers = {'User-Agent': 'Mozilla/5.0'}
+
+        if provider == 'esri' and wayback_id:
+            url_for = lambda x, y: f"https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{wayback_id}/{z}/{y}/{x}"
+        elif provider == 'google':
+            url_for = lambda x, y: f"https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+        elif provider == 'custom' and custom_url:
+            url_for = lambda x, y: custom_url.replace('{x}', str(x)).replace('{y}', str(y)).replace('{z}', str(z))
+        else:
+            return None, None
+
+        def _fetch_tile(coords):
+            x, y = coords
+            from io import BytesIO
+            try:
+                r = requests.get(url_for(x, y), headers=headers, timeout=8)
+                if r.status_code == 200:
+                    tile_img = Image.open(BytesIO(r.content)).convert('RGB')
+                    return (x - xtile_min) * 256, (y - ytile_min) * 256, tile_img
+            except Exception:
+                pass
+            return None
+
+        tile_coords = [
+            (x, y)
+            for x in range(xtile_min, xtile_max + 1)
+            for y in range(ytile_min, ytile_max + 1)
+        ]
+
         any_success = False
-        
-        for x in range(xtile_min, xtile_max + 1):
-            for y in range(ytile_min, ytile_max + 1):
-                if provider == 'esri' and wayback_id:
-                    url = f"https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{wayback_id}/{z}/{y}/{x}"
-                elif provider == 'google':
-                    url = f"https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
-                elif provider == 'custom' and custom_url:
-                    url = custom_url.replace('{x}', str(x)).replace('{y}', str(y)).replace('{z}', str(z))
-                else:
-                    return None, None
-                    
-                px = (x - xtile_min) * 256
-                py = (y - ytile_min) * 256
-                try:
-                    r = requests.get(url, headers=headers, timeout=8)
-                    if r.status_code == 200:
-                        from io import BytesIO
-                        tile_img = Image.open(BytesIO(r.content)).convert('RGB')
-                        stitched_img.paste(tile_img, (px, py))
-                        any_success = True
-                except Exception:
-                    pass
+        # Tile fetches are I/O-bound (network round trips), so run them
+        # concurrently instead of one-at-a-time -- otherwise a 12x12 (144)
+        # tile grid at ~8s worst-case each can take minutes and blow past
+        # the mobile client's request timeout.
+        #
+        # requests' `timeout=` only bounds the socket connect/read phase --
+        # DNS resolution (socket.getaddrinfo) happens before that and can
+        # hang indefinitely on a flaky/hotspot network. executor.map()
+        # blocks on each future in submission order, so a single hung DNS
+        # lookup would previously freeze this whole call (and the request
+        # thread + semaphore slot holding it) forever. Bound the wait
+        # explicitly and abandon whatever hasn't finished instead of
+        # joining on it.
+        executor = ThreadPoolExecutor(max_workers=16)
+        try:
+            futures = [executor.submit(_fetch_tile, coords) for coords in tile_coords]
+            done, _pending = futures_wait(futures, timeout=60)
+            for future in done:
+                result = future.result()
+                if result is not None:
+                    px, py, tile_img = result
+                    stitched_img.paste(tile_img, (px, py))
+                    any_success = True
+        finally:
+            executor.shutdown(wait=False, cancel_futures=True)
 
         if not any_success:
             return None, None

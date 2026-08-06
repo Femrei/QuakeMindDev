@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import bcrypt
+import math
 import sys
 import os
 import site
@@ -13,6 +14,7 @@ from pathlib import Path
 from contextlib import contextmanager
 from typing import Optional
 from threading import Lock, Semaphore
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 
 BASE_DIR = Path(__file__).resolve().parent
 APPS_DIR = BASE_DIR / "apps"
@@ -119,6 +121,30 @@ try:
         print("YOLO Bina Model loaded.", flush=True)
 except Exception as e:
     print(f"Failed to load YOLO Camera Models: {e}", flush=True)
+
+
+def _zoom_for_radius(radius_km, target_tiles=6, min_zoom=13, max_zoom=18):
+    """Pick a tile zoom so the stitched image stays a bounded number of tiles
+    across, regardless of the requested analysis radius.
+
+    The Segformer inference below runs on CPU over overlapping 512px patches,
+    so its cost scales roughly with pixel count. Previously zoom was fixed at
+    18 and a larger radiusKm just pushed more tiles into the same fixed tile
+    cap, which either silently cropped the analyzed area back down (defeating
+    the point of the radius slider) or, when the cap was raised to actually
+    honor the radius, ballooned a request from ~1min to ~6-7min of inference
+    -- past the mobile client's 300s timeout, so the analysis never came back.
+    Scaling zoom down for a larger radius keeps the tile/pixel budget (and so
+    inference time) roughly constant while still covering the real requested
+    area.
+    """
+    z = max_zoom
+    while z > min_zoom:
+        km_per_tile = 40075.0 / (2 ** z)
+        if (2 * radius_km) / km_per_tile <= target_tiles:
+            break
+        z -= 1
+    return z
 
 
 def _load_road_runtime():
@@ -270,6 +296,11 @@ class RoadDamageRequest(BaseModel):
     waybackId: Optional[str] = None
     oamTileUrl: Optional[str] = None
     networkType: Optional[str] = None
+    # Half-width of the analysis area in km when no explicit bbox is given.
+    # Previously the backend fell back to a tiny ~2-tile patch (a few hundred
+    # meters) whenever the caller (mobile app) sent no bbox at all -- this
+    # makes sure a real, requested-size area is always analyzed instead.
+    radiusKm: float = 2.5
 
 
 class RoadDamageRouteRequest(BaseModel):
@@ -600,6 +631,7 @@ def road_damage_oam_search(
     longitude: float,
     dateStart: Optional[str] = None,
     dateEnd: Optional[str] = None,
+    radiusKm: float = 5.0,
     bboxWest: Optional[float] = None,
     bboxSouth: Optional[float] = None,
     bboxEast: Optional[float] = None,
@@ -617,7 +649,7 @@ def road_damage_oam_search(
     if bboxWest is not None and bboxSouth is not None and bboxEast is not None and bboxNorth is not None:
         bbox = (bboxWest, bboxSouth, bboxEast, bboxNorth)
     else:
-        bbox = (longitude - 0.03, latitude - 0.03, longitude + 0.03, latitude + 0.03)
+        bbox = runtime["bbox_from_center"](latitude, longitude, max(0.5, radiusKm))
 
     images = search_oam_images(bbox, date_start=dateStart, date_end=dateEnd, limit=25)
     return {"images": images}
@@ -664,6 +696,11 @@ def _analyze_road_damage_impl(req: RoadDamageRequest):
         bbox = None
         if req.bboxWest is not None and req.bboxSouth is not None and req.bboxEast is not None and req.bboxNorth is not None:
             bbox = (req.bboxWest, req.bboxSouth, req.bboxEast, req.bboxNorth)
+        else:
+            # No explicit bbox (the common case for the mobile app): derive a
+            # real-world-sized area from radiusKm instead of letting
+            # fetch_satellite_area silently fall back to a tiny tile patch.
+            bbox = runtime["bbox_from_center"](req.latitude, req.longitude, max(0.5, req.radiusKm))
 
         source_text = (req.source or "").lower()
         prov_code = "google"
@@ -795,7 +832,7 @@ def _analyze_road_damage_impl(req: RoadDamageRequest):
             lat=req.latitude,
             lon=req.longitude,
             bbox=bbox,
-            zoom_level=18,
+            zoom_level=_zoom_for_radius(req.radiusKm),
             wayback_id=wayback_id,
             provider=prov_code,
             custom_url=custom_url,
@@ -846,9 +883,26 @@ def _analyze_road_damage_impl(req: RoadDamageRequest):
         blocked_segments = []
         analysis_id = str(uuid.uuid4())
         try:
-            G, safe_G, safe_edges, blocked_edges = analyze_road_network_graph(
-                bounds, w, h, intersection, network_type=req.networkType or "drive"
-            )
+            # analyze_road_network_graph makes its own osmnx/Overpass fetch,
+            # separate from (and slower than) the raster road mask above --
+            # left unbounded it can occasionally stall well past this
+            # optional step's fair share of the mobile client's 300s
+            # request timeout, so the whole analysis appears to "never
+            # complete" on the phone even though the backend keeps working
+            # and finishes late. Bound it and skip logistics on timeout
+            # rather than risk the entire response.
+            logistics_executor = ThreadPoolExecutor(max_workers=1)
+            try:
+                future = logistics_executor.submit(
+                    analyze_road_network_graph,
+                    bounds, w, h, intersection, req.networkType or "drive",
+                )
+                G, safe_G, safe_edges, blocked_edges = future.result(timeout=45)
+            finally:
+                # Don't block the request on a still-running (stalled)
+                # osmnx fetch -- abandon it instead of joining, same
+                # pattern as fetch_satellite_area's tile executor.
+                logistics_executor.shutdown(wait=False, cancel_futures=True)
             if G is not None:
                 safe_count = len(safe_edges) if safe_edges else 0
                 blocked_count = len(blocked_edges) if blocked_edges else 0
@@ -856,6 +910,8 @@ def _analyze_road_damage_impl(req: RoadDamageRequest):
                 blocked_segments = _serialize_segments(blocked_edges)
                 log_lines.append(f"Lojistik: {safe_count} acik, {blocked_count} kapali sokak")
                 _store_road_damage_session(analysis_id, {"safe_G": safe_G, "bounds": bounds})
+        except FutureTimeoutError:
+            log_lines.append("Lojistik analiz opsiyonel - OSMnx zaman asimina ugradi")
         except Exception:
             log_lines.append("Lojistik analiz opsiyonel - OSMnx mevcut degil veya hata olustu")
         logistics_ms = (time.perf_counter() - t3) * 1000.0
@@ -1383,27 +1439,33 @@ def _verify_password(plain: str, stored: str) -> bool:
         return plain == stored
 
 
-USER_DATABASE = {
-    "saha@quakemind.gov.tr": {
-        "id": "usr-responder-101",
-        "name": "Afet Saha Ekibi",
-        "email": "saha@quakemind.gov.tr",
+def _demo_user(id_suffix, name, email, role, unit, city="Hatay"):
+    return {
+        "id": f"usr-{id_suffix}",
+        "name": name,
+        "email": email,
         "password": _hash_password("password123"),
-        "role": "responder",
-        "city": "Hatay",
-        "unit": "Arama Kurtarma Lideri",
-        "token": "token-responder-101"
-    },
-    "afetzede@quakemind.gov.tr": {
-        "id": "usr-survivor-102",
-        "name": "Afetzede Vatandaş",
-        "email": "afetzede@quakemind.gov.tr",
-        "password": _hash_password("password123"),
-        "role": "survivor",
-        "city": "Hatay",
-        "unit": "Sivil",
-        "token": "token-survivor-102"
+        "role": role,
+        "city": city,
+        "unit": unit,
+        "token": f"token-{id_suffix}",
     }
+
+# Demo accounts for development/testing -- multiple per role so team-chat and
+# multi-user flows can be tried without needing real registrations. TODO:
+# remove or gate behind an env flag before production.
+USER_DATABASE = {
+    u["email"]: u
+    for u in [
+        _demo_user("responder-101", "Afet Saha Ekibi", "saha@quakemind.gov.tr", "responder", "Arama Kurtarma Lideri"),
+        _demo_user("responder-103", "Zeynep Arslan", "saha2@quakemind.gov.tr", "responder", "AKUT Arama Kurtarma Operatörü"),
+        _demo_user("responder-104", "Mehmet Demir", "saha3@quakemind.gov.tr", "responder", "İHA & Uydu Operatörü"),
+        _demo_user("responder-105", "Elif Kaya", "saha4@quakemind.gov.tr", "responder", "UMKE Sağlık Ekibi Lideri"),
+        _demo_user("responder-106", "Burak Öztürk", "saha5@quakemind.gov.tr", "responder", "İtfaiye Arama Kurtarma"),
+        _demo_user("survivor-102", "Afetzede Vatandaş", "afetzede@quakemind.gov.tr", "survivor", "Sivil"),
+        _demo_user("survivor-103", "Ali Yıldız", "afetzede2@quakemind.gov.tr", "survivor", "Sivil"),
+        _demo_user("survivor-104", "Ayşe Şahin", "afetzede3@quakemind.gov.tr", "survivor", "Sivil"),
+    ]
 }
 
 @app.post("/api/auth/register")
@@ -1572,6 +1634,40 @@ def get_active_emergency_notifications():
         "activeAlert": active_emergency_alerts[0] if active_emergency_alerts else None,
         "totalAlerts": len(active_emergency_alerts)
     }
+
+
+# TEAM CHAT (internal messaging between logged-in responder/admin accounts)
+class ChatMessageRequest(BaseModel):
+    token: Optional[str] = None
+    text: str
+
+team_chat_messages: list[dict] = []
+_TEAM_CHAT_LIMIT = 200
+
+@app.post("/api/chat/send")
+def send_team_chat_message(req: ChatMessageRequest):
+    user = _require_role(req.token, {"responder", "admin"})
+    text = req.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Mesaj boş olamaz.")
+    message = {
+        "id": f"msg-{uuid.uuid4().hex[:10]}",
+        "senderId": user.get("id"),
+        "senderName": user.get("name") or user.get("email") or "Ekip Üyesi",
+        "senderUnit": user.get("unit"),
+        "text": text[:2000],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    team_chat_messages.append(message)
+    if len(team_chat_messages) > _TEAM_CHAT_LIMIT:
+        del team_chat_messages[: len(team_chat_messages) - _TEAM_CHAT_LIMIT]
+    return {"status": "sent", "message": message}
+
+@app.get("/api/chat/messages")
+def get_team_chat_messages(token: Optional[str] = None, limit: int = 50):
+    _require_role(token, {"responder", "admin"})
+    capped_limit = max(1, min(limit, _TEAM_CHAT_LIMIT))
+    return {"messages": team_chat_messages[-capped_limit:]}
 
 @app.get("/api/status")
 def server_status():
