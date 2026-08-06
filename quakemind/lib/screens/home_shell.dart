@@ -7,25 +7,32 @@ import '../data/mock_data.dart';
 import '../models/nlp_module_result.dart';
 import '../models/risk_module_result.dart';
 import '../models/road_damage_result.dart';
-import '../models/sos_alert_result.dart';
 import '../services/nlp_module_service.dart';
 import '../services/risk_module_service.dart';
+import '../services/map_layers_controller.dart';
 import '../services/road_damage_service.dart';
 import '../services/server_status_service.dart';
 import '../services/sos_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/emergency_banner.dart';
+import '../widgets/identity_bar.dart';
 import '../widgets/ip_config_dialog.dart';
 import '../widgets/live_camera_view.dart';
+import '../widgets/team_chat_sheet.dart';
+import 'unified_map_screen.dart';
 
-class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
+/// Responder/admin command shell: full operational tool set (dashboard,
+/// incoming SOS queue, risk, satellite road damage, NLP, camera) plus the
+/// floating team-chat overlay. Survivors get [SurvivorShell] instead.
+class ResponderShell extends StatefulWidget {
+  const ResponderShell({super.key});
 
   @override
-  State<HomeShell> createState() => _HomeShellState();
+  State<ResponderShell> createState() => _ResponderShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _ResponderShellState extends State<ResponderShell> {
   int _index = 0;
   String _selectedCity = turkeyCities.first;
   String _selectedRoadCity = roadCities.first;
@@ -66,7 +73,8 @@ class _HomeShellState extends State<HomeShell> {
         onSampleChanged: (value) => setState(() => _selectedSample = value!),
       ),
       const _CameraPage(),
-      const _SosPage(),
+      const _IncomingSosPage(),
+      const UnifiedMapScreen(isResponder: true),
     ];
 
     return Scaffold(
@@ -75,11 +83,7 @@ class _HomeShellState extends State<HomeShell> {
           const Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.bg, Color(0xFF0D1526), Color(0xFF0A1220)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: AppTheme.heroGradient,
               ),
             ),
           ),
@@ -112,11 +116,20 @@ class _HomeShellState extends State<HomeShell> {
             ),
           ),
           SafeArea(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              child: KeyedSubtree(key: ValueKey(_index), child: pages[_index]),
+            child: Column(
+              children: [
+                const IdentityBar(accentColor: Color(0xFF3276E8)),
+                const EmergencyBanner(),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: KeyedSubtree(key: ValueKey(_index), child: pages[_index]),
+                  ),
+                ),
+              ],
             ),
           ),
+          const TeamChatOverlay(),
         ],
       ),
       bottomNavigationBar: SafeArea(
@@ -173,7 +186,11 @@ class _HomeShellState extends State<HomeShell> {
                   ),
                   NavigationDestination(
                     icon: Icon(Icons.sos),
-                    label: 'SOS',
+                    label: 'Cagrilar',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.map),
+                    label: 'Harita',
                   ),
                 ],
               ),
@@ -235,78 +252,75 @@ class _DashboardPageState extends State<_DashboardPage> {
               'Afet mudahale operasyon paneli. Hotspot ile baglanti kurarak tum modullere erisin.',
         ),
         const SizedBox(height: 18),
-        _buildConnectionCard(context),
-        const SizedBox(height: 18),
-        _buildModuleStatusCard(context),
-        const SizedBox(height: 18),
-        ...List.generate(moduleSummaries.length, (index) {
-          final module = moduleSummaries[index];
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: index == moduleSummaries.length - 1 ? 0 : 16,
-            ),
-            child: SectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: module.color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Icon(module.icon, color: module.color),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              module.title,
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              module.subtitle,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _moduleStatusPill(index),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: module.highlights
-                        .map(
-                          (item) => Chip(
-                            label: Text(item),
-                            backgroundColor: AppTheme.sand,
+        CardMasonryGrid(
+          children: [
+            _buildConnectionCard(context),
+            _buildModuleStatusCard(context),
+            ...List.generate(moduleSummaries.length, (index) {
+              final module = moduleSummaries[index];
+              return SectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: module.color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(18),
                           ),
-                        )
-                        .toList(),
-                  ),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: FilledButton(
-                      onPressed: () => widget.onOpenModule(index + 1),
-                      child: const Text('Modulu Ac'),
+                          child: Icon(module.icon, color: module.color),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                module.title,
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                module.subtitle,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
+                    const SizedBox(height: 16),
+                    _moduleStatusPill(index),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: module.highlights
+                          .map(
+                            (item) => Chip(
+                              label: Text(item),
+                              backgroundColor: AppTheme.sand,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton(
+                        onPressed: () => widget.onOpenModule(index + 1),
+                        child: const Text('Modulu Ac'),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
       ],
     );
   }
@@ -857,104 +871,109 @@ class _RiskPageState extends State<_RiskPage> {
                   ],
                 ),
                 const SizedBox(height: 18),
-                SectionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Risk faktorleri',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 14),
-                      ...result.factors.entries.map(
-                        (entry) => Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                CardMasonryGrid(
+                  children: [
+                    SectionCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Risk faktorleri',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 14),
+                          ...result.factors.entries.map(
+                            (entry) => Padding(
+                              padding: const EdgeInsets.only(bottom: 14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      entry.key,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          entry.key,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text('%${(entry.value * 100).round()}'),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(99),
+                                    child: LinearProgressIndicator(
+                                      minHeight: 10,
+                                      value: entry.value,
+                                      backgroundColor: AppTheme.mist,
+                                      color: entry.value > 0.75
+                                          ? const Color(0xFFE15B64)
+                                          : AppTheme.teal,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text('%${(entry.value * 100).round()}'),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(99),
-                                child: LinearProgressIndicator(
-                                  minHeight: 10,
-                                  value: entry.value,
-                                  backgroundColor: AppTheme.mist,
-                                  color: entry.value > 0.75
-                                      ? const Color(0xFFE15B64)
-                                      : AppTheme.teal,
-                                ),
+                            ),
+                          ),
+                          const Divider(height: 32),
+                          Text(
+                            'Motor ozeti',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(result.summary.replaceAll('\n', '\n\n')),
+                        ],
+                      ),
+                    ),
+                    SectionCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Yakin faylar',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 12),
+                          ...result.nearbyFaults.map(
+                            (fault) => ListTile(
+                              leading: const Icon(
+                                Icons.timeline,
+                                color: AppTheme.accent,
                               ),
-                            ],
+                              title: Text(fault),
+                              subtitle: Text(
+                                '${result.city} merkezine gore siralandi',
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      const Divider(height: 32),
-                      Text(
-                        'Motor ozeti',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(result.summary.replaceAll('\n', '\n\n')),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-                SectionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Yakin faylar',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 12),
-                      ...result.nearbyFaults.map(
-                        (fault) => ListTile(
-                          leading: const Icon(
-                            Icons.timeline,
-                            color: AppTheme.accent,
+                          const SizedBox(height: 8),
+                          Text(
+                            'Yakin olaylar',
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
-                          title: Text(fault),
-                          subtitle: Text(
-                            '${result.city} merkezine gore siralandi',
+                          const SizedBox(height: 12),
+                          if (result.recentEvents.isEmpty)
+                            const Text(
+                              'Bu alan icin son deprem kaydi bulunamadi.',
+                            ),
+                          ...result.recentEvents.map(
+                            (event) => ListTile(
+                              leading: const Icon(
+                                Icons.warning_amber_rounded,
+                                color: Color(0xFFE15B64),
+                              ),
+                              title: Text(event),
+                              subtitle: const Text(
+                                '150 km icindeki en yeni kayitlardan',
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Yakin olaylar',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 12),
-                      if (result.recentEvents.isEmpty)
-                        const Text('Bu alan icin son deprem kaydi bulunamadi.'),
-                      ...result.recentEvents.map(
-                        (event) => ListTile(
-                          leading: const Icon(
-                            Icons.warning_amber_rounded,
-                            color: Color(0xFFE15B64),
-                          ),
-                          title: Text(event),
-                          subtitle: const Text(
-                            '150 km icindeki en yeni kayitlardan',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             );
@@ -1038,6 +1057,108 @@ class _RoadDamagePageState extends State<_RoadDamagePage> {
   double? _currentLatitude;
   double? _currentLongitude;
   String? _locationError;
+  double _radiusKm = 2.5;
+  String? _selectedWaybackId;
+  String? _selectedWaybackLabel;
+  String? _selectedOamTileUrl;
+  String? _selectedOamLabel;
+
+  Future<void> _pickHistoricalImagery() async {
+    final isWayback = widget.source.toLowerCase().contains('esri') ||
+        widget.source.toLowerCase().contains('wayback');
+    final isOam = widget.source.toLowerCase().contains('openaerial') ||
+        widget.source.toLowerCase().contains('oam');
+
+    if (!isWayback && !isOam) return;
+
+    List<Map<String, dynamic>> items = [];
+    String errorText = '';
+    try {
+      if (isWayback) {
+        items = await _service.fetchWaybackVersions();
+      } else {
+        final coords = _locationMode == _RoadLocationMode.current &&
+                _currentLatitude != null &&
+                _currentLongitude != null
+            ? [_currentLatitude!, _currentLongitude!]
+            : _cityCoordinates(widget.city);
+        items = await _service.searchOamImages(
+          latitude: coords[0],
+          longitude: coords[1],
+          radiusKm: _radiusKm,
+        );
+      }
+    } catch (e) {
+      errorText = 'Liste alinamadi: $e';
+    }
+
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isWayback ? 'Esri Wayback goruntusu sec' : 'OpenAerialMap goruntusu sec',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 12),
+                if (errorText.isNotEmpty)
+                  Text(errorText)
+                else if (items.isEmpty)
+                  const Text('Bu bolge/tarih icin uygun goruntu bulunamadi. Varsayilan kaynak kullanilacak.')
+                else
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        final title = isWayback
+                            ? (item['date']?.toString() ?? 'Wayback #${item['id']}')
+                            : (item['title']?.toString() ?? 'OAM goruntusu ${index + 1}');
+                        final subtitle = isWayback
+                            ? 'ID: ${item['id']}'
+                            : (item['acquisition_date']?.toString() ?? '');
+                        return ListTile(
+                          leading: const Icon(Icons.image_search),
+                          title: Text(title),
+                          subtitle: subtitle.isEmpty ? null : Text(subtitle),
+                          onTap: () {
+                            setState(() {
+                              if (isWayback) {
+                                _selectedWaybackId = item['id']?.toString();
+                                _selectedWaybackLabel = title;
+                                _selectedOamTileUrl = null;
+                                _selectedOamLabel = null;
+                              } else {
+                                _selectedOamTileUrl = item['tms']?.toString();
+                                _selectedOamLabel = title;
+                                _selectedWaybackId = null;
+                                _selectedWaybackLabel = null;
+                              }
+                            });
+                            Navigator.of(context).pop();
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Future<void> _runAnalysis() async {
     double latitude;
@@ -1066,21 +1187,31 @@ class _RoadDamagePageState extends State<_RoadDamagePage> {
     }
 
     setState(() {
-      _future = _service.analyzeArea(
-        city: cityLabel,
-        latitude: latitude,
-        longitude: longitude,
-        source: widget.source,
-        oamPreferredTitle:
-            _locationMode == _RoadLocationMode.sample &&
-                widget.source.toLowerCase().contains('openaerial')
-            ? _oamSampleTitle
-            : null,
-        damageBooster: widget.damageBooster,
-        threshold: widget.threshold,
-        useImagenetNorm: widget.useImagenetNorm,
-        postProcessLevel: widget.postProcessLevel,
-      );
+      _future = _service
+          .analyzeArea(
+            city: cityLabel,
+            latitude: latitude,
+            longitude: longitude,
+            source: widget.source,
+            oamPreferredTitle: _selectedOamTileUrl == null &&
+                    _locationMode == _RoadLocationMode.sample &&
+                    widget.source.toLowerCase().contains('openaerial')
+                ? _oamSampleTitle
+                : null,
+            waybackId: _selectedWaybackId,
+            oamTileUrl: _selectedOamTileUrl,
+            damageBooster: widget.damageBooster,
+            threshold: widget.threshold,
+            useImagenetNorm: widget.useImagenetNorm,
+            postProcessLevel: widget.postProcessLevel,
+            radiusKm: _radiusKm,
+          )
+          .then((result) {
+            // Feed the result into the shared map layers store so it also
+            // shows up on the "Harita" (toplu harita) tab, not just here.
+            MapLayersController.instance.addRoadDamageAnalysis(result);
+            return result;
+          });
     });
   }
 
@@ -1139,6 +1270,8 @@ class _RoadDamagePageState extends State<_RoadDamagePage> {
               'Segformer AI modeli ile uydu goruntusunden yol hasari tespiti. Backend uzerinden calisir.',
         ),
         const SizedBox(height: 18),
+        CardMasonryGrid(
+          children: [
         SectionCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1221,13 +1354,45 @@ class _RoadDamagePageState extends State<_RoadDamagePage> {
                     child: Text('Esri Wayback (Historical)'),
                   ),
                 ],
-                onChanged: widget.onSourceChanged,
+                onChanged: (value) {
+                  widget.onSourceChanged(value);
+                  setState(() {
+                    _selectedWaybackId = null;
+                    _selectedWaybackLabel = null;
+                    _selectedOamTileUrl = null;
+                    _selectedOamLabel = null;
+                  });
+                },
                 decoration: const InputDecoration(labelText: 'Uydu kaynagi'),
+              ),
+              if (widget.source.toLowerCase().contains('openaerial') ||
+                  widget.source.toLowerCase().contains('esri') ||
+                  widget.source.toLowerCase().contains('wayback')) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _pickHistoricalImagery,
+                  icon: const Icon(Icons.image_search),
+                  label: Text(
+                    _selectedWaybackLabel ?? _selectedOamLabel ?? 'Belirli goruntu / tarih sec',
+                  ),
+                ),
+              ],
+              const SizedBox(height: 18),
+              Text(
+                'Analiz yaricapi: ${_radiusKm.toStringAsFixed(1)} km',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              Slider(
+                value: _radiusKm,
+                min: 0.5,
+                max: 8.0,
+                divisions: 15,
+                label: '${_radiusKm.toStringAsFixed(1)} km',
+                onChanged: (value) => setState(() => _radiusKm = value),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 18),
         SectionCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1289,6 +1454,8 @@ class _RoadDamagePageState extends State<_RoadDamagePage> {
               ),
             ],
           ),
+        ),
+          ],
         ),
         const SizedBox(height: 18),
         if (_future == null)
@@ -2083,256 +2250,152 @@ class _CameraPageState extends State<_CameraPage> {
 }
 
 // ---------------------------------------------------------------------------
-// SOS Page
+// Incoming SOS Page (responder view)
 // ---------------------------------------------------------------------------
 
-enum _SosStatus { idle, locating, sending, sent, locationError, sendError }
-
-class _SosPage extends StatefulWidget {
-  const _SosPage();
+class _IncomingSosPage extends StatefulWidget {
+  const _IncomingSosPage();
 
   @override
-  State<_SosPage> createState() => _SosPageState();
+  State<_IncomingSosPage> createState() => _IncomingSosPageState();
 }
 
-class _SosPageState extends State<_SosPage> {
+class _IncomingSosPageState extends State<_IncomingSosPage> {
   static const _service = SosService();
 
-  _SosStatus _status = _SosStatus.idle;
-  Position? _position;
-  String? _errorMessage;
-  SosAlertResult? _lastAlert;
+  Future<List<SosAlertSummary>>? _future;
 
-  Future<void> _triggerSos() async {
-    setState(() {
-      _status = _SosStatus.locating;
-      _errorMessage = null;
-    });
-
-    final position = await _resolveCurrentPosition();
-    if (position == null) return;
-
-    setState(() {
-      _position = position;
-      _status = _SosStatus.sending;
-    });
-
-    try {
-      final result = await _service.sendAlert(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        accuracy: position.accuracy,
-      );
-      if (!mounted) return;
-      setState(() {
-        _lastAlert = result;
-        _status = _SosStatus.sent;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
-        _status = _SosStatus.sendError;
-      });
-    }
+  @override
+  void initState() {
+    super.initState();
+    _future = _service.fetchAlerts();
   }
 
-  Future<Position?> _resolveCurrentPosition() async {
-    try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        setState(() {
-          _errorMessage = 'Konum servisi kapali. Lutfen GPS\'i acin.';
-          _status = _SosStatus.locationError;
-        });
-        return null;
-      }
-
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        setState(() {
-          _errorMessage =
-              'Konum izni verilmedi. Ayarlardan konum iznini acmalisin.';
-          _status = _SosStatus.locationError;
-        });
-        return null;
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-      return position;
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Konum alinirken hata: $e';
-        _status = _SosStatus.locationError;
-      });
-      return null;
-    }
+  void _refresh() {
+    setState(() {
+      _future = _service.fetchAlerts();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isBusy =
-        _status == _SosStatus.locating || _status == _SosStatus.sending;
-
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
       children: [
         const _AppHeader(
-          title: 'Acil Durum SOS',
+          title: 'Gelen SOS Cagrilari',
           subtitle:
-              'Butona bastiginda konumun otomatik alinir, haritada gosterilir ve backend\'e gonderilir.',
+              'Sahadan gelen acil durum bildirimleri. Backend uzerinden canli listelenir.',
         ),
-        const SizedBox(height: 24),
-        Center(
-          child: GestureDetector(
-            onTap: isBusy ? null : _triggerSos,
-            child: Container(
-              width: 190,
-              height: 190,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFE15B64).withValues(
-                  alpha: isBusy ? 0.45 : 0.92,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFE15B64).withValues(alpha: 0.45),
-                    blurRadius: 36,
-                    spreadRadius: 4,
-                  ),
-                ],
-                border: Border.all(color: Colors.white, width: 4),
-              ),
-              alignment: Alignment.center,
-              child: isBusy
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.sos, color: Colors.white, size: 46),
-                        SizedBox(height: 8),
-                        Text(
-                          'SOS',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 2,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
+        const SizedBox(height: 18),
+        Align(
+          alignment: Alignment.centerRight,
+          child: OutlinedButton.icon(
+            onPressed: _refresh,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Listeyi Yenile'),
           ),
         ),
-        const SizedBox(height: 12),
-        Center(
-          child: Text(
-            _statusLabel(),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-        ),
-        const SizedBox(height: 24),
-        if (_status == _SosStatus.locationError ||
-            _status == _SosStatus.sendError)
-          _ErrorState(
-            title: _status == _SosStatus.locationError
-                ? 'Konum alinamadi'
-                : 'Uyari gonderilemedi',
-            error: _errorMessage ?? 'Bilinmeyen hata',
-            onRetry: _triggerSos,
-          ),
-        if (_status == _SosStatus.sent && _lastAlert != null) ...[
-          SectionCard(
-            color: const Color(0xFF1C3A2E),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        const SizedBox(height: 14),
+        FutureBuilder<List<SosAlertSummary>>(
+          future: _future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const _LoadingState(
+                message: 'Gelen SOS cagrilari yukleniyor...',
+              );
+            }
+            if (snapshot.hasError) {
+              return _ErrorState(
+                title: 'SOS listesi alinamadi',
+                error: snapshot.error?.toString() ?? 'Bilinmeyen hata',
+                onRetry: _refresh,
+              );
+            }
+            final alerts = snapshot.data ?? const [];
+            if (alerts.isEmpty) {
+              return const SectionCard(
+                child: Column(
                   children: [
-                    const Icon(Icons.check_circle, color: AppTheme.teal),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'SOS uyarin sunucuya ulasti',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
+                    Icon(Icons.check_circle_outline, size: 38, color: AppTheme.teal),
+                    SizedBox(height: 14),
+                    Text(
+                      'Su anda bekleyen SOS cagrisi yok.',
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Text('Uyari ID: ${_lastAlert!.id}'),
-                Text('Alinma zamani: ${_lastAlert!.receivedAt}'),
-                Text(
-                  'Bu oturumda toplam kayitli uyari: ${_lastAlert!.totalAlerts}',
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-        ],
-        if (_position != null) ...[
-          GeoPointsMapPanel(
-            title: 'Gonderilen Konum',
-            subtitle: 'GPS\'ten alinan enlem/boylam haritada isaretlendi.',
-            markers: [
-              GeoMarkerData(
-                latitude: _position!.latitude,
-                longitude: _position!.longitude,
-                label:
-                    '${_position!.latitude.toStringAsFixed(5)}, ${_position!.longitude.toStringAsFixed(5)}',
-                highlight: true,
-              ),
-            ],
-            height: 340,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Koordinat: ${_position!.latitude.toStringAsFixed(6)}, ${_position!.longitude.toStringAsFixed(6)}'
-            ' (dogruluk ~${_position!.accuracy.toStringAsFixed(0)} m)',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ] else if (!isBusy && _status == _SosStatus.idle)
-          const SectionCard(
-            child: Column(
+              );
+            }
+            return Column(
               children: [
-                Icon(Icons.location_searching, size: 38, color: AppTheme.teal),
-                SizedBox(height: 14),
-                Text(
-                  'SOS butonuna bastiginda konumun alinir ve burada haritada gosterilir.',
-                  textAlign: TextAlign.center,
+                GeoPointsMapPanel(
+                  title: 'Cagri Konumlari',
+                  subtitle: '${alerts.length} aktif cagri haritada isaretli.',
+                  height: 320,
+                  markers: alerts
+                      .map(
+                        (alert) => GeoMarkerData(
+                          latitude: alert.latitude,
+                          longitude: alert.longitude,
+                          label: alert.message?.isNotEmpty == true
+                              ? alert.message!
+                              : 'SOS cagrisi',
+                          highlight: true,
+                        ),
+                      )
+                      .toList(),
+                ),
+                const SizedBox(height: 18),
+                CardMasonryGrid(
+                  children: alerts
+                      .map(
+                        (alert) => SectionCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.sos,
+                                    color: Color(0xFFE15B64),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      alert.message?.isNotEmpty == true
+                                          ? alert.message!
+                                          : 'Acil durum cagrisi',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleMedium,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Konum: ${alert.latitude.toStringAsFixed(5)}, ${alert.longitude.toStringAsFixed(5)}'
+                                '${alert.accuracy != null ? " (dogruluk ~${alert.accuracy!.toStringAsFixed(0)} m)" : ""}',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Alinma zamani: ${alert.receivedAt}',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ],
-            ),
-          ),
+            );
+          },
+        ),
       ],
     );
-  }
-
-  String _statusLabel() {
-    switch (_status) {
-      case _SosStatus.idle:
-        return 'Acil durumda butona bas. Konumun otomatik olarak alinir.';
-      case _SosStatus.locating:
-        return 'Konumun aliniyor...';
-      case _SosStatus.sending:
-        return 'Konum haritada isaretlendi, sunucuya gonderiliyor...';
-      case _SosStatus.sent:
-        return 'Uyari basariyla gonderildi.';
-      case _SosStatus.locationError:
-        return 'Konum alinamadi.';
-      case _SosStatus.sendError:
-        return 'Konum alindi ama sunucuya gonderilemedi. Konum yine de asagida gorunur.';
-    }
   }
 }
 

@@ -35,6 +35,11 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // Code shrinking (R8) is memory-hungry and not needed for a test
+            // build; also avoids an unrelated snakeyaml/java.beans R8 error
+            // from a transitive dependency.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

@@ -1,18 +1,31 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color bg = Color(0xFF060B16);
-  static const Color panel = Color(0xFF101A2A);
-  static const Color panelHigh = Color(0xFF162338);
-  static const Color ink = Color(0xFF0A1220);
-  static const Color textPrimary = Color(0xFFEAF1FB);
-  static const Color textSecondary = Color(0xFF9FB1C9);
-  static const Color clay = Color(0xFF24354E);
-  static const Color accent = Color(0xFFCC5A31);
-  static const Color teal = Color(0xFF28A6A1);
-  static const Color sand = Color(0xFF1D2A3F);
-  static const Color mist = Color(0xFF2A3A52);
-  static const Color glassStroke = Color(0x55C8D4E8);
+  // Deep indigo-black base with a vivid violet primary and neon-mint
+  // secondary -- a deliberate departure from the previous earthy
+  // orange/slate palette toward a more modern, high-contrast look.
+  static const Color bg = Color(0xFF05060F);
+  static const Color panel = Color(0xFF13152B);
+  static const Color panelHigh = Color(0xFF1C1F42);
+  static const Color ink = Color(0xFF0A0B18);
+  static const Color textPrimary = Color(0xFFF3F5FF);
+  static const Color textSecondary = Color(0xFFA6ACD4);
+  static const Color clay = Color(0xFF2C2A52);
+  static const Color accent = Color(0xFF7C5CFF);
+  static const Color teal = Color(0xFF17E3B4);
+  static const Color sand = Color(0xFF20244A);
+  static const Color mist = Color(0xFF383F6E);
+  static const Color glassStroke = Color(0x55A9B3FF);
+
+  // Emergency/SOS red kept separate from the primary accent so distress UI
+  // stays visually distinct from normal navigation/action colors.
+  static const Color danger = Color(0xFFFF3B5C);
+
+  static const LinearGradient heroGradient = LinearGradient(
+    colors: [Color(0xFF120A2E), Color(0xFF05060F), Color(0xFF06111F)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   static ThemeData get theme {
     final base = ThemeData.dark(useMaterial3: true);
@@ -133,7 +146,7 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.transparent,
-        indicatorColor: const Color(0x2ECC5A31),
+        indicatorColor: const Color(0x2E7C5CFF),
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.black54,
         elevation: 0,

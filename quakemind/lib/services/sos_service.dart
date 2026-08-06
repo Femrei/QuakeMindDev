@@ -47,4 +47,49 @@ class SosService {
 
     return SosAlertResult.fromJson(jsonMap);
   }
+
+  Future<List<SosAlertSummary>> fetchAlerts() async {
+    final json = await _httpClient.getJson(
+      endpoint: '/api/sos/alerts',
+      timeoutSeconds: 8,
+    );
+    final list = json['alerts'] as List<dynamic>? ?? const [];
+    return list
+        .map((item) => SosAlertSummary.fromJson(item as Map<String, dynamic>))
+        .toList()
+        .reversed
+        .toList();
+  }
+}
+
+class SosAlertSummary {
+  const SosAlertSummary({
+    required this.id,
+    required this.latitude,
+    required this.longitude,
+    this.accuracy,
+    this.message,
+    this.userId,
+    required this.receivedAt,
+  });
+
+  factory SosAlertSummary.fromJson(Map<String, dynamic> json) {
+    return SosAlertSummary(
+      id: json['id'] as String? ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
+      accuracy: (json['accuracy'] as num?)?.toDouble(),
+      message: json['message'] as String?,
+      userId: json['userId'] as String?,
+      receivedAt: json['receivedAt'] as String? ?? '',
+    );
+  }
+
+  final String id;
+  final double latitude;
+  final double longitude;
+  final double? accuracy;
+  final String? message;
+  final String? userId;
+  final String receivedAt;
 }

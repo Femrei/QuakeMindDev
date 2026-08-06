@@ -3,6 +3,15 @@ import networkx as nx
 from shapely.geometry import LineString
 import math
 
+# Without an explicit cap, osmnx falls back to its own default Overpass
+# timeout/retry policy, which can wait far longer than the mobile client's
+# fixed 300s HTTP timeout for /api/road_damage/analyze -- the backend
+# eventually finishes and logs success, but the request already timed out
+# on the phone. Cache responses so repeated analyses of the same area don't
+# re-hit Overpass at all.
+ox.settings.use_cache = True
+ox.settings.requests_timeout = 30
+
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371000 # radius of earth in meters
     phi1 = math.radians(lat1)

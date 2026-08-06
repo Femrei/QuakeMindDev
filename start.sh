@@ -4,6 +4,7 @@ set -e
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$ROOT_DIR/QuakeMindBackend"
 WEB_DIR="$ROOT_DIR/quakemind-web"
+MOBILE_DIR="$ROOT_DIR/quakemind"
 LOG_DIR="$ROOT_DIR/.logs"
 mkdir -p "$LOG_DIR"
 
@@ -37,6 +38,7 @@ cleanup() {
   echo "Sistem kapatiliyor..."
   kill_tree "$BACKEND_PID"
   kill_tree "$WEB_PID"
+  kill_tree "$MOBILE_PID"
   wait 2>/dev/null
 }
 trap cleanup EXIT INT TERM
@@ -69,10 +71,41 @@ fi
 npm run dev > "$LOG_DIR/web.log" 2>&1 &
 WEB_PID=$!
 
+MOBILE_STATUS="atlandi (flutter bulunamadi)"
+if command -v flutter >/dev/null 2>&1 && [ -d "$MOBILE_DIR" ]; then
+  echo "==> Mobil (Flutter) icin bagli cihaz/emulator araniyor..."
+  cd "$MOBILE_DIR"
+  MOBILE_DEVICE_ID=""
+  if command -v python3 >/dev/null 2>&1; then
+    MOBILE_DEVICE_ID="$(flutter devices --machine 2>/dev/null | python3 -c '
+import json, sys
+try:
+    devices = json.load(sys.stdin)
+except Exception:
+    devices = []
+for d in devices:
+    if d.get("platformType") in ("android", "ios"):
+        print(d.get("id", ""))
+        break
+' 2>/dev/null || true)"
+  fi
+
+  if [ -n "$MOBILE_DEVICE_ID" ]; then
+    echo "==> Mobil uygulama '$MOBILE_DEVICE_ID' cihazinda baslatiliyor..."
+    flutter run -d "$MOBILE_DEVICE_ID" > "$LOG_DIR/mobile.log" 2>&1 &
+    MOBILE_PID=$!
+    MOBILE_STATUS="'$MOBILE_DEVICE_ID' cihazinda calisiyor (log: $LOG_DIR/mobile.log)"
+  else
+    MOBILE_STATUS="bagli cihaz/emulator yok -- 'cd quakemind && flutter run' ile manuel baslat"
+  fi
+  cd "$ROOT_DIR"
+fi
+
 echo ""
 echo "============================================================"
 echo " Backend : http://127.0.0.1:8000   (log: $LOG_DIR/backend.log)"
 echo " Frontend: http://localhost:3000   (log: $LOG_DIR/web.log)"
+echo " Mobil   : $MOBILE_STATUS"
 echo " Durdurmak icin: Ctrl+C"
 echo "============================================================"
 

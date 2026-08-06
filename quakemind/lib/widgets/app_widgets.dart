@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:latlong2/latlong.dart' show LatLng;
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -64,6 +65,39 @@ class SectionCard extends StatelessWidget {
           child: Padding(padding: padding, child: child),
         ),
       ),
+    );
+  }
+}
+
+/// Compact staggered layout for a set of [SectionCard]-style children so
+/// pages read as a dense cluster of tiles instead of a single left-aligned
+/// column. Meant for short/medium-height cards (summaries, controls, logs);
+/// tall content (maps, webviews, long JSON dumps) should stay outside the
+/// grid at full width.
+class CardMasonryGrid extends StatelessWidget {
+  const CardMasonryGrid({
+    super.key,
+    required this.children,
+    this.crossAxisCount = 2,
+    this.spacing = 12,
+  });
+
+  final List<Widget> children;
+  final int crossAxisCount;
+  final double spacing;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final columns = width < 480 ? 1 : crossAxisCount;
+    return MasonryGridView.count(
+      crossAxisCount: columns,
+      mainAxisSpacing: spacing,
+      crossAxisSpacing: spacing,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: children.length,
+      itemBuilder: (context, index) => children[index],
     );
   }
 }
@@ -707,6 +741,142 @@ class GeoPointsMapPanel extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Shows the user's position, the nearest assembly/gathering point, and the
+/// walking route between them as a green polyline.
+class RoutePlanMapPanel extends StatelessWidget {
+  const RoutePlanMapPanel({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.userLatitude,
+    required this.userLongitude,
+    this.destinationLatitude,
+    this.destinationLongitude,
+    this.destinationLabel,
+    this.routePoints = const [],
+    this.height = 320,
+  });
+
+  final String title;
+  final String subtitle;
+  final double userLatitude;
+  final double userLongitude;
+  final double? destinationLatitude;
+  final double? destinationLongitude;
+  final String? destinationLabel;
+  final List<List<double>> routePoints;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasDestination = destinationLatitude != null && destinationLongitude != null;
+    final center = hasDestination
+        ? LatLng(
+            (userLatitude + destinationLatitude!) / 2,
+            (userLongitude + destinationLongitude!) / 2,
+          )
+        : LatLng(userLatitude, userLongitude);
+
+    final polyline = routePoints.length > 1
+        ? Polyline(
+            points: routePoints
+                .map((p) => LatLng(p[0], p[1]))
+                .toList(growable: false),
+            color: AppTheme.teal,
+            strokeWidth: 5,
+          )
+        : (hasDestination
+            ? Polyline(
+                points: [
+                  LatLng(userLatitude, userLongitude),
+                  LatLng(destinationLatitude!, destinationLongitude!),
+                ],
+                color: AppTheme.teal.withValues(alpha: 0.7),
+                strokeWidth: 4,
+              )
+            : null);
+
+    return SizedBox(
+      height: height,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: _glassBoxDecoration(radius: 26),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: Theme.of(context).textTheme.titleLarge),
+                      const SizedBox(height: 4),
+                      Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: center,
+                        initialZoom: hasDestination ? 15 : 13,
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.example.quakemind',
+                        ),
+                        if (polyline != null)
+                          PolylineLayer(polylines: [polyline]),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: LatLng(userLatitude, userLongitude),
+                              width: 34,
+                              height: 34,
+                              child: const Tooltip(
+                                message: 'Konumun',
+                                child: Icon(
+                                  Icons.my_location,
+                                  color: Color(0xFF3B82F6),
+                                  size: 30,
+                                ),
+                              ),
+                            ),
+                            if (hasDestination)
+                              Marker(
+                                point: LatLng(destinationLatitude!, destinationLongitude!),
+                                width: 36,
+                                height: 36,
+                                child: Tooltip(
+                                  message: destinationLabel ?? 'Toplanma alani',
+                                  child: const Icon(
+                                    Icons.shield,
+                                    color: Color(0xFF28A6A1),
+                                    size: 32,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
