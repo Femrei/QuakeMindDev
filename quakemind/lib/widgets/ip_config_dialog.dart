@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_config.dart';
+import '../theme/app_theme.dart';
 
 class IpConfigDialog extends StatefulWidget {
   const IpConfigDialog({super.key});
@@ -31,7 +32,19 @@ class _IpConfigDialogState extends State<IpConfigDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Sunucu Baglanti Ayari'),
+      backgroundColor: AppTheme.panelHigh,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: const BorderSide(color: AppTheme.glassStroke),
+      ),
+      title: Row(
+        children: [
+          const Icon(Icons.dns_outlined, color: AppTheme.neonCyan, size: 20),
+          const SizedBox(width: 10),
+          const Text('Sunucu Baglanti Ayari'),
+        ],
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -39,7 +52,7 @@ class _IpConfigDialogState extends State<IpConfigDialog> {
           children: [
             const Text(
               'FastAPI sunucusunun calistigi bilgisayarin IP adresi ve portunu girin.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF5A6C7D)),
+              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -81,15 +94,16 @@ class _IpConfigDialogState extends State<IpConfigDialog> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8F3E7),
+                color: AppTheme.ink,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.glassStroke),
               ),
               child: const Text(
                 'PC uzerinden hotspot acildiginda:\n'
                 '  Linux  ->  10.42.0.1\n'
                 '  Windows  ->  192.168.137.1\n\n'
                 'Telefon bu hotspot\'a baglanir, uygulama yukardaki IP ile sunucuya erisir.',
-                style: TextStyle(fontSize: 12, height: 1.5),
+                style: TextStyle(fontSize: 12, height: 1.5, color: AppTheme.textSecondary),
               ),
             ),
           ],

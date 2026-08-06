@@ -142,9 +142,10 @@ class _TeamChatOverlayState extends State<TeamChatOverlay> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppTheme.panelHigh,
-              border: Border.all(color: AppTheme.glassStroke),
-              boxShadow: const [
-                BoxShadow(color: Color(0x66000000), blurRadius: 18, offset: Offset(0, 8)),
+              border: Border.all(color: AppTheme.neonCyan.withValues(alpha: 0.55)),
+              boxShadow: [
+                const BoxShadow(color: Color(0x66000000), blurRadius: 18, offset: Offset(0, 8)),
+                BoxShadow(color: AppTheme.neonCyan.withValues(alpha: 0.22), blurRadius: 16),
               ],
             ),
             child: Icon(
@@ -160,7 +161,7 @@ class _TeamChatOverlayState extends State<TeamChatOverlay> {
                 padding: const EdgeInsets.all(4),
                 constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
                 decoration: const BoxDecoration(
-                  color: Color(0xFFE15B64),
+                  color: AppTheme.danger,
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
@@ -275,7 +276,7 @@ class _TeamChatOverlayState extends State<TeamChatOverlay> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: mine
-                                        ? const Color(0xFFCC5A31).withValues(alpha: 0.85)
+                                        ? AppTheme.accent.withValues(alpha: 0.82)
                                         : AppTheme.sand,
                                     borderRadius: BorderRadius.only(
                                       topLeft: const Radius.circular(14),
@@ -321,7 +322,7 @@ class _TeamChatOverlayState extends State<TeamChatOverlay> {
                         width: 38,
                         height: 38,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFCC5A31),
+                          color: AppTheme.accent,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         alignment: Alignment.center,

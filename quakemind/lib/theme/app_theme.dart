@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'tactical_palette.dart';
+
 class AppTheme {
   // Deep indigo-black base with a vivid violet primary and neon-mint
   // secondary -- a deliberate departure from the previous earthy
@@ -20,6 +22,36 @@ class AppTheme {
   // Emergency/SOS red kept separate from the primary accent so distress UI
   // stays visually distinct from normal navigation/action colors.
   static const Color danger = Color(0xFFFF3B5C);
+
+  // Data-viz accents for the tactical redesign, re-exported here so screens
+  // only need to import AppTheme.
+  static const Color neonCyan = TacticalPalette.neonCyan;
+  static const Color neonAmber = TacticalPalette.neonAmber;
+  static const Color gridLine = TacticalPalette.gridLine;
+
+  // Role tints, formalized here instead of magic hex literals scattered
+  // across the responder/survivor shells.
+  static const Color responderAccent = Color(0xFF3276E8);
+  static const Color survivorAccent = Color(0xFFE15B64);
+
+  /// Monospace/tabular style for telemetry-style numeric readouts (metric
+  /// tile values, coordinates, timestamps) -- the one typographic move that
+  /// sells "ops center" more than color alone.
+  static TextStyle telemetryStyle({
+    double fontSize = 26,
+    FontWeight fontWeight = FontWeight.w800,
+    Color color = textPrimary,
+  }) {
+    return TextStyle(
+      fontFamily: 'monospace',
+      fontFamilyFallback: const ['RobotoMono', 'Courier'],
+      fontFeatures: const [FontFeature.tabularFigures()],
+      letterSpacing: 0.2,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+    );
+  }
 
   static const LinearGradient heroGradient = LinearGradient(
     colors: [Color(0xFF120A2E), Color(0xFF05060F), Color(0xFF06111F)],

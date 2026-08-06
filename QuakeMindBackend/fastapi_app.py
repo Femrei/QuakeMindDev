@@ -1674,7 +1674,7 @@ def server_status():
     return {
         "status": "ok",
         "modules": {
-            "nlp": nlp_pipeline is not None,
+            "nlp": _get_nlp_pipeline() is not None,
             "risk": risk_engine is not None,
             "road_damage": road_runtime is not None,
             "camera": True,

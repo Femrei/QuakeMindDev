@@ -1,11 +1,11 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../models/user_profile.dart';
 import '../../services/auth_controller.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/app_widgets.dart';
+import '../../theme/tactical_motion.dart';
+import '../../widgets/tactical/ops_panel.dart';
+import '../../widgets/tactical/scan_background.dart';
 import '../../widgets/ip_config_dialog.dart';
 
 class _DemoAccount {
@@ -41,6 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isRegisterTab = false;
   UserRole _selectedRole = UserRole.responder;
+  bool _showDemoAccounts = false;
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -126,224 +127,254 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Color get _roleColor =>
+      _selectedRole == UserRole.responder ? AppTheme.responderAccent : AppTheme.survivorAccent;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          const Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.bg, Color(0xFF0D1526), Color(0xFF0A1220)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            right: -70,
-            top: -60,
-            child: IgnorePointer(
-              child: Container(
-                width: 240,
-                height: 240,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppTheme.accent.withValues(alpha: 0.14),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: -60,
-            bottom: 60,
-            child: IgnorePointer(
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppTheme.teal.withValues(alpha: 0.10),
-                ),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
-              children: [
-                Center(
-                  child: Container(
-                    width: 68,
-                    height: 68,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF3276E8), Color(0xFF4CC9F0)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF3276E8).withValues(alpha: 0.35),
-                          blurRadius: 24,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.shield_moon_outlined,
-                      color: Colors.white,
-                      size: 34,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'QUAKEMIND AFET KIMLIK MERKEZI',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'PostGIS & AI Destekli Afet Ikaz & Operasyon Platformu',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 24),
-                SectionCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTabSwitch(),
-                      const SizedBox(height: 20),
-                      _buildRoleSelector(),
-                      const SizedBox(height: 18),
-                      if (_errorMessage != null) ...[
-                        _buildBanner(
-                          _errorMessage!,
-                          const Color(0xFFE15B64),
-                          Icons.error_outline,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      if (_successMessage != null) ...[
-                        _buildBanner(
-                          _successMessage!,
-                          AppTheme.teal,
-                          Icons.check_circle_outline,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      if (_isRegisterTab) ...[
-                        TextField(
-                          controller: _nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Ad Soyad',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          labelText: 'E-Posta Adresi',
-                          hintText: _selectedRole == UserRole.responder
-                              ? 'saha@quakemind.gov.tr'
-                              : 'afetzede@quakemind.gov.tr',
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(labelText: 'Sifre'),
-                      ),
-                      if (_isRegisterTab) ...[
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _cityController,
-                          decoration: const InputDecoration(
-                            labelText: 'Sehir / Il',
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 18),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: _loading ? null : _submit,
-                          icon: _loading
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(Icons.arrow_forward),
-                          label: Text(
-                            _isRegisterTab
-                                ? 'Hesabimi Olustur ve Basla'
-                                : 'Giris Yap ve Devam Et',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton.icon(
-                          onPressed: () async {
-                            await showDialog(
-                              context: context,
-                              builder: (_) => const IpConfigDialog(),
-                            );
-                          },
-                          icon: const Icon(Icons.settings_ethernet, size: 16),
-                          label: const Text('Sunucu Ayari'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'DEMO HESAPLARLA HIZLI GIRIS (TEST AMACLI)',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                CardMasonryGrid(
+      body: ScanBackground(
+        showRadar: true,
+        radarColor: _roleColor,
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 900;
+              final form = _buildFormColumn(context);
+              final hero = _buildHeroColumn(context, wide: wide);
+
+              if (wide) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildDemoGroup(
-                      'SAHA EKIBI HESAPLARI',
-                      const Color(0xFF3276E8),
-                      _demoResponders,
-                      UserRole.responder,
-                    ),
-                    _buildDemoGroup(
-                      'VATANDAS HESAPLARI',
-                      const Color(0xFFE15B64),
-                      _demoSurvivors,
-                      UserRole.survivor,
+                    SizedBox(width: constraints.maxWidth * 0.38, child: hero),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(24, 40, 40, 40),
+                        child: form,
+                      ),
                     ),
                   ],
+                );
+              }
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+                child: Column(
+                  children: [hero, const SizedBox(height: 24), form],
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  'Tum demo hesaplarin sifresi: password123',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroColumn(BuildContext context, {required bool wide}) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(wide ? 40 : 0, wide ? 60 : 0, wide ? 24 : 0, 0),
+      child: Column(
+        crossAxisAlignment: wide ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppTheme.responderAccent, AppTheme.neonCyan],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.responderAccent.withValues(alpha: 0.35),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
+            child: const Icon(Icons.shield_moon_outlined, color: Colors.white, size: 34),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'QUAKEMIND',
+            textAlign: wide ? TextAlign.left : TextAlign.center,
+            style: AppTheme.telemetryStyle(fontSize: 26, color: AppTheme.textPrimary),
+          ),
+          Text(
+            'AFET KIMLIK MERKEZI',
+            textAlign: wide ? TextAlign.left : TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              letterSpacing: 2,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'PostGIS & AI destekli afet ikaz ve operasyon platformu',
+            textAlign: wide ? TextAlign.left : TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormColumn(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OpsPanel(
+          variant: OpsPanelVariant.hero,
+          color: _roleColor,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTabSwitch(),
+              const SizedBox(height: 20),
+              _buildRoleSelector(),
+              const SizedBox(height: 18),
+              if (_errorMessage != null) ...[
+                _buildBanner(_errorMessage!, AppTheme.danger, Icons.error_outline),
+                const SizedBox(height: 12),
+              ],
+              if (_successMessage != null) ...[
+                _buildBanner(_successMessage!, AppTheme.teal, Icons.check_circle_outline),
+                const SizedBox(height: 12),
+              ],
+              if (_isRegisterTab) ...[
+                TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Ad Soyad'),
+                ),
+                const SizedBox(height: 12),
+              ],
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'E-Posta Adresi',
+                  hintText: _selectedRole == UserRole.responder
+                      ? 'saha@quakemind.gov.tr'
+                      : 'afetzede@quakemind.gov.tr',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Sifre'),
+              ),
+              if (_isRegisterTab) ...[
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _cityController,
+                  decoration: const InputDecoration(labelText: 'Sehir / Il'),
+                ),
+              ],
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _loading ? null : _submit,
+                  icon: _loading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.arrow_forward),
+                  label: Text(
+                    _isRegisterTab ? 'Hesabimi Olustur ve Basla' : 'Giris Yap ve Devam Et',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () async {
+                    await showDialog(context: context, builder: (_) => const IpConfigDialog());
+                  },
+                  icon: const Icon(Icons.settings_ethernet, size: 16),
+                  label: const Text('Sunucu Ayari'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildDemoSection(),
+      ],
+    );
+  }
+
+  Widget _buildDemoSection() {
+    return OpsPanel(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () => setState(() => _showDemoAccounts = !_showDemoAccounts),
+            child: Row(
+              children: [
+                const Icon(Icons.bolt, color: AppTheme.neonAmber, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'DEMO HESAPLARLA HIZLI GIRIS',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      letterSpacing: 0.4,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ),
+                AnimatedRotation(
+                  turns: _showDemoAccounts ? 0.5 : 0,
+                  duration: AppMotion.base,
+                  child: const Icon(Icons.expand_more, color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          AnimatedSize(
+            duration: AppMotion.base,
+            curve: AppMotion.crossFade,
+            child: _showDemoAccounts
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildDemoStrip(
+                          'SAHA EKIBI',
+                          AppTheme.responderAccent,
+                          _demoResponders,
+                          UserRole.responder,
+                        ),
+                        const SizedBox(height: 14),
+                        _buildDemoStrip(
+                          'VATANDAS',
+                          AppTheme.survivorAccent,
+                          _demoSurvivors,
+                          UserRole.survivor,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Tum demo hesaplarin sifresi: password123',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -362,9 +393,7 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           Icon(icon, color: color, size: 18),
           const SizedBox(width: 10),
-          Expanded(
-            child: Text(text, style: TextStyle(color: color, fontSize: 12.5)),
-          ),
+          Expanded(child: Text(text, style: TextStyle(color: color, fontSize: 12.5))),
         ],
       ),
     );
@@ -405,10 +434,10 @@ class _LoginScreenState extends State<LoginScreen> {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: AppMotion.base,
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF3276E8) : Colors.transparent,
+          color: active ? _roleColor : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.center,
@@ -432,7 +461,7 @@ class _LoginScreenState extends State<LoginScreen> {
             'SAHA EKIBI & KOMUTA',
             'AFAD, arama kurtarma, IHA & uydu operatoru.',
             UserRole.responder,
-            const Color(0xFF3276E8),
+            AppTheme.responderAccent,
           ),
         ),
         const SizedBox(width: 10),
@@ -441,7 +470,7 @@ class _LoginScreenState extends State<LoginScreen> {
             'VATANDAS & AFETZEDE',
             'Tek tikla SOS, guvenli toplanma alani.',
             UserRole.survivor,
-            const Color(0xFFE15B64),
+            AppTheme.survivorAccent,
           ),
         ),
       ],
@@ -453,15 +482,15 @@ class _LoginScreenState extends State<LoginScreen> {
     return GestureDetector(
       onTap: () => setState(() => _selectedRole = role),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: AppMotion.base,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: selected ? color.withValues(alpha: 0.16) : AppTheme.panel,
-          border: Border.all(
-            color: selected ? color : AppTheme.glassStroke,
-            width: selected ? 1.4 : 1,
-          ),
+          border: Border.all(color: selected ? color : AppTheme.glassStroke, width: selected ? 1.4 : 1),
           borderRadius: BorderRadius.circular(16),
+          boxShadow: selected
+              ? [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 14)]
+              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -483,17 +512,14 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
             const SizedBox(height: 6),
-            Text(
-              subtitle,
-              style: const TextStyle(fontSize: 10.5, color: AppTheme.textSecondary),
-            ),
+            Text(subtitle, style: const TextStyle(fontSize: 10.5, color: AppTheme.textSecondary)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDemoGroup(
+  Widget _buildDemoStrip(
     String label,
     Color color,
     List<_DemoAccount> accounts,
@@ -503,7 +529,7 @@ class _LoginScreenState extends State<LoginScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: 6),
+          padding: const EdgeInsets.only(left: 2, bottom: 8),
           child: Text(
             label,
             style: TextStyle(
@@ -514,59 +540,47 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: accounts.map((account) {
-            return SizedBox(
-              width: 170,
-              child: GestureDetector(
+        SizedBox(
+          height: 62,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: accounts.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final account = accounts[index];
+              return GestureDetector(
                 onTap: _loading ? null : () => _demoLogin(account, role),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
+                child: Container(
+                  width: 170,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.10),
+                    border: Border.all(color: color.withValues(alpha: 0.35)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        account.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 12),
                       ),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.10),
-                        border: Border.all(color: color.withValues(alpha: 0.35)),
-                        borderRadius: BorderRadius.circular(14),
+                      const SizedBox(height: 2),
+                      Text(
+                        account.unit,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            account.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: color,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            account.unit,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    ],
                   ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            },
+          ),
         ),
       ],
     );

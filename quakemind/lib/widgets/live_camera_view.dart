@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 
+import '../theme/app_theme.dart';
+
 enum CameraDetectionMode { debris, crack }
 
 class CameraDetectionTick {
@@ -174,38 +176,58 @@ class _LiveCameraViewState extends State<LiveCameraView> {
         : 'Catlak Algilama';
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          YOLOView(
-            modelPath: _modelPath!,
-            task: YOLOTask.detect,
-            controller: _controller,
-            cameraResolution: '720p',
-            showNativeUI: false,
-            onResult: _onResults,
-            onPerformanceMetrics: _onMetrics,
-          ),
-          Positioned(
-            left: 12,
-            bottom: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xCC0D1B2A),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '$modeLabel  |  Guven: %${(_lastConfidence * 100).round()}  |  FPS: ${_lastFps.toStringAsFixed(1)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
+      borderRadius: BorderRadius.circular(26),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: AppTheme.neonCyan.withValues(alpha: 0.5), width: 1.5),
+          borderRadius: BorderRadius.circular(26),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            YOLOView(
+              modelPath: _modelPath!,
+              task: YOLOTask.detect,
+              controller: _controller,
+              cameraResolution: '720p',
+              showNativeUI: false,
+              onResult: _onResults,
+              onPerformanceMetrics: _onMetrics,
+            ),
+            Positioned(
+              left: 12,
+              top: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.danger.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  '● CANLI',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11),
                 ),
               ),
             ),
-          ),
-        ],
+            Positioned(
+              left: 12,
+              bottom: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppTheme.ink.withValues(alpha: 0.72),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.neonCyan.withValues(alpha: 0.35)),
+                ),
+                child: Text(
+                  '$modeLabel  |  GUVEN %${(_lastConfidence * 100).round()}  |  FPS ${_lastFps.toStringAsFixed(1)}',
+                  style: AppTheme.telemetryStyle(fontSize: 12.5, color: AppTheme.neonCyan),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

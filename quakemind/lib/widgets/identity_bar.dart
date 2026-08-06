@@ -21,19 +21,23 @@ class IdentityBar extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(12),
+              color: accentColor.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(color: accentColor.withValues(alpha: 0.55)),
+              boxShadow: [
+                BoxShadow(color: accentColor.withValues(alpha: 0.25), blurRadius: 12),
+              ],
             ),
             alignment: Alignment.center,
             child: Text(
               user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-              style: TextStyle(color: accentColor, fontWeight: FontWeight.w900),
+              style: AppTheme.telemetryStyle(fontSize: 16, color: accentColor),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,10 +50,15 @@ class IdentityBar extends StatelessWidget {
                 ),
                 if (user.unit != null)
                   Text(
-                    user.unit!,
+                    user.unit!.toUpperCase(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      letterSpacing: 0.5,
+                      fontWeight: FontWeight.w700,
+                      color: accentColor.withValues(alpha: 0.85),
+                    ),
                   ),
               ],
             ),
@@ -57,7 +66,7 @@ class IdentityBar extends StatelessWidget {
           IconButton(
             tooltip: 'Cikis Yap',
             onPressed: () => AuthController.instance.logout(),
-            icon: const Icon(Icons.logout, size: 20, color: AppTheme.textSecondary),
+            icon: const Icon(Icons.power_settings_new, size: 20, color: AppTheme.textSecondary),
           ),
         ],
       ),

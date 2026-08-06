@@ -10,6 +10,9 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../models/road_damage_result.dart';
 import '../models/risk_module_result.dart';
 import '../theme/app_theme.dart';
+import 'tactical/ops_panel.dart';
+import 'tactical/status_beacon.dart';
+import 'tactical/telemetry_tile.dart';
 
 BoxDecoration _glassBoxDecoration({
   double radius = 26,
@@ -38,6 +41,8 @@ BoxDecoration _glassBoxDecoration({
   );
 }
 
+/// Deprecated: delegates to [OpsPanel] (standard variant). Kept as a thin
+/// alias so not-yet-migrated call sites still get the new panel treatment.
 class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,
@@ -52,20 +57,7 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          decoration: _glassBoxDecoration(
-            radius: 28,
-            tint: color ?? scheme.surfaceContainerHigh,
-          ),
-          child: Padding(padding: padding, child: child),
-        ),
-      ),
-    );
+    return OpsPanel(padding: padding, color: color, child: child);
   }
 }
 
@@ -121,6 +113,8 @@ class SectionTitle extends StatelessWidget {
   }
 }
 
+/// Deprecated: delegates to [TelemetryMetricTile]. Kept as a thin alias so
+/// not-yet-migrated call sites still get the new mono-numeral treatment.
 class MetricTile extends StatelessWidget {
   const MetricTile({
     super.key,
@@ -135,39 +129,12 @@ class MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: _glassBoxDecoration(
-            radius: 22,
-            tint: scheme.surfaceContainerHigh,
-            stroke: color.withValues(alpha: 0.44),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 10),
-              Text(
-                value,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(color: color),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return TelemetryMetricTile(label: label, value: value, color: color);
   }
 }
 
+/// Deprecated: delegates to [StatusBeacon]. Kept as a thin alias so
+/// not-yet-migrated call sites still get the new beacon treatment.
 class StatusPill extends StatelessWidget {
   const StatusPill({super.key, required this.label, required this.color});
 
@@ -176,110 +143,7 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        border: Border.all(color: color.withValues(alpha: 0.42)),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class FakeMapPanel extends StatelessWidget {
-  const FakeMapPanel({
-    super.key,
-    this.title = 'Harita katmani',
-    required this.markers,
-    this.height = 240,
-  });
-
-  final String title;
-  final List<Alignment> markers;
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0E3B43), Color(0xFF1A6B75), Color(0xFF90B77D)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned.fill(child: CustomPaint(painter: _TerrainPainter())),
-          Positioned(
-            left: 18,
-            top: 18,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.88),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-          ),
-          for (final marker in markers)
-            Align(
-              alignment: marker,
-              child: Container(
-                width: 18,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: AppTheme.accent,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: Colors.white, width: 3),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x55000000),
-                      blurRadius: 12,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Text(
-                'Mobil taslak harita',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return StatusBeacon(label: label, color: color);
   }
 }
 
@@ -527,7 +391,7 @@ class _RiskTechnicalPanel extends StatelessWidget {
               child: MetricTile(
                 label: '150 km icindeki deprem',
                 value: '${result.nearbyQuakeCount}',
-                color: const Color(0xFFE15B64),
+                color: AppTheme.survivorAccent,
               ),
             ),
             SizedBox(
@@ -708,7 +572,7 @@ class GeoPointsMapPanel extends StatelessWidget {
                                           ? Icons.location_on
                                           : Icons.location_pin,
                                       color: item.highlight
-                                          ? const Color(0xFFE15B64)
+                                          ? AppTheme.survivorAccent
                                           : const Color(0xFF15616D),
                                       size: item.highlight ? 30 : 24,
                                     ),
@@ -917,7 +781,7 @@ class RoadLogisticsMapPanel extends StatelessWidget {
             points: segment
                 .map((p) => LatLng(p.latitude, p.longitude))
                 .toList(growable: false),
-            color: const Color(0xFFE15B64),
+            color: AppTheme.survivorAccent,
             strokeWidth: 4,
           ),
         )
@@ -974,7 +838,7 @@ class RoadLogisticsMapPanel extends StatelessWidget {
                           StatusPill(
                             label:
                                 'Kapali segment: ${result.blockedRoadSegments.length}',
-                            color: const Color(0xFFE15B64),
+                            color: AppTheme.survivorAccent,
                           ),
                           StatusPill(
                             label:
@@ -985,7 +849,7 @@ class RoadLogisticsMapPanel extends StatelessWidget {
                             label: result.satelliteSource.isNotEmpty
                                 ? result.satelliteSource
                                 : 'OpenStreetMap',
-                            color: const Color(0xFF3276E8),
+                            color: AppTheme.responderAccent,
                           ),
                         ],
                       ),
@@ -1083,71 +947,4 @@ class _MapLegendRow extends StatelessWidget {
       ],
     );
   }
-}
-
-class _TerrainPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.18)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    final routePaint = Paint()
-      ..color = const Color(0xFFF8F3D6).withValues(alpha: 0.9)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final path1 = Path()
-      ..moveTo(size.width * 0.08, size.height * 0.18)
-      ..quadraticBezierTo(
-        size.width * 0.36,
-        size.height * 0.1,
-        size.width * 0.56,
-        size.height * 0.22,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.78,
-        size.height * 0.34,
-        size.width * 0.92,
-        size.height * 0.24,
-      );
-    canvas.drawPath(path1, linePaint);
-
-    final path2 = Path()
-      ..moveTo(size.width * 0.15, size.height * 0.82)
-      ..quadraticBezierTo(
-        size.width * 0.42,
-        size.height * 0.68,
-        size.width * 0.64,
-        size.height * 0.72,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.82,
-        size.height * 0.78,
-        size.width * 0.94,
-        size.height * 0.62,
-      );
-    canvas.drawPath(path2, routePaint);
-
-    for (var i = 1; i < 6; i++) {
-      final y = size.height * i / 6;
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        linePaint..strokeWidth = 1.2,
-      );
-    }
-    for (var i = 1; i < 5; i++) {
-      final x = size.width * i / 5;
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        linePaint..strokeWidth = 1.2,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

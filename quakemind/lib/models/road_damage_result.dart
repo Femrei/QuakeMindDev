@@ -18,6 +18,12 @@ class RoadDamageResult {
     required this.satelliteTileUrl,
     required this.satelliteAttribution,
     required this.timingsMs,
+    this.imageOriginalB64,
+    this.imageDamageOverlayB64,
+    this.imageDamageMaskB64,
+    this.imageRoadMaskB64,
+    this.imageIntersectionB64,
+    this.imageSegmentationOverlayB64,
   });
 
   factory RoadDamageResult.fromJson(Map<String, dynamic> json) {
@@ -42,6 +48,12 @@ class RoadDamageResult {
       satelliteTileUrl: json['satelliteTileUrl'] as String? ?? '',
       satelliteAttribution: json['satelliteAttribution'] as String? ?? '',
       timingsMs: _parseTimings(json['timingsMs']),
+      imageOriginalB64: json['imageOriginalB64'] as String?,
+      imageDamageOverlayB64: json['imageDamageOverlayB64'] as String?,
+      imageDamageMaskB64: json['imageDamageMaskB64'] as String?,
+      imageRoadMaskB64: json['imageRoadMaskB64'] as String?,
+      imageIntersectionB64: json['imageIntersectionB64'] as String?,
+      imageSegmentationOverlayB64: json['imageSegmentationOverlayB64'] as String?,
     );
   }
 
@@ -95,6 +107,12 @@ class RoadDamageResult {
   final String satelliteTileUrl;
   final String satelliteAttribution;
   final Map<String, double> timingsMs;
+  final String? imageOriginalB64;
+  final String? imageDamageOverlayB64;
+  final String? imageDamageMaskB64;
+  final String? imageRoadMaskB64;
+  final String? imageIntersectionB64;
+  final String? imageSegmentationOverlayB64;
 }
 
 class RoadPoint {

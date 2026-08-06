@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'models/user_profile.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/home_shell.dart';
+import 'screens/responder/responder_shell.dart';
 import 'screens/splash_screen.dart';
-import 'screens/survivor_shell.dart';
+import 'screens/survivor/survivor_shell.dart';
 import 'services/auth_controller.dart';
 import 'theme/app_theme.dart';
 

@@ -44,11 +44,11 @@ class _EmergencyBannerState extends State<EmergencyBanner> {
   Color _severityColor(String severity) {
     switch (severity) {
       case 'critical':
-        return const Color(0xFFE15B64);
+        return AppTheme.danger;
       case 'warning':
-        return const Color(0xFFF59F00);
+        return AppTheme.neonAmber;
       default:
-        return const Color(0xFF3276E8);
+        return AppTheme.neonCyan;
     }
   }
 
@@ -64,9 +64,10 @@ class _EmergencyBannerState extends State<EmergencyBanner> {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        border: Border.all(color: color.withValues(alpha: 0.45)),
+        color: AppTheme.ink.withValues(alpha: 0.55),
+        border: Border.all(color: color.withValues(alpha: 0.55)),
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.28), blurRadius: 18)],
       ),
       child: Row(
         children: [

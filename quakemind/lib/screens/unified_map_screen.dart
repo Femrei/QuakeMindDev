@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import '../services/map_layers_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
+import '../widgets/tactical/ops_panel.dart';
 
 /// Shared "toplu harita" (bulk/unified map) screen used by both the
 /// responder and survivor shells: overlays SOS calls, satellite road-damage
@@ -252,30 +253,31 @@ class _UnifiedMapScreenState extends State<UnifiedMapScreen> {
         if (_controller.lastError != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: SectionCard(
-              color: const Color(0xFF4A1C1C),
-              child: Text(
-                _controller.lastError!,
-                style: const TextStyle(color: Colors.white),
-              ),
+            child: OpsPanel(
+              variant: OpsPanelVariant.alert,
+              color: AppTheme.danger,
+              child: Text(_controller.lastError!, style: const TextStyle(color: Colors.white)),
             ),
           ),
         if (_locationError != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: SectionCard(
-              color: const Color(0xFF4A1C1C),
-              child: Text(
-                _locationError!,
-                style: const TextStyle(color: Colors.white),
-              ),
+            child: OpsPanel(
+              variant: OpsPanelVariant.alert,
+              color: AppTheme.danger,
+              child: Text(_locationError!, style: const TextStyle(color: Colors.white)),
             ),
           ),
         SizedBox(
           height: 460,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(26),
-            child: Stack(
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: AppTheme.neonCyan.withValues(alpha: 0.4), width: 1.5),
+                borderRadius: BorderRadius.circular(26),
+              ),
+              child: Stack(
               children: [
                 FlutterMap(
                   options: MapOptions(
@@ -316,6 +318,7 @@ class _UnifiedMapScreenState extends State<UnifiedMapScreen> {
                   ),
                 ),
               ],
+              ),
             ),
           ),
         ),
