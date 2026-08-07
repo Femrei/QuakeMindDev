@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -641,11 +642,17 @@ class _RoadDamageImageFilmstrip extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                           child: GestureDetector(
                             onTap: () => _showFullscreen(context, entry.key, entry.value!),
-                            child: Image.memory(
-                              base64Decode(entry.value!),
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              errorBuilder: (context, error, stackTrace) => const _ImageDecodeError(),
+                            child: Builder(
+                              builder: (context) {
+                                final bytes = _decodeImageDataUri(entry.value!);
+                                if (bytes == null) return const _ImageDecodeError();
+                                return Image.memory(
+                                  bytes,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  errorBuilder: (context, error, stackTrace) => const _ImageDecodeError(),
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -662,15 +669,38 @@ class _RoadDamageImageFilmstrip extends StatelessWidget {
   }
 
   void _showFullscreen(BuildContext context, String title, String base64) {
+    final bytes = _decodeImageDataUri(base64);
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => Scaffold(
           appBar: AppBar(title: Text(title)),
           backgroundColor: Colors.black,
-          body: Center(child: InteractiveViewer(child: Image.memory(base64Decode(base64)))),
+          body: Center(
+            child: bytes == null
+                ? const _ImageDecodeError()
+                : InteractiveViewer(child: Image.memory(bytes)),
+          ),
         ),
       ),
     );
+  }
+}
+
+/// Backend sends images as `data:image/png;base64,<...>` data URIs, not raw
+/// base64 -- `base64Decode` throws a FormatException on the `data:` prefix,
+/// and since it runs synchronously while building the widget (not inside
+/// Image.memory's own error handling), that exception used to crash the
+/// whole result screen with Flutter's red error view instead of being
+/// caught by Image.memory's errorBuilder.
+Uint8List? _decodeImageDataUri(String value) {
+  final commaIndex = value.indexOf(',');
+  final raw = value.startsWith('data:') && commaIndex != -1
+      ? value.substring(commaIndex + 1)
+      : value;
+  try {
+    return base64Decode(raw);
+  } catch (_) {
+    return null;
   }
 }
 

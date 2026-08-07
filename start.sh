@@ -30,6 +30,25 @@ kill_tree() {
   fi
 }
 
+get_lan_ip() {
+  # Backend dinliyor 0.0.0.0:8000, yani telefonun gorebilecegi adres
+  # 127.0.0.1 degil, bu makinenin LAN/hotspot IP'si. Gercek bir paket
+  # gondermeden hangi arayuzun kullanilacagini ogrenmek icin soket
+  # trigi kullaniyoruz -- ipconfig/ifconfig parse etmekten daha guvenilir.
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -c '
+import socket
+try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    print(s.getsockname()[0])
+    s.close()
+except Exception:
+    pass
+' 2>/dev/null
+  fi
+}
+
 CLEANED_UP=0
 cleanup() {
   [ "$CLEANED_UP" = "1" ] && return 0
@@ -101,11 +120,22 @@ for d in devices:
   cd "$ROOT_DIR"
 fi
 
+LAN_IP="$(get_lan_ip)"
+
 echo ""
 echo "============================================================"
 echo " Backend : http://127.0.0.1:8000   (log: $LOG_DIR/backend.log)"
 echo " Frontend: http://localhost:3000   (log: $LOG_DIR/web.log)"
 echo " Mobil   : $MOBILE_STATUS"
+if [ -n "$LAN_IP" ]; then
+  echo " Mobil API IP: $LAN_IP:8000"
+  echo "   (Telefon uygulamasinda Giris Ekrani > Sunucu Ayari kismina"
+  echo "    bu IP:port degerini girin. Telefon ve bilgisayar ayni"
+  echo "    ag/hotspot'ta olmali.)"
+else
+  echo " Mobil API IP: tespit edilemedi -- 'ipconfig' / 'ifconfig' ile"
+  echo "   bu bilgisayarin LAN IP'sini bulup telefonda Sunucu Ayari'na girin."
+fi
 echo " Durdurmak icin: Ctrl+C"
 echo "============================================================"
 

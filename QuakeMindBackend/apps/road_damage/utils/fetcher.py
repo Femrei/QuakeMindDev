@@ -6,8 +6,7 @@ import cv2
 from PIL import Image
 import datetime
 import logging
-import time
-from concurrent.futures import ThreadPoolExecutor, wait as futures_wait
+from concurrent.futures import ThreadPoolExecutor, as_completed, wait as futures_wait
 
 from .local_osm import draw_local_road_mask, has_local_roads_dataset
 
@@ -202,26 +201,43 @@ def get_osm_roads_overpass(bounds, w, h, thickness=4):
     road_img = np.zeros((h, w), dtype=np.uint8)
     data = None
 
-    session = requests.Session()
     headers = {"User-Agent": "QuakeMindRoadDamage/1.0"}
 
-    # Bounded to ~1 attempt/server, short timeout: this runs inside a sync FastAPI
-    # route handler, which occupies one of the (limited) thread-pool workers for
-    # the entire call. The previous 5 servers x 2 attempts x 35s could block a
-    # worker for up to ~350s, risking exhausting the pool under a few concurrent
-    # requests and freezing the whole API for unrelated fast endpoints.
-    for url in servers:
+    def _fetch_one(url):
         try:
             if url.endswith("?data="):
-                resp = session.get(url + requests.utils.quote(query), headers=headers, timeout=12)
+                resp = requests.get(url + requests.utils.quote(query), headers=headers, timeout=12)
             else:
-                resp = session.post(url, data=query, headers=headers, timeout=12)
+                resp = requests.post(url, data=query, headers=headers, timeout=12)
             if resp.status_code == 200:
-                data = resp.json()
-                break  # Success
+                return resp.json()
         except Exception:
             pass
-        time.sleep(0.35)
+        return None
+
+    # Fire all mirrors concurrently and take the first success, instead of
+    # trying them one at a time -- when Overpass mirrors are down/slow
+    # (a real, observed failure mode), the old sequential loop could block
+    # this worker for ~5 servers x 12s timeout = up to a minute before
+    # giving up, which is a big chunk of the mobile client's "why is this
+    # taking so long" complaint. Still bounded to one thread per server so
+    # it can't outlive a normal single-server attempt in the common case.
+    pool = ThreadPoolExecutor(max_workers=len(servers))
+    try:
+        futures = [pool.submit(_fetch_one, url) for url in servers]
+        try:
+            for future in as_completed(futures, timeout=15):
+                result = future.result()
+                if result:
+                    data = result
+                    break
+        except Exception:
+            pass
+    finally:
+        # Don't block on slower mirrors once we have a winner (or gave up) --
+        # same "abandon, don't join" pattern used for the other bounded
+        # thread-pool calls in this codebase.
+        pool.shutdown(wait=False, cancel_futures=True)
 
     if not data:
         _warn("All Overpass servers failed. Roads could not be fetched.")

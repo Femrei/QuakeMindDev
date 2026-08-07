@@ -52,11 +52,13 @@ class TacticalDock extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 for (var i = 0; i < items.length; i++)
-                  _DockButton(
-                    item: items[i],
-                    selected: i == selectedIndex,
-                    accentColor: accentColor,
-                    onTap: () => onSelected(i),
+                  Flexible(
+                    child: _DockButton(
+                      item: items[i],
+                      selected: i == selectedIndex,
+                      accentColor: accentColor,
+                      onTap: () => onSelected(i),
+                    ),
                   ),
               ],
             ),
@@ -108,14 +110,21 @@ class _DockButton extends StatelessWidget {
               size: 22,
               color: selected ? accentColor : AppTheme.textSecondary,
             ),
+            // Flexible (not FittedBox) so a cramped dock only ever shrinks
+            // the label -- the icon stays full-size instead of scaling
+            // down along with it when many items compete for space.
             if (selected) ...[
               const SizedBox(width: 8),
-              Text(
-                item.label,
-                style: TextStyle(
-                  color: accentColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+              Flexible(
+                child: Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: accentColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ],

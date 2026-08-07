@@ -6,6 +6,7 @@ import '../../widgets/emergency_banner.dart';
 import '../../widgets/identity_bar.dart';
 import '../../widgets/tactical/scan_background.dart';
 import '../../widgets/tactical/tactical_dock.dart';
+import '../../widgets/tactical/tactical_page_switcher.dart';
 import '../../widgets/team_chat_sheet.dart';
 import '../unified_map_screen.dart';
 import 'camera_page.dart';
@@ -87,10 +88,7 @@ class _ResponderShellState extends State<ResponderShell> {
                   const IdentityBar(accentColor: AppTheme.responderAccent),
                   const EmergencyBanner(),
                   Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      child: KeyedSubtree(key: ValueKey(_index), child: pages[_index]),
-                    ),
+                    child: TacticalPageSwitcher(index: _index, child: pages[_index]),
                   ),
                 ],
               ),
