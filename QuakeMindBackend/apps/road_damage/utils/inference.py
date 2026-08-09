@@ -92,13 +92,17 @@ def _postprocess_mask(pred_mask_binary, level=1):
 
 
 def run_inference(img, road_mask_binary, model, device, damage_booster, threshold,
-                  use_imagenet_norm=False, postprocess_level=1):
+                  use_imagenet_norm=False, postprocess_level=1, progress_callback=None):
     """
     Runs the Segformer model with overlapping patches and blending.
-    
+
     Args:
         use_imagenet_norm: True ise ImageNet normalize uygular (yeni model için).
         postprocess_level: 0=Kapalı, 1=Hafif, 2=Güçlü
+        progress_callback: Opsiyonel `fn(done_patches, total_patches)` -- patch
+            dongusu CPU'da dakikalarca surebildigi icin cagiran tarafin gercek
+            ilerleme gosterebilmesini saglar. Hicbir sey donmez, hatalari
+            yutulur (ilerleme raporu analizi bozmamali).
     """
     w, h = img.size
     img_np = np.array(img.convert("RGB"))
@@ -122,8 +126,13 @@ def run_inference(img, road_mask_binary, model, device, damage_booster, threshol
     raw_probs = np.zeros((padded_h, padded_w), dtype=np.float32)
     weight_map = np.zeros((padded_h, padded_w), dtype=np.float32)
 
-    for y in range(0, padded_h - patch_size + 1, stride):
-        for x in range(0, padded_w - patch_size + 1, stride):
+    y_positions = list(range(0, padded_h - patch_size + 1, stride))
+    x_positions = list(range(0, padded_w - patch_size + 1, stride))
+    total_patches = max(1, len(y_positions) * len(x_positions))
+    done_patches = 0
+
+    for y in y_positions:
+        for x in x_positions:
             chunk = img_padded[y:y + patch_size, x:x + patch_size, :]
 
             input_tensor = torch.from_numpy(chunk).permute(2, 0, 1).float() / 255.0
@@ -138,6 +147,13 @@ def run_inference(img, road_mask_binary, model, device, damage_booster, threshol
             # Ağırlıklı toplama (blending)
             raw_probs[y:y + patch_size, x:x + patch_size] += chunk_pred * weight_window
             weight_map[y:y + patch_size, x:x + patch_size] += weight_window
+
+            done_patches += 1
+            if progress_callback is not None:
+                try:
+                    progress_callback(done_patches, total_patches)
+                except Exception:
+                    pass
 
     # Normalize (ağırlıklara böl)
     raw_probs = raw_probs / np.maximum(weight_map, 1e-6)

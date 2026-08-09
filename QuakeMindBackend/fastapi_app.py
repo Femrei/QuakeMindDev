@@ -11,10 +11,26 @@ import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from contextlib import contextmanager
+from contextlib import contextmanager, asynccontextmanager
 from typing import Optional
-from threading import Lock, Semaphore
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
+from threading import Lock, Thread
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, TimeoutError as FutureTimeoutError
+import functools
+import multiprocessing
+
+# Windows' ProcessPoolExecutor (spawn) re-imports this module's top-level code
+# inside every pool worker process, even when the worker's target function
+# lives elsewhere. Empirically (verified via a diagnostic print on this
+# machine): the initial `python fastapi_app.py` launch is named "MainProcess",
+# uvicorn's own reload subprocess (the one that actually serves HTTP -- reload
+# uses `multiprocessing` internally too) is named "SpawnProcess-1", and a
+# ProcessPoolExecutor worker spawned from *that* process is named
+# "SpawnProcess-1:1" (parent-name:index) -- i.e. pool workers are the only
+# processes whose name contains ":". Guarding on that (not on "MainProcess",
+# which only matches the launcher and would wrongly also skip loading in the
+# real reload-managed server process) lets the eager, heavy model loads below
+# skip themselves in pool workers without touching the real server process.
+_IS_APP_PROCESS = ":" not in multiprocessing.current_process().name
 
 BASE_DIR = Path(__file__).resolve().parent
 APPS_DIR = BASE_DIR / "apps"
@@ -39,6 +55,18 @@ def add_project_site_packages(project_root):
 
 for project_root in [NLP_ROOT, ROAD_ROOT, RISK_ROOT, CAMERA_ROOT]:
     add_project_site_packages(project_root)
+
+from apps.road_damage.utils.serialization import (
+    compact_segment_coords as _compact_segment_coords,
+    serialize_segments as _serialize_segments,
+    haversine_m as _haversine_m,
+)
+from apps.road_damage.utils.imaging import (
+    image_array_to_b64 as _image_array_to_b64,
+    build_damage_overlay as _build_damage_overlay,
+    build_segmentation_overlay as _build_segmentation_overlay,
+)
+from apps.road_damage.utils.tiling import zoom_for_radius as _zoom_for_radius
 
 @contextmanager
 def temporary_sys_path(*paths):
@@ -75,14 +103,6 @@ road_runtime_error = None
 road_runtime_load_attempted = False
 road_runtime_lock = Lock()
 
-# Bounds how many /api/road_damage/analyze requests can run at once. Each call
-# occupies a sync-route thread-pool worker for the duration of a slow
-# satellite-fetch + Overpass + AI-inference pipeline (tens of seconds to a
-# couple minutes) -- without this limit, a handful of concurrent analyze
-# requests could exhaust Starlette's thread pool and freeze unrelated fast
-# endpoints (SOS alerts, login, etc.) for every user.
-_analyze_semaphore = Semaphore(2)
-
 def _get_nlp_pipeline():
     global nlp_pipeline
     if nlp_pipeline is None:
@@ -96,55 +116,32 @@ def _get_nlp_pipeline():
             print(f"Failed to load NLP: {e}", flush=True)
     return nlp_pipeline
 
-try:
-    clear_module_cache(["risk_engine"])
-    with temporary_sys_path(RISK_ROOT), temporary_cwd(RISK_ROOT):
-        risk_module = importlib.import_module("risk_engine")
-        RISK_CSV = RISK_ROOT / "data" / "query.csv"
-        risk_engine = risk_module.EarthquakeRiskEngine(csv_path=str(RISK_CSV.resolve()))
-    print("Risk Engine loaded.", flush=True)
-except Exception as e:
-    print(f"Failed to load Risk Engine: {e}", flush=True)
-
 yolo_catlak = None
 yolo_bina = None
 
-try:
-    from ultralytics import YOLO
-    catlak_path = CAMERA_ROOT / "models" / "catlak.pt"
-    bina_path = CAMERA_ROOT / "models" / "bina.pt"
-    if catlak_path.exists():
-        yolo_catlak = YOLO(str(catlak_path.resolve()))
-        print("YOLO Catlak Model loaded.", flush=True)
-    if bina_path.exists():
-        yolo_bina = YOLO(str(bina_path.resolve()))
-        print("YOLO Bina Model loaded.", flush=True)
-except Exception as e:
-    print(f"Failed to load YOLO Camera Models: {e}", flush=True)
+if _IS_APP_PROCESS:
+    try:
+        clear_module_cache(["risk_engine"])
+        with temporary_sys_path(RISK_ROOT), temporary_cwd(RISK_ROOT):
+            risk_module = importlib.import_module("risk_engine")
+            RISK_CSV = RISK_ROOT / "data" / "query.csv"
+            risk_engine = risk_module.EarthquakeRiskEngine(csv_path=str(RISK_CSV.resolve()))
+        print("Risk Engine loaded.", flush=True)
+    except Exception as e:
+        print(f"Failed to load Risk Engine: {e}", flush=True)
 
-
-def _zoom_for_radius(radius_km, target_tiles=6, min_zoom=13, max_zoom=18):
-    """Pick a tile zoom so the stitched image stays a bounded number of tiles
-    across, regardless of the requested analysis radius.
-
-    The Segformer inference below runs on CPU over overlapping 512px patches,
-    so its cost scales roughly with pixel count. Previously zoom was fixed at
-    18 and a larger radiusKm just pushed more tiles into the same fixed tile
-    cap, which either silently cropped the analyzed area back down (defeating
-    the point of the radius slider) or, when the cap was raised to actually
-    honor the radius, ballooned a request from ~1min to ~6-7min of inference
-    -- past the mobile client's 300s timeout, so the analysis never came back.
-    Scaling zoom down for a larger radius keeps the tile/pixel budget (and so
-    inference time) roughly constant while still covering the real requested
-    area.
-    """
-    z = max_zoom
-    while z > min_zoom:
-        km_per_tile = 40075.0 / (2 ** z)
-        if (2 * radius_km) / km_per_tile <= target_tiles:
-            break
-        z -= 1
-    return z
+    try:
+        from ultralytics import YOLO
+        catlak_path = CAMERA_ROOT / "models" / "catlak.pt"
+        bina_path = CAMERA_ROOT / "models" / "bina.pt"
+        if catlak_path.exists():
+            yolo_catlak = YOLO(str(catlak_path.resolve()))
+            print("YOLO Catlak Model loaded.", flush=True)
+        if bina_path.exists():
+            yolo_bina = YOLO(str(bina_path.resolve()))
+            print("YOLO Bina Model loaded.", flush=True)
+    except Exception as e:
+        print(f"Failed to load YOLO Camera Models: {e}", flush=True)
 
 
 def _load_road_runtime():
@@ -224,10 +221,11 @@ def _get_road_runtime():
     return road_runtime
 
 
-try:
-    _get_road_runtime()
-except Exception:
-    pass
+if _IS_APP_PROCESS:
+    try:
+        _get_road_runtime()
+    except Exception:
+        pass
 
 # In-memory SOS alert store. Intentionally not persisted: alerts reset whenever
 # the server restarts, matching the PoC requirement of session-only storage.
@@ -252,7 +250,138 @@ def _store_road_damage_session(analysis_id, data):
             oldest = road_damage_sessions_order.pop(0)
             road_damage_sessions.pop(oldest, None)
 
-app = FastAPI(title="QuakeMind API", version="1.0.0")
+
+# In-memory road-damage *job* store (separate from road_damage_sessions
+# above, which only holds the routable graph for /route). Tracks the
+# lifecycle of an /analyze call now that it runs on a background
+# ProcessPoolExecutor worker instead of inline in the request handler:
+# queued -> done (result attached) or error (message attached). Bounded
+# FIFO eviction, same pattern as the session store.
+road_damage_jobs: "dict[str, dict]" = {}
+road_damage_jobs_order: list = []
+road_damage_jobs_lock = Lock()
+ROAD_DAMAGE_JOB_LIMIT = 20
+# Soft cap on concurrently *queued* jobs -- pool.submit() itself never
+# blocks (unlike the old semaphore-gated thread-pool route), so this is
+# just cheap backpressure against a client hammering /analyze.
+ROAD_DAMAGE_MAX_QUEUED_JOBS = 5
+
+road_damage_pool: "ProcessPoolExecutor | None" = None
+# Worker -> main-process progress channel. A plain multiprocessing.Queue
+# (not a Manager dict) on purpose: a Manager would spin up its own server
+# process, and on Windows spawn that process re-imports this module and
+# would redundantly reload every heavy model -- exactly what _IS_APP_PROCESS
+# exists to prevent. A Queue needs no extra process, and handing it to the
+# pool via initargs is the one path multiprocessing allows a Queue to cross
+# a process boundary.
+road_damage_progress_queue = None
+road_damage_progress_thread = None
+
+
+def _store_road_damage_job(analysis_id, data):
+    with road_damage_jobs_lock:
+        road_damage_jobs[analysis_id] = data
+        road_damage_jobs_order.append(analysis_id)
+        while len(road_damage_jobs_order) > ROAD_DAMAGE_JOB_LIMIT:
+            oldest = road_damage_jobs_order.pop(0)
+            road_damage_jobs.pop(oldest, None)
+
+
+def _count_queued_road_damage_jobs():
+    with road_damage_jobs_lock:
+        return sum(1 for job in road_damage_jobs.values() if job.get("status") == "queued")
+
+
+def _on_road_damage_job_done(analysis_id, future):
+    """Runs in the main process (on the pool's management thread) once a
+    submitted job finishes. Must only touch road_damage_jobs under its lock,
+    matching the thread-safety pattern already used for sos_lock /
+    road_damage_sessions_lock elsewhere in this file.
+    """
+    with road_damage_jobs_lock:
+        job = road_damage_jobs.get(analysis_id)
+        if job is None:
+            return  # evicted from the bounded FIFO while still in flight
+        exc = future.exception()
+        if exc is not None:
+            job["status"] = "error"
+            job["error"] = str(exc)
+        else:
+            result = future.result()
+            safe_graph = result.pop("safeGraph", None)
+            if safe_graph is not None:
+                _store_road_damage_session(analysis_id, {"safe_G": safe_graph, "bounds": result.get("bounds")})
+            job["status"] = "done"
+            job["result"] = result
+            job["progress"] = 100
+            job["progressMessage"] = "Analiz tamamlandi."
+        job["finishedAt"] = time.time()
+
+
+def _drain_road_damage_progress(queue):
+    """Main-process daemon thread: turns worker progress pings into job-store
+    updates. Exits on the None sentinel pushed at shutdown.
+    """
+    while True:
+        try:
+            item = queue.get()
+        except (EOFError, OSError):
+            return
+        if item is None:
+            return
+        try:
+            analysis_id = item.get("analysisId")
+            with road_damage_jobs_lock:
+                job = road_damage_jobs.get(analysis_id)
+                # Only advance a still-running job -- a late ping must never
+                # drag a finished job's progress back below 100.
+                if job is not None and job.get("status") == "queued":
+                    job["progress"] = item.get("percent")
+                    job["progressMessage"] = item.get("message")
+        except Exception:
+            pass
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global road_damage_pool, road_damage_progress_queue, road_damage_progress_thread
+    from apps.road_damage import worker as road_damage_worker
+
+    model_path = str(ROAD_ROOT / "models" / "optimized_mitb4_focal_dice30.pth")
+    pool_size = int(os.environ.get("QUAKEMIND_ROAD_POOL_SIZE", "1"))
+    road_damage_progress_queue = multiprocessing.Queue()
+    road_damage_progress_thread = Thread(
+        target=_drain_road_damage_progress,
+        args=(road_damage_progress_queue,),
+        daemon=True,
+    )
+    road_damage_progress_thread.start()
+
+    road_damage_pool = ProcessPoolExecutor(
+        max_workers=pool_size,
+        initializer=road_damage_worker._init_worker,
+        initargs=(model_path, road_damage_progress_queue),
+    )
+    # Pay the one-time "cold worker spawn" cost (Windows process creation +
+    # module import, measured ~10-15s on this machine) now, during startup,
+    # instead of during the first real user's analysis request.
+    warm_up = road_damage_pool.submit(road_damage_worker._warm_up)
+    try:
+        warm_up.result(timeout=120)
+        print(f"Road Damage pool warmed up ({pool_size} worker(s)).", flush=True)
+    except Exception as e:
+        print(f"Road Damage pool warm-up failed (will still lazy-init on first job): {e}", flush=True)
+
+    yield
+
+    road_damage_pool.shutdown(wait=False, cancel_futures=True)
+    try:
+        road_damage_progress_queue.put_nowait(None)
+    except Exception:
+        pass
+
+
+app = FastAPI(title="QuakeMind API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -310,102 +439,6 @@ class RoadDamageRouteRequest(BaseModel):
     endLat: float
     endLon: float
 
-
-def _compact_segment_coords(line, max_points=28):
-    """Serialize a shapely LineString to compact [[lat, lon], ...] payload."""
-    coords = list(getattr(line, "coords", []))
-    if len(coords) < 2:
-        return None
-    if len(coords) <= max_points:
-        sampled = coords
-    else:
-        stride = max(1, len(coords) // max_points)
-        sampled = coords[::stride]
-        if sampled[-1] != coords[-1]:
-            sampled.append(coords[-1])
-    return [[float(lat), float(lon)] for lon, lat in sampled]
-
-
-def _serialize_segments(edges, max_segments=500):
-    if not edges:
-        return []
-    serialized = []
-    for _, _, _, line in edges[:max_segments]:
-        compact = _compact_segment_coords(line)
-        if compact:
-            serialized.append(compact)
-    return serialized
-
-
-def _image_array_to_b64(image_arr):
-    """Encode an RGB numpy array (or single-channel mask) as a base64 PNG data URI."""
-    import io
-    import base64
-    from PIL import Image
-    import numpy as np
-
-    arr = image_arr
-    if arr.dtype != np.uint8:
-        arr = arr.astype(np.uint8)
-    img = Image.fromarray(arr)
-    buffer = io.BytesIO()
-    img.save(buffer, format="PNG")
-    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
-
-
-def _build_damage_overlay(original_img, road_mask, pred_mask, intersection):
-    """Reproduce the Streamlit RDA color overlay: cyan=open road, yellow=debris, red=debris-on-road."""
-    import cv2
-    import numpy as np
-
-    vis_img = original_img.copy()
-
-    yellow_overlay = np.zeros_like(vis_img)
-    yellow_overlay[:] = [255, 255, 0]
-    red_overlay = np.zeros_like(vis_img)
-    red_overlay[:] = [255, 0, 0]
-    cyan_overlay = np.zeros_like(vis_img)
-    cyan_overlay[:] = [0, 255, 255]
-
-    cyan_idx = (road_mask == 1) & (intersection == 0)
-    blended_cyan = cv2.addWeighted(vis_img, 0.3, cyan_overlay, 0.7, 0)
-    vis_img[cyan_idx] = blended_cyan[cyan_idx]
-
-    mask_idx = (pred_mask == 1) & (intersection == 0)
-    blended_yellow = cv2.addWeighted(vis_img, 0.5, yellow_overlay, 0.5, 0)
-    vis_img[mask_idx] = blended_yellow[mask_idx]
-
-    kernel = np.ones((9, 9), np.uint8)
-    thick_intersection = cv2.dilate(intersection, kernel, iterations=2)
-    intersection_idx = thick_intersection == 1
-    blended_red = cv2.addWeighted(vis_img, 0.1, red_overlay, 0.9, 0)
-    vis_img[intersection_idx] = blended_red[intersection_idx]
-
-    return vis_img
-
-
-def _haversine_m(lat1, lon1, lat2, lon2):
-    import math
-    radius_m = 6371000
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    d_phi = math.radians(lat2 - lat1)
-    d_lambda = math.radians(lon2 - lon1)
-    a = math.sin(d_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2) ** 2
-    return radius_m * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-
-def _build_segmentation_overlay(original_img, pred_mask):
-    import cv2
-    import numpy as np
-
-    seg_overlay = original_img.copy()
-    damage_color = np.zeros_like(seg_overlay)
-    damage_color[:] = [255, 50, 50]
-    damage_idx = pred_mask == 1
-    blended = cv2.addWeighted(seg_overlay, 0.4, damage_color, 0.6, 0)
-    seg_overlay[damage_idx] = blended[damage_idx]
-    return seg_overlay
 
 @app.get("/")
 def health_check():
@@ -655,334 +688,57 @@ def road_damage_oam_search(
     return {"images": images}
 
 
-@app.post("/api/road_damage/analyze")
+@app.post("/api/road_damage/analyze", status_code=202)
 def analyze_road_damage(req: RoadDamageRequest):
-    if not _analyze_semaphore.acquire(blocking=True, timeout=5):
+    """Kicks off a road-damage analysis on the dedicated ProcessPoolExecutor
+    and returns immediately with a job id -- the actual Segformer inference
+    (CPU-bound, can take minutes) used to run inline here and freeze every
+    other endpoint on this single-process server for its whole duration.
+    Poll GET /api/road_damage/status/{analysisId} for the result.
+    """
+    if road_damage_pool is None:
+        raise HTTPException(status_code=503, detail="Road Damage worker havuzu henuz hazir degil.")
+    if _count_queued_road_damage_jobs() >= ROAD_DAMAGE_MAX_QUEUED_JOBS:
         raise HTTPException(
             status_code=503,
             detail="Sistem su anda cok sayida hasar analizi istegini isliyor. Lutfen birkac saniye sonra tekrar deneyin.",
         )
-    try:
-        return _analyze_road_damage_impl(req)
-    finally:
-        _analyze_semaphore.release()
+
+    from apps.road_damage import worker as road_damage_worker
+
+    analysis_id = str(uuid.uuid4())
+    req_dict = req.model_dump()
+    req_dict["_analysisId"] = analysis_id
+    _store_road_damage_job(analysis_id, {
+        "status": "queued",
+        "createdAt": time.time(),
+        "progress": 0,
+        "progressMessage": "Sirada bekliyor...",
+    })
+
+    future = road_damage_pool.submit(road_damage_worker.run_analysis_job, req_dict)
+    future.add_done_callback(functools.partial(_on_road_damage_job_done, analysis_id))
+
+    return {"analysisId": analysis_id, "status": "queued"}
 
 
-def _analyze_road_damage_impl(req: RoadDamageRequest):
-    try:
-        import numpy as np
-        import cv2
-
-        try:
-            runtime = _get_road_runtime()
-        except Exception:
-            raise HTTPException(
-                status_code=503,
-                detail=f"Road Damage runtime yuklenemedi: {road_runtime_error or 'bilinmeyen hata'}",
-            )
-
-        fetch_satellite_area = runtime["fetch_satellite_area"]
-        get_osm_roads_overpass = runtime["get_osm_roads_overpass"]
-        get_wayback_versions = runtime["get_wayback_versions"]
-        search_oam_images = runtime["search_oam_images"]
-        run_inference = runtime["run_inference"]
-        analyze_road_network_graph = runtime["analyze_road_network_graph"]
-        model = runtime["model"]
-        device = runtime["device"]
-
-        started_at = time.perf_counter()
-        t0 = started_at
-
-        bbox = None
-        if req.bboxWest is not None and req.bboxSouth is not None and req.bboxEast is not None and req.bboxNorth is not None:
-            bbox = (req.bboxWest, req.bboxSouth, req.bboxEast, req.bboxNorth)
-        else:
-            # No explicit bbox (the common case for the mobile app): derive a
-            # real-world-sized area from radiusKm instead of letting
-            # fetch_satellite_area silently fall back to a tiny tile patch.
-            bbox = runtime["bbox_from_center"](req.latitude, req.longitude, max(0.5, req.radiusKm))
-
-        source_text = (req.source or "").lower()
-        prov_code = "google"
-        wayback_id = None
-        custom_url = None
-        source_note = "Google uydu katmani kullanildi."
-        satellite_tile_url = "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
-        satellite_attribution = "Google"
-        source_label = "Google Maps (Latest / High Res)"
-
-        if "esri" in source_text or "wayback" in source_text:
-            if req.waybackId:
-                prov_code = "esri"
-                wayback_id = req.waybackId
-                source_note = f"Esri Wayback secildi (id={wayback_id})."
-                satellite_tile_url = f"https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{wayback_id}/{{z}}/{{y}}/{{x}}"
-                satellite_attribution = "Esri"
-                source_label = "Esri Wayback (Historical)"
-            else:
-                versions = get_wayback_versions()
-                if versions:
-                    prov_code = "esri"
-                    wayback_id = versions[0].get("id")
-                    source_note = f"Esri Wayback secildi (id={wayback_id})."
-                    satellite_tile_url = f"https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{wayback_id}/{{z}}/{{y}}/{{x}}"
-                    satellite_attribution = "Esri"
-                    source_label = "Esri Wayback (Historical)"
-                else:
-                    source_note = "Esri Wayback surumu bulunamadi, Google'a geri donuldu."
-        elif "oam" in source_text or "openaerial" in source_text:
-            if req.oamTileUrl:
-                prov_code = "custom"
-                custom_url = req.oamTileUrl
-                source_note = "OpenAerialMap (secilen goruntu) kullanildi."
-                satellite_tile_url = req.oamTileUrl
-                satellite_attribution = "OpenAerialMap"
-                source_label = "OpenAerialMap (Event Specific)"
-            else:
-                oam_bbox = bbox if bbox is not None else (
-                    req.longitude - 0.03,
-                    req.latitude - 0.03,
-                    req.longitude + 0.03,
-                    req.latitude + 0.03,
-                )
-                oam_images = search_oam_images(oam_bbox, limit=25)
-                if oam_images:
-                    preferred_title = (req.oamPreferredTitle or "").strip().lower()
-                    selected_oam = None
-
-                    def _bbox_center(item):
-                        raw_bbox = item.get("bbox")
-                        if not isinstance(raw_bbox, (list, tuple)) or len(raw_bbox) < 4:
-                            return None
-                        try:
-                            west = float(raw_bbox[0])
-                            south = float(raw_bbox[1])
-                            east = float(raw_bbox[2])
-                            north = float(raw_bbox[3])
-                            return ((south + north) / 2.0, (west + east) / 2.0)
-                        except Exception:
-                            return None
-
-                    def _pick_closest(items):
-                        if not items:
-                            return None
-                        with_center = []
-                        for item in items:
-                            center = _bbox_center(item)
-                            if center is None:
-                                continue
-                            dlat = center[0] - req.latitude
-                            dlon = center[1] - req.longitude
-                            with_center.append((dlat * dlat + dlon * dlon, item))
-                        if with_center:
-                            with_center.sort(key=lambda x: x[0])
-                            return with_center[0][1]
-                        return items[0]
-
-                    if preferred_title:
-                        preferred_matches = [
-                            item
-                            for item in oam_images
-                            if preferred_title in (item.get("title", "").lower())
-                        ]
-                        selected_oam = _pick_closest(preferred_matches)
-
-                    # Known stable Antakya sample used in Streamlit UI.
-                    if selected_oam is None:
-                        known_matches = [
-                            item
-                            for item in oam_images
-                            if "2023-02-09" in item.get("title", "")
-                            and "help.ngo" in item.get("title", "").lower()
-                        ]
-                        selected_oam = _pick_closest(known_matches)
-
-                    if selected_oam is None:
-                        selected_oam = _pick_closest(oam_images)
-
-                    tms_url = (selected_oam.get("tms_url") or "").strip()
-                    oam_result_bbox = selected_oam.get("bbox")
-                    if (
-                        isinstance(oam_result_bbox, (list, tuple))
-                        and len(oam_result_bbox) >= 4
-                    ):
-                        try:
-                            bbox = (
-                                float(oam_result_bbox[0]),
-                                float(oam_result_bbox[1]),
-                                float(oam_result_bbox[2]),
-                                float(oam_result_bbox[3]),
-                            )
-                        except Exception:
-                            pass
-
-                    if "{x}" in tms_url and "{y}" in tms_url:
-                        prov_code = "custom"
-                        custom_url = tms_url
-                        source_note = f"OpenAerialMap secildi: {selected_oam.get('title', 'isimsiz goruntu')}"
-                        satellite_tile_url = tms_url
-                        satellite_attribution = "OpenAerialMap"
-                        source_label = "OpenAerialMap (Event Specific)"
-                    else:
-                        source_note = "OpenAerialMap tms URL formati uyumsuz, Google'a geri donuldu."
-                else:
-                    source_note = "OpenAerialMap kaydi bulunamadi, Google'a geri donuldu."
-
-        img, bounds = fetch_satellite_area(
-            lat=req.latitude,
-            lon=req.longitude,
-            bbox=bbox,
-            zoom_level=_zoom_for_radius(req.radiusKm),
-            wayback_id=wayback_id,
-            provider=prov_code,
-            custom_url=custom_url,
-        )
-        satellite_fetch_ms = (time.perf_counter() - t0) * 1000.0
-        t1 = time.perf_counter()
-
-        if img is None:
-            raise HTTPException(status_code=422, detail="Uydu goruntusu indirilemedi. Farkli bir kaynak veya konum deneyin.")
-
-        w, h = img.size
-        line_width = 6
-        road_mask = get_osm_roads_overpass(bounds, w, h, thickness=line_width)
-        road_mask_binary = (road_mask > 0).astype(np.uint8)
-        overpass_ms = (time.perf_counter() - t1) * 1000.0
-        t2 = time.perf_counter()
-
-        raw_probs, boosted_probs, pred_mask_binary, intersection, img_np = run_inference(
-            img, road_mask_binary, model, device,
-            req.damageBooster, req.threshold,
-            req.useImagenetNorm, req.postProcessLevel,
-        )
-        inference_ms = (time.perf_counter() - t2) * 1000.0
-        t3 = time.perf_counter()
-
-        total_pixels = pred_mask_binary.size
-        damage_pixels = int(np.sum(pred_mask_binary))
-        damage_rate = damage_pixels / total_pixels if total_pixels > 0 else 0
-
-        road_pixels = int(np.sum(road_mask_binary))
-        blocked_pixels = int(np.sum(intersection))
-        open_road_pixels = road_pixels - blocked_pixels
-
-        blocked_road_pct = blocked_pixels / road_pixels if road_pixels > 0 else 0
-        open_road_pct = 1.0 - blocked_road_pct
-
-        log_lines = [
-            "1/4 Uydu goruntusu indirildi",
-            source_note,
-            f"2/4 OSM yol agi cikarildi ({road_pixels} piksel)",
-            "3/4 Segformer modeli ile inference tamamlandi",
-            f"4/4 Analiz tamamlandi - hasar orani: %{damage_rate * 100:.1f}",
-        ]
-
-        safe_count = 0
-        blocked_count = 0
-        safe_segments = []
-        blocked_segments = []
-        analysis_id = str(uuid.uuid4())
-        try:
-            # analyze_road_network_graph makes its own osmnx/Overpass fetch,
-            # separate from (and slower than) the raster road mask above --
-            # left unbounded it can occasionally stall well past this
-            # optional step's fair share of the mobile client's 300s
-            # request timeout, so the whole analysis appears to "never
-            # complete" on the phone even though the backend keeps working
-            # and finishes late. Bound it and skip logistics on timeout
-            # rather than risk the entire response.
-            logistics_executor = ThreadPoolExecutor(max_workers=1)
-            try:
-                future = logistics_executor.submit(
-                    analyze_road_network_graph,
-                    bounds, w, h, intersection, req.networkType or "drive",
-                )
-                G, safe_G, safe_edges, blocked_edges = future.result(timeout=45)
-            finally:
-                # Don't block the request on a still-running (stalled)
-                # osmnx fetch -- abandon it instead of joining, same
-                # pattern as fetch_satellite_area's tile executor.
-                logistics_executor.shutdown(wait=False, cancel_futures=True)
-            if G is not None:
-                safe_count = len(safe_edges) if safe_edges else 0
-                blocked_count = len(blocked_edges) if blocked_edges else 0
-                safe_segments = _serialize_segments(safe_edges)
-                blocked_segments = _serialize_segments(blocked_edges)
-                log_lines.append(f"Lojistik: {safe_count} acik, {blocked_count} kapali sokak")
-                _store_road_damage_session(analysis_id, {"safe_G": safe_G, "bounds": bounds})
-        except FutureTimeoutError:
-            log_lines.append("Lojistik analiz opsiyonel - OSMnx zaman asimina ugradi")
-        except Exception:
-            log_lines.append("Lojistik analiz opsiyonel - OSMnx mevcut degil veya hata olustu")
-        logistics_ms = (time.perf_counter() - t3) * 1000.0
-        total_ms = (time.perf_counter() - started_at) * 1000.0
-        log_lines.append(
-            f"Sureler (sn): uydu={satellite_fetch_ms / 1000:.1f}, yol={overpass_ms / 1000:.1f}, AI={inference_ms / 1000:.1f}, lojistik={logistics_ms / 1000:.1f}, toplam={total_ms / 1000:.1f}"
-        )
-
-        recommended = "Analiz basarili."
-        if blocked_road_pct > 0.5:
-            recommended = "Kritik: Yollarin buyuk kismi kapali. Alternatif rotalar planlanmali."
-        elif blocked_road_pct > 0.2:
-            recommended = "Dikkat: Bazi yollar kapali. Ekipler icin alternatif guzergah onerilir."
-        elif damage_rate > 0.3:
-            recommended = "Yuksek hasar orani. Bolgeye dikkatli erisim saglanmali."
-        else:
-            recommended = "Bolge genel olarak erisilebilir durumda."
-
-        try:
-            damage_overlay = _build_damage_overlay(img_np, road_mask_binary, pred_mask_binary, intersection)
-            segmentation_overlay = _build_segmentation_overlay(img_np, pred_mask_binary)
-            diagnostic_images = {
-                "imageOriginalB64": _image_array_to_b64(img_np),
-                "imageDamageOverlayB64": _image_array_to_b64(damage_overlay),
-                "imageDamageMaskB64": _image_array_to_b64(pred_mask_binary * 255),
-                "imageRoadMaskB64": _image_array_to_b64(road_mask_binary * 255),
-                "imageIntersectionB64": _image_array_to_b64(intersection * 255),
-                "imageSegmentationOverlayB64": _image_array_to_b64(segmentation_overlay),
-            }
-        except Exception:
-            diagnostic_images = {}
-
+@app.get("/api/road_damage/status/{analysis_id}")
+def get_road_damage_status(analysis_id: str):
+    with road_damage_jobs_lock:
+        job = road_damage_jobs.get(analysis_id)
+        if job is None:
+            raise HTTPException(status_code=404, detail="Bilinmeyen ya da suresi dolmus analysisId.")
+        status = job["status"]
+        if status == "error":
+            return {"analysisId": analysis_id, "status": "error", "error": job.get("error")}
+        if status == "done":
+            return {"analysisId": analysis_id, "status": "done", "progress": 100, **job["result"]}
         return {
-            "city": req.city,
             "analysisId": analysis_id,
-            "damageRate": round(damage_rate, 4),
-            "openRoads": safe_count,
-            "blockedRoads": blocked_count,
-            "openRoadPct": round(open_road_pct, 4),
-            "blockedRoadPct": round(blocked_road_pct, 4),
-            "logLines": log_lines,
-            "recommendedAction": recommended,
-            "bounds": {
-                "west": bounds[0],
-                "south": bounds[1],
-                "east": bounds[2],
-                "north": bounds[3],
-            },
-            "imageWidth": w,
-            "imageHeight": h,
-            "damageBooster": req.damageBooster,
-            "threshold": req.threshold,
-            "safeRoadSegments": safe_segments,
-            "blockedRoadSegments": blocked_segments,
-            "satelliteSource": source_label,
-            "satelliteTileUrl": satellite_tile_url,
-            "satelliteAttribution": satellite_attribution,
-            **diagnostic_images,
-            "timingsMs": {
-                "satellite": round(satellite_fetch_ms, 1),
-                "roads": round(overpass_ms, 1),
-                "inference": round(inference_ms, 1),
-                "logistics": round(logistics_ms, 1),
-                "total": round(total_ms, 1),
-            },
+            "status": status,
+            "progress": job.get("progress", 0),
+            "progressMessage": job.get("progressMessage"),
         }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/road_damage/route")
@@ -1704,10 +1460,19 @@ if __name__ == "__main__":
             sock.close()
 
     local_ip = _get_local_ip()
+    workers = int(os.environ.get("QUAKEMIND_WORKERS", "1"))
     print("\n" + "=" * 60)
     print("FastAPI sunucusu baslatiliyor...")
     print(f"Bu cihazdan: http://127.0.0.1:{port}")
     print(f"Diger cihazlardan (ayni ag): http://{local_ip}:{port}")
+    if workers > 1:
+        print(f"Worker sayisi: {workers} (her worker modelleri kendi hafizasina ayrica yukler)")
     print("=" * 60 + "\n")
 
-    uvicorn.run("fastapi_app:app", host=host, port=port, reload=True)
+    if workers > 1:
+        # Multiple worker processes so one heavy CPU-bound request (e.g. road
+        # damage Segformer inference) can't starve every other request in the
+        # process via the GIL -- reload isn't compatible with workers>1.
+        uvicorn.run("fastapi_app:app", host=host, port=port, workers=workers)
+    else:
+        uvicorn.run("fastapi_app:app", host=host, port=port, reload=True)
