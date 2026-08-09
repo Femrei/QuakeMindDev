@@ -14,5 +14,4 @@ __pycache__/
 *.pt
 *.onnx
 *.safetensors
-models/
-**/models/
+*.tflite
