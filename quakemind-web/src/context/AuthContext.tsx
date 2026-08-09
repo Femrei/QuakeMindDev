@@ -23,6 +23,11 @@ interface AuthContextType {
   notificationsCount: number;
   setNotificationsCount: React.Dispatch<React.SetStateAction<number>>;
   token: string | null;
+  /** True once the localStorage-persisted session has been checked. Route
+   * guards must wait for this before deciding "not logged in" -- otherwise
+   * an already-logged-in visitor gets bounced during the brief window before
+   * the persisted session loads. */
+  ready: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [notificationsCount, setNotificationsCount] = useState<number>(0);
+  const [ready, setReady] = useState(false);
 
   // Load persisted auth from localStorage on mount
   useEffect(() => {
@@ -49,6 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (savedToken) setToken(savedToken);
     } catch (e) {
       console.warn("Error loading persisted auth state:", e);
+    } finally {
+      setReady(true);
     }
   }, []);
 
@@ -110,6 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         notificationsCount,
         setNotificationsCount,
         token,
+        ready,
       }}
     >
       {children}

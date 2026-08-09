@@ -1,33 +1,50 @@
 "use client";
 
 import React, { Suspense, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { registerUser, loginUser } from "@/lib/api";
 import { setupRecaptcha, sendSmsOtp, signInWithGoogle } from "@/lib/firebase";
-import { 
-  ShieldAlert, 
-  Mail, 
-  Lock, 
-  User, 
-  ArrowRight, 
-  CheckCircle2, 
-  Shield, 
-  UserCheck, 
-  MapPin, 
+import {
+  ShieldAlert,
+  Mail,
+  Lock,
+  User,
+  ArrowRight,
+  CheckCircle2,
+  Shield,
+  UserCheck,
+  MapPin,
   Briefcase,
   AlertCircle,
   RefreshCw,
   Phone,
   KeyRound,
-  Globe
+  Globe,
+  Zap,
+  ChevronDown,
+  Radio,
+  Satellite,
+  Route,
 } from "lucide-react";
 
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlRole = searchParams.get("role");
+
+  // Where RouteGuard sent the visitor from before bouncing them here, so
+  // login can return them to the page they actually wanted. Only accept a
+  // same-origin relative path (must start with a single "/") -- anything
+  // else (a bare "//evil.com" or an absolute URL) is an open-redirect
+  // vector and gets ignored in favor of the role's default portal.
+  const rawRedirect = searchParams.get("redirect");
+  const safeRedirect =
+    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+      ? rawRedirect
+      : null;
+  const destinationFor = (role: string | null | undefined) =>
+    safeRedirect || (role === "survivor" ? "/survivor" : "/command");
 
   const { loginWithProfile } = useAuth();
   
@@ -51,6 +68,10 @@ function LoginPageContent() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  // Collapsed by default -- 8 demo account buttons always expanded is what
+  // was pushing the card taller than the viewport and forcing an awkward
+  // inner scroll.
+  const [showDemo, setShowDemo] = useState(false);
 
   const handleSendSms = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +121,7 @@ function LoginPageContent() {
       loginWithProfile(profile, "firebase-sms-token-" + profile.id);
       setSuccessMsg("SMS Doğrulaması Başarılı! Yönlendiriliyorsunuz...");
       setTimeout(() => {
-        router.push(selectedRole === "survivor" ? "/survivor" : "/command");
+        router.push(destinationFor(selectedRole));
       }, 500);
     } catch (err: any) {
       setErrorMsg(err.message || "SMS Doğrulama Kodu Hatalı!");
@@ -123,7 +144,7 @@ function LoginPageContent() {
         unit: selectedRole === "responder" ? "Arama Kurtarma Lideri" : "Sivil",
       };
       loginWithProfile(profile, "google-oauth-token");
-      router.push(selectedRole === "survivor" ? "/survivor" : "/command");
+      router.push(destinationFor(selectedRole));
     } catch (err: any) {
       setErrorMsg("Google ile giriş yapılamadı.");
     } finally {
@@ -155,7 +176,7 @@ function LoginPageContent() {
         setSuccessMsg(res.message || "Kayıt başarılı! Yönlendiriliyorsunuz...");
         loginWithProfile(res.user, res.token);
         setTimeout(() => {
-          router.push(selectedRole === "survivor" ? "/survivor" : "/command");
+          router.push(destinationFor(selectedRole));
         }, 600);
       } else {
         const userEmail = email.trim() || (selectedRole === "responder" ? "saha@quakemind.gov.tr" : "afetzede@quakemind.gov.tr");
@@ -167,7 +188,7 @@ function LoginPageContent() {
         setSuccessMsg("Giriş başarılı! Yönlendiriliyorsunuz...");
         loginWithProfile(res.user, res.token);
         setTimeout(() => {
-          router.push(res.user.role === "survivor" ? "/survivor" : "/command");
+          router.push(destinationFor(res.user.role));
         }, 500);
       }
     } catch (err: any) {
@@ -200,7 +221,7 @@ function LoginPageContent() {
     loginUser({ email, password: "password123", role })
       .then((res) => {
         loginWithProfile(res.user, res.token);
-        router.push(role === "survivor" ? "/survivor" : "/command");
+        router.push(destinationFor(role));
       })
       .catch((err: any) => {
         // Fail closed: a demo-login failure must surface as an error, not a
@@ -210,19 +231,91 @@ function LoginPageContent() {
       .finally(() => setLoading(false));
   };
 
+  const roleAccent = selectedRole === "survivor" ? "red" : "blue";
+  const heroFeatures =
+    selectedRole === "responder"
+      ? [
+          [Satellite, "Birleşik Komuta Haritası & Katmanlar"],
+          [Radio, "Canlı SOS Sevk & Ekip Yönetimi"],
+          [Shield, "Kurumsal AFAD / AKUT / UMKE Girişi"],
+        ] as const
+      : [
+          [Zap, "Tek Dokunuşla SOS Gönderimi"],
+          [Route, "PostGIS Sokak Rota Navigasyonu"],
+          [ShieldAlert, "YOLO Canlı Çatlak & Hasar Tara"],
+        ] as const;
+
   return (
-    <div className="flex-1 w-full min-h-screen overflow-y-auto max-h-[calc(100vh-65px)] flex items-center justify-center p-4 md:p-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0b0f17] to-black">
-      <div className="max-w-xl w-full glass-panel p-6 md:p-8 rounded-3xl border border-slate-800 space-y-6 relative z-10 shadow-2xl bg-slate-950/90">
-        
-        {/* HEADER BRANDING */}
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 mx-auto flex items-center justify-center text-white font-bold shadow-xl shadow-blue-500/30 mb-3 animate-pulse">
+    <div className="flex-1 w-full min-h-[calc(100vh-65px)] flex bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0b0f17] to-black relative overflow-hidden">
+      {/* Ambient glow -- tints toward the selected role's accent color */}
+      <div
+        className={`absolute top-1/3 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] blur-[150px] pointer-events-none rounded-full transition-colors duration-700 ${
+          roleAccent === "red" ? "bg-red-600/20" : "bg-blue-600/20"
+        }`}
+      />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-amber-500/5 blur-[130px] pointer-events-none rounded-full" />
+
+      {/* LEFT: branding / hero panel -- desktop only, mirrors the landing page's language */}
+      <div className="hidden lg:flex lg:w-[42%] xl:w-[38%] flex-col justify-center px-12 xl:px-16 relative z-10 border-r border-slate-800/60 shrink-0">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-xs font-semibold text-slate-300 backdrop-blur-md shadow-xl w-fit mb-8">
+          <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
+          <span>QuakeMind Afet İkaz & Operasyon Ekosistemi v2.0</span>
+        </div>
+
+        <div
+          className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-xl mb-6 transition-colors duration-500 ${
+            roleAccent === "red"
+              ? "bg-gradient-to-tr from-red-600 to-rose-500 shadow-red-500/30"
+              : "bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 shadow-blue-500/30"
+          }`}
+        >
+          <ShieldAlert className="w-9 h-9" />
+        </div>
+
+        <h1 className="text-4xl xl:text-5xl font-black text-white font-mono tracking-tight leading-[1.1] mb-4">
+          AFET KİMLİK{" "}
+          <span
+            className={`bg-clip-text text-transparent bg-gradient-to-r transition-colors duration-500 ${
+              roleAccent === "red" ? "from-red-500 via-rose-400 to-orange-300" : "from-blue-500 via-indigo-400 to-cyan-300"
+            }`}
+          >
+            MERKEZİ
+          </span>
+        </h1>
+        <p className="text-sm text-slate-400 leading-relaxed mb-9 max-w-sm">
+          PostGIS 3.4 mekânsal veritabanı ve yapay zekâ destekli afet ikaz platformu. Rolüne göre özelleştirilmiş güvenli giriş.
+        </p>
+
+        <div className="space-y-3.5">
+          {heroFeatures.map(([Icon, label], i) => (
+            <div key={i} className="flex items-center gap-3 text-sm text-slate-300">
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-500 ${
+                  roleAccent === "red" ? "bg-red-500/15 text-red-400" : "bg-blue-500/15 text-blue-400"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+              </div>
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* RIGHT: form panel -- full width on mobile, remaining width on desktop */}
+      <div className="flex-1 min-w-0 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 overflow-y-auto relative z-10">
+        <div className="w-full max-w-md space-y-4 py-6">
+
+        {/* Compact header -- only shown when the hero panel is hidden (mobile/tablet) */}
+        <div className="lg:hidden text-center space-y-2 mb-2">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 mx-auto flex items-center justify-center text-white shadow-xl shadow-blue-500/30">
             <ShieldAlert className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-white font-mono tracking-wide">QUAKEMIND AFET KİMLİK MERKEZİ</h1>
+          <h1 className="text-xl font-black text-white font-mono tracking-wide">QUAKEMIND AFET KİMLİK MERKEZİ</h1>
           <p className="text-xs text-slate-400">PostGIS & AI Destekli Afet İkaz & Operasyon Platformu</p>
         </div>
 
+        <div className="glass-panel p-5 md:p-6 rounded-3xl border border-slate-800 space-y-5 shadow-2xl bg-slate-950/90">
         {/* LOGIN / REGISTER / SMS TAB SELECTOR */}
         <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-900 border border-slate-800 text-[11px] font-bold">
           <button
@@ -490,59 +583,79 @@ function LoginPageContent() {
           </button>
         </form>
       )}
+        </div>
+        {/* /glass-panel card */}
 
-        {/* MULTI-ACCOUNT DEMO LOGIN & GOOGLE OAUTH -- geliştirme/test amaçlı, henüz yeterli gerçek hesap yok */}
-        <div className="pt-4 border-t border-slate-800 space-y-3">
-          <p className="text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider">⚡ Demo Hesaplarla Hızlı Giriş (Test Amaçlı)</p>
-
-          <div className="space-y-1.5">
-            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wide px-0.5">🔵 Saha Ekibi Hesapları</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-              {DEMO_RESPONDERS.map((acc) => (
-                <button
-                  key={acc.email}
-                  type="button"
-                  disabled={loading}
-                  onClick={() => handleDemoLogin("responder", acc.email)}
-                  className="py-2 px-3 rounded-xl bg-blue-950/40 hover:bg-blue-900/60 border border-blue-500/30 text-blue-300 text-[11px] font-bold flex flex-col items-start gap-0.5 transition-all disabled:opacity-50 text-left"
-                >
-                  <span className="truncate w-full">👤 {acc.name}</span>
-                  <span className="text-[9px] text-blue-400/70 font-normal truncate w-full">{acc.unit}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <p className="text-[10px] font-bold text-red-400 uppercase tracking-wide px-0.5">🔴 Vatandaş Hesapları</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-              {DEMO_SURVIVORS.map((acc) => (
-                <button
-                  key={acc.email}
-                  type="button"
-                  disabled={loading}
-                  onClick={() => handleDemoLogin("survivor", acc.email)}
-                  className="py-2 px-3 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-300 text-[11px] font-bold flex flex-col items-start gap-0.5 transition-all disabled:opacity-50 text-left"
-                >
-                  <span className="truncate w-full">🛡️ {acc.name}</span>
-                  <span className="text-[9px] text-red-400/70 font-normal truncate w-full">{acc.unit}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <p className="text-[10px] text-slate-500 text-center">Tüm demo hesapların şifresi: <span className="font-mono text-slate-400">password123</span></p>
-
+        {/* DEMO ACCOUNTS -- collapsed by default so 8 buttons don't force the
+            page into an awkward inner scroll on smaller viewports. */}
+        <div className="glass-panel rounded-2xl border border-slate-800/80 bg-slate-950/70 overflow-hidden">
           <button
             type="button"
-            onClick={handleGoogleLogin}
-            className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all mt-2"
+            onClick={() => setShowDemo((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider hover:text-slate-200 transition-colors"
           >
-            <Globe className="w-4 h-4 text-cyan-400" />
-            <span>Google Hesabı İle Giriş Yap (OAuth 2.0)</span>
+            <span className="flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-400" /> Demo Hesaplarla Hızlı Giriş (Test Amaçlı)
+            </span>
+            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showDemo ? "rotate-180" : ""}`} />
           </button>
+
+          {showDemo && (
+            <div className="px-4 pb-4 pt-1 space-y-3 border-t border-slate-800/80">
+              <div className="space-y-1.5 pt-3">
+                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wide px-0.5">🔵 Saha Ekibi Hesapları</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {DEMO_RESPONDERS.map((acc) => (
+                    <button
+                      key={acc.email}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => handleDemoLogin("responder", acc.email)}
+                      className="py-2 px-3 rounded-xl bg-blue-950/40 hover:bg-blue-900/60 border border-blue-500/30 text-blue-300 text-[11px] font-bold flex flex-col items-start gap-0.5 transition-all disabled:opacity-50 text-left"
+                    >
+                      <span className="truncate w-full">👤 {acc.name}</span>
+                      <span className="text-[9px] text-blue-400/70 font-normal truncate w-full">{acc.unit}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-bold text-red-400 uppercase tracking-wide px-0.5">🔴 Vatandaş Hesapları</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {DEMO_SURVIVORS.map((acc) => (
+                    <button
+                      key={acc.email}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => handleDemoLogin("survivor", acc.email)}
+                      className="py-2 px-3 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-300 text-[11px] font-bold flex flex-col items-start gap-0.5 transition-all disabled:opacity-50 text-left"
+                    >
+                      <span className="truncate w-full">🛡️ {acc.name}</span>
+                      <span className="text-[9px] text-red-400/70 font-normal truncate w-full">{acc.unit}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <p className="text-[10px] text-slate-500 text-center pt-1">
+                Tüm demo hesapların şifresi: <span className="font-mono text-slate-400">password123</span>
+              </p>
+            </div>
+          )}
         </div>
 
+        {/* GOOGLE OAUTH */}
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          className="w-full py-3 px-3 rounded-2xl glass-panel bg-slate-950/70 border border-slate-800 hover:border-slate-700 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all"
+        >
+          <Globe className="w-4 h-4 text-cyan-400" />
+          <span>Google Hesabı İle Giriş Yap (OAuth 2.0)</span>
+        </button>
+
+        </div>
       </div>
     </div>
   );
