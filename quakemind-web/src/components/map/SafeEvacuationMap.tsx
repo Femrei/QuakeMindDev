@@ -8,6 +8,7 @@ import {
   getEvacuationAssemblyData,
   calculateCustomRoute,
   analyzeRoadDamage,
+  pollRoadDamageStatus,
   getRouteBetweenPoints,
   EvacuationAssemblyRecord,
   EvacuationAssemblyResponse,
@@ -191,13 +192,14 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
 
       setDamageAnalysisLoading(true);
       try {
-        const result = await analyzeRoadDamage({
+        const { analysisId } = await analyzeRoadDamage({
           city: "Sokak Rotası Bölgesi",
           latitude: (originLat + destLat) / 2,
           longitude: (originLon + destLon) / 2,
           bbox: [bbox.west, bbox.south, bbox.east, bbox.north],
           networkType: "walk",
         });
+        const result = await pollRoadDamageStatus(analysisId);
         analysis = {
           analysisId: result.analysisId,
           bounds: result.bounds,

@@ -7,11 +7,13 @@ import SafeEvacuationMap from "@/components/map/SafeEvacuationMap";
 import CompareMap from "@/components/map/CompareMap";
 import {
   analyzeRoadDamage,
+  pollRoadDamageStatus,
   getWaybackVersions,
   searchOamImages,
   getRouteBetweenPoints,
   getAssemblyAreas,
   RoadDamageResponse,
+  RoadDamageProgress,
   WaybackVersion,
   OamImage,
   AssemblyResponse,
@@ -108,6 +110,14 @@ function DamageAnalysisTab() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RoadDamageResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<RoadDamageProgress | null>(null);
+  const analysisAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      analysisAbortRef.current?.abort();
+    };
+  }, []);
 
   // Esri Wayback (historical satellite version) selection
   const [waybackVersions, setWaybackVersions] = useState<WaybackVersion[]>([]);
@@ -196,12 +206,19 @@ function DamageAnalysisTab() {
   };
 
   const handleRunAnalysis = async () => {
+    // Cancel any still-in-flight poll from a previous run before starting a
+    // new one (second click, or changed parameters mid-analysis).
+    analysisAbortRef.current?.abort();
+    const controller = new AbortController();
+    analysisAbortRef.current = controller;
+
     setLoading(true);
     setError(null);
+    setProgress({ percent: 0, message: "Analiz sıraya alınıyor..." });
     resetRouteSelection();
     setPickingRoute(false);
     try {
-      const data = await analyzeRoadDamage({
+      const { analysisId } = await analyzeRoadDamage({
         city: selectedCity,
         latitude: analysisCenter.lat,
         longitude: analysisCenter.lng,
@@ -214,6 +231,13 @@ function DamageAnalysisTab() {
         postProcessLevel,
         bbox: selectionMode === "draw" && drawnBbox ? drawnBbox : undefined,
       });
+      const data = await pollRoadDamageStatus(analysisId, {
+        signal: controller.signal,
+        onProgress: (p) => {
+          if (!controller.signal.aborted) setProgress(p);
+        },
+      });
+      if (controller.signal.aborted) return;
       setResult(data);
       addRoadDamageAnalysis({
         analysisId: data.analysisId,
@@ -223,10 +247,14 @@ function DamageAnalysisTab() {
         bounds: data.bounds,
       });
     } catch (err: any) {
+      if (controller.signal.aborted) return;
       setError(err?.message || "Analiz başarısız oldu. Backend çalışıyor mu kontrol edin.");
       setResult(null);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+        setProgress(null);
+      }
     }
   };
 
@@ -563,8 +591,28 @@ function DamageAnalysisTab() {
             ) : (
               <Play className="w-5 h-5 fill-white" />
             )}
-            <span>{loading ? "Segformer Analiz Ediyor..." : "Yol Hasar Analizini Başlat"}</span>
+            <span>
+              {loading
+                ? `Segformer Analiz Ediyor... %${progress?.percent ?? 0}`
+                : "Yol Hasar Analizini Başlat"}
+            </span>
           </button>
+
+          {/* Analysis can run for minutes on CPU, so show the backend's real
+              stage-by-stage progress instead of an indeterminate spinner. */}
+          {loading && (
+            <div className="mt-3 space-y-2">
+              <div className="h-2 w-full rounded-full bg-slate-700/60 overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                  style={{ width: `${progress?.percent ?? 0}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-slate-400">
+                {progress?.message || "Analiz sıraya alındı..."}
+              </p>
+            </div>
+          )}
         </div>
 
         {error && (
