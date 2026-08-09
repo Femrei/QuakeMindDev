@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../data/mock_data.dart';
+import '../../models/road_damage_job_status.dart';
 import '../../models/road_damage_result.dart';
 import '../../services/map_layers_controller.dart';
 import '../../services/road_damage_service.dart';
@@ -54,7 +56,8 @@ class _RoadDamagePageState extends State<RoadDamagePage> {
   static const _service = RoadDamageService();
   static const _oamSampleTitle = '2023-02-09T17:00:00.000Z - Help.NGO';
 
-  Future<RoadDamageResult>? _future;
+  StreamSubscription<RoadDamageJobStatus>? _pollSubscription;
+  RoadDamageJobStatus? _jobStatus;
   _RoadLocationMode _locationMode = _RoadLocationMode.sample;
   double? _currentLatitude;
   double? _currentLongitude;
@@ -164,6 +167,11 @@ class _RoadDamagePageState extends State<RoadDamagePage> {
   }
 
   Future<void> _runAnalysis() async {
+    // Cancel any still-active poll from a previous run before starting a new
+    // one (second tap, or changed parameters mid-analysis).
+    await _pollSubscription?.cancel();
+    _pollSubscription = null;
+
     double latitude;
     double longitude;
     String cityLabel;
@@ -172,8 +180,9 @@ class _RoadDamagePageState extends State<RoadDamagePage> {
       final coords = await _resolveCurrentCoordinates();
       if (coords == null) {
         setState(() {
-          _future = Future.error(
-            _locationError ?? 'Mevcut konum alinamadi. Ornek uydu seti moduna gecip tekrar deneyin.',
+          _jobStatus = RoadDamageJobStatus(
+            status: 'error',
+            errorMessage: _locationError ?? 'Mevcut konum alinamadi. Ornek uydu seti moduna gecip tekrar deneyin.',
           );
         });
         return;
@@ -189,32 +198,50 @@ class _RoadDamagePageState extends State<RoadDamagePage> {
     }
 
     setState(() {
-      _future = _service
-          .analyzeArea(
-            city: cityLabel,
-            latitude: latitude,
-            longitude: longitude,
-            source: widget.source,
-            oamPreferredTitle: _selectedOamTileUrl == null &&
-                    _locationMode == _RoadLocationMode.sample &&
-                    widget.source.toLowerCase().contains('openaerial')
-                ? _oamSampleTitle
-                : null,
-            waybackId: _selectedWaybackId,
-            oamTileUrl: _selectedOamTileUrl,
-            damageBooster: widget.damageBooster,
-            threshold: widget.threshold,
-            useImagenetNorm: widget.useImagenetNorm,
-            postProcessLevel: widget.postProcessLevel,
-            radiusKm: _radiusKm,
-          )
-          .then((result) {
-            // Feed the result into the shared map layers store so it also
-            // shows up on the "Harita" (toplu harita) tab, not just here.
-            MapLayersController.instance.addRoadDamageAnalysis(result);
-            return result;
-          });
+      _jobStatus = const RoadDamageJobStatus(status: 'queued');
     });
+
+    try {
+      final analysisId = await _service.analyzeArea(
+        city: cityLabel,
+        latitude: latitude,
+        longitude: longitude,
+        source: widget.source,
+        oamPreferredTitle: _selectedOamTileUrl == null &&
+                _locationMode == _RoadLocationMode.sample &&
+                widget.source.toLowerCase().contains('openaerial')
+            ? _oamSampleTitle
+            : null,
+        waybackId: _selectedWaybackId,
+        oamTileUrl: _selectedOamTileUrl,
+        damageBooster: widget.damageBooster,
+        threshold: widget.threshold,
+        useImagenetNorm: widget.useImagenetNorm,
+        postProcessLevel: widget.postProcessLevel,
+        radiusKm: _radiusKm,
+      );
+      if (!mounted) return;
+      _pollSubscription = _service.pollAnalysis(analysisId).listen((status) {
+        if (!mounted) return;
+        setState(() => _jobStatus = status);
+        if (status.status == 'done' && status.result != null) {
+          // Feed the result into the shared map layers store so it also
+          // shows up on the "Harita" (toplu harita) tab, not just here.
+          MapLayersController.instance.addRoadDamageAnalysis(status.result!);
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _jobStatus = RoadDamageJobStatus(status: 'error', errorMessage: e.toString());
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _pollSubscription?.cancel();
+    super.dispose();
   }
 
   List<double> _cityCoordinates(String city) {
@@ -263,7 +290,7 @@ class _RoadDamagePageState extends State<RoadDamagePage> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
       children: [
-        if (_future == null)
+        if (_jobStatus == null)
           const HeroStatBand(
             title: 'Uydu Yol Hasari Analizi',
             headline: 'ANALIZ BEKLENIYOR',
@@ -271,52 +298,48 @@ class _RoadDamagePageState extends State<RoadDamagePage> {
             beaconLabel: 'HAZIR',
             beaconColor: AppTheme.neonCyan,
           )
+        else if (_jobStatus!.status == 'done' && _jobStatus!.result != null)
+          Builder(builder: (context) {
+            final result = _jobStatus!.result!;
+            return HeroStatBand(
+              title: 'Uydu Yol Hasari Analizi - ${result.city}',
+              headline: '%${(result.damageRate * 100).toStringAsFixed(1)}',
+              headlineColor: const Color(0xFFE15B64),
+              subtitle: result.recommendedAction,
+              variant: OpsPanelVariant.hero,
+              accentColor: const Color(0xFFE15B64),
+              stats: [
+                HeroStat(label: 'ACIK YOL', value: '${result.openRoads}', color: AppTheme.teal),
+                HeroStat(label: 'KAPALI YOL', value: '${result.blockedRoads}', color: const Color(0xFF9C3D54)),
+                if (result.timingsMs['total'] != null)
+                  HeroStat(
+                    label: 'SURE',
+                    value: '${(result.timingsMs['total']! / 1000).toStringAsFixed(1)}sn',
+                    color: AppTheme.neonCyan,
+                  ),
+              ],
+            );
+          })
+        else if (_jobStatus!.status == 'error' || _jobStatus!.status == 'not_found')
+          HeroStatBand(
+            title: 'Uydu Yol Hasari Analizi',
+            headline: 'ANALIZ BASARISIZ',
+            headlineColor: AppTheme.danger,
+            subtitle: 'Yol hasari analizi tamamlanamadi.',
+            variant: OpsPanelVariant.alert,
+            accentColor: AppTheme.danger,
+            beaconLabel: 'HATA',
+            beaconColor: AppTheme.danger,
+          )
         else
-          FutureBuilder<RoadDamageResult>(
-            future: _future,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const HeroStatBand(
-                  title: 'Uydu Yol Hasari Analizi',
-                  headline: 'ISLENIYOR...',
-                  subtitle: 'Uydu goruntusu indiriliyor ve AI modeli calisiyor. Bu islem 1-2 dakika surebilir.',
-                  beaconLabel: 'AKTIF',
-                  beaconColor: AppTheme.neonAmber,
-                  beaconLive: true,
-                );
-              }
-              if (snapshot.hasError || !snapshot.hasData) {
-                return HeroStatBand(
-                  title: 'Uydu Yol Hasari Analizi',
-                  headline: 'ANALIZ BASARISIZ',
-                  headlineColor: AppTheme.danger,
-                  subtitle: 'Yol hasari analizi tamamlanamadi.',
-                  variant: OpsPanelVariant.alert,
-                  accentColor: AppTheme.danger,
-                  beaconLabel: 'HATA',
-                  beaconColor: AppTheme.danger,
-                );
-              }
-              final result = snapshot.data!;
-              return HeroStatBand(
-                title: 'Uydu Yol Hasari Analizi - ${result.city}',
-                headline: '%${(result.damageRate * 100).toStringAsFixed(1)}',
-                headlineColor: const Color(0xFFE15B64),
-                subtitle: result.recommendedAction,
-                variant: OpsPanelVariant.hero,
-                accentColor: const Color(0xFFE15B64),
-                stats: [
-                  HeroStat(label: 'ACIK YOL', value: '${result.openRoads}', color: AppTheme.teal),
-                  HeroStat(label: 'KAPALI YOL', value: '${result.blockedRoads}', color: const Color(0xFF9C3D54)),
-                  if (result.timingsMs['total'] != null)
-                    HeroStat(
-                      label: 'SURE',
-                      value: '${(result.timingsMs['total']! / 1000).toStringAsFixed(1)}sn',
-                      color: AppTheme.neonCyan,
-                    ),
-                ],
-              );
-            },
+          HeroStatBand(
+            title: 'Uydu Yol Hasari Analizi',
+            headline: 'ISLENIYOR %${_jobStatus!.progress}',
+            subtitle: _jobStatus!.progressMessage ??
+                'Uydu goruntusu indiriliyor ve AI modeli calisiyor. Bu islem birkac dakika surebilir.',
+            beaconLabel: 'AKTIF',
+            beaconColor: AppTheme.neonAmber,
+            beaconLive: true,
           ),
         const SizedBox(height: 18),
         OpsPanel(
@@ -488,26 +511,25 @@ class _RoadDamagePageState extends State<RoadDamagePage> {
           ),
         ),
         const SizedBox(height: 18),
-        if (_future != null)
-          FutureBuilder<RoadDamageResult>(
-            future: _future,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const LoadingState(
-                  message: 'Uydu goruntusu indiriliyor ve AI modeli calisiyor... Bu islem 1-2 dakika surebilir.',
-                );
-              }
-              if (snapshot.hasError || !snapshot.hasData) {
-                return ErrorState(
-                  title: 'Yol hasari analizi tamamlanamadi',
-                  error: snapshot.error?.toString() ?? 'Bilinmeyen hata',
-                  onRetry: () => _runAnalysis(),
-                );
-              }
-              final result = snapshot.data!;
-              return _RoadDamageResultBody(result: result);
-            },
-          ),
+        if (_jobStatus != null)
+          Builder(builder: (context) {
+            final jobStatus = _jobStatus!;
+            if (jobStatus.status == 'done' && jobStatus.result != null) {
+              return _RoadDamageResultBody(result: jobStatus.result!);
+            }
+            if (jobStatus.status == 'error' || jobStatus.status == 'not_found') {
+              return ErrorState(
+                title: 'Yol hasari analizi tamamlanamadi',
+                error: jobStatus.errorMessage ?? 'Bilinmeyen hata',
+                onRetry: () => _runAnalysis(),
+              );
+            }
+            return LoadingState(
+              progress: jobStatus.progress > 0 ? jobStatus.progress / 100 : null,
+              message: '%${jobStatus.progress} - '
+                  '${jobStatus.progressMessage ?? "Uydu goruntusu indiriliyor ve AI modeli calisiyor..."}',
+            );
+          }),
       ],
     );
   }

@@ -92,6 +92,41 @@ class BridgeHttpClient {
     } catch (_) {}
     return {};
   }
+
+  /// Like [getJson], but surfaces the HTTP status code and any transport
+  /// error instead of collapsing every outcome into `{}`. Needed for status
+  /// polling, where "not done yet" (2xx, still queued), "unknown job" (404),
+  /// and "network hiccup, keep retrying" (transport error) are three
+  /// different things a caller must be able to tell apart.
+  Future<BridgePollOutcome> getJsonWithStatus({
+    required String endpoint,
+    int timeoutSeconds = 10,
+  }) async {
+    final baseUrl = await ApiConfig.getBackendUrl();
+    try {
+      final uri = Uri.parse('$baseUrl$endpoint');
+      final response = await _sharedClient
+          .get(uri, headers: const {'Connection': 'keep-alive'})
+          .timeout(Duration(seconds: timeoutSeconds));
+      Map<String, dynamic>? json;
+      try {
+        json = decodeBridgeJson(response.body);
+      } catch (_) {
+        json = null;
+      }
+      return BridgePollOutcome(statusCode: response.statusCode, json: json);
+    } catch (error) {
+      return BridgePollOutcome(error: error);
+    }
+  }
+}
+
+class BridgePollOutcome {
+  const BridgePollOutcome({this.statusCode, this.json, this.error});
+
+  final int? statusCode;
+  final Map<String, dynamic>? json;
+  final Object? error;
 }
 
 class _BridgeHttpException implements Exception {

@@ -1,4 +1,6 @@
-import '../models/road_damage_result.dart';
+import 'dart:async';
+
+import '../models/road_damage_job_status.dart';
 import 'bridge_client.dart';
 
 class RoadDamageBridgeUnavailableException extends BridgeUnavailableException {
@@ -18,7 +20,12 @@ class RoadDamageService {
     defaultPort: 8000,
   );
 
-  Future<RoadDamageResult> analyzeArea({
+  /// Kicks off a road-damage analysis job and returns its analysisId almost
+  /// immediately -- the backend runs the actual (CPU-bound, can take
+  /// minutes) Segformer inference on a dedicated worker process, so this
+  /// call no longer blocks on the full analysis. Poll with
+  /// getAnalysisStatus / pollAnalysis using the returned id.
+  Future<String> analyzeArea({
     required String city,
     required double latitude,
     required double longitude,
@@ -57,10 +64,59 @@ class RoadDamageService {
           'Ayarlardan API adresini (IP:Port) dogru girdiginizden emin olun.',
         ],
       ),
-      timeoutSeconds: 300,
+      // The POST now returns almost instantly (just queues the job) --
+      // keeping the old 300s timeout here would mask a genuinely broken
+      // endpoint instead of failing fast.
+      timeoutSeconds: 20,
     );
 
-    return RoadDamageResult.fromJson(jsonMap);
+    final analysisId = jsonMap['analysisId'] as String?;
+    if (analysisId == null || analysisId.isEmpty) {
+      throw const RoadDamageBridgeUnavailableException(
+        message: 'Sunucu analysisId dondurmedi.',
+        instructions: [
+          'Backend surumunun guncel oldugundan emin olun.',
+        ],
+      );
+    }
+    return analysisId;
+  }
+
+  Future<RoadDamageJobStatus> getAnalysisStatus(String analysisId) async {
+    final outcome = await _httpClient.getJsonWithStatus(
+      endpoint: '/api/road_damage/status/$analysisId',
+      timeoutSeconds: 10,
+    );
+    if (outcome.statusCode == 404) {
+      return const RoadDamageJobStatus(status: 'not_found', errorMessage: 'Analiz bulunamadi.');
+    }
+    if (outcome.json != null && outcome.statusCode != null && outcome.statusCode! >= 200 && outcome.statusCode! < 300) {
+      return RoadDamageJobStatus.fromJson(outcome.json!);
+    }
+    // Transport error or a non-2xx/404 response -- treat as transient so the
+    // poll loop keeps retrying instead of failing on one dropped request.
+    return const RoadDamageJobStatus(status: 'queued');
+  }
+
+  /// Polls getAnalysisStatus until the job reaches a terminal state
+  /// (done/error/not_found) or the overall timeout elapses, yielding every
+  /// intermediate status along the way so the UI can react.
+  Stream<RoadDamageJobStatus> pollAnalysis(
+    String analysisId, {
+    Duration interval = const Duration(seconds: 3),
+    Duration timeout = const Duration(minutes: 15),
+  }) async* {
+    final startedAt = DateTime.now();
+    while (true) {
+      final status = await getAnalysisStatus(analysisId);
+      yield status;
+      if (status.isTerminal) return;
+      if (DateTime.now().difference(startedAt) > timeout) {
+        yield const RoadDamageJobStatus(status: 'error', errorMessage: 'Analiz zaman asimina ugradi.');
+        return;
+      }
+      await Future.delayed(interval);
+    }
   }
 
   /// Historical Esri Wayback capture list, newest first, so the user can pick
