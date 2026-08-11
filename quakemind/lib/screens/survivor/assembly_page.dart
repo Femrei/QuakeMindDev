@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../services/assembly_service.dart';
+import '../../services/road_damage_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_widgets.dart';
 import '../../widgets/tactical/hero_stat_band.dart';
@@ -16,11 +17,71 @@ class SurvivorAssemblyPage extends StatefulWidget {
 
 class _SurvivorAssemblyPageState extends State<SurvivorAssemblyPage> {
   static const _service = AssemblyService();
+  static const _roadDamageService = RoadDamageService();
 
   Position? _position;
   AssemblyRouteResult? _result;
   String? _error;
   bool _loading = false;
+
+  // PostGIS-tabanli, risk-agirlikli A*/Dijkstra rota (rapor 2.4.4) --
+  // toplanma alanina cizilen varsayilan OSRM rotasinin ustune, aktif
+  // edilebilir bir alternatif.
+  bool _usingSafeRoute = false;
+  bool _safeRouteLoading = false;
+  String? _safeRouteError;
+  List<List<double>>? _safeRouteCoords;
+  double? _safeRouteDistanceM;
+  String? _safeRouteAlgorithm;
+
+  Future<void> _toggleSafeRoute() async {
+    if (_usingSafeRoute) {
+      setState(() {
+        _usingSafeRoute = false;
+        _safeRouteCoords = null;
+        _safeRouteDistanceM = null;
+        _safeRouteAlgorithm = null;
+        _safeRouteError = null;
+      });
+      return;
+    }
+
+    final position = _position;
+    final nearest = _result?.nearest;
+    if (position == null || nearest == null) return;
+
+    setState(() {
+      _safeRouteLoading = true;
+      _safeRouteError = null;
+    });
+    try {
+      final data = await _roadDamageService.fetchSafeRoute(
+        startLat: position.latitude,
+        startLon: position.longitude,
+        destLat: nearest.latitude,
+        destLon: nearest.longitude,
+      );
+      final coords = (data['routeCoords'] as List<dynamic>? ?? const [])
+          .map(
+            (point) => (point as List<dynamic>)
+                .map((value) => (value as num).toDouble())
+                .toList(),
+          )
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        _usingSafeRoute = true;
+        _safeRouteCoords = coords;
+        _safeRouteDistanceM = (data['distanceMeters'] as num?)?.toDouble();
+        _safeRouteAlgorithm = data['algorithm']?.toString();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _safeRouteError = 'Risk-agirlikli rota hesaplanamadi: $e');
+    } finally {
+      if (mounted) setState(() => _safeRouteLoading = false);
+    }
+  }
 
   @override
   void initState() {
@@ -32,6 +93,11 @@ class _SurvivorAssemblyPageState extends State<SurvivorAssemblyPage> {
     setState(() {
       _loading = true;
       _error = null;
+      _usingSafeRoute = false;
+      _safeRouteCoords = null;
+      _safeRouteDistanceM = null;
+      _safeRouteAlgorithm = null;
+      _safeRouteError = null;
     });
 
     try {
@@ -150,15 +216,59 @@ class _SurvivorAssemblyPageState extends State<SurvivorAssemblyPage> {
           ),
         const SizedBox(height: 18),
         if (nearest != null && _position != null) ...[
+          OpsPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _usingSafeRoute
+                      ? 'Risk-agirlikli guvenli rota aktif'
+                          '${_safeRouteAlgorithm != null ? ' (${_safeRouteAlgorithm!})' : ''}'
+                          '${_safeRouteDistanceM != null ? ' - ${(_safeRouteDistanceM! / 1000).toStringAsFixed(2)} km' : ''}'
+                      : 'Varsayilan OSRM rotasi gosteriliyor.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _safeRouteLoading ? null : _toggleSafeRoute,
+                    icon: _safeRouteLoading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(_usingSafeRoute ? Icons.shield : Icons.shield_outlined),
+                    label: Text(
+                      _usingSafeRoute ? 'Standart Rotaya Don' : 'Risk-Agirlikli Guvenli Rota',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_safeRouteError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(_safeRouteError!, style: const TextStyle(color: AppTheme.danger)),
+            ),
+          const SizedBox(height: 12),
           RoutePlanMapPanel(
             title: 'Toplanma alanina rota',
-            subtitle: 'Yesil hat: en yakin guvenli alana yuruyus rotasi.',
+            subtitle: _usingSafeRoute
+                ? 'Cyan hat: PostGIS damage_points + road_blockages ile hesaplanan risk-agirlikli A*/Dijkstra rotasi.'
+                : 'Yesil hat: en yakin guvenli alana yuruyus rotasi.',
             userLatitude: _position!.latitude,
             userLongitude: _position!.longitude,
             destinationLatitude: nearest.latitude,
             destinationLongitude: nearest.longitude,
             destinationLabel: nearest.name,
-            routePoints: _result?.routeCoords ?? const [],
+            routePoints: _usingSafeRoute && _safeRouteCoords != null
+                ? _safeRouteCoords!
+                : (_result?.routeCoords ?? const []),
             height: 340,
           ),
           const SizedBox(height: 18),

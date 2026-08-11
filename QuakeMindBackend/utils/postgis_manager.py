@@ -105,7 +105,21 @@ class PostGISManager:
                 CREATE INDEX IF NOT EXISTS idx_osm_poly_gist ON osm_safety_polygons USING GIST (geom);
             """)
 
-            # 5. Users Authentication Table
+            # 5. Damage Points Table (crack / destruction / road_damage / sos detections,
+            # feeds the Gaussian heatmap and the risk-weighted route engine)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS damage_points (
+                    id SERIAL PRIMARY KEY,
+                    source_type VARCHAR(50) NOT NULL,
+                    severity FLOAT,
+                    label VARCHAR(255),
+                    geom GEOMETRY(Point, 4326),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS idx_damage_points_gist_geom ON damage_points USING GIST (geom);
+            """)
+
+            # 6. Users Authentication Table
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id VARCHAR(64) PRIMARY KEY,
@@ -339,6 +353,92 @@ class PostGISManager:
         except Exception as e:
             print(f"PostgreSQL user query error: {e}")
             return None
+
+    def insert_damage_point(self, source_type: str, lat: float, lon: float, severity: float = 0.0, label: str = "") -> bool:
+        """Hasar/tehlike noktasını (çatlak, yıkım, yol hasarı, SOS) PostGIS'e kalıcı olarak yazar."""
+        if not self.check_connection():
+            return False
+        try:
+            conn = psycopg2.connect(self.db_url)
+            conn.autocommit = True
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO damage_points (source_type, severity, label, geom)
+                VALUES (%s, %s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326));
+            """, (source_type, severity, label, lon, lat))
+            cur.close()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"PostGIS damage_points insert hatasi: {e}")
+            return False
+
+    def query_damage_points_nearby(self, lat: float, lon: float, radius_m: float = 5000.0) -> List[Dict[str, Any]]:
+        """PostGIS ST_DWithin ile verilen konuma yakın hasar/tehlike noktalarını döndürür."""
+        if not self.check_connection():
+            return []
+        try:
+            conn = psycopg2.connect(self.db_url)
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("""
+                SELECT id, source_type, severity, label,
+                       ST_Y(geom) AS lat, ST_X(geom) AS lon, created_at,
+                       ST_Distance(geom::geography, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography) AS dist_m
+                FROM damage_points
+                WHERE ST_DWithin(geom::geography, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography, %s)
+                ORDER BY dist_m ASC LIMIT 200;
+            """, (lon, lat, lon, lat, radius_m))
+            results = cur.fetchall()
+            cur.close()
+            conn.close()
+            return [dict(r) for r in results]
+        except Exception as e:
+            print(f"PostGIS damage_points nearby sorgu hatasi: {e}")
+            return []
+
+    def query_damage_points_in_bbox(self, bbox) -> List[Dict[str, Any]]:
+        """bbox: (west, south, east, north). ST_MakeEnvelope ile o alandaki hasar/tehlike noktalarını döndürür."""
+        if not self.check_connection():
+            return []
+        west, south, east, north = bbox
+        try:
+            conn = psycopg2.connect(self.db_url)
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("""
+                SELECT id, source_type, severity, label, ST_Y(geom) AS lat, ST_X(geom) AS lon, created_at
+                FROM damage_points
+                WHERE ST_Within(geom, ST_MakeEnvelope(%s, %s, %s, %s, 4326))
+                LIMIT 5000;
+            """, (west, south, east, north))
+            results = cur.fetchall()
+            cur.close()
+            conn.close()
+            return [dict(r) for r in results]
+        except Exception as e:
+            print(f"PostGIS damage_points bbox sorgu hatasi: {e}")
+            return []
+
+    def query_blockages_in_bbox(self, bbox) -> List[Dict[str, Any]]:
+        """bbox: (west, south, east, north). O alanla kesişen road_blockages kayıtlarını döndürür."""
+        if not self.check_connection():
+            return []
+        west, south, east, north = bbox
+        try:
+            conn = psycopg2.connect(self.db_url)
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("""
+                SELECT id, title, severity, ST_AsGeoJSON(geom) AS geojson, created_at
+                FROM road_blockages
+                WHERE ST_Intersects(geom, ST_MakeEnvelope(%s, %s, %s, %s, 4326));
+            """, (west, south, east, north))
+            results = cur.fetchall()
+            cur.close()
+            conn.close()
+            return [dict(r) for r in results]
+        except Exception as e:
+            print(f"PostGIS road_blockages bbox sorgu hatasi: {e}")
+            return []
+
 
 # Singleton Instance
 postgis_engine = PostGISManager()

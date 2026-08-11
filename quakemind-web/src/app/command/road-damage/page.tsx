@@ -12,6 +12,7 @@ import {
   searchOamImages,
   getRouteBetweenPoints,
   getAssemblyAreas,
+  getDamageHeatmap,
   RoadDamageResponse,
   RoadDamageProgress,
   WaybackVersion,
@@ -140,6 +141,11 @@ function DamageAnalysisTab() {
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
 
+  // Isı haritası (Gaussian kernel yıkım/kapanma yoğunluğu, /api/road_damage/heatmap)
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [heatmapPoints, setHeatmapPoints] = useState<[number, number, number][]>([]);
+  const [heatmapLoading, setHeatmapLoading] = useState(false);
+
   useEffect(() => {
     if (source !== "esri" || waybackVersions.length > 0) return;
     setLoadingWayback(true);
@@ -159,6 +165,15 @@ function DamageAnalysisTab() {
       : selectionMode === "draw" && drawnBbox
       ? { lat: (drawnBbox[1] + drawnBbox[3]) / 2, lng: (drawnBbox[0] + drawnBbox[2]) / 2 }
       : cityCoords;
+
+  useEffect(() => {
+    if (!showHeatmap) return;
+    setHeatmapLoading(true);
+    getDamageHeatmap(analysisCenter.lat, analysisCenter.lng, 5.0)
+      .then((data) => setHeatmapPoints(data.points))
+      .catch(() => setHeatmapPoints([]))
+      .finally(() => setHeatmapLoading(false));
+  }, [showHeatmap, analysisCenter.lat, analysisCenter.lng]);
 
   // Live map preview of the currently selected satellite source, so the map
   // updates immediately when picking Esri/OpenAerial — not only after a full
@@ -713,6 +728,17 @@ function DamageAnalysisTab() {
               <span className="flex items-center gap-1 text-rose-400">
                 <span className="w-3 h-1 bg-rose-500 rounded" /> Hesaplanan Rota
               </span>
+              <button
+                onClick={() => setShowHeatmap((v) => !v)}
+                className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                  showHeatmap
+                    ? "bg-orange-600/90 text-white border-orange-500"
+                    : "glass-button text-slate-400 border-slate-700"
+                }`}
+              >
+                <Layers className="w-3 h-3" />
+                {heatmapLoading ? "Isı Haritası Yükleniyor..." : "Isı Haritası"}
+              </button>
             </div>
           </div>
 
@@ -722,6 +748,7 @@ function DamageAnalysisTab() {
               zoom={15}
               markers={markers}
               polylines={polylines}
+              heatData={showHeatmap ? heatmapPoints : undefined}
               satelliteTileUrl={activeSatelliteTileUrl}
               satelliteAttribution={activeSatelliteAttribution}
               onMapClick={handleMapClick}
