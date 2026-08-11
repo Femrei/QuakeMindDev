@@ -1,0 +1,25 @@
+"""Pure tile-zoom math, kept dependency-free so it can be imported from both
+fastapi_app.py and apps/road_damage/worker.py (a ProcessPoolExecutor worker
+entrypoint that must not import fastapi_app.py).
+"""
+
+
+def zoom_for_radius(radius_km, target_tiles=6, min_zoom=13, max_zoom=18):
+    """Pick a tile zoom so the stitched image stays a bounded number of tiles
+    across, regardless of the requested analysis radius.
+
+    The Segformer inference runs over overlapping 512px patches, so its cost
+    scales roughly with pixel count. A larger radiusKm would otherwise push
+    more tiles into a fixed tile cap -- either silently cropping the analyzed
+    area back down, or (if the cap is raised to honor the radius) inflating
+    inference time a lot for a wide analysis. Scaling zoom down for a larger
+    radius keeps the tile/pixel budget (and so inference time) roughly
+    constant while still covering the real requested area.
+    """
+    z = max_zoom
+    while z > min_zoom:
+        km_per_tile = 40075.0 / (2 ** z)
+        if (2 * radius_km) / km_per_tile <= target_tiles:
+            break
+        z -= 1
+    return z

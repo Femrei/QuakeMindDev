@@ -211,6 +211,20 @@ export async function refreshLiveEarthquakeData(): Promise<{ message: string }> 
   return res.json();
 }
 
+export type RoadDamageStatusResponse =
+  | { analysisId: string; status: "queued"; progress?: number; progressMessage?: string | null }
+  | { analysisId: string; status: "error"; error: string }
+  | ({ analysisId: string; status: "done"; progress?: number } & RoadDamageResponse);
+
+export interface RoadDamageProgress {
+  percent: number;
+  message: string | null;
+}
+
+// Kicks off a road-damage analysis job and returns immediately with a job id
+// -- the backend runs the actual (CPU-bound, can take minutes) Segformer
+// inference on a dedicated worker process, so this call no longer blocks on
+// the full analysis. Poll with getRoadDamageStatus / pollRoadDamageStatus.
 export async function analyzeRoadDamage(params: {
   city: string;
   latitude: number;
@@ -224,7 +238,7 @@ export async function analyzeRoadDamage(params: {
   postProcessLevel?: number;
   bbox?: [number, number, number, number]; // [west, south, east, north]
   networkType?: string; // "drive" (default, vehicle logistics) or "walk" (pedestrian evacuation)
-}): Promise<RoadDamageResponse> {
+}): Promise<{ analysisId: string; status: string }> {
   const res = await fetch(`${API_BASE_URL}/api/road_damage/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -251,6 +265,65 @@ export async function analyzeRoadDamage(params: {
     throw new Error(detail?.detail || "Uydu yol hasar analizi başarısız.");
   }
   return res.json();
+}
+
+export async function getRoadDamageStatus(analysisId: string): Promise<RoadDamageStatusResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/road_damage/status/${analysisId}`);
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "Analiz durumu okunamadı.");
+  }
+  return res.json();
+}
+
+// Polls getRoadDamageStatus until the job reaches "done" (resolves with the
+// full result) or "error"/timeout/abort (rejects).
+export async function pollRoadDamageStatus(
+  analysisId: string,
+  options: {
+    intervalMs?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+    onProgress?: (progress: RoadDamageProgress) => void;
+  } = {}
+): Promise<RoadDamageResponse> {
+  const intervalMs = options.intervalMs ?? 3000;
+  const timeoutMs = options.timeoutMs ?? 15 * 60 * 1000;
+  const startedAt = Date.now();
+
+  while (true) {
+    if (options.signal?.aborted) {
+      throw new Error("Analiz beklemesi iptal edildi.");
+    }
+    if (Date.now() - startedAt > timeoutMs) {
+      throw new Error("Analiz zaman aşımına uğradı.");
+    }
+
+    const status = await getRoadDamageStatus(analysisId);
+    if (status.status === "done") {
+      const { status: _status, ...result } = status;
+      return result as RoadDamageResponse;
+    }
+    if (status.status === "error") {
+      throw new Error(status.error || "Analiz başarısız oldu.");
+    }
+    options.onProgress?.({
+      percent: status.progress ?? 0,
+      message: status.progressMessage ?? null,
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(resolve, intervalMs);
+      options.signal?.addEventListener(
+        "abort",
+        () => {
+          clearTimeout(timer);
+          reject(new Error("Analiz beklemesi iptal edildi."));
+        },
+        { once: true }
+      );
+    });
+  }
 }
 
 export async function reportRoadBlockage(

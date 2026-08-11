@@ -5,6 +5,7 @@ import '../../widgets/emergency_banner.dart';
 import '../../widgets/identity_bar.dart';
 import '../../widgets/tactical/scan_background.dart';
 import '../../widgets/tactical/tactical_dock.dart';
+import '../../widgets/tactical/tactical_page_switcher.dart';
 import '../unified_map_screen.dart';
 import 'assembly_page.dart';
 import 'camera_page.dart';
@@ -52,10 +53,7 @@ class _SurvivorShellState extends State<SurvivorShell> {
               const IdentityBar(accentColor: AppTheme.survivorAccent),
               const EmergencyBanner(),
               Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  child: KeyedSubtree(key: ValueKey(_index), child: pages[_index]),
-                ),
+                child: TacticalPageSwitcher(index: _index, child: pages[_index]),
               ),
             ],
           ),

@@ -1,5 +1,6 @@
 class RoadDamageResult {
   const RoadDamageResult({
+    required this.analysisId,
     required this.city,
     required this.damageRate,
     required this.openRoads,
@@ -28,6 +29,7 @@ class RoadDamageResult {
 
   factory RoadDamageResult.fromJson(Map<String, dynamic> json) {
     return RoadDamageResult(
+      analysisId: json['analysisId'] as String? ?? '',
       city: json['city'] as String? ?? '',
       damageRate: (json['damageRate'] as num?)?.toDouble() ?? 0,
       openRoads: (json['openRoads'] as num?)?.toInt() ?? 0,
@@ -89,6 +91,7 @@ class RoadDamageResult {
     return out;
   }
 
+  final String analysisId;
   final String city;
   final double damageRate;
   final int openRoads;

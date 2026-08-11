@@ -23,9 +23,13 @@ class AppHeader extends StatelessWidget {
 }
 
 class LoadingState extends StatelessWidget {
-  const LoadingState({super.key, required this.message});
+  const LoadingState({super.key, required this.message, this.progress});
 
   final String message;
+
+  /// 0.0-1.0 for a determinate indicator; null keeps the indeterminate spin
+  /// (the default for callers that have no real progress to report).
+  final double? progress;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +37,7 @@ class LoadingState extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          const CircularProgressIndicator(),
+          CircularProgressIndicator(value: progress),
           const SizedBox(height: 18),
           Text(message, textAlign: TextAlign.center),
         ],

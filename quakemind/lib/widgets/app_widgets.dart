@@ -753,7 +753,7 @@ class RoutePlanMapPanel extends StatelessWidget {
   }
 }
 
-class RoadLogisticsMapPanel extends StatelessWidget {
+class RoadLogisticsMapPanel extends StatefulWidget {
   const RoadLogisticsMapPanel({
     super.key,
     required this.title,
@@ -766,16 +766,45 @@ class RoadLogisticsMapPanel extends StatelessWidget {
   final double height;
 
   @override
-  Widget build(BuildContext context) {
+  State<RoadLogisticsMapPanel> createState() => _RoadLogisticsMapPanelState();
+}
+
+class _RoadLogisticsMapPanelState extends State<RoadLogisticsMapPanel> {
+  late RoadPoint _centerPoint;
+  late List<Polyline> _safePolylines;
+  late List<Polyline> _blockedPolylines;
+
+  @override
+  void initState() {
+    super.initState();
+    _computePolylines();
+  }
+
+  @override
+  void didUpdateWidget(covariant RoadLogisticsMapPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Rebuilding these lists (and re-diffing flutter_map's PolylineLayer) is
+    // the most expensive part of this panel -- with up to ~1000 short
+    // segments, doing it on every rebuild of the surrounding page (e.g. a
+    // slider being dragged elsewhere on screen) caused visible stutter/tearing
+    // in the drawn roads. Only recompute when the actual analysis result
+    // changes.
+    if (!identical(oldWidget.result, widget.result)) {
+      _computePolylines();
+    }
+  }
+
+  void _computePolylines() {
+    final result = widget.result;
     final blockedPoints = result.blockedRoadSegments.expand((s) => s).toList();
     final safePoints = result.safeRoadSegments.expand((s) => s).toList();
-    final centerPoint = blockedPoints.isNotEmpty
+    _centerPoint = blockedPoints.isNotEmpty
         ? blockedPoints.first
         : (safePoints.isNotEmpty
               ? safePoints.first
               : const RoadPoint(37.0, 35.0));
 
-    final blockedPolylines = result.blockedRoadSegments
+    _blockedPolylines = result.blockedRoadSegments
         .map(
           (segment) => Polyline(
             points: segment
@@ -783,18 +812,13 @@ class RoadLogisticsMapPanel extends StatelessWidget {
                 .toList(growable: false),
             color: AppTheme.survivorAccent,
             strokeWidth: 4,
+            strokeCap: StrokeCap.round,
+            strokeJoin: StrokeJoin.round,
           ),
         )
         .toList(growable: false);
 
-    final tileTemplate = result.satelliteTileUrl.trim().isNotEmpty
-        ? result.satelliteTileUrl.trim()
-        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-    final tileAttribution = result.satelliteAttribution.trim().isNotEmpty
-        ? result.satelliteAttribution.trim()
-        : 'OpenStreetMap';
-
-    final safePolylines = result.safeRoadSegments
+    _safePolylines = result.safeRoadSegments
         .map(
           (segment) => Polyline(
             points: segment
@@ -802,9 +826,28 @@ class RoadLogisticsMapPanel extends StatelessWidget {
                 .toList(growable: false),
             color: AppTheme.teal,
             strokeWidth: 3,
+            strokeCap: StrokeCap.round,
+            strokeJoin: StrokeJoin.round,
           ),
         )
         .toList(growable: false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final result = widget.result;
+    final title = widget.title;
+    final height = widget.height;
+    final centerPoint = _centerPoint;
+    final blockedPolylines = _blockedPolylines;
+    final safePolylines = _safePolylines;
+
+    final tileTemplate = result.satelliteTileUrl.trim().isNotEmpty
+        ? result.satelliteTileUrl.trim()
+        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    final tileAttribution = result.satelliteAttribution.trim().isNotEmpty
+        ? result.satelliteAttribution.trim()
+        : 'OpenStreetMap';
 
     return SizedBox(
       height: height,
