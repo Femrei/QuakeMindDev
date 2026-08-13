@@ -119,6 +119,13 @@ const nlpIcon = L.divIcon({
 export interface MapPolylineItem {
   id: string;
   coords: [number, number][];
+  /** Ayni renk/kalinliktaki COK SAYIDA kopuk cizgiyi (orn. bir sehrin tum
+   * acik yol agi -- ~50.000 segment) TEK bir Leaflet katmani olarak cizmek
+   * icin. Her segment ayri bir <Polyline> olarak render edilirse React 50.000
+   * bilesen + 50.000 Leaflet katman nesnesi olusturur ve ana is parcacigi
+   * kilitlenir (olculdu: katmani acmak tarayiciyi 30sn+ dondurdu). Leaflet'in
+   * L.polyline'i cok-parcali (multi-linestring) diziyi zaten destekler. */
+  coordGroups?: [number, number][][];
   color: string;
   weight?: number;
   opacity?: number;
@@ -169,6 +176,54 @@ function FitBoundsHandler({ points }: { points: [number, number][] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points.length, Math.round(points[0]?.[0] * 20), Math.round(points[0]?.[1] * 20), map]);
   return null;
+}
+
+function PolylineLayer({ polylines }: { polylines: MapPolylineItem[] }) {
+  return (
+    <>
+      {polylines.map((poly) => (
+        <React.Fragment key={poly.id}>
+          {poly.casing && (
+            <>
+              {/* Dark outline for contrast against any tile */}
+              <Polyline
+                positions={poly.coords}
+                pathOptions={{
+                  color: "#0b0f17",
+                  weight: (poly.weight || 4) + 8,
+                  opacity: 0.85,
+                  lineCap: "round",
+                  lineJoin: "round",
+                }}
+              />
+              {/* Bright base stroke under the animated dashes */}
+              <Polyline
+                positions={poly.coords}
+                pathOptions={{
+                  color: "#ffffff",
+                  weight: (poly.weight || 4) + 3,
+                  opacity: 0.9,
+                  lineCap: "round",
+                  lineJoin: "round",
+                }}
+              />
+            </>
+          )}
+          <Polyline
+            positions={poly.coordGroups ?? poly.coords}
+            pathOptions={{
+              color: poly.color || "#3b82f6",
+              weight: poly.weight || 4,
+              opacity: poly.opacity || 0.85,
+              lineCap: "round",
+              lineJoin: "round",
+              className: poly.casing ? "qm-route-line" : undefined,
+            }}
+          />
+        </React.Fragment>
+      ))}
+    </>
+  );
 }
 
 function ClickHandler({ onClick }: { onClick?: (lat: number, lng: number) => void }) {
@@ -246,47 +301,8 @@ export default function LeafletContainer({
         )}
 
         {/* Polylines (Roads, Routes, Fault Lines) */}
-        {polylines.map((poly) => (
-          <React.Fragment key={poly.id}>
-            {poly.casing && (
-              <>
-                {/* Dark outline for contrast against any tile */}
-                <Polyline
-                  positions={poly.coords}
-                  pathOptions={{
-                    color: "#0b0f17",
-                    weight: (poly.weight || 4) + 8,
-                    opacity: 0.85,
-                    lineCap: "round",
-                    lineJoin: "round",
-                  }}
-                />
-                {/* Bright base stroke under the animated dashes */}
-                <Polyline
-                  positions={poly.coords}
-                  pathOptions={{
-                    color: "#ffffff",
-                    weight: (poly.weight || 4) + 3,
-                    opacity: 0.9,
-                    lineCap: "round",
-                    lineJoin: "round",
-                  }}
-                />
-              </>
-            )}
-            <Polyline
-              positions={poly.coords}
-              pathOptions={{
-                color: poly.color || "#3b82f6",
-                weight: poly.weight || 4,
-                opacity: poly.opacity || 0.85,
-                lineCap: "round",
-                lineJoin: "round",
-                className: poly.casing ? "qm-route-line" : undefined,
-              }}
-            />
-          </React.Fragment>
-        ))}
+        <PolylineLayer polylines={polylines} />
+
 
         {/* Markers */}
         {markers.map((marker) => {

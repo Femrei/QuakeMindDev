@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem, MapPolylineItem } from "@/components/map/InteractiveMap";
@@ -34,6 +34,9 @@ import {
 } from "lucide-react";
 
 const SIMULATION_POLL_MS = 2500;
+// Yol agi buyuk (bir sehir ~4,5MB JSON) ve analiz basina bir kez uretilir --
+// hizli dongude her tur cekmeye gerek yok.
+const ROAD_POLL_MS = 20000;
 
 const ANTAKYA_CENTER: [number, number] = [36.202, 36.161];
 
@@ -55,16 +58,18 @@ export default function CommandDashboardPage() {
   // Ekip pozisyonlari zaman-bazli interpolasyonla turetildigi icin, harita
   // yeniden render olsun diye her tick'te bagimsiz bir "simdi" tetigi lazim.
   const [, setSimTick] = useState(0);
+  // Yol analizi kumesinin "imzasi" (id + segment sayilari) -- degismediyse
+  // 90.000 elemanli polyline dizileri yeniden olusturulmaz.
+  const roadSignatureRef = useRef<string>("");
 
   useEffect(() => {
     if (!simulationMode) return;
 
     const poll = async () => {
       try {
-        const [sosData, claimsData, damageData, debrisData, nlpData] = await Promise.all([
+        const [sosData, claimsData, debrisData, nlpData] = await Promise.all([
           getSOSAlerts(),
           getTeamClaims(),
-          getRecentRoadDamage(120),
           getDebrisReports(),
           getNlpLocations(),
         ]);
@@ -72,24 +77,6 @@ export default function CommandDashboardPage() {
         setTeamClaims(claimsData.claims);
         setDebrisReports(debrisData.reports);
         setNlpLocations(nlpData.locations);
-
-        const polylines: MapPolylineItem[] = [];
-        let safeCount = 0;
-        let blockedCount = 0;
-        damageData.analyses.forEach((a) => {
-          safeCount += a.safeRoadSegments.length;
-          blockedCount += a.blockedRoadSegments.length;
-          // Acik/guvenli yol agi -- yesil, kaliniz cizgi alta gomulmesin diye
-          a.safeRoadSegments.forEach((coords, i) =>
-            polylines.push({ id: `${a.analysisId}-safe-${i}`, coords, color: "#22c55e", weight: 3, opacity: 0.8 })
-          );
-          // Kapali yol -- kirmizi, kesikli olmayan ama belirgin
-          a.blockedRoadSegments.forEach((coords, i) =>
-            polylines.push({ id: `${a.analysisId}-blocked-${i}`, coords, color: "#ef4444", weight: 4, opacity: 0.95 })
-          );
-        });
-        setDamagePolylines(polylines);
-        setRoadStats({ safe: safeCount, blocked: blockedCount });
       } catch {
         // sunucu gecici olarak yanit vermiyor olabilir -- bir sonraki tick'te tekrar dene
       }
@@ -98,6 +85,67 @@ export default function CommandDashboardPage() {
 
     poll();
     const interval = setInterval(poll, SIMULATION_POLL_MS);
+    return () => clearInterval(interval);
+  }, [simulationMode]);
+
+  // Yol agi AYRI ve cok daha seyrek cekilir: bir sehrin tam yol agi ~4,5MB
+  // JSON eder ve 2,5sn'lik hizli dongude her tur yeniden indirilip
+  // ayristirilirsa istekler ust uste binip arayuzu bogar (olculdu: tek
+  // istek ~1,8sn). Ayrica analiz kumesi degismediyse (ayni analysisId'ler,
+  // ayni segment sayilari) 90.000 elemanli diziler bosuna yeniden
+  // olusturulmaz -- yol kapanmalari zaten analiz basina bir kez uretilir.
+  useEffect(() => {
+    if (!simulationMode) return;
+
+    const pollRoads = async () => {
+      try {
+        const damageData = await getRecentRoadDamage(120);
+        const signature = damageData.analyses
+          .map((a) => `${a.analysisId}:${a.safeRoadSegments.length}:${a.blockedRoadSegments.length}`)
+          .join("|");
+        if (signature === roadSignatureRef.current) return;
+        roadSignatureRef.current = signature;
+
+        const polylines: MapPolylineItem[] = [];
+        let safeCount = 0;
+        let blockedCount = 0;
+        damageData.analyses.forEach((a) => {
+          safeCount += a.safeRoadSegments.length;
+          blockedCount += a.blockedRoadSegments.length;
+          // Bir sehrin TAM yol agi ~50.000 segment surer -- her segmenti ayri
+          // bir <Polyline> yapmak React'i ve Leaflet'i kilitliyordu (olculdu:
+          // katmani acmak tarayiciyi 30sn+ dondurdu). Acik yollarin hepsi TEK,
+          // kapalilarin hepsi TEK cok-parcali katman olarak cizilir.
+          if (a.safeRoadSegments.length > 0) {
+            polylines.push({
+              id: `${a.analysisId}-safe`,
+              coords: [],
+              coordGroups: a.safeRoadSegments as [number, number][][],
+              color: "#22c55e",
+              weight: 2,
+              opacity: 0.75,
+            });
+          }
+          if (a.blockedRoadSegments.length > 0) {
+            polylines.push({
+              id: `${a.analysisId}-blocked`,
+              coords: [],
+              coordGroups: a.blockedRoadSegments as [number, number][][],
+              color: "#ef4444",
+              weight: 3,
+              opacity: 0.95,
+            });
+          }
+        });
+        setDamagePolylines(polylines);
+        setRoadStats({ safe: safeCount, blocked: blockedCount });
+      } catch {
+        // sunucu gecici olarak yanit vermiyor olabilir -- bir sonraki turda tekrar dene
+      }
+    };
+
+    pollRoads();
+    const interval = setInterval(pollRoads, ROAD_POLL_MS);
     return () => clearInterval(interval);
   }, [simulationMode]);
 

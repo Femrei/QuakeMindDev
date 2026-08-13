@@ -22,7 +22,14 @@ def compact_segment_coords(line, max_points=28):
     return [[float(lat), float(lon)] for lon, lat in sampled]
 
 
-def serialize_segments(edges, max_segments=8000):
+# Bir sehrin 3km yaricapli TAM yaya+arac yol agi ~50.000 kenar surer ve
+# ~2.3MB JSON eder (olculdu: Kahramanmaras 49.666 kenar, Hatay 40.950) --
+# yani tam kapsama tasinabilir bir yuk. Onceki 8000'lik sinir, grafin
+# yalnizca ilk ~%16'sini gonderdigi icin haritada yollarin cogu HIC
+# renklendirilmemis (ne yesil ne kirmizi) kaliyordu. Sinir yine de bir
+# guvenlik supabi olarak duruyor, sadece gercek sehir grafiklerini
+# kapsayacak kadar yuksek.
+def serialize_segments(edges, max_segments=120000):
     if not edges:
         return []
     serialized = []

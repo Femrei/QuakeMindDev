@@ -313,24 +313,29 @@ function DamageAnalysisTab() {
   // Convert road segments into MapPolylineItems
   const polylines: MapPolylineItem[] = [];
   if (result) {
-    result.safeRoadSegments.forEach((seg, idx) => {
+    // Genis bir alan analiz edildiginde yol agi on binlerce segment surebilir;
+    // her birini ayri bir <Polyline> yapmak ana is parcacigini kilitliyor.
+    // Acik ve kapali yollar birer cok-parcali katman olarak cizilir.
+    if (result.safeRoadSegments.length > 0) {
       polylines.push({
-        id: `safe-${idx}`,
-        coords: seg as [number, number][],
+        id: "safe-roads",
+        coords: [],
+        coordGroups: result.safeRoadSegments as [number, number][][],
         color: "#10b981",
+        weight: 3,
+        opacity: 0.85,
+      });
+    }
+    if (result.blockedRoadSegments.length > 0) {
+      polylines.push({
+        id: "blocked-roads",
+        coords: [],
+        coordGroups: result.blockedRoadSegments as [number, number][][],
+        color: "#ef4444",
         weight: 4,
         opacity: 0.9,
       });
-    });
-    result.blockedRoadSegments.forEach((seg, idx) => {
-      polylines.push({
-        id: `blocked-${idx}`,
-        coords: seg as [number, number][],
-        color: "#ef4444",
-        weight: 5,
-        opacity: 0.9,
-      });
-    });
+    }
     if (routeCoords) {
       polylines.push({
         id: "computed-route",

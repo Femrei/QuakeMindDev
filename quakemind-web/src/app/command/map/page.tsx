@@ -35,7 +35,9 @@ import {
 
 const TURKEY_CENTER: [number, number] = [38.9, 35.2];
 const DEBRIS_POLL_MS = 6000;
-const ROAD_DAMAGE_POLL_MS = 6000;
+// Yol agi buyuk (bir sehir ~4,5MB JSON) ve analiz basina bir kez uretilir --
+// diger katmanlar kadar sik cekmeye gerek yok.
+const ROAD_DAMAGE_POLL_MS = 20000;
 const NLP_POLL_MS = 6000;
 const SOS_POLL_MS = 6000;
 const TEAM_POLL_MS = 2500;
@@ -93,6 +95,9 @@ export default function UnifiedCommandMapPage() {
   // (command/page.tsx'teki simulasyon modundaki mantikla ayni).
   const [, setTeamTick] = useState(0);
   const assemblyFetchedForRef = useRef<Set<string>>(new Set());
+  // Yol analizi kumesinin "imzasi" (id + segment sayilari) -- degismediyse
+  // 90.000 elemanli segment dizileri context'e yeniden yazilmaz.
+  const roadSignatureRef = useRef<string>("");
 
   // SOS ihbarlari -- daha once bu harita SADECE /command/sos'un context'e
   // push ettigi (o sayfa ziyaret edilmediyse bos kalan) veriyi okuyordu; artik
@@ -168,14 +173,28 @@ export default function UnifiedCommandMapPage() {
     const poll = () => {
       getRecentRoadDamage(180)
         .then((data) => {
+          // Bir sehrin tam yol agi ~4,5MB JSON eder; analiz kumesi
+          // degismediyse (ayni id'ler + ayni segment sayilari) 90.000
+          // elemanli diziler bosuna context'e yeniden yazilmaz.
+          const signature = data.analyses
+            .map((a) => `${a.analysisId}:${a.safeRoadSegments.length}:${a.blockedRoadSegments.length}`)
+            .join("|");
+          const changed = signature !== roadSignatureRef.current;
+          roadSignatureRef.current = signature;
+
           data.analyses.forEach((a) => {
-            addRoadDamageAnalysis({
-              analysisId: a.analysisId,
-              city: "Canlı Simülasyon",
-              safeRoadSegments: a.safeRoadSegments,
-              blockedRoadSegments: a.blockedRoadSegments,
-              bounds: a.bounds || { west: 0, south: 0, east: 0, north: 0 },
-            });
+            // Agir segment dizileri SADECE analiz kumesi degistiginde
+            // context'e yazilir; toplanma-alani sorgusu ise her zaman
+            // (analysisId basina bir kez) tetiklenir.
+            if (changed) {
+              addRoadDamageAnalysis({
+                analysisId: a.analysisId,
+                city: "Canlı Simülasyon",
+                safeRoadSegments: a.safeRoadSegments,
+                blockedRoadSegments: a.blockedRoadSegments,
+                bounds: a.bounds || { west: 0, south: 0, east: 0, north: 0 },
+              });
+            }
 
             if (a.bounds && !assemblyFetchedForRef.current.has(a.analysisId)) {
               assemblyFetchedForRef.current.add(a.analysisId);
@@ -390,25 +409,30 @@ export default function UnifiedCommandMapPage() {
     }
 
     if (layerVisibility.roadDamage) {
+      // Bir sehrin TAM yol agi ~50.000 segment surer; her segmenti ayri bir
+      // <Polyline> yapmak React'i ve Leaflet'i kilitliyordu. Tum acik yollar
+      // TEK, tum kapali yollar TEK cok-parcali katman olarak cizilir.
       roadDamageAnalyses.forEach((a) => {
-        a.safeRoadSegments.forEach((seg, i) =>
+        if (a.safeRoadSegments.length > 0) {
           list.push({
-            id: `${a.analysisId}-safe-${i}`,
-            coords: seg as [number, number][],
-            color: "#10b981",
-            weight: 5,
-            opacity: 0.8,
-          })
-        );
-        a.blockedRoadSegments.forEach((seg, i) =>
+            id: `${a.analysisId}-safe`,
+            coords: [],
+            coordGroups: a.safeRoadSegments as [number, number][][],
+            color: "#22c55e",
+            weight: 2,
+            opacity: 0.75,
+          });
+        }
+        if (a.blockedRoadSegments.length > 0) {
           list.push({
-            id: `${a.analysisId}-blocked-${i}`,
-            coords: seg as [number, number][],
+            id: `${a.analysisId}-blocked`,
+            coords: [],
+            coordGroups: a.blockedRoadSegments as [number, number][][],
             color: "#ef4444",
-            weight: 6,
-            opacity: 0.9,
-          })
-        );
+            weight: 3,
+            opacity: 0.95,
+          });
+        }
       });
     }
 
