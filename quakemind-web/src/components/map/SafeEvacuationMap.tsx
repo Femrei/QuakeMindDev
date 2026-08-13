@@ -304,9 +304,19 @@ function InnerEvacuationMap({ role, onShelterSelect, onAssemblyData }: SafeEvacu
       if (requestId === routeRequestIdRef.current) setRoutingLoading(false);
     }
 
-    // PostGIS-tabanlı, session'sız risk-ağırlıklı rota önce denenir (analyze
-    // önceden çağrılmış olmasını gerektirmez) -- başarısız olursa satellite
-    // damage-analysis tabanlı rotaya (session gerektirir) düşülür.
+    // PostGIS-tabanlı, session'sız risk-ağırlıklı rota (hızlı, analyze
+    // önceden çağrılmış olmasını gerektirmez) VE uydu hasar-analizi (haritada
+    // acik/kapali yol katmanini besleyen tek kaynak) AYNI ANDA baslatilir.
+    // Once ikisi ayri ayri (biri basarisiz olursa digerine dus) calisiyordu
+    // -- bu, getSafeRoute her zaman kazandigi icin runDamageAwareRoute'un
+    // (ve onun icindeki setDamageAnalysis yan etkisinin, yani yesil/kirmizi
+    // yol katmaninin) HICBIR ZAMAN calismamasina yol aciyordu: rota cizgisi
+    // goruluyordu ama hangi yollarin acik/kapali oldugu hic gosterilmiyordu.
+    const damageRoutePromise = runDamageAwareRoute(origin[0], origin[1], destLat, destLon).catch((e) => {
+      console.warn("Hasar-farkında rota hesaplanamadı:", e);
+      return null;
+    });
+
     try {
       const safeRoute = await getSafeRoute(origin[0], origin[1], destLat, destLon);
       if (requestId !== routeRequestIdRef.current) return;
@@ -315,23 +325,20 @@ function InnerEvacuationMap({ role, onShelterSelect, onAssemblyData }: SafeEvacu
         setCustomDistanceM(safeRoute.distanceMeters);
         setCustomWalkMinutes(Math.max(1, Math.round(safeRoute.distanceMeters / 80)));
         setRouteMode("safe-route");
+        await damageRoutePromise; // yol ortusu (damageAnalysis) dolsun diye bekle, rotasini kullanma
         return;
       }
     } catch (e) {
       console.warn("PostGIS risk-ağırlıklı rota hesaplanamadı, hasar-analiz rotası deneniyor:", e);
     }
 
-    try {
-      const damageRoute = await runDamageAwareRoute(origin[0], origin[1], destLat, destLon);
-      if (requestId !== routeRequestIdRef.current) return;
-      if (damageRoute && damageRoute.routeCoords && damageRoute.routeCoords.length > 0) {
-        setCustomRouteCoords(damageRoute.routeCoords);
-        setCustomDistanceM(damageRoute.distanceMeters);
-        setCustomWalkMinutes(Math.max(1, Math.round(damageRoute.distanceMeters / 80)));
-        setRouteMode("damage-aware");
-      }
-    } catch (e) {
-      console.warn("Hasar-farkında rota hesaplanamadı:", e);
+    const damageRoute = await damageRoutePromise;
+    if (requestId !== routeRequestIdRef.current) return;
+    if (damageRoute && damageRoute.routeCoords && damageRoute.routeCoords.length > 0) {
+      setCustomRouteCoords(damageRoute.routeCoords);
+      setCustomDistanceM(damageRoute.distanceMeters);
+      setCustomWalkMinutes(Math.max(1, Math.round(damageRoute.distanceMeters / 80)));
+      setRouteMode("damage-aware");
     }
   };
 
