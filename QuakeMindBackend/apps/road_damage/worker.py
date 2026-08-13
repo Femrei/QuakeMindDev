@@ -15,6 +15,7 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 
+import cv2
 import numpy as np
 
 from apps.road_damage.utils.assembly import bbox_from_center
@@ -308,6 +309,36 @@ def run_analysis_job(req: dict) -> dict:
 
     blocked_road_pct = blocked_pixels / road_pixels if road_pixels > 0 else 0
     open_road_pct = 1.0 - blocked_road_pct
+
+    # Best-effort: persist damage blob centroids as damage_points so the
+    # heatmap and risk-weighted route engine have real, queryable data --
+    # never lets a PostGIS hiccup fail the whole analysis.
+    try:
+        from utils.postgis_manager import postgis_engine
+
+        west, south, east, north = bounds
+        num_labels, cc_labels, stats, centroids = cv2.connectedComponentsWithStats(
+            pred_mask_binary, connectivity=8,
+        )
+        # Label 0 is background; keep only blobs above noise-floor area,
+        # largest first, capped so a very noisy mask can't flood the DB.
+        blob_ids = [
+            lbl for lbl in range(1, num_labels)
+            if stats[lbl, cv2.CC_STAT_AREA] >= 20
+        ]
+        blob_ids.sort(key=lambda lbl: stats[lbl, cv2.CC_STAT_AREA], reverse=True)
+        for lbl in blob_ids[:300]:
+            cx, cy = centroids[lbl]
+            lon = west + (cx / w) * (east - west)
+            lat = north - (cy / h) * (north - south)
+            component_mask = cc_labels == lbl
+            severity = float(boosted_probs[component_mask].mean()) if component_mask.any() else float(threshold)
+            postgis_engine.insert_damage_point(
+                "road_damage", lat, lon, severity=severity,
+                label="Segformer Yol Hasari Tespiti",
+            )
+    except Exception as e:
+        print(f"damage_points insert (road_damage) hatasi: {e}")
 
     log_lines = [
         "1/4 Uydu goruntusu indirildi",

@@ -145,4 +145,57 @@ class RoadDamageService {
     final list = json['images'] as List<dynamic>? ?? const [];
     return list.cast<Map<String, dynamic>>();
   }
+
+  /// PostGIS-tabanli, session'suz risk-agirlikli rota (A*/Dijkstra +
+  /// damage_points + road_blockages). analyzeArea'nin onceden cagirilmis
+  /// olmasini gerektirmez -- mevcut route/analyze akisinin uzerine ucuncu,
+  /// risk-farkinda bir alternatif sunar.
+  Future<Map<String, dynamic>> fetchSafeRoute({
+    required double startLat,
+    required double startLon,
+    required double destLat,
+    required double destLon,
+    double radiusKm = 3.0,
+  }) async {
+    return _httpClient.postJson(
+      endpoint: '/api/road_damage/safe_route',
+      payload: {
+        'startLat': startLat,
+        'startLon': startLon,
+        'destLat': destLat,
+        'destLon': destLon,
+        'radiusKm': radiusKm,
+      },
+      unavailableException: const RoadDamageBridgeUnavailableException(
+        message: 'FastAPI sunucusuna baglanilamadi.',
+        instructions: [
+          'Ayarlardan API adresini (IP:Port) dogru girdiginizden emin olun.',
+        ],
+      ),
+      timeoutSeconds: 30,
+    );
+  }
+
+  /// Bir konumdan gelen tum bildirim yogunlugunun (Twitter/NLP, kamera,
+  /// SOS, uydu hasar noktalari) Gaussian kernel isi haritasi -- leaflet.heat
+  /// uyumlu [lat, lon, intensity] uclusu listesi doner (points alani).
+  Future<List<List<double>>> fetchDamageHeatmap({
+    required double latitude,
+    required double longitude,
+    double radiusKm = 10.0,
+  }) async {
+    final json = await _httpClient.getJson(
+      endpoint: '/api/road_damage/heatmap'
+          '?latitude=$latitude&longitude=$longitude&radiusKm=$radiusKm',
+      timeoutSeconds: 20,
+    );
+    final list = json['points'] as List<dynamic>? ?? const [];
+    return list
+        .map<List<double>>(
+          (point) => (point as List<dynamic>)
+              .map((value) => (value as num).toDouble())
+              .toList(),
+        )
+        .toList();
+  }
 }

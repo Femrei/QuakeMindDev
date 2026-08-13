@@ -699,6 +699,59 @@ export async function calculateCustomRoute(
   return res.json();
 }
 
+export interface SafeRouteResponse {
+  routeCoords: [number, number][];
+  distanceMeters: number;
+  algorithm: "astar" | "dijkstra";
+  riskScore: number;
+  damagePointsConsidered: number;
+  blockagesConsidered: number;
+}
+
+export async function getSafeRoute(
+  startLat: number,
+  startLon: number,
+  destLat: number,
+  destLon: number,
+  radiusKm: number = 3.0
+): Promise<SafeRouteResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/road_damage/safe_route`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ startLat, startLon, destLat, destLon, radiusKm }),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "Risk ağırlıklı rota hesaplanamadı.");
+  }
+  return res.json();
+}
+
+export interface HeatmapResponse {
+  points: [number, number, number][];
+  bounds: { west: number; south: number; east: number; north: number };
+  generatedFrom: {
+    totalReports: number;
+    bySource: Record<string, number>;
+    source: string;
+  };
+}
+
+export async function getDamageHeatmap(
+  latitude: number,
+  longitude: number,
+  radiusKm: number = 10.0
+): Promise<HeatmapResponse> {
+  const query = new URLSearchParams({
+    latitude: String(latitude),
+    longitude: String(longitude),
+    radiusKm: String(radiusKm),
+  });
+  const res = await fetch(`${API_BASE_URL}/api/road_damage/heatmap?${query.toString()}`);
+  if (!res.ok) throw new Error("Isı haritası verisi alınamadı.");
+  return res.json();
+}
+
 export interface AuthUserResponse {
   status: string;
   message?: string;

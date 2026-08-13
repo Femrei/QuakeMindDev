@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_heatmap/flutter_map_heatmap.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:latlong2/latlong.dart' show LatLng;
 import 'package:webview_flutter/webview_flutter.dart';
@@ -753,17 +754,45 @@ class RoutePlanMapPanel extends StatelessWidget {
   }
 }
 
+/// Genel [lat, lon, intensity] üçlü listesinden bir flutter_map ısı katmanı
+/// üretir -- deprem risk modülüne özel `heatmapEvents` yerine, hem hasar
+/// yoğunluğu hem de ileride başka herhangi bir nokta seti için tekrar
+/// kullanılabilir tek bir katman.
+List<Widget> buildHeatmapLayers(List<List<double>> points) {
+  final weighted = points
+      .where((p) => p.length >= 3)
+      .map((p) => WeightedLatLng(LatLng(p[0], p[1]), p[2]))
+      .toList(growable: false);
+  if (weighted.isEmpty) return const [];
+  return [
+    HeatMapLayer(
+      heatMapDataSource: InMemoryHeatMapDataSource(data: weighted),
+      heatMapOptions: HeatMapOptions(radius: 42, minOpacity: 0.25),
+    ),
+  ];
+}
+
 class RoadLogisticsMapPanel extends StatefulWidget {
   const RoadLogisticsMapPanel({
     super.key,
     required this.title,
     required this.result,
     this.height = 320,
+    this.heatmapPoints,
+    this.showHeatmap = false,
+    this.heatmapLoading = false,
+    this.onToggleHeatmap,
   });
 
   final String title;
   final RoadDamageResult result;
   final double height;
+  /// [lat, lon, intensity] triples from /api/road_damage/heatmap, or null
+  /// if the caller doesn't wire up the heatmap toggle.
+  final List<List<double>>? heatmapPoints;
+  final bool showHeatmap;
+  final bool heatmapLoading;
+  final VoidCallback? onToggleHeatmap;
 
   @override
   State<RoadLogisticsMapPanel> createState() => _RoadLogisticsMapPanelState();
@@ -894,6 +923,20 @@ class _RoadLogisticsMapPanelState extends State<RoadLogisticsMapPanel> {
                                 : 'OpenStreetMap',
                             color: AppTheme.responderAccent,
                           ),
+                          if (widget.onToggleHeatmap != null)
+                            GestureDetector(
+                              onTap: widget.onToggleHeatmap,
+                              child: StatusPill(
+                                label: widget.heatmapLoading
+                                    ? 'Isi haritasi yukleniyor...'
+                                    : widget.showHeatmap
+                                    ? 'Isi haritasi acik'
+                                    : 'Isi haritasi',
+                                color: widget.showHeatmap
+                                    ? AppTheme.neonAmber
+                                    : AppTheme.textSecondary,
+                              ),
+                            ),
                         ],
                       ),
                     ],
@@ -918,6 +961,8 @@ class _RoadLogisticsMapPanelState extends State<RoadLogisticsMapPanel> {
                         ),
                         PolylineLayer(polylines: safePolylines),
                         PolylineLayer(polylines: blockedPolylines),
+                        if (widget.showHeatmap && widget.heatmapPoints != null)
+                          ...buildHeatmapLayers(widget.heatmapPoints!),
                       ],
                     ),
                   ),
@@ -935,8 +980,10 @@ class _RoadLogisticsMapPanelState extends State<RoadLogisticsMapPanel> {
                       color: AppTheme.sand,
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Text(
-                      'Yesil cizgiler acik yollari, kirmizi cizgiler engelli/kapali yol segmentlerini gosterir.',
+                    child: Text(
+                      widget.showHeatmap
+                          ? 'Isi haritasi bir konumdan gelen tum bildirim yogunlugunu gosterir: Twitter/NLP, kamera (catlak/yikim) ve SOS bildirimleri ile uydunun tespit ettigi hasar noktalari.'
+                          : 'Yesil cizgiler acik yollari, kirmizi cizgiler engelli/kapali yol segmentlerini gosterir.',
                     ),
                   ),
                 ),

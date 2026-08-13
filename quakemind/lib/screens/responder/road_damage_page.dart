@@ -69,6 +69,13 @@ class _RoadDamagePageState extends State<RoadDamagePage> {
   String? _selectedOamLabel;
   bool _showAdvanced = false;
 
+  // Isı haritası (Gaussian kernel yıkım/kapanma yoğunluğu)
+  bool _showHeatmap = false;
+  bool _heatmapLoading = false;
+  List<List<double>> _heatmapPoints = const [];
+  double? _lastAnalysisLat;
+  double? _lastAnalysisLon;
+
   Future<void> _pickHistoricalImagery() async {
     final isWayback = widget.source.toLowerCase().contains('esri') ||
         widget.source.toLowerCase().contains('wayback');
@@ -197,6 +204,8 @@ class _RoadDamagePageState extends State<RoadDamagePage> {
       cityLabel = widget.city;
     }
 
+    _lastAnalysisLat = latitude;
+    _lastAnalysisLon = longitude;
     setState(() {
       _jobStatus = const RoadDamageJobStatus(status: 'queued');
     });
@@ -242,6 +251,34 @@ class _RoadDamagePageState extends State<RoadDamagePage> {
   void dispose() {
     _pollSubscription?.cancel();
     super.dispose();
+  }
+
+  Future<void> _toggleHeatmap() async {
+    if (_showHeatmap) {
+      setState(() => _showHeatmap = false);
+      return;
+    }
+
+    final lat = _lastAnalysisLat ?? _currentLatitude ?? _cityCoordinates(widget.city)[0];
+    final lon = _lastAnalysisLon ?? _currentLongitude ?? _cityCoordinates(widget.city)[1];
+    setState(() {
+      _showHeatmap = true;
+      _heatmapLoading = true;
+    });
+    try {
+      final points = await _service.fetchDamageHeatmap(
+        latitude: lat,
+        longitude: lon,
+        radiusKm: _radiusKm.clamp(1.0, 10.0),
+      );
+      if (!mounted) return;
+      setState(() => _heatmapPoints = points);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _heatmapPoints = const []);
+    } finally {
+      if (mounted) setState(() => _heatmapLoading = false);
+    }
   }
 
   List<double> _cityCoordinates(String city) {
@@ -515,7 +552,13 @@ class _RoadDamagePageState extends State<RoadDamagePage> {
           Builder(builder: (context) {
             final jobStatus = _jobStatus!;
             if (jobStatus.status == 'done' && jobStatus.result != null) {
-              return _RoadDamageResultBody(result: jobStatus.result!);
+              return _RoadDamageResultBody(
+                result: jobStatus.result!,
+                showHeatmap: _showHeatmap,
+                heatmapLoading: _heatmapLoading,
+                heatmapPoints: _heatmapPoints,
+                onToggleHeatmap: _toggleHeatmap,
+              );
             }
             if (jobStatus.status == 'error' || jobStatus.status == 'not_found') {
               return ErrorState(
@@ -536,9 +579,19 @@ class _RoadDamagePageState extends State<RoadDamagePage> {
 }
 
 class _RoadDamageResultBody extends StatelessWidget {
-  const _RoadDamageResultBody({required this.result});
+  const _RoadDamageResultBody({
+    required this.result,
+    this.showHeatmap = false,
+    this.heatmapLoading = false,
+    this.heatmapPoints = const [],
+    this.onToggleHeatmap,
+  });
 
   final RoadDamageResult result;
+  final bool showHeatmap;
+  final bool heatmapLoading;
+  final List<List<double>> heatmapPoints;
+  final VoidCallback? onToggleHeatmap;
 
   void _showAnalysisSteps(BuildContext context) {
     showModalBottomSheet<void>(
@@ -607,7 +660,15 @@ class _RoadDamageResultBody extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
-        RoadLogisticsMapPanel(title: 'Lojistik Cizim Katmani', result: result, height: 500),
+        RoadLogisticsMapPanel(
+          title: 'Lojistik Cizim Katmani',
+          result: result,
+          height: 500,
+          showHeatmap: showHeatmap,
+          heatmapLoading: heatmapLoading,
+          heatmapPoints: heatmapPoints,
+          onToggleHeatmap: onToggleHeatmap,
+        ),
       ],
     );
   }

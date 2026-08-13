@@ -16,7 +16,22 @@ import {
   TeamClaim,
 } from "@/lib/api";
 import { interpolateTeamPosition } from "@/lib/teamPosition";
-import { Layers, Siren, FileText, Activity, Waves, Map as MapIcon, Tent, Clock, AlertTriangle, Users } from "lucide-react";
+import { generateDemoMapData } from "@/lib/demoMapData";
+import {
+  Layers,
+  Siren,
+  FileText,
+  Activity,
+  Waves,
+  Map as MapIcon,
+  Tent,
+  Clock,
+  AlertTriangle,
+  Users,
+  Flame,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 
 const TURKEY_CENTER: [number, number] = [38.9, 35.2];
 const DEBRIS_POLL_MS = 6000;
@@ -47,21 +62,25 @@ function timeAgo(iso: string | null): string {
 export default function UnifiedCommandMapPage() {
   const {
     sosAlerts,
+    setSosAlerts,
     sosUpdatedAt,
     nlpIncidents,
+    setNlpIncidents,
     riskLayer,
+    setRiskResult,
+    clearRiskResult,
     riskUpdatedAt,
     faultLinesUpdatedAt,
     setAllFaultLines,
     roadDamageAnalyses,
     addRoadDamageAnalysis,
+    setRoadDamageAnalyses,
     assemblyAreas,
     setAssemblyAreas,
     assemblyUpdatedAt,
     debrisReports,
     setDebrisReports,
     debrisUpdatedAt,
-    setSosAlerts,
     layerVisibility,
     toggleLayer,
   } = useMapLayers();
@@ -174,6 +193,33 @@ export default function UnifiedCommandMapPage() {
     const timer = setInterval(poll, ROAD_DAMAGE_POLL_MS);
     return () => clearInterval(timer);
   }, [addRoadDamageAnalysis, setAssemblyAreas]);
+
+  // Sunucusuz sunum/demo modu -- gercek verinin uzerine gecici olarak
+  // sahte-ama-tutarli ornek veri yukler (canli backend'e bagli olmadan
+  // katmanlarin nasil gorunecegini gostermek icin).
+  const [demoActive, setDemoActive] = useState(false);
+
+  const loadDemoData = () => {
+    const demo = generateDemoMapData();
+    setSosAlerts(demo.sosAlerts);
+    setNlpIncidents(demo.nlpIncidents);
+    setRiskResult(demo.riskResult);
+    setRoadDamageAnalyses(demo.roadDamageAnalyses);
+    setAssemblyAreas(demo.assemblyAreas);
+    (["sos", "nlp", "risk", "roadDamage", "assemblyAreas", "heatmap"] as LayerKey[]).forEach((key) => {
+      if (!layerVisibility[key]) toggleLayer(key);
+    });
+    setDemoActive(true);
+  };
+
+  const clearDemoData = () => {
+    setSosAlerts([]);
+    setNlpIncidents([]);
+    clearRiskResult();
+    setRoadDamageAnalyses([]);
+    setAssemblyAreas([]);
+    setDemoActive(false);
+  };
 
   // Lazy-fetch: Turkiye geneli fay hatti veri seti buyuk oldugu icin sadece
   // katman ilk kez acildiginda ve daha once cekilmediyse indirilir.
@@ -387,6 +433,37 @@ export default function UnifiedCommandMapPage() {
     return list;
   }, [layerVisibility, riskLayer, roadDamageAnalyses, teamClaims]);
 
+  // Combined heat layer: pools every feature currently on the map into one
+  // density surface. Reuses data already loaded by the other layers instead
+  // of a separate backend call — SOS/NLP/risk/road-damage points are already
+  // in context by the time this toggle gets switched on.
+  const heatPoints: [number, number, number][] = useMemo(() => {
+    if (!layerVisibility.heatmap) return [];
+    const points: [number, number, number][] = [];
+
+    sosAlerts.forEach((a) => points.push([a.latitude, a.longitude, 1.0]));
+
+    nlpIncidents.forEach((n) => points.push([n.marker.lat, n.marker.lng, 0.6]));
+
+    const quakeEvents = riskLayer.cityResult?.heatmapEvents ?? riskLayer.cityResult?.mapEvents ?? [];
+    quakeEvents.forEach((q) => points.push([q.latitude, q.longitude, Math.min(1, q.magnitude / 6)]));
+
+    roadDamageAnalyses.forEach((a) => {
+      a.blockedRoadSegments.forEach((seg) => {
+        if (seg.length === 0) return;
+        const mid = seg[Math.floor(seg.length / 2)];
+        points.push([mid[0], mid[1], 0.7]);
+      });
+    });
+
+    return points;
+  }, [layerVisibility.heatmap, sosAlerts, nlpIncidents, riskLayer, roadDamageAnalyses]);
+
+  const heatUpdatedAt = [sosUpdatedAt, riskUpdatedAt, roadDamageAnalyses.at(-1)?.createdAt ?? null]
+    .filter((v): v is string => !!v)
+    .sort()
+    .at(-1) ?? null;
+
   const layerDefs: LayerDef[] = [
     { key: "sos", label: "SOS İhbarları", icon: Siren, color: "text-red-400", count: sosAlerts.length, updatedAt: sosUpdatedAt },
     { key: "nlp", label: "NLP İhbar Konumları", icon: FileText, color: "text-cyan-400", count: nlpIncidents.length + nlpLocations.length, updatedAt: nlpLocations.at(-1)?.receivedAt ?? nlpIncidents.at(-1)?.createdAt ?? null },
@@ -403,6 +480,7 @@ export default function UnifiedCommandMapPage() {
       count: teamClaims.filter((c) => c.status === "active").length,
       updatedAt: teamClaims.at(-1)?.claimedAt ?? null,
     },
+    { key: "heatmap", label: "Birleşik Isı Haritası", icon: Flame, color: "text-rose-400", count: heatPoints.length, updatedAt: heatPoints.length > 0 ? heatUpdatedAt : null },
   ];
 
   return (
@@ -411,7 +489,7 @@ export default function UnifiedCommandMapPage() {
 
       <main className="flex-1 relative h-[calc(100vh-65px)] bg-[#0b0f17]">
         <div className="absolute inset-0">
-          <InteractiveMap center={TURKEY_CENTER} zoom={6} markers={markers} polylines={polylines} />
+          <InteractiveMap center={TURKEY_CENTER} zoom={6} markers={markers} polylines={polylines} heatData={heatPoints} />
         </div>
 
         {/* LAYER CONTROL PANEL */}
@@ -419,6 +497,30 @@ export default function UnifiedCommandMapPage() {
           <div className="flex items-center gap-2 font-bold text-slate-200 border-b border-slate-800 pb-2">
             <Layers className="w-4 h-4 text-blue-400" />
             <span>BİRLEŞİK KOMUTA HARİTASI</span>
+          </div>
+
+          <div className="space-y-1.5 pb-2 border-b border-slate-800">
+            <button
+              onClick={loadDemoData}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-purple-200 font-semibold transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {demoActive ? "Simülasyon Verisini Yenile" : "Simülasyon Verisi Yükle"}
+            </button>
+            {demoActive && (
+              <button
+                onClick={clearDemoData}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-900 text-slate-400 transition-colors"
+              >
+                <Trash2 className="w-3 h-3" />
+                Simülasyon Verisini Temizle
+              </button>
+            )}
+            {demoActive && (
+              <p className="text-[10px] text-purple-300/80 text-center pt-0.5">
+                Tüm katmanlar sahte/simüle veriyle dolduruldu — test amaçlıdır.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
