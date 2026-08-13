@@ -21,15 +21,27 @@ LOCAL_PBF_PATH = os.environ.get("QUAKEMIND_LOCAL_OSM_PBF", "D:/quakemind_osm_dat
 LOCAL_GRAPH_CACHE_DIR = Path(__file__).resolve().parents[1] / "data" / "osm_graph_cache"
 
 
-def _local_graph_cache_path(bounds) -> Path:
-    key = hashlib.sha1(",".join(f"{v:.5f}" for v in bounds).encode()).hexdigest()[:16]
+# pyrosm'un network_type sozlugu osmnx'ten farkli isimler kullanir ('driving'
+# vs 'drive' gibi) -- canli Overpass yolundaki (fetch_osm_road_graph) osmnx
+# stiliyle tutarli kalinsin diye burada tek bir yerde eslenir.
+_PYROSM_NETWORK_TYPE = {"drive": "driving", "walk": "walking", "bike": "cycling", "all": "all"}
+
+
+def _local_graph_cache_path(bounds, network_type: str = "drive") -> Path:
+    raw = ",".join(f"{v:.5f}" for v in bounds)
+    # 'drive' TARIHSEL varsayilandi -- mevcut on-isitilmis cache dosyalarinin
+    # (osm_graph_cache/*.pkl) gecersiz kalmamasi icin sadece 'drive' DISINDAKI
+    # network_type'lar anahtara eklenir, 'drive' anahtari eskisiyle birebir ayni kalir.
+    if network_type != "drive":
+        raw += f":{network_type}"
+    key = hashlib.sha1(raw.encode()).hexdigest()[:16]
     return LOCAL_GRAPH_CACHE_DIR / f"{key}.pkl"
 
 
-def load_local_graph_from_cache(bounds):
+def load_local_graph_from_cache(bounds, network_type: str = "drive"):
     """Sadece onceden pre-warm edilmis (bkz. warm_local_graph_cache.py)
     pickle dosyasini okur -- hicbir zaman canli PBF taramasi baslatmaz."""
-    path = _local_graph_cache_path(bounds)
+    path = _local_graph_cache_path(bounds, network_type)
     if not path.exists():
         return None
     try:
@@ -39,20 +51,21 @@ def load_local_graph_from_cache(bounds):
         return None
 
 
-def build_local_graph_from_pbf(bounds, cache: bool = True):
+def build_local_graph_from_pbf(bounds, network_type: str = "drive", cache: bool = True):
     """PBF'ten canli cikarim yapar (~230sn surebilir) -- SADECE onceden
     calistirilan pre-warm script'i icin, canli istek yolunda DEGIL."""
     from pyrosm import OSM
 
     west, south, east, north = bounds
     osm = OSM(LOCAL_PBF_PATH, bounding_box=[west, south, east, north])
-    nodes, edges = osm.get_network(network_type="driving", nodes=True)
+    pyrosm_type = _PYROSM_NETWORK_TYPE.get(network_type, network_type)
+    nodes, edges = osm.get_network(network_type=pyrosm_type, nodes=True)
     if nodes is None or edges is None or nodes.empty or edges.empty:
         raise RuntimeError("Yerel PBF'te bu bbox icin yol verisi bulunamadi.")
     G = osm.to_graph(nodes, edges, graph_type="networkx")
     if cache:
         LOCAL_GRAPH_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        with open(_local_graph_cache_path(bounds), "wb") as f:
+        with open(_local_graph_cache_path(bounds, network_type), "wb") as f:
             pickle.dump(G, f)
     return G
 
@@ -250,7 +263,7 @@ def fetch_osm_road_graph(bounds, network_type='drive'):
     SADECE soket connect/read fazini kapsiyor, DNS asamasini kapsamiyor, bu
     yuzden 4 ayna x 10sn = 40sn hedeflesek de gercekte 300sn+ surebiliyor
     (bkz. oturum notlari)."""
-    G = load_local_graph_from_cache(bounds)
+    G = load_local_graph_from_cache(bounds, network_type)
     if G is not None:
         print(f"OSMnx: yerel PBF cache'inden yuklendi ({G.number_of_nodes()} dugum), Overpass'a hic gidilmedi.")
         return G, None

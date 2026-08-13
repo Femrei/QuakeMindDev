@@ -872,8 +872,14 @@ def simulate_road_closures(req: SimulateClosuresRequest):
     from apps.road_damage.utils.network import simulate_random_closures
 
     bbox = bbox_from_center(req.latitude, req.longitude, req.radiusKm)
+    # network_type='walk' (varsayilan 'drive' yerine): CARTO taban haritasi
+    # yaya sokaklarini/ara yollari da ciziyor, 'drive' grafigi bunlari hic
+    # icermedigi icin haritada "bos" (renksiz) kalan bir suru yol goruluyordu.
+    # 'walk' arac + yaya gecebilen TUM yollari kapsadigi icin (arama-kurtarma
+    # ekipleri zaten hem araclarla hem yaya ilerliyor), haritadaki neredeyse
+    # her sokak acik/kapali olarak renklendirilir.
     G, safe_G, safe_edges, blocked_edges, error = simulate_random_closures(
-        bbox, closure_ratio=req.closureRatio, seed=req.seed,
+        bbox, closure_ratio=req.closureRatio, seed=req.seed, network_type='walk',
     )
     if G is None:
         raise HTTPException(status_code=503, detail=f"Yol grafigi alinamadi: {error}")
