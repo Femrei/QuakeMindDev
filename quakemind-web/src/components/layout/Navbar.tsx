@@ -4,13 +4,15 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useMapLayers } from "@/context/MapLayersContext";
 import { fetchServerStatus } from "@/lib/api";
-import { Bell, ShieldAlert, Activity, User, LogOut, CheckCircle2, AlertCircle } from "lucide-react";
+import { Bell, ShieldAlert, Activity, User, LogOut, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, role, setRole, logout, notificationsCount } = useAuth();
+  const { demoActive, activateDemo, deactivateDemo } = useMapLayers();
   const [serverOk, setServerOk] = useState<boolean | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -73,6 +75,24 @@ export default function Navbar() {
               </span>
             )}
           </div>
+
+          {/* Global Simülasyon / Örnek Veri Butonu -- tetiklendiğinde tüm
+              sayfalar (SOS, NLP, Risk, Yol Hasarı, Komuta Haritası) aynı
+              sahte veri setini paylaşır, gerçek sistemmiş gibi davranır. */}
+          <button
+            onClick={demoActive ? deactivateDemo : activateDemo}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border shrink-0 transition-colors ${
+              demoActive
+                ? "bg-purple-600/20 text-purple-200 border-purple-500/60"
+                : "bg-purple-500/10 text-purple-200 border-purple-500/40 hover:bg-purple-500/20"
+            }`}
+            title="Tüm sayfaları etkileyen örnek/simülasyon verisi"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline">
+              {demoActive ? "Simülasyonu Kapat" : "Örnek Verilerle Simüle Et"}
+            </span>
+          </button>
 
           {/* Role Switcher Button */}
           <button

@@ -8,6 +8,7 @@ import type {
   RiskResponse,
   SOSAlert,
 } from "@/lib/api";
+import { generateDemoMapData } from "@/lib/demoMapData";
 
 export type LayerKey =
   | "sos"
@@ -66,6 +67,13 @@ interface MapLayersContextType {
 
   layerVisibility: Record<LayerKey, boolean>;
   toggleLayer: (key: LayerKey) => void;
+
+  // Global "gerçek sistemmiş gibi çalışan" simülasyon modu: tek bir yerden
+  // (Navbar) tetiklenip her sayfayı (SOS, NLP, Risk, Yol Hasarı, Komuta
+  // Merkezi haritası) aynı sahte veri setiyle doldurur.
+  demoActive: boolean;
+  activateDemo: () => void;
+  deactivateDemo: () => void;
 }
 
 const DEFAULT_VISIBILITY: Record<LayerKey, boolean> = {
@@ -96,6 +104,7 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
   const [assemblyUpdatedAt, setAssemblyUpdatedAt] = useState<string | null>(null);
 
   const [layerVisibility, setLayerVisibility] = useState<Record<LayerKey, boolean>>(DEFAULT_VISIBILITY);
+  const [demoActive, setDemoActive] = useState(false);
 
   const setSosAlerts = useCallback((alerts: SOSAlert[]) => {
     setSosAlertsState(alerts);
@@ -148,6 +157,37 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
     setLayerVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
 
+  // Tek tuşla tüm katmanları (SOS, NLP, risk, yol hasarı, toplanma alanları)
+  // aynı senaryoya ait sahte veriyle doldurur; her ekran bu context'ten
+  // okuduğu için hepsi eş zamanlı güncellenir.
+  const activateDemo = useCallback(() => {
+    const demo = generateDemoMapData();
+    setSosAlerts(demo.sosAlerts);
+    setNlpIncidents(demo.nlpIncidents);
+    setRiskResult(demo.riskResult);
+    setRoadDamageAnalyses(demo.roadDamageAnalyses);
+    setAssemblyAreas(demo.assemblyAreas);
+    setLayerVisibility({
+      sos: true,
+      nlp: true,
+      risk: true,
+      faultLines: true,
+      roadDamage: true,
+      assemblyAreas: true,
+      heatmap: true,
+    });
+    setDemoActive(true);
+  }, [setSosAlerts, setNlpIncidents, setRiskResult, setRoadDamageAnalyses, setAssemblyAreas]);
+
+  const deactivateDemo = useCallback(() => {
+    setSosAlerts([]);
+    setNlpIncidents([]);
+    clearRiskResult();
+    setRoadDamageAnalyses([]);
+    setAssemblyAreas([]);
+    setDemoActive(false);
+  }, [setSosAlerts, setNlpIncidents, clearRiskResult, setRoadDamageAnalyses, setAssemblyAreas]);
+
   // Bundling every layer's state into one object literal means any single
   // layer updating (e.g. one new SOS alert) would otherwise hand every
   // consumer a new context reference and force an app-wide re-render fan-out,
@@ -174,6 +214,9 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
       assemblyUpdatedAt,
       layerVisibility,
       toggleLayer,
+      demoActive,
+      activateDemo,
+      deactivateDemo,
     }),
     [
       sosAlerts,
@@ -196,6 +239,9 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
       assemblyUpdatedAt,
       layerVisibility,
       toggleLayer,
+      demoActive,
+      activateDemo,
+      deactivateDemo,
     ]
   );
 

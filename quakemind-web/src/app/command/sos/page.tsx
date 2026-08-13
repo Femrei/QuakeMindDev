@@ -9,12 +9,18 @@ import { useMapLayers } from "@/context/MapLayersContext";
 import { Siren, ShieldAlert, CheckCircle2, Clock, UserCheck, Plus, Filter } from "lucide-react";
 
 export default function SOSDispatchPage() {
-  const { setSosAlerts } = useMapLayers();
+  const { setSosAlerts, sosAlerts: contextSosAlerts, demoActive } = useMapLayers();
   const [alerts, setAlerts] = useState<SOSAlert[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<SOSAlert | null>(null);
   const [filter, setFilter] = useState<"ALL" | "OPEN" | "EN_ROUTE" | "RESOLVED">("ALL");
 
+  // Global simülasyon aktifse Navbar'ın ürettiği ortak veriyi kullan; değilse
+  // gerçek backend'den çek (başarısız olursa yerel örnek veriye düş).
   useEffect(() => {
+    if (demoActive) {
+      setAlerts(contextSosAlerts);
+      return;
+    }
     getSOSAlerts()
       .then((data) => setAlerts(data.alerts))
       .catch(() => {
@@ -48,7 +54,8 @@ export default function SOSDispatchPage() {
           },
         ]);
       });
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoActive]);
 
   useEffect(() => {
     setSosAlerts(alerts);
@@ -90,6 +97,11 @@ export default function SOSDispatchPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {demoActive && (
+              <span className="px-3 py-1.5 rounded-xl text-[11px] font-bold bg-purple-500/10 text-purple-200 border border-purple-500/40">
+                Simülasyon Modu
+              </span>
+            )}
             {(["ALL", "OPEN", "EN_ROUTE", "RESOLVED"] as const).map((st) => (
               <button
                 key={st}

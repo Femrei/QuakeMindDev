@@ -20,6 +20,7 @@ import {
   AssemblyResponse,
 } from "@/lib/api";
 import { useMapLayers } from "@/context/MapLayersContext";
+import { generateDemoRoadDamageResult, generateDemoHeatmapPoints } from "@/lib/demoRoadDamageData";
 import {
   Map as MapIcon,
   Sliders,
@@ -34,6 +35,7 @@ import {
   LocateFixed,
   Tent,
   RefreshCw,
+  Sparkles,
 } from "lucide-react";
 
 const CITIES = {
@@ -96,7 +98,7 @@ export default function RoadDamagePage() {
 }
 
 function DamageAnalysisTab() {
-  const { addRoadDamageAnalysis } = useMapLayers();
+  const { addRoadDamageAnalysis, demoActive: globalDemoActive } = useMapLayers();
   const [selectedCity, setSelectedCity] = useState<keyof typeof CITIES>("Antakya (Hatay)");
   const [source, setSource] = useState("google");
   const [booster, setBooster] = useState(3.5);
@@ -112,6 +114,7 @@ function DamageAnalysisTab() {
   const [result, setResult] = useState<RoadDamageResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<RoadDamageProgress | null>(null);
+  const [demoActive, setDemoActive] = useState(false);
   const analysisAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -167,13 +170,13 @@ function DamageAnalysisTab() {
       : cityCoords;
 
   useEffect(() => {
-    if (!showHeatmap) return;
+    if (!showHeatmap || demoActive) return;
     setHeatmapLoading(true);
     getDamageHeatmap(analysisCenter.lat, analysisCenter.lng, 5.0)
       .then((data) => setHeatmapPoints(data.points))
       .catch(() => setHeatmapPoints([]))
       .finally(() => setHeatmapLoading(false));
-  }, [showHeatmap, analysisCenter.lat, analysisCenter.lng]);
+  }, [showHeatmap, demoActive, analysisCenter.lat, analysisCenter.lng]);
 
   // Live map preview of the currently selected satellite source, so the map
   // updates immediately when picking Esri/OpenAerial — not only after a full
@@ -230,6 +233,7 @@ function DamageAnalysisTab() {
     setLoading(true);
     setError(null);
     setProgress({ percent: 0, message: "Analiz sıraya alınıyor..." });
+    setDemoActive(false);
     resetRouteSelection();
     setPickingRoute(false);
     try {
@@ -272,6 +276,46 @@ function DamageAnalysisTab() {
       }
     }
   };
+
+  // Örnek verilerle sahte bir analiz sonucu üretir: gerçek backend/Segformer
+  // çağrısı yapmadan, sonuç kartını/haritayı gerçek bir simülasyon çıktısı
+  // gibi doldurur. Devam eden gerçek bir analiz varsa iptal eder.
+  const handleLoadDemo = () => {
+    analysisAbortRef.current?.abort();
+    setLoading(false);
+    setError(null);
+    setProgress(null);
+    resetRouteSelection();
+    setPickingRoute(false);
+
+    const demoResult = generateDemoRoadDamageResult(selectedCity, cityCoords);
+    setResult(demoResult);
+    addRoadDamageAnalysis({
+      analysisId: demoResult.analysisId,
+      city: demoResult.city,
+      safeRoadSegments: demoResult.safeRoadSegments,
+      blockedRoadSegments: demoResult.blockedRoadSegments,
+      bounds: demoResult.bounds,
+    });
+    setHeatmapPoints(generateDemoHeatmapPoints(cityCoords));
+    setShowHeatmap(true);
+    setDemoActive(true);
+  };
+
+  // Navbar'daki "Örnek Verilerle Simüle Et" butonu tüm uygulama için tek
+  // kaynak: burada tetiklenince (ya da şehir değişince) bu sayfa da otomatik
+  // olarak aynı senaryodan bir sonuç üretir. Kapatılınca sahte sonucu temizler.
+  useEffect(() => {
+    if (globalDemoActive) {
+      handleLoadDemo();
+    } else if (demoActive) {
+      setResult(null);
+      setShowHeatmap(false);
+      setHeatmapPoints([]);
+      setDemoActive(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalDemoActive, selectedCity]);
 
   const handleMapClick = (lat: number, lng: number) => {
     if (pickingRoute) {
@@ -387,6 +431,13 @@ function DamageAnalysisTab() {
               <Sliders className="w-4 h-4" /> PARAMETRE AYARLARI
             </span>
           </div>
+
+          {demoActive && (
+            <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-purple-500/40 bg-purple-500/10 text-purple-200 text-[11px] font-semibold">
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              Simülasyon modu aktif — üstteki panelden kapatabilirsiniz.
+            </div>
+          )}
 
           {/* Selection Mode */}
           <div>

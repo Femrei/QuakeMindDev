@@ -114,11 +114,24 @@ export default function EarthquakeRiskPage() {
 }
 
 function RiskAnalysisTab() {
-  const { setRiskResult, setAllFaultLines: publishFaultLines } = useMapLayers();
+  const { setRiskResult, setAllFaultLines: publishFaultLines, riskLayer, demoActive } = useMapLayers();
   const [selectedCity, setSelectedCity] = useState("Hatay");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RiskResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Global simülasyon aktifken bu ekran da Navbar'ın ürettiği ortak risk
+  // sonucunu gösterir; kapatılınca (yalnızca gösterdiği hâlâ o demo sonucuysa)
+  // temizler, kullanıcının kendi manuel hesapladığı bir sonucu silmez.
+  useEffect(() => {
+    if (demoActive && riskLayer.cityResult) {
+      setResult(riskLayer.cityResult);
+      setSelectedCity(riskLayer.cityResult.city);
+    } else if (!demoActive && result?.source === "DEMO_SIMULATION") {
+      setResult(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoActive, riskLayer.cityResult]);
 
   // Turkiye genelindeki tum fay hatlari — secilen sehirden bagimsiz, harita her
   // zaman gosterir (eskiden sadece 6 segmentlik kaba bir yaklasik veri hardcode
@@ -186,7 +199,12 @@ function RiskAnalysisTab() {
 
   return (
     <>
-      <div className="flex justify-end -mt-2">
+      <div className="flex justify-end items-center gap-2 -mt-2">
+        {demoActive && (
+          <span className="text-[10px] text-purple-300 font-bold bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/40">
+            Simülasyon Modu
+          </span>
+        )}
         <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
           {faultLinesLoading ? "Fay hatları yükleniyor..." : `${allFaultLines.length} fay segmenti (Türkiye geneli)`}
         </span>

@@ -5,7 +5,6 @@ import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem, MapPolylineItem } from "@/components/map/InteractiveMap";
 import { useMapLayers, LayerKey } from "@/context/MapLayersContext";
 import { getFaultLines } from "@/lib/api";
-import { generateDemoMapData } from "@/lib/demoMapData";
 import { Layers, Siren, FileText, Activity, Waves, Map as MapIcon, Tent, Clock, Flame, Sparkles, Trash2 } from "lucide-react";
 
 const TURKEY_CENTER: [number, number] = [38.9, 35.2];
@@ -32,49 +31,23 @@ function timeAgo(iso: string | null): string {
 export default function UnifiedCommandMapPage() {
   const {
     sosAlerts,
-    setSosAlerts,
     sosUpdatedAt,
     nlpIncidents,
-    setNlpIncidents,
     riskLayer,
-    setRiskResult,
-    clearRiskResult,
     riskUpdatedAt,
     faultLinesUpdatedAt,
     setAllFaultLines,
     roadDamageAnalyses,
-    setRoadDamageAnalyses,
     assemblyAreas,
-    setAssemblyAreas,
     assemblyUpdatedAt,
     layerVisibility,
     toggleLayer,
+    demoActive,
+    activateDemo,
+    deactivateDemo,
   } = useMapLayers();
 
   const [faultLinesLoading, setFaultLinesLoading] = useState(false);
-  const [demoActive, setDemoActive] = useState(false);
-
-  const loadDemoData = () => {
-    const demo = generateDemoMapData();
-    setSosAlerts(demo.sosAlerts);
-    setNlpIncidents(demo.nlpIncidents);
-    setRiskResult(demo.riskResult);
-    setRoadDamageAnalyses(demo.roadDamageAnalyses);
-    setAssemblyAreas(demo.assemblyAreas);
-    (["sos", "nlp", "risk", "roadDamage", "assemblyAreas", "heatmap"] as LayerKey[]).forEach((key) => {
-      if (!layerVisibility[key]) toggleLayer(key);
-    });
-    setDemoActive(true);
-  };
-
-  const clearDemoData = () => {
-    setSosAlerts([]);
-    setNlpIncidents([]);
-    clearRiskResult();
-    setRoadDamageAnalyses([]);
-    setAssemblyAreas([]);
-    setDemoActive(false);
-  };
 
   // Lazy-fetch: Turkiye geneli fay hatti veri seti buyuk oldugu icin sadece
   // katman ilk kez acildiginda ve daha once cekilmediyse indirilir.
@@ -273,7 +246,7 @@ export default function UnifiedCommandMapPage() {
 
           <div className="space-y-1.5 pb-2 border-b border-slate-800">
             <button
-              onClick={loadDemoData}
+              onClick={activateDemo}
               className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-purple-200 font-semibold transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -281,7 +254,7 @@ export default function UnifiedCommandMapPage() {
             </button>
             {demoActive && (
               <button
-                onClick={clearDemoData}
+                onClick={deactivateDemo}
                 className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-900 text-slate-400 transition-colors"
               >
                 <Trash2 className="w-3 h-3" />
