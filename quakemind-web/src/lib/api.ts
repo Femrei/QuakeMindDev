@@ -487,6 +487,86 @@ export async function getSOSAlerts(): Promise<{ alerts: SOSAlert[]; totalAlerts:
   return res.json();
 }
 
+export interface TeamClaim {
+  targetId: string;
+  teamId: string;
+  targetType: string;
+  lat: number;
+  lon: number;
+  status: "active" | "completed";
+  claimedAt: string;
+  routeCoords?: [number, number][];
+  distanceMeters?: number;
+  assumedSpeedKmh?: number;
+  startedAt?: string;
+}
+
+export async function getTeamClaims(): Promise<{ claims: TeamClaim[]; totalClaims: number }> {
+  const res = await fetch(`${API_BASE_URL}/api/team/claims`);
+  if (!res.ok) throw new Error("Ekip claim'leri çekilemedi.");
+  return res.json();
+}
+
+export async function claimTeamTarget(payload: {
+  teamId: string;
+  targetId: string;
+  targetType: string;
+  lat: number;
+  lon: number;
+}): Promise<TeamClaim> {
+  const res = await fetch(`${API_BASE_URL}/api/team/claim`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "Ekip ataması başarısız.");
+  }
+  return res.json();
+}
+
+export async function releaseTeamClaim(targetId: string): Promise<TeamClaim> {
+  const res = await fetch(`${API_BASE_URL}/api/team/claim/${targetId}/release`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "Ekip görevi kapatılamadı.");
+  }
+  return res.json();
+}
+
+export async function updateSOSAlertStatus(
+  id: string,
+  status: "OPEN" | "EN_ROUTE" | "RESOLVED"
+): Promise<SOSAlert> {
+  const res = await fetch(`${API_BASE_URL}/api/sos/alert/${id}/status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "SOS durumu güncellenemedi.");
+  }
+  return res.json();
+}
+
+export interface RecentRoadDamageAnalysis {
+  analysisId: string;
+  createdAt: number;
+  bounds: { west: number; south: number; east: number; north: number } | null;
+  blockedRoadSegments: [number, number][][];
+  safeRoadSegments: [number, number][][];
+}
+
+export async function getRecentRoadDamage(minutes: number = 60): Promise<{ analyses: RecentRoadDamageAnalysis[] }> {
+  const res = await fetch(`${API_BASE_URL}/api/road_damage/recent?minutes=${minutes}`);
+  if (!res.ok) throw new Error("Güncel yol hasarı analizleri çekilemedi.");
+  return res.json();
+}
+
 export interface CameraDetection {
   label: string;
   confidence: number;
@@ -505,13 +585,52 @@ export interface CameraAnalysisResponse {
   timestamp: string;
 }
 
-export async function analyzeCameraFrame(modelType: string = "hybrid", imageBase64?: string): Promise<CameraAnalysisResponse> {
+export async function analyzeCameraFrame(
+  modelType: string = "hybrid",
+  imageBase64?: string,
+  latitude?: number,
+  longitude?: number
+): Promise<CameraAnalysisResponse> {
   const res = await fetch(`${API_BASE_URL}/api/camera/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ modelType, imageBase64 }),
+    body: JSON.stringify({ modelType, imageBase64, latitude, longitude }),
   });
   if (!res.ok) throw new Error("Kamera analizi başarısız.");
+  return res.json();
+}
+
+export interface DebrisReport {
+  id: string;
+  latitude: number;
+  longitude: number;
+  status: string;
+  severity: "CRITICAL" | "SAFE";
+  detectionCount: number;
+  topLabel: string | null;
+  receivedAt: string;
+}
+
+export async function getDebrisReports(): Promise<{ reports: DebrisReport[]; totalReports: number }> {
+  const res = await fetch(`${API_BASE_URL}/api/camera/reports`);
+  if (!res.ok) throw new Error("Enkaz/çatlak raporları çekilemedi.");
+  return res.json();
+}
+
+export interface NLPLocation {
+  id: string;
+  latitude: number;
+  longitude: number;
+  konumMetin: string | null;
+  kategori: string | null;
+  aciliyet: number | null;
+  sourceText: string;
+  receivedAt: string;
+}
+
+export async function getNlpLocations(): Promise<{ locations: NLPLocation[]; totalLocations: number }> {
+  const res = await fetch(`${API_BASE_URL}/api/nlp/locations`);
+  if (!res.ok) throw new Error("NLP konum çıkarımları çekilemedi.");
   return res.json();
 }
 
@@ -530,6 +649,7 @@ export interface EvacuationAssemblyRecord {
   source?: string;
   capacity?: string;
   status?: string;
+  dist_m?: number;
 }
 
 export interface EvacuationAssemblyResponse {

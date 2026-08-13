@@ -15,3 +15,13 @@ __pycache__/
 *.onnx
 *.safetensors
 *.tflite
+
+# Claude Code tool-local config, not shared project state
+.claude/
+
+# Regenerable OSM graph cache (rebuilt automatically on first request)
+QuakeMindBackend/apps/road_damage/data/osm_graph_cache/
+
+# Large manually-downloaded third-party ground-truth data (Copernicus EMS) --
+# too large for git history, user re-downloads from the Copernicus portal
+QuakeMindBackend/benchmark/data/copernicus/

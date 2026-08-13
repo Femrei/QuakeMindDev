@@ -3,16 +3,37 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem } from "@/components/map/InteractiveMap";
-import { getSOSAlerts, sendSOSAlert, SOSAlert } from "@/lib/api";
+import {
+  getSOSAlerts,
+  sendSOSAlert,
+  SOSAlert,
+  getTeamClaims,
+  claimTeamTarget,
+  releaseTeamClaim,
+  updateSOSAlertStatus,
+  TeamClaim,
+} from "@/lib/api";
 import { deriveUrgencyTier, urgencyLabel, urgencyBadgeClass, urgencyTextClass } from "@/lib/urgency";
 import { useMapLayers } from "@/context/MapLayersContext";
 import { Siren, ShieldAlert, CheckCircle2, Clock, UserCheck, Plus, Filter } from "lucide-react";
+
+const DISPATCH_POLL_MS = 4000;
 
 export default function SOSDispatchPage() {
   const { setSosAlerts } = useMapLayers();
   const [alerts, setAlerts] = useState<SOSAlert[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<SOSAlert | null>(null);
   const [filter, setFilter] = useState<"ALL" | "OPEN" | "EN_ROUTE" | "RESOLVED">("ALL");
+  const [teamClaims, setTeamClaims] = useState<TeamClaim[]>([]);
+  const [assignTeamId, setAssignTeamId] = useState("");
+  const [assigning, setAssigning] = useState(false);
+  const [assignError, setAssignError] = useState<string | null>(null);
+
+  const refreshClaims = () => {
+    getTeamClaims()
+      .then((data) => setTeamClaims(data.claims))
+      .catch(() => {});
+  };
 
   useEffect(() => {
     getSOSAlerts()
@@ -54,12 +75,67 @@ export default function SOSDispatchPage() {
     setSosAlerts(alerts);
   }, [alerts, setSosAlerts]);
 
+  useEffect(() => {
+    refreshClaims();
+    const timer = setInterval(() => {
+      getSOSAlerts()
+        .then((data) => setAlerts(data.alerts))
+        .catch(() => {});
+      refreshClaims();
+    }, DISPATCH_POLL_MS);
+    return () => clearInterval(timer);
+  }, []);
+
   const updateStatus = (id: string, newStatus: "OPEN" | "EN_ROUTE" | "RESOLVED") => {
     setAlerts((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
     );
     if (selectedAlert && selectedAlert.id === id) {
       setSelectedAlert({ ...selectedAlert, status: newStatus });
+    }
+    updateSOSAlertStatus(id, newStatus).catch(() => {
+      // sunucuya yazilamadi -- bir sonraki poll gercek durumu geri getirir
+    });
+  };
+
+  const claimForAlert = (id: string): TeamClaim | undefined =>
+    teamClaims.find((c) => c.targetId === id && c.status === "active");
+
+  const knownTeamIds = Array.from(new Set(teamClaims.map((c) => c.teamId))).sort();
+
+  const assignTeam = async (alert: SOSAlert) => {
+    const teamId = assignTeamId.trim();
+    if (!teamId) {
+      setAssignError("Ekip kimliği girin (örn. EKIP-01).");
+      return;
+    }
+    setAssigning(true);
+    setAssignError(null);
+    try {
+      await claimTeamTarget({
+        teamId,
+        targetId: alert.id,
+        targetType: "sos",
+        lat: alert.latitude,
+        lon: alert.longitude,
+      });
+      refreshClaims();
+      updateStatus(alert.id, "EN_ROUTE");
+      setAssignTeamId("");
+    } catch (err) {
+      setAssignError(err instanceof Error ? err.message : "Ekip ataması başarısız.");
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const completeAssignment = async (alert: SOSAlert) => {
+    try {
+      await releaseTeamClaim(alert.id);
+      refreshClaims();
+      updateStatus(alert.id, "RESOLVED");
+    } catch {
+      // görev zaten kapanmış olabilir -- bir sonraki poll tutarli hali getirir
     }
   };
 
@@ -69,6 +145,7 @@ export default function SOSDispatchPage() {
     id: a.id,
     lat: a.latitude,
     lng: a.longitude,
+    claimStatus: claimForAlert(a.id) ? "active" : a.status === "RESOLVED" ? "completed" : "unclaimed",
     title: a.message || "SOS İhbarı",
     type: "sos",
     popupText: `Durum: ${a.status || "AÇIK"}`,
@@ -138,6 +215,11 @@ export default function SOSDispatchPage() {
                   <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
                     <span className="text-[11px] text-slate-400">
                       Konum: {alert.latitude.toFixed(3)}, {alert.longitude.toFixed(3)}
+                      {claimForAlert(alert.id) && (
+                        <span className="ml-2 text-amber-400 font-semibold">
+                          · {claimForAlert(alert.id)!.teamId}
+                        </span>
+                      )}
                     </span>
                     <div className="flex items-center gap-1">
                       {alert.status === "OPEN" && (
@@ -221,6 +303,58 @@ export default function SOSDispatchPage() {
                       Kurtarıldı / Çözüldü
                     </button>
                   </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-800 space-y-2">
+                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5" /> Ekip Ataması
+                  </span>
+                  {claimForAlert(selectedAlert.id) ? (
+                    <div className="flex items-center justify-between gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2">
+                      <span className="text-xs text-amber-300 font-semibold">
+                        {claimForAlert(selectedAlert.id)!.teamId} ekibi yolda
+                      </span>
+                      <button
+                        onClick={() => completeAssignment(selectedAlert)}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all"
+                      >
+                        Görevi Tamamla
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={assignTeamId}
+                          onChange={(e) => setAssignTeamId(e.target.value)}
+                          placeholder="Ekip kimliği (örn. EKIP-01)"
+                          className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-red-500"
+                        />
+                        <button
+                          onClick={() => assignTeam(selectedAlert)}
+                          disabled={assigning}
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white transition-all"
+                        >
+                          Ekip Ata
+                        </button>
+                      </div>
+                      {knownTeamIds.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {knownTeamIds.map((tid) => (
+                            <button
+                              key={tid}
+                              onClick={() => setAssignTeamId(tid)}
+                              className="px-2 py-1 rounded-lg text-[10px] font-bold glass-button text-slate-400 hover:text-slate-200"
+                            >
+                              {tid}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {assignError && <p className="text-[10px] text-red-400">{assignError}</p>}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (

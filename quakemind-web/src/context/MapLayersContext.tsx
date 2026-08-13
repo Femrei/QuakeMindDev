@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext, useMemo, useState } from
 import type { MapMarkerItem } from "@/components/map/LeafletContainer";
 import type {
   AssemblyRecord,
+  DebrisReport,
   RiskFaultLine,
   RiskResponse,
   SOSAlert,
@@ -15,7 +16,9 @@ export type LayerKey =
   | "risk"
   | "faultLines"
   | "roadDamage"
-  | "assemblyAreas";
+  | "assemblyAreas"
+  | "debris"
+  | "team";
 
 export interface NlpIncident {
   id: string;
@@ -57,8 +60,12 @@ interface MapLayersContextType {
   addRoadDamageAnalysis: (analysis: Omit<RoadDamageAnalysisLayer, "createdAt">) => void;
 
   assemblyAreas: AssemblyRecord[];
-  setAssemblyAreas: (areas: AssemblyRecord[]) => void;
+  setAssemblyAreas: (areas: AssemblyRecord[], sourceId?: string) => void;
   assemblyUpdatedAt: string | null;
+
+  debrisReports: DebrisReport[];
+  setDebrisReports: (reports: DebrisReport[]) => void;
+  debrisUpdatedAt: string | null;
 
   layerVisibility: Record<LayerKey, boolean>;
   toggleLayer: (key: LayerKey) => void;
@@ -71,6 +78,8 @@ const DEFAULT_VISIBILITY: Record<LayerKey, boolean> = {
   faultLines: false,
   roadDamage: false,
   assemblyAreas: false,
+  debris: true,
+  team: true,
 };
 
 const MapLayersContext = createContext<MapLayersContextType | undefined>(undefined);
@@ -87,8 +96,19 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
 
   const [roadDamageAnalyses, setRoadDamageAnalyses] = useState<RoadDamageAnalysisLayer[]>([]);
 
-  const [assemblyAreas, setAssemblyAreasState] = useState<AssemblyRecord[]>([]);
+  // Coklu sehir/analiz kaynagindan gelen toplanma alanlarinin birbirini
+  // silmemesi icin kaynak (analysisId veya "manual") bazinda saklanir, harita
+  // icin hepsi birlestirilir -- boylece Kahramanmaras'in verisi Hatay'in
+  // verisi gelince kaybolmaz.
+  const [assemblyAreasBySource, setAssemblyAreasBySource] = useState<Record<string, AssemblyRecord[]>>({});
   const [assemblyUpdatedAt, setAssemblyUpdatedAt] = useState<string | null>(null);
+  const assemblyAreas = useMemo(
+    () => Object.values(assemblyAreasBySource).flat(),
+    [assemblyAreasBySource]
+  );
+
+  const [debrisReports, setDebrisReportsState] = useState<DebrisReport[]>([]);
+  const [debrisUpdatedAt, setDebrisUpdatedAt] = useState<string | null>(null);
 
   const [layerVisibility, setLayerVisibility] = useState<Record<LayerKey, boolean>>(DEFAULT_VISIBILITY);
 
@@ -121,9 +141,14 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
     ]);
   }, []);
 
-  const setAssemblyAreas = useCallback((areas: AssemblyRecord[]) => {
-    setAssemblyAreasState(areas);
+  const setAssemblyAreas = useCallback((areas: AssemblyRecord[], sourceId: string = "manual") => {
+    setAssemblyAreasBySource((prev) => ({ ...prev, [sourceId]: areas }));
     setAssemblyUpdatedAt(new Date().toISOString());
+  }, []);
+
+  const setDebrisReports = useCallback((reports: DebrisReport[]) => {
+    setDebrisReportsState(reports);
+    setDebrisUpdatedAt(new Date().toISOString());
   }, []);
 
   const toggleLayer = useCallback((key: LayerKey) => {
@@ -151,6 +176,9 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
       assemblyAreas,
       setAssemblyAreas,
       assemblyUpdatedAt,
+      debrisReports,
+      setDebrisReports,
+      debrisUpdatedAt,
       layerVisibility,
       toggleLayer,
     }),
@@ -170,6 +198,9 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
       assemblyAreas,
       setAssemblyAreas,
       assemblyUpdatedAt,
+      debrisReports,
+      setDebrisReports,
+      debrisUpdatedAt,
       layerVisibility,
       toggleLayer,
     ]

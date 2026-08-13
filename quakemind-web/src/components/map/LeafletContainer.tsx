@@ -42,18 +42,78 @@ const blueIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+// Bir ekip zaten yola cikmis (aktif claim) bir SOS ihbarini gostermek icin --
+// digerlerinden (kirmizi=bekliyor, yesil=tamamlandi) ayirt edilsin diye.
+const amberIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
 export interface MapMarkerItem {
   id: string;
   lat: number;
   lng: number;
   title: string;
-  type?: "sos" | "shelter" | "quake" | "damage";
+  type?: "sos" | "shelter" | "quake" | "damage" | "team" | "team-start" | "debris" | "nlp";
   popupText?: string;
   magnitude?: number;
+  /** "team" marker only: renders a different color/icon per role. */
+  teamRole?: "arama-kurtarma" | "lojistik-ilk-yardim";
+  /** "sos" marker only: bir ekip atanmis mi -- kirmizi (bekliyor) / turuncu
+   * (ekip yolda) / yesil (tamamlandi) ayrimi icin. */
+  claimStatus?: "unclaimed" | "active" | "completed";
   /** Optional deep-link shown in the popup, e.g. "Detaya git" back to the module that produced this marker. */
   linkHref?: string;
   linkLabel?: string;
 }
+
+function teamDivIcon(role?: string) {
+  const color = role === "lojistik-ilk-yardim" ? "#3b82f6" : "#f59e0b";
+  return L.divIcon({
+    className: "",
+    html: `<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 8px ${color};"></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
+}
+
+// Ekibin yola CIKTIGI nokta (itfaiye/hastane vb.) -- hareketli daire ikondan
+// (teamDivIcon, o anki konum) bilincli olarak ayirt edilsin diye sabit bir
+// bayrak sekli; ekip harekete gectikten sonra bile haritada kalir.
+function teamStartDivIcon(role?: string) {
+  const color = role === "lojistik-ilk-yardim" ? "#3b82f6" : "#f59e0b";
+  return L.divIcon({
+    className: "",
+    html: `<div style="width:0;height:0;border-left:2px solid ${color};position:relative;"><div style="position:absolute;left:2px;top:-1px;width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:9px solid ${color};filter:drop-shadow(0 0 3px ${color});"></div><div style="position:absolute;left:0;top:9px;width:6px;height:3px;background:#0b0f17;border-radius:1px;"></div></div>`,
+    iconSize: [11, 14],
+    iconAnchor: [1, 13],
+  });
+}
+
+// Kamera modelleri (catlak/bina) uzerinden tespit edilip haritaya "enkaz"
+// olarak isaretlenen noktalar icin -- SOS/ekip pinlerinden ayirt edilsin diye
+// ucgen uyari isareti.
+const debrisIcon = L.divIcon({
+  className: "",
+  html: `<div style="width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:16px solid #fb923c;filter:drop-shadow(0 0 4px rgba(251,146,60,0.9));"></div>`,
+  iconSize: [18, 16],
+  iconAnchor: [9, 14],
+});
+
+// NLP'nin serbest metinden CIKARDIGI konum -- afetzedenin kendi GPS'inden
+// gelen SOS pin'inden (kirmizi) bilincli olarak ayirt edilsin diye baklava
+// (elmas) seklinde mor bir isaret. Ikisi ayni afetzedeye ait olsa bile farkli
+// kaynaklardan gelir (biri cihaz GPS'i, digeri metin analizi tahmini).
+const nlpIcon = L.divIcon({
+  className: "",
+  html: `<div style="width:14px;height:14px;background:#a855f7;border:2px solid #fff;transform:rotate(45deg);box-shadow:0 0 8px rgba(168,85,247,0.9);"></div>`,
+  iconSize: [14, 14],
+  iconAnchor: [7, 7],
+});
 
 export interface MapPolylineItem {
   id: string;
@@ -78,6 +138,10 @@ interface LeafletContainerProps {
   enableDraw?: boolean;
   onBoundsSelected?: (bbox: [number, number, number, number]) => void;
   onDrawCleared?: () => void;
+  /** Verilince center/zoom yerine bu noktalarin hepsini gorecek sekilde
+   * otomatik zum yapar -- sabit bir bolgeye (orn. Antakya) kilitlenmek
+   * yerine, aktif olay verisi nerede olursa olsun dogru odaklanmak icin. */
+  fitBoundsPoints?: [number, number][];
 }
 
 function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
@@ -85,6 +149,23 @@ function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }
   useEffect(() => {
     map.setView(center, zoom);
   }, [center, zoom, map]);
+  return null;
+}
+
+function FitBoundsHandler({ points }: { points: [number, number][] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (points.length === 0) return;
+    if (points.length === 1) {
+      map.setView(points[0], 15);
+      return;
+    }
+    map.fitBounds(points, { padding: [60, 60], maxZoom: 16 });
+    // Sadece nokta SAYISI ve kaba konumu degistiginde yeniden sigdir --
+    // yoksa ekip pozisyonu her interpolasyon tick'inde (2.5sn) mikro
+    // hareket ettikce harita da surekli zum/pan sicrar, kullaniciyi rahatsiz eder.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [points.length, Math.round(points[0]?.[0] * 20), Math.round(points[0]?.[1] * 20), map]);
   return null;
 }
 
@@ -109,6 +190,7 @@ export default function LeafletContainer({
   enableDraw = false,
   onBoundsSelected,
   onDrawCleared,
+  fitBoundsPoints,
 }: LeafletContainerProps) {
   return (
     <div className={`relative overflow-hidden rounded-xl border border-slate-800 ${className}`}>
@@ -119,7 +201,11 @@ export default function LeafletContainer({
         className="w-full h-full min-h-[400px]"
         style={{ background: "#0b0f17" }}
       >
-        <ChangeView center={center} zoom={zoom} />
+        {fitBoundsPoints && fitBoundsPoints.length > 0 ? (
+          <FitBoundsHandler points={fitBoundsPoints} />
+        ) : (
+          <ChangeView center={center} zoom={zoom} />
+        )}
         <ClickHandler onClick={onMapClick} />
         {enableDraw && <DrawControl onBoundsSelected={onBoundsSelected} onCleared={onDrawCleared} />}
 
@@ -200,9 +286,17 @@ export default function LeafletContainer({
 
         {/* Markers */}
         {markers.map((marker) => {
-          let customIcon = blueIcon;
-          if (marker.type === "sos") customIcon = redIcon;
+          let customIcon: L.Icon | L.DivIcon = blueIcon;
+          if (marker.type === "sos") {
+            if (marker.claimStatus === "active") customIcon = amberIcon;
+            else if (marker.claimStatus === "completed") customIcon = greenIcon;
+            else customIcon = redIcon;
+          }
           if (marker.type === "shelter") customIcon = greenIcon;
+          if (marker.type === "team") customIcon = teamDivIcon(marker.teamRole);
+          if (marker.type === "team-start") customIcon = teamStartDivIcon(marker.teamRole);
+          if (marker.type === "debris") customIcon = debrisIcon;
+          if (marker.type === "nlp") customIcon = nlpIcon;
 
           if (marker.type === "quake") {
             const mag = marker.magnitude || 3.0;

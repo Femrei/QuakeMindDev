@@ -813,7 +813,7 @@ function AssemblyAreasTab() {
         allowOnlineFallback,
       });
       setAssemblyResult(data);
-      setAssemblyAreas(data.records);
+      setAssemblyAreas(data.records, "manual");
     } catch (err: any) {
       setAssemblyError(err?.message || "Toplanma alanları verisi alınamadı.");
       setAssemblyResult(null);

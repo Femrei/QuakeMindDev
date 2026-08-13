@@ -1,0 +1,251 @@
+{
+  "scenarioId": "hatay_agir",
+  "region": "hatay",
+  "regionLabel": "Hatay / Antakya (merkez)",
+  "severity": "agir",
+  "bbox": {
+    "west": 36.041101873,
+    "south": 36.184509363000004,
+    "east": 36.287904422,
+    "north": 36.360655515
+  },
+  "mahalleler": [
+    {
+      "name": "ELEKTRİK",
+      "ilce": "Hatay / Antakya (merkez)",
+      "bbox": {
+        "west": 36.146753,
+        "south": 36.195466,
+        "east": 36.15189,
+        "north": 36.199922
+      },
+      "centerLat": 36.197694,
+      "centerLon": 36.1493215,
+      "damageScore": 6,
+      "toplanmaAlanlari": [
+        {
+          "name": "AKEVLER",
+          "lat": 36.208573169,
+          "lon": 36.154745289
+        },
+        {
+          "name": "ALTINÇAY",
+          "lat": 36.212426997,
+          "lon": 36.140726768
+        }
+      ],
+      "oamTitleMatch": "Defne - Elektrik"
+    },
+    {
+      "name": "ARMUTLU",
+      "ilce": "Hatay / Antakya (merkez)",
+      "bbox": {
+        "west": 36.142957,
+        "south": 36.192684,
+        "east": 36.15092,
+        "north": 36.19543
+      },
+      "centerLat": 36.194057,
+      "centerLon": 36.146938500000005,
+      "damageScore": 1,
+      "toplanmaAlanlari": [
+        {
+          "name": "AKEVLER",
+          "lat": 36.208573169,
+          "lon": 36.154745289
+        },
+        {
+          "name": "ALTINÇAY",
+          "lat": 36.212426997,
+          "lon": 36.140726768
+        }
+      ],
+      "oamTitleMatch": "Turinclu - Akdeniz"
+    }
+  ],
+  "afetzedeler": [
+    {
+      "id": "ELEKTRİK-1",
+      "mahalle": "ELEKTRİK",
+      "ilce": "Hatay / Antakya (merkez)",
+      "lat": 36.19987880435202,
+      "lon": 36.14908717704694,
+      "durum": "yarali",
+      "needText": "Bacağım kırıldı sanırım, tıbbi yardıma ihtiyacım var Elektri̇k",
+      "sos": false
+    },
+    {
+      "id": "ELEKTRİK-2",
+      "mahalle": "ELEKTRİK",
+      "ilce": "Hatay / Antakya (merkez)",
+      "lat": 36.198986349593675,
+      "lon": 36.14852133358664,
+      "durum": "yarali",
+      "needText": "Düşen enkazdan yaralandım, kanama var Elektri̇k",
+      "sos": true
+    },
+    {
+      "id": "ELEKTRİK-3",
+      "mahalle": "ELEKTRİK",
+      "ilce": "Hatay / Antakya (merkez)",
+      "lat": 36.19935061064716,
+      "lon": 36.14822102251372,
+      "durum": "yarali",
+      "needText": "Düşen enkazdan yaralandım, kanama var Elektri̇k",
+      "sos": false
+    },
+    {
+      "id": "ELEKTRİK-4",
+      "mahalle": "ELEKTRİK",
+      "ilce": "Hatay / Antakya (merkez)",
+      "lat": 36.19940501740451,
+      "lon": 36.14819355793771,
+      "durum": "hafif",
+      "needText": "Çadıra ihtiyacımız var, çok soğukta kaldık Elektri̇k",
+      "sos": false
+    },
+    {
+      "id": "ELEKTRİK-5",
+      "mahalle": "ELEKTRİK",
+      "ilce": "Hatay / Antakya (merkez)",
+      "lat": 36.194214009446796,
+      "lon": 36.151131330959345,
+      "durum": "yarali",
+      "needText": "Bacağım kırıldı sanırım, tıbbi yardıma ihtiyacım var Elektri̇k",
+      "sos": true
+    },
+    {
+      "id": "ELEKTRİK-6",
+      "mahalle": "ELEKTRİK",
+      "ilce": "Hatay / Antakya (merkez)",
+      "lat": 36.19714180429326,
+      "lon": 36.14574164308261,
+      "durum": "yarali",
+      "needText": "Bacağım kırıldı sanırım, tıbbi yardıma ihtiyacım var Elektri̇k",
+      "sos": true
+    },
+    {
+      "id": "ARMUTLU-1",
+      "mahalle": "ARMUTLU",
+      "ilce": "Hatay / Antakya (merkez)",
+      "lat": 36.19737148596907,
+      "lon": 36.145527502668195,
+      "durum": "yarali",
+      "needText": "Yaşlı annem yaralı, yürüyemiyor, sağlık ekibi lazım Armutlu",
+      "sos": false
+    },
+    {
+      "id": "ARMUTLU-2",
+      "mahalle": "ARMUTLU",
+      "ilce": "Hatay / Antakya (merkez)",
+      "lat": 36.19739614193057,
+      "lon": 36.145375713482075,
+      "durum": "hafif",
+      "needText": "Suyumuz bitti, temiz suya ihtiyacımız var Armutlu",
+      "sos": false
+    },
+    {
+      "id": "ARMUTLU-3",
+      "mahalle": "ARMUTLU",
+      "ilce": "Hatay / Antakya (merkez)",
+      "lat": 36.19679681500744,
+      "lon": 36.14621336969627,
+      "durum": "hafif",
+      "needText": "Suyumuz bitti, temiz suya ihtiyacımız var Armutlu",
+      "sos": false
+    },
+    {
+      "id": "ARMUTLU-4",
+      "mahalle": "ARMUTLU",
+      "ilce": "Hatay / Antakya (merkez)",
+      "lat": 36.19665631667279,
+      "lon": 36.14503335529231,
+      "durum": "kritik",
+      "needText": "Bina üstümüze çöktü, arama kurtarma ekibi bekliyoruz Armutlu",
+      "sos": true
+    },
+    {
+      "id": "ARMUTLU-5",
+      "mahalle": "ARMUTLU",
+      "ilce": "Hatay / Antakya (merkez)",
+      "lat": 36.196668358040924,
+      "lon": 36.1456798745871,
+      "durum": "yarali",
+      "needText": "Yaralılar var evde, ambulans gelemedi henüz Armutlu",
+      "sos": true
+    },
+    {
+      "id": "ARMUTLU-6",
+      "mahalle": "ARMUTLU",
+      "ilce": "Hatay / Antakya (merkez)",
+      "lat": 36.196425853541214,
+      "lon": 36.145687932584764,
+      "durum": "kritik",
+      "needText": "Ağır yaralı var burada, kan kaybediyor, acil ekip lazım Armutlu",
+      "sos": true
+    }
+  ],
+  "ekipler": [
+    {
+      "id": "ekip-1",
+      "role": "arama-kurtarma",
+      "unit": "İtfaiye Arama Kurtarma",
+      "startName": "Hatay Devlet Hastanesi",
+      "startKind": "hastane",
+      "startLat": 36.2699485,
+      "startLon": 36.2245215
+    },
+    {
+      "id": "ekip-2",
+      "role": "lojistik-ilk-yardim",
+      "unit": "AFAD Lojistik Ekibi",
+      "startName": "Isimsiz",
+      "startKind": "hastane",
+      "startLat": 36.3359466,
+      "startLon": 36.1991471
+    },
+    {
+      "id": "ekip-3",
+      "role": "arama-kurtarma",
+      "unit": "İtfaiye Arama Kurtarma",
+      "startName": "Özel Antakya Akademi Hastanesi",
+      "startKind": "hastane",
+      "startLat": 36.235842,
+      "startLon": 36.1697494
+    },
+    {
+      "id": "ekip-4",
+      "role": "lojistik-ilk-yardim",
+      "unit": "UMKE Sahra Sağlık",
+      "startName": "Özel Antakya Akademi Hastanesi",
+      "startKind": "hastane",
+      "startLat": 36.235842,
+      "startLon": 36.1697494
+    },
+    {
+      "id": "ekip-5",
+      "role": "arama-kurtarma",
+      "unit": "Jandarma Arama Kurtarma",
+      "startName": "Antakya Devlet Hastanesi",
+      "startKind": "hastane",
+      "startLat": 36.2145194,
+      "startLon": 36.1367626
+    },
+    {
+      "id": "ekip-6",
+      "role": "lojistik-ilk-yardim",
+      "unit": "AFAD Lojistik Ekibi",
+      "startName": "Isimsiz",
+      "startKind": "hastane",
+      "startLat": 36.3359466,
+      "startLon": 36.1991471
+    }
+  ],
+  "closedRoadGroundTruth": [],
+  "meta": {
+    "copernicusSource": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+    "victimCount": 12,
+    "teamCount": 6,
+    "closedRoadCount": 0
+  }
+}

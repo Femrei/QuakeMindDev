@@ -232,6 +232,25 @@ if _IS_APP_PROCESS:
 sos_alerts: list[dict] = []
 sos_lock = Lock()
 
+# In-memory debris/catlak report store -- POST /api/camera/analyze bir tespit
+# + konum aldiginda buraya ekler; harita bunu ayri bir "debris" katmani
+# olarak gosterir (akis diyagramindaki "goruntu analizi -> haritada isaretle").
+debris_reports: "list[dict]" = []
+debris_lock = Lock()
+
+# In-memory NLP-cikarimli konum deposu -- POST /api/nlp/analyze serbest
+# metinden gercek bir konum (NER + il/ilce sozlugu + Nominatim geocoding)
+# cikarabildiginde buraya eklenir; harita bunu SOS pin'inden (afetzedenin
+# kendi GPS'i) AYRI bir katman olarak gosterir -- boylece NLP'nin metinden
+# konum cikarma yeteneginin kendisi gorunur/dogrulanabilir olur.
+nlp_locations: "list[dict]" = []
+nlp_locations_lock = Lock()
+
+# In-memory team target-claim store: prevents two teams from being dispatched to
+# the same target ("yigilma onleme" in the field-team flow). Keyed by targetId.
+team_claims: "dict[str, dict]" = {}
+team_claims_lock = Lock()
+
 # In-memory road-damage analysis session store: keeps the routable "safe roads"
 # graph around so a later /route call can compute a real path without re-running
 # the whole satellite fetch + inference pipeline. Bounded FIFO eviction since
@@ -402,6 +421,20 @@ class SOSAlertRequest(BaseModel):
     message: Optional[str] = None
     userId: Optional[str] = None
 
+
+class TeamClaimRequest(BaseModel):
+    teamId: str
+    targetId: str
+    targetType: str  # "sos" | "report" | "evacuation"
+    lat: float
+    lon: float
+
+
+class TeamRouteAttachRequest(BaseModel):
+    routeCoords: list
+    distanceMeters: float
+    assumedSpeedKmh: float = 15.0
+
 class RiskRequest(BaseModel):
     city: str
     manualLatitude: float | None = None
@@ -432,6 +465,14 @@ class RoadDamageRequest(BaseModel):
     radiusKm: float = 2.5
 
 
+class SimulateClosuresRequest(BaseModel):
+    latitude: float
+    longitude: float
+    radiusKm: float = 1.0
+    closureRatio: float = 0.15
+    seed: Optional[int] = None
+
+
 class RoadDamageRouteRequest(BaseModel):
     analysisId: str
     startLat: float
@@ -453,9 +494,35 @@ def analyze_nlp(req: NLPRequest):
     try:
         with temporary_sys_path(NLP_ROOT), temporary_cwd(NLP_ROOT):
             result = pipeline.process_tweet(req.text)
-        return result if result else {"status": "ignored", "reason": "Not related to disaster"}
+        if not result:
+            return {"status": "ignored", "reason": "Not related to disaster"}
+
+        konum = result.get("konum")
+        if konum and len(konum) == 2:
+            entry = {
+                "id": str(uuid.uuid4()),
+                "latitude": konum[0],
+                "longitude": konum[1],
+                "konumMetin": result.get("konum_metin"),
+                "kategori": result.get("kategori"),
+                "aciliyet": result.get("aciliyet"),
+                "sourceText": req.text,
+                "receivedAt": datetime.now(timezone.utc).isoformat(),
+            }
+            with nlp_locations_lock:
+                nlp_locations.append(entry)
+            result["nlpLocationId"] = entry["id"]
+
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/nlp/locations")
+def list_nlp_locations():
+    with nlp_locations_lock:
+        locations = list(nlp_locations)
+    return {"locations": locations, "totalLocations": len(locations)}
 
 @app.post("/api/risk/predict")
 def predict_risk(req: RiskRequest):
@@ -777,6 +844,93 @@ def road_damage_route(req: RoadDamageRouteRequest):
     }
 
 
+@app.post("/api/road_damage/simulate_closures")
+def simulate_road_closures(req: SimulateClosuresRequest):
+    """Gercek senaryo kurgusu icin: CANLI SegFormer/uydu goruntusu
+    calistirmadan, gercek bir OSM yol grafigi uzerinde rastgele yol
+    kapanmalari atar. `/analyze`'in basarili sonuc seklinin BIREBIR ayni
+    doner (analysisId + safe/blockedRoadSegments + bounds) -- boylece
+    /route, /recent ve frontend hicbir fark gozetmeden kullanir. Senkron
+    calisir (worker pool YOK) cunku SegFormer inference yok, sadece graf
+    edinme var (fetch_osm_road_graph zaten cache-first, hizli)."""
+    from apps.road_damage.utils.assembly import bbox_from_center
+    from apps.road_damage.utils.network import simulate_random_closures
+
+    bbox = bbox_from_center(req.latitude, req.longitude, req.radiusKm)
+    G, safe_G, safe_edges, blocked_edges, error = simulate_random_closures(
+        bbox, closure_ratio=req.closureRatio, seed=req.seed,
+    )
+    if G is None:
+        raise HTTPException(status_code=503, detail=f"Yol grafigi alinamadi: {error}")
+
+    analysis_id = str(uuid.uuid4())
+    bounds_dict = {"west": bbox[0], "south": bbox[1], "east": bbox[2], "north": bbox[3]}
+    result = {
+        "bounds": bounds_dict,
+        "safeRoadSegments": _serialize_segments(safe_edges),
+        "blockedRoadSegments": _serialize_segments(blocked_edges),
+        "simulated": True,
+    }
+
+    # G (kapatmasiz TAM graf) + kapali kenar (u,v,key) kumesi de saklanir --
+    # /naive_compare bu ikisini KENDI SURECIMIZDE (baska bir Python surecinde
+    # simulate_random_closures'i AYNI parametrelerle TEKRAR cagirmak yerine)
+    # kullanarak "biz olmasaydik" karsilastirmasini calistirir. Surecler
+    # arasi rastgele-ornekleme tutarsizligi (bkz. network.py'deki
+    # simulate_naive_agent docstring'i) boylece tamamen ortadan kalkar.
+    closed_edge_keys = {(u, v, k) for u, v, k, _line in blocked_edges}
+    _store_road_damage_session(analysis_id, {
+        "safe_G": safe_G, "G": G, "closedEdgeKeys": closed_edge_keys, "bounds": bounds_dict,
+    })
+    _store_road_damage_job(analysis_id, {
+        "status": "done", "result": result, "progress": 100,
+        "progressMessage": "Simulasyon tamamlandi.",
+        "createdAt": time.time(), "finishedAt": time.time(),
+    })
+    return {"analysisId": analysis_id, "status": "done", **result}
+
+
+class NaiveCompareRequest(BaseModel):
+    analysisId: str
+    startLat: float
+    startLon: float
+    endLat: float
+    endLon: float
+
+
+@app.post("/api/road_damage/naive_compare")
+def naive_compare(req: NaiveCompareRequest):
+    """'Biz tespit edip soylemeseydik ne kadar kaybederdiniz' karsilastirmasi
+    -- SADECE simulate_closures ile olusturulmus (yani gercek bir G + kapali
+    kenar kumesi tasiyan) session'lar icin calisir. Naif ajan simulasyonu
+    BILEREK bu SURECTE (baska bir Python sureci -- benchmark script'i --
+    DEGIL) calistirilir: /route'un fiilen kullandigi G/kapanma kumesiyle
+    BIREBIR ayni nesneleri kullanir, boylece 'ayni kapanmayi biliyor/bilmiyor
+    olma' matematiksel garantisi (naive >= bizim motor) hicbir surec-arasi
+    farkla bozulmaz."""
+    with road_damage_sessions_lock:
+        session = road_damage_sessions.get(req.analysisId)
+    if session is None or "G" not in session or "closedEdgeKeys" not in session:
+        raise HTTPException(
+            status_code=422,
+            detail="Bu analiz oturumu naif-ajan karsilastirmasi icin gerekli veriyi tasimiyor "
+                   "(sadece /simulate_closures ile olusturulan oturumlar desteklenir).",
+        )
+
+    from apps.road_damage.utils.network import simulate_naive_agent
+
+    G = session["G"]
+    real_closed_edges = set()
+    for u, v, k in session["closedEdgeKeys"]:
+        real_closed_edges.add((u, v, k))
+        real_closed_edges.add((v, u, k))
+
+    result = simulate_naive_agent(G, real_closed_edges, req.startLat, req.startLon, req.endLat, req.endLon)
+    if result is None:
+        return {"reachable": False, "distanceMeters": None, "discoveries": None}
+    return {"reachable": True, "distanceMeters": result["distanceMeters"], "discoveries": result["discoveries"]}
+
+
 def _fetch_osrm_street_route(u_lat: float, u_lon: float, d_lat: float, d_lon: float):
     import requests
     url = f"http://router.project-osrm.org/route/v1/foot/{u_lon},{u_lat};{d_lon},{d_lat}?overview=full&geometries=geojson"
@@ -1059,9 +1213,113 @@ def list_sos_alerts():
     return {"alerts": alerts, "totalAlerts": len(alerts)}
 
 
+class SOSStatusUpdateRequest(BaseModel):
+    status: str  # "OPEN" | "EN_ROUTE" | "RESOLVED"
+
+
+@app.post("/api/sos/alert/{alert_id}/status")
+def update_sos_status(alert_id: str, req: SOSStatusUpdateRequest):
+    with sos_lock:
+        for alert in sos_alerts:
+            if alert["id"] == alert_id:
+                alert["status"] = req.status
+                alert["statusUpdatedAt"] = datetime.now(timezone.utc).isoformat()
+                return alert
+    raise HTTPException(status_code=404, detail="Bilinmeyen SOS uyarisi.")
+
+
+@app.get("/api/camera/reports")
+def list_debris_reports():
+    with debris_lock:
+        reports = list(debris_reports)
+    return {"reports": reports, "totalReports": len(reports)}
+
+
+@app.post("/api/team/claim")
+def claim_team_target(req: TeamClaimRequest):
+    with team_claims_lock:
+        existing = team_claims.get(req.targetId)
+        if existing is not None and existing["status"] == "active" and existing["teamId"] != req.teamId:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Bu hedefe zaten {existing['teamId']} ekibi mudahale ediyor.",
+            )
+        claim = {
+            "targetId": req.targetId,
+            "teamId": req.teamId,
+            "targetType": req.targetType,
+            "lat": req.lat,
+            "lon": req.lon,
+            "status": "active",
+            "claimedAt": datetime.now(timezone.utc).isoformat(),
+        }
+        team_claims[req.targetId] = claim
+    return claim
+
+
+@app.get("/api/team/claims")
+def list_team_claims():
+    with team_claims_lock:
+        claims = list(team_claims.values())
+    return {"claims": claims, "totalClaims": len(claims)}
+
+
+@app.post("/api/team/claim/{target_id}/route")
+def attach_team_route(target_id: str, req: TeamRouteAttachRequest):
+    """Bir claim'e gercek GNN rotasini ekler -- canli simulasyonda frontend
+    bu rota + startedAt zaman damgasini kullanarak ekip pozisyonunu istemci
+    tarafinda zaman-bazli interpolasyonla hesaplar (ayrica bir 'pozisyon
+    guncelle' donguisune gerek kalmadan)."""
+    with team_claims_lock:
+        claim = team_claims.get(target_id)
+        if claim is None:
+            raise HTTPException(status_code=404, detail="Bu hedef icin aktif bir claim bulunamadi.")
+        claim["routeCoords"] = req.routeCoords
+        claim["distanceMeters"] = req.distanceMeters
+        claim["assumedSpeedKmh"] = req.assumedSpeedKmh
+        claim["startedAt"] = datetime.now(timezone.utc).isoformat()
+    return claim
+
+
+@app.get("/api/road_damage/recent")
+def recent_road_damage_analyses(minutes: float = 60.0):
+    """Canli simulasyon icin: son N dakikada tamamlanmis analizleri listeler
+    -- frontend'in hangi analysisId'lerin haritada 'canli' gosterilecegini
+    ayrica bir mekanizma icat etmeden bilmesini saglar."""
+    cutoff = time.time() - minutes * 60
+    results = []
+    with road_damage_jobs_lock:
+        for analysis_id, job in road_damage_jobs.items():
+            if job.get("status") != "done" or job.get("createdAt", 0) < cutoff:
+                continue
+            result = job.get("result", {})
+            results.append({
+                "analysisId": analysis_id,
+                "createdAt": job.get("createdAt"),
+                "bounds": result.get("bounds"),
+                "blockedRoadSegments": result.get("blockedRoadSegments", []),
+                "safeRoadSegments": result.get("safeRoadSegments", []),
+            })
+    results.sort(key=lambda r: r["createdAt"], reverse=True)
+    return {"analyses": results}
+
+
+@app.post("/api/team/claim/{target_id}/release")
+def release_team_claim(target_id: str):
+    with team_claims_lock:
+        claim = team_claims.get(target_id)
+        if claim is None:
+            raise HTTPException(status_code=404, detail="Bu hedef icin aktif bir claim bulunamadi.")
+        claim["status"] = "completed"
+        claim["releasedAt"] = datetime.now(timezone.utc).isoformat()
+    return claim
+
+
 class CameraAnalysisRequest(BaseModel):
     modelType: str = "hybrid"  # "catlak", "bina", "hybrid"
     imageBase64: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 @app.post("/api/camera/analyze")
 def analyze_camera_frame(req: CameraAnalysisRequest):
@@ -1156,7 +1414,7 @@ def analyze_camera_frame(req: CameraAnalysisRequest):
         status = "NO_DETECTION"
         advice = "🟢 GÖRÜNTÜDE HERHANGİ BİR ÇATLAK VEYA BİNA HASARI SAPTANMADI. Modeller kamera karesinde riskli bir alan tespit etmedi."
 
-    return {
+    result = {
         "status": status,
         "modelType": req.modelType,
         "activeModels": active_models or (["catlak.pt (Çatlak Tespiti)"] if model_type=="catlak" else (["bina.pt (Bina Hasar)"] if model_type=="bina" else ["catlak.pt", "bina.pt"])),
@@ -1165,6 +1423,27 @@ def analyze_camera_frame(req: CameraAnalysisRequest):
         "advice": advice,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
+
+    # Tespit varsa VE konum bilgisi geldiyse (telefon GPS'i), harita
+    # uzerinde gorunur bir "enkaz/catlak" isareti olarak da sakla --
+    # akis diyagramindaki "goruntu analizi -> haritada isaretle" adiminin
+    # gercek karsiligi.
+    if detections and req.latitude is not None and req.longitude is not None:
+        report = {
+            "id": str(uuid.uuid4()),
+            "latitude": req.latitude,
+            "longitude": req.longitude,
+            "status": status,
+            "severity": "CRITICAL" if has_critical else "SAFE",
+            "detectionCount": len(detections),
+            "topLabel": detections[0]["label"] if detections else None,
+            "receivedAt": datetime.now(timezone.utc).isoformat(),
+        }
+        with debris_lock:
+            debris_reports.append(report)
+        result["debrisReportId"] = report["id"]
+
+    return result
 
 # AUTHENTICATION & AUTHORIZATION MODELS & ENDPOINTS
 class UserRegisterRequest(BaseModel):
@@ -1475,4 +1754,10 @@ if __name__ == "__main__":
         # process via the GIL -- reload isn't compatible with workers>1.
         uvicorn.run("fastapi_app:app", host=host, port=port, workers=workers)
     else:
-        uvicorn.run("fastapi_app:app", host=host, port=port, reload=True)
+        # QUAKEMIND_RELOAD=0: --reload kapatma kacisi. Windows'ta bazi venv
+        # kurulumlarinda uvicorn'un reloader'i sys.executable'i sistem
+        # Python'a cozumleyip worker'i YANLIS interpreter'da baslatabiliyor
+        # (bkz. oturum notlari) -- kod degisikligi sonrasi guvenilir sekilde
+        # yeniden yuklenmedigi gozlemlendiginde bu bayrakla kapatilabilir.
+        reload_enabled = os.environ.get("QUAKEMIND_RELOAD", "1") != "0"
+        uvicorn.run("fastapi_app:app", host=host, port=port, reload=reload_enabled)

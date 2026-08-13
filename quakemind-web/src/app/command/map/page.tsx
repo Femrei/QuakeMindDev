@@ -1,13 +1,29 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem, MapPolylineItem } from "@/components/map/InteractiveMap";
 import { useMapLayers, LayerKey } from "@/context/MapLayersContext";
-import { getFaultLines } from "@/lib/api";
-import { Layers, Siren, FileText, Activity, Waves, Map as MapIcon, Tent, Clock } from "lucide-react";
+import {
+  getFaultLines,
+  getDebrisReports,
+  getRecentRoadDamage,
+  getAssemblyAreas,
+  getNlpLocations,
+  NLPLocation,
+  getSOSAlerts,
+  getTeamClaims,
+  TeamClaim,
+} from "@/lib/api";
+import { interpolateTeamPosition } from "@/lib/teamPosition";
+import { Layers, Siren, FileText, Activity, Waves, Map as MapIcon, Tent, Clock, AlertTriangle, Users } from "lucide-react";
 
 const TURKEY_CENTER: [number, number] = [38.9, 35.2];
+const DEBRIS_POLL_MS = 6000;
+const ROAD_DAMAGE_POLL_MS = 6000;
+const NLP_POLL_MS = 6000;
+const SOS_POLL_MS = 6000;
+const TEAM_POLL_MS = 2500;
 
 interface LayerDef {
   key: LayerKey;
@@ -38,13 +54,126 @@ export default function UnifiedCommandMapPage() {
     faultLinesUpdatedAt,
     setAllFaultLines,
     roadDamageAnalyses,
+    addRoadDamageAnalysis,
     assemblyAreas,
+    setAssemblyAreas,
     assemblyUpdatedAt,
+    debrisReports,
+    setDebrisReports,
+    debrisUpdatedAt,
+    setSosAlerts,
     layerVisibility,
     toggleLayer,
   } = useMapLayers();
 
   const [faultLinesLoading, setFaultLinesLoading] = useState(false);
+  const [nlpLocations, setNlpLocations] = useState<NLPLocation[]>([]);
+  const [teamClaims, setTeamClaims] = useState<TeamClaim[]>([]);
+  // Ekip pozisyonlari zaman-bazli interpolasyonla turetildigi icin, harita
+  // yeniden render olsun diye her tick'te bagimsiz bir "simdi" tetigi lazim
+  // (command/page.tsx'teki simulasyon modundaki mantikla ayni).
+  const [, setTeamTick] = useState(0);
+  const assemblyFetchedForRef = useRef<Set<string>>(new Set());
+
+  // SOS ihbarlari -- daha once bu harita SADECE /command/sos'un context'e
+  // push ettigi (o sayfa ziyaret edilmediyse bos kalan) veriyi okuyordu; artik
+  // diger katmanlar gibi (debris/road-damage/nlp) kendi basina da ceker,
+  // boylece /command'daki "Simulasyon Modu" hic acilmasa/o sayfaya hic
+  // gidilmese bile SOS verisi burada canli gorunur.
+  useEffect(() => {
+    const poll = () => {
+      getSOSAlerts()
+        .then((data) => setSosAlerts(data.alerts))
+        .catch(() => {});
+    };
+    poll();
+    const timer = setInterval(poll, SOS_POLL_MS);
+    return () => clearInterval(timer);
+  }, [setSosAlerts]);
+
+  // Ekip claim'leri -- /command sayfasindaki "Simulasyon Modu" acik degilken
+  // ya da o sayfadan baska bir sayfaya gecildiginde ekip verisi/hareketi
+  // kaybolmasin diye bu harita da kendi basina ceker (daha once burada HIC
+  // ekip katmani yoktu, bu yuzden /command/map'e gecince ekipler "duruyor"
+  // gibi gorunuyordu).
+  useEffect(() => {
+    const poll = () => {
+      getTeamClaims()
+        .then((data) => setTeamClaims(data.claims))
+        .catch(() => {});
+      setTeamTick((t) => t + 1);
+    };
+    poll();
+    const timer = setInterval(poll, TEAM_POLL_MS);
+    return () => clearInterval(timer);
+  }, []);
+
+  // NLP boru hattinin (rich_simulation.py gibi orkestratorlerin gonderdigi
+  // ihbar metinlerinden) cikardigi konumlar -- command/nlp sayfasindaki
+  // manuel tek-metin akisindan (nlpIncidents) AYRI bir kaynak, bu yuzden
+  // burada kendi basina cekilip ayni "nlp" katmaninda birlestirilir.
+  useEffect(() => {
+    const poll = () => {
+      getNlpLocations()
+        .then((data) => setNlpLocations(data.locations))
+        .catch(() => {});
+    };
+    poll();
+    const timer = setInterval(poll, NLP_POLL_MS);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Kamera modelleriyle tespit edilen enkaz/catlak noktalari -- diger
+  // katmanlarin aksine (bir sayfa ziyaretiyle doldurulan) bu katman icin
+  // ozel bir "kaynak" sayfa yok, o yuzden birlesik harita kendi basina
+  // periyodik olarak ceker.
+  useEffect(() => {
+    const poll = () => {
+      getDebrisReports()
+        .then((data) => setDebrisReports(data.reports))
+        .catch(() => {});
+    };
+    poll();
+    const timer = setInterval(poll, DEBRIS_POLL_MS);
+    return () => clearInterval(timer);
+  }, [setDebrisReports]);
+
+  // Yol hasari analizleri de ayni sekilde: baska bir sayfanin (orn. gercek
+  // senaryo orkestratorunun tetikledigi simulate_closures) ureteceklerini
+  // kendi basina cekip haritaya ekler -- ziyaret sirasina bagli kalmadan.
+  // Her YENI analysisId icin bounds merkezinde bir toplanma-alani sorgusu
+  // da tetiklenir, boylece "toplanma alanlari" katmani da otomatik dolar
+  // (daha once SADECE road-damage sayfasindaki Assembly sekmesi ziyaret
+  // edilirse doluyordu).
+  useEffect(() => {
+    const poll = () => {
+      getRecentRoadDamage(180)
+        .then((data) => {
+          data.analyses.forEach((a) => {
+            addRoadDamageAnalysis({
+              analysisId: a.analysisId,
+              city: "Canlı Simülasyon",
+              safeRoadSegments: a.safeRoadSegments,
+              blockedRoadSegments: a.blockedRoadSegments,
+              bounds: a.bounds || { west: 0, south: 0, east: 0, north: 0 },
+            });
+
+            if (a.bounds && !assemblyFetchedForRef.current.has(a.analysisId)) {
+              assemblyFetchedForRef.current.add(a.analysisId);
+              const centerLat = (a.bounds.south + a.bounds.north) / 2;
+              const centerLon = (a.bounds.west + a.bounds.east) / 2;
+              getAssemblyAreas({ latitude: centerLat, longitude: centerLon, radiusKm: 5 })
+                .then((res) => setAssemblyAreas(res.records, a.analysisId))
+                .catch(() => {});
+            }
+          });
+        })
+        .catch(() => {});
+    };
+    poll();
+    const timer = setInterval(poll, ROAD_DAMAGE_POLL_MS);
+    return () => clearInterval(timer);
+  }, [addRoadDamageAnalysis, setAssemblyAreas]);
 
   // Lazy-fetch: Turkiye geneli fay hatti veri seti buyuk oldugu icin sadece
   // katman ilk kez acildiginda ve daha once cekilmediyse indirilir.
@@ -82,6 +211,16 @@ export default function UnifiedCommandMapPage() {
           ...n.marker,
           linkHref: "/command/nlp",
           linkLabel: "NLP Analiz Ekranına Git",
+        })
+      );
+      nlpLocations.forEach((n) =>
+        list.push({
+          id: `nlp-loc-${n.id}`,
+          lat: n.latitude,
+          lng: n.longitude,
+          title: `NLP Konum Çıkarımı: ${n.konumMetin || "bilinmiyor"}`,
+          type: "nlp",
+          popupText: `Kategori: ${n.kategori || "—"} | Aciliyet: ${n.aciliyet ?? "—"} | Metin: "${n.sourceText}"`,
         })
       );
     }
@@ -128,8 +267,54 @@ export default function UnifiedCommandMapPage() {
       );
     }
 
+    if (layerVisibility.team) {
+      teamClaims
+        .filter((c) => c.status === "active")
+        .forEach((claim) => {
+          if (claim.routeCoords && claim.routeCoords.length > 0) {
+            list.push({
+              id: `team-start-${claim.teamId}-${claim.targetId}`,
+              lat: claim.routeCoords[0][0],
+              lng: claim.routeCoords[0][1],
+              title: `Çıkış Noktası: ${claim.teamId}`,
+              type: "team-start",
+              popupText: `Ekip ${claim.teamId} buradan yola çıktı | Hedef: ${claim.targetId}`,
+              linkHref: "/command/sos",
+              linkLabel: "SOS Sevk Ekranına Git",
+            });
+          }
+          const pos = interpolateTeamPosition(claim);
+          if (!pos) return;
+          list.push({
+            id: `team-${claim.teamId}-${claim.targetId}`,
+            lat: pos[0],
+            lng: pos[1],
+            title: `Ekip: ${claim.teamId}`,
+            type: "team",
+            popupText: `Hedef: ${claim.targetId} | Tür: ${claim.targetType}`,
+            linkHref: "/command/sos",
+            linkLabel: "SOS Sevk Ekranına Git",
+          });
+        });
+    }
+
+    if (layerVisibility.debris) {
+      debrisReports.forEach((r) =>
+        list.push({
+          id: `debris-${r.id}`,
+          lat: r.latitude,
+          lng: r.longitude,
+          title: `Enkaz: ${r.topLabel || "Tespit"}`,
+          type: "debris",
+          popupText: `Şiddet: ${r.severity} | Tespit sayısı: ${r.detectionCount} | ${new Date(r.receivedAt).toLocaleTimeString()}`,
+          linkHref: "/command/camera",
+          linkLabel: "Kamera Tespit Ekranına Git",
+        })
+      );
+    }
+
     return list;
-  }, [layerVisibility, sosAlerts, nlpIncidents, riskLayer.cityResult, assemblyAreas]);
+  }, [layerVisibility, sosAlerts, nlpIncidents, nlpLocations, riskLayer.cityResult, assemblyAreas, debrisReports, teamClaims]);
 
   const polylines: MapPolylineItem[] = useMemo(() => {
     const list: MapPolylineItem[] = [];
@@ -181,16 +366,43 @@ export default function UnifiedCommandMapPage() {
       });
     }
 
+    if (layerVisibility.team) {
+      // Ekibin GERCEKTEN gittigi rota -- genel acik/kapali yol katmanindan
+      // (yesil/kirmizi) ayrilsin diye belirgin sari, koyu konturlu kalin cizgi
+      // (command/page.tsx'teki simulasyon modundaki mantikla ayni).
+      teamClaims
+        .filter((c) => c.status === "active" && c.routeCoords)
+        .forEach((claim) => {
+          list.push({
+            id: `team-route-${claim.teamId}-${claim.targetId}`,
+            coords: claim.routeCoords!,
+            color: "#facc15",
+            weight: 5,
+            opacity: 0.95,
+            casing: true,
+          });
+        });
+    }
+
     return list;
-  }, [layerVisibility, riskLayer, roadDamageAnalyses]);
+  }, [layerVisibility, riskLayer, roadDamageAnalyses, teamClaims]);
 
   const layerDefs: LayerDef[] = [
     { key: "sos", label: "SOS İhbarları", icon: Siren, color: "text-red-400", count: sosAlerts.length, updatedAt: sosUpdatedAt },
-    { key: "nlp", label: "NLP İhbar Konumları", icon: FileText, color: "text-cyan-400", count: nlpIncidents.length, updatedAt: nlpIncidents.at(-1)?.createdAt ?? null },
+    { key: "nlp", label: "NLP İhbar Konumları", icon: FileText, color: "text-cyan-400", count: nlpIncidents.length + nlpLocations.length, updatedAt: nlpLocations.at(-1)?.receivedAt ?? nlpIncidents.at(-1)?.createdAt ?? null },
     { key: "risk", label: "Deprem Riski & Yakın Faylar", icon: Activity, color: "text-amber-400", count: riskLayer.cityResult ? 1 : 0, updatedAt: riskUpdatedAt },
     { key: "faultLines", label: "Türkiye Geneli Fay Hatları", icon: Waves, color: "text-orange-400", count: riskLayer.allFaultLines.length, updatedAt: faultLinesUpdatedAt },
     { key: "roadDamage", label: "Uydu Yol Hasarı", icon: MapIcon, color: "text-blue-400", count: roadDamageAnalyses.length, updatedAt: roadDamageAnalyses.at(-1)?.createdAt ?? null },
     { key: "assemblyAreas", label: "Toplanma Alanları", icon: Tent, color: "text-emerald-400", count: assemblyAreas.length, updatedAt: assemblyUpdatedAt },
+    { key: "debris", label: "Enkaz / Çatlak Tespitleri", icon: AlertTriangle, color: "text-orange-400", count: debrisReports.length, updatedAt: debrisUpdatedAt },
+    {
+      key: "team",
+      label: "Saha Ekipleri (Canlı Konum)",
+      icon: Users,
+      color: "text-yellow-400",
+      count: teamClaims.filter((c) => c.status === "active").length,
+      updatedAt: teamClaims.at(-1)?.claimedAt ?? null,
+    },
   ];
 
   return (

@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import { Camera, Video, AlertCircle, CheckCircle2, Play, Square, Layers, Zap, RefreshCw, AlertTriangle, ShieldAlert, Upload, Image as ImageIcon } from "lucide-react";
 import { analyzeCameraFrame, CameraAnalysisResponse } from "@/lib/api";
+import { getCurrentCoords } from "@/lib/geolocation";
 
 export default function CameraDetectionPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -107,7 +108,8 @@ export default function CameraDetectionPage() {
     }
 
     try {
-      const res = await analyzeCameraFrame(selectedModel, imagePayload);
+      const coords = await getCurrentCoords();
+      const res = await analyzeCameraFrame(selectedModel, imagePayload, coords?.lat, coords?.lon);
       setResult(res);
     } catch (e) {
       console.warn("Backend API offline fallback:", e);

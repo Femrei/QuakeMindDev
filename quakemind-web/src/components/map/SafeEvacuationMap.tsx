@@ -10,14 +10,21 @@ import {
   analyzeRoadDamage,
   pollRoadDamageStatus,
   getRouteBetweenPoints,
+  getDebrisReports,
   EvacuationAssemblyRecord,
   EvacuationAssemblyResponse,
+  DebrisReport,
 } from "@/lib/api";
+
+const DEBRIS_POLL_MS = 6000;
 
 interface SafeEvacuationMapProps {
   role?: "survivor" | "command";
   height?: string;
   onShelterSelect?: (shelterName: string) => void;
+  /** Toplanma alanlari (dist_m'e gore sirali) her guncellendiginde ust
+   * bilesenin de kendi siralı listesini gosterebilmesi icin. */
+  onAssemblyData?: (data: EvacuationAssemblyResponse) => void;
 }
 
 // Fallback Default Location: Antakya Epicenter
@@ -67,7 +74,7 @@ function computeBboxForPair(userLat: number, userLon: number, destLat: number, d
   };
 }
 
-function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
+function InnerEvacuationMap({ role, onShelterSelect, onAssemblyData }: SafeEvacuationMapProps) {
   const { MapContainer, TileLayer, Polyline, Marker, Popup, Tooltip, useMapEvents } = require("react-leaflet");
   const L = require("leaflet");
 
@@ -90,9 +97,29 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
   const [routeErrorMsg, setRouteErrorMsg] = useState<string | null>(null);
   const routeRequestIdRef = useRef(0);
 
+  const [debrisReports, setDebrisReports] = useState<DebrisReport[]>([]);
+
   // Detect User GPS on Load
   useEffect(() => {
     detectUserGPS();
+  }, []);
+
+  useEffect(() => {
+    if (assemblyData) onAssemblyData?.(assemblyData);
+  }, [assemblyData, onAssemblyData]);
+
+  // Kamera modelleriyle (catlak/bina) tespit edilip haritada "enkaz" olarak
+  // isaretlenen noktalar -- ekip ve afetzede haritalari ayni paylasilan veriyi
+  // gorsun diye periyodik olarak cekilir.
+  useEffect(() => {
+    const poll = () => {
+      getDebrisReports()
+        .then((data) => setDebrisReports(data.reports))
+        .catch(() => {});
+    };
+    poll();
+    const timer = setInterval(poll, DEBRIS_POLL_MS);
+    return () => clearInterval(timer);
   }, []);
 
   const detectUserGPS = () => {
@@ -343,6 +370,13 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
     iconAnchor: [14, 14],
   });
 
+  const debrisReportIcon = L.divIcon({
+    className: "custom-debris-icon",
+    html: `<div style="width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:18px solid #fb923c;filter:drop-shadow(0 0 5px rgba(251,146,60,0.9));"></div>`,
+    iconSize: [20, 18],
+    iconAnchor: [10, 16],
+  });
+
   const userGpsIcon = L.divIcon({
     className: "custom-user-gps-icon",
     html: `<div style="background:#3b82f6; border:3px solid #ffffff; width:26px; height:26px; border-radius:50%; box-shadow:0 0 22px #3b82f6; display:flex; align-items:center; justify-content:center;"><div style="width:8px; height:8px; background:white; border-radius:50%;"></div></div>`,
@@ -490,6 +524,21 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
             </span>
           </Tooltip>
         </Marker>
+
+        {/* KAMERA MODELLERİYLE TESPİT EDİLEN ENKAZ/ÇATLAK NOKTALARI (paylaşılan /api/camera/reports) */}
+        {debrisReports.map((r) => (
+          <Marker key={`debris-${r.id}`} position={[r.latitude, r.longitude]} icon={debrisReportIcon}>
+            <Popup>
+              <div className="text-slate-900 text-xs font-sans space-y-1 p-1">
+                <div className="font-bold text-orange-600 flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" /> {r.topLabel || "Enkaz/Çatlak Tespiti"}
+                </div>
+                <div>Şiddet: <b>{r.severity}</b> | Tespit sayısı: {r.detectionCount}</div>
+                <div className="text-slate-500">{new Date(r.receivedAt).toLocaleTimeString("tr-TR")}</div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
 
         {/* REAL OFFICIAL AFAD ASSEMBLY & SAFE ZONES */}
         {assemblyData?.records?.map((s, idx) => {
