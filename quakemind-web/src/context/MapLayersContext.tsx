@@ -15,7 +15,8 @@ export type LayerKey =
   | "risk"
   | "faultLines"
   | "roadDamage"
-  | "assemblyAreas";
+  | "assemblyAreas"
+  | "heatmap";
 
 export interface NlpIncident {
   id: string;
@@ -46,15 +47,18 @@ interface MapLayersContextType {
 
   nlpIncidents: NlpIncident[];
   addNlpIncident: (incident: Omit<NlpIncident, "id" | "createdAt">) => void;
+  setNlpIncidents: (incidents: NlpIncident[]) => void;
 
   riskLayer: RiskLayerState;
   setRiskResult: (result: RiskResponse) => void;
+  clearRiskResult: () => void;
   setAllFaultLines: (faultLines: RiskFaultLine[]) => void;
   riskUpdatedAt: string | null;
   faultLinesUpdatedAt: string | null;
 
   roadDamageAnalyses: RoadDamageAnalysisLayer[];
   addRoadDamageAnalysis: (analysis: Omit<RoadDamageAnalysisLayer, "createdAt">) => void;
+  setRoadDamageAnalyses: (analyses: RoadDamageAnalysisLayer[]) => void;
 
   assemblyAreas: AssemblyRecord[];
   setAssemblyAreas: (areas: AssemblyRecord[]) => void;
@@ -71,6 +75,7 @@ const DEFAULT_VISIBILITY: Record<LayerKey, boolean> = {
   faultLines: false,
   roadDamage: false,
   assemblyAreas: false,
+  heatmap: false,
 };
 
 const MapLayersContext = createContext<MapLayersContextType | undefined>(undefined);
@@ -79,13 +84,13 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
   const [sosAlerts, setSosAlertsState] = useState<SOSAlert[]>([]);
   const [sosUpdatedAt, setSosUpdatedAt] = useState<string | null>(null);
 
-  const [nlpIncidents, setNlpIncidents] = useState<NlpIncident[]>([]);
+  const [nlpIncidents, setNlpIncidentsState] = useState<NlpIncident[]>([]);
 
   const [riskLayer, setRiskLayerState] = useState<RiskLayerState>({ allFaultLines: [] });
   const [riskUpdatedAt, setRiskUpdatedAt] = useState<string | null>(null);
   const [faultLinesUpdatedAt, setFaultLinesUpdatedAt] = useState<string | null>(null);
 
-  const [roadDamageAnalyses, setRoadDamageAnalyses] = useState<RoadDamageAnalysisLayer[]>([]);
+  const [roadDamageAnalyses, setRoadDamageAnalysesState] = useState<RoadDamageAnalysisLayer[]>([]);
 
   const [assemblyAreas, setAssemblyAreasState] = useState<AssemblyRecord[]>([]);
   const [assemblyUpdatedAt, setAssemblyUpdatedAt] = useState<string | null>(null);
@@ -98,7 +103,7 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addNlpIncident = useCallback((incident: Omit<NlpIncident, "id" | "createdAt">) => {
-    setNlpIncidents((prev) => [
+    setNlpIncidentsState((prev) => [
       ...prev,
       { ...incident, id: `nlp-${Date.now()}-${prev.length}`, createdAt: new Date().toISOString() },
     ]);
@@ -109,13 +114,18 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
     setRiskUpdatedAt(new Date().toISOString());
   }, []);
 
+  const clearRiskResult = useCallback(() => {
+    setRiskLayerState((prev) => ({ ...prev, cityResult: undefined }));
+    setRiskUpdatedAt(null);
+  }, []);
+
   const setAllFaultLines = useCallback((faultLines: RiskFaultLine[]) => {
     setRiskLayerState((prev) => ({ ...prev, allFaultLines: faultLines }));
     setFaultLinesUpdatedAt(new Date().toISOString());
   }, []);
 
   const addRoadDamageAnalysis = useCallback((analysis: Omit<RoadDamageAnalysisLayer, "createdAt">) => {
-    setRoadDamageAnalyses((prev) => [
+    setRoadDamageAnalysesState((prev) => [
       ...prev.filter((a) => a.analysisId !== analysis.analysisId),
       { ...analysis, createdAt: new Date().toISOString() },
     ]);
@@ -124,6 +134,14 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
   const setAssemblyAreas = useCallback((areas: AssemblyRecord[]) => {
     setAssemblyAreasState(areas);
     setAssemblyUpdatedAt(new Date().toISOString());
+  }, []);
+
+  const setNlpIncidents = useCallback((incidents: NlpIncident[]) => {
+    setNlpIncidentsState(incidents);
+  }, []);
+
+  const setRoadDamageAnalyses = useCallback((analyses: RoadDamageAnalysisLayer[]) => {
+    setRoadDamageAnalysesState(analyses);
   }, []);
 
   const toggleLayer = useCallback((key: LayerKey) => {
@@ -141,13 +159,16 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
       sosUpdatedAt,
       nlpIncidents,
       addNlpIncident,
+      setNlpIncidents,
       riskLayer,
       setRiskResult,
+      clearRiskResult,
       setAllFaultLines,
       riskUpdatedAt,
       faultLinesUpdatedAt,
       roadDamageAnalyses,
       addRoadDamageAnalysis,
+      setRoadDamageAnalyses,
       assemblyAreas,
       setAssemblyAreas,
       assemblyUpdatedAt,
@@ -160,13 +181,16 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
       sosUpdatedAt,
       nlpIncidents,
       addNlpIncident,
+      setNlpIncidents,
       riskLayer,
       setRiskResult,
+      clearRiskResult,
       setAllFaultLines,
       riskUpdatedAt,
       faultLinesUpdatedAt,
       roadDamageAnalyses,
       addRoadDamageAnalysis,
+      setRoadDamageAnalyses,
       assemblyAreas,
       setAssemblyAreas,
       assemblyUpdatedAt,

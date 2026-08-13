@@ -22,7 +22,7 @@ def compact_segment_coords(line, max_points=28):
     return [[float(lat), float(lon)] for lon, lat in sampled]
 
 
-def serialize_segments(edges, max_segments=500):
+def serialize_segments(edges, max_segments=8000):
     if not edges:
         return []
     serialized = []
