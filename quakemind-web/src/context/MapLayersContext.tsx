@@ -80,7 +80,12 @@ const DEFAULT_VISIBILITY: Record<LayerKey, boolean> = {
   nlp: true,
   risk: false,
   faultLines: false,
-  roadDamage: false,
+  // Varsayilan olarak acik -- ekip rotasinin (sari) GERCEKTEN acik yollardan
+  // (yesil) gecip kapali olanlari (kirmizi) atladigini gorsel olarak
+  // kanitlamak icin yol agi katmani da ekip katmaniyla birlikte gorunmeli;
+  // aksi halde sari cizgi baglamdan kopuk, "en kisa yol mu belli degil"
+  // izlenimi veriyordu.
+  roadDamage: true,
   assemblyAreas: false,
   debris: true,
   team: true,
