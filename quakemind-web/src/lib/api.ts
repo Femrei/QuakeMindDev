@@ -118,6 +118,12 @@ export interface SOSAlert {
   receivedAt: string;
   status?: "OPEN" | "EN_ROUTE" | "RESOLVED";
   urgency?: "HIGH" | "MEDIUM" | "CRITICAL";
+  /** Diyagramlardaki pil durumu -- gercek donanim sensoru yok, temsili/
+   * simule deger (bkz. rich_simulation.py::generate_incidents). */
+  batteryPercent?: number | null;
+  /** Diyagramlardaki haberlesme durumu -- sebeke normal mi (online), BLE
+   * mesh rolesi uzerinden mi (mesh), yoksa hic ulasmiyor mu (offline). */
+  commsStatus?: "online" | "mesh" | "offline" | null;
 }
 
 export async function fetchServerStatus(): Promise<StatusResponse> {

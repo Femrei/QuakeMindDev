@@ -18,6 +18,7 @@ import {
 } from "@/lib/api";
 import { deriveUrgencyTier, urgencyLabel, urgencyTextClass } from "@/lib/urgency";
 import { interpolateTeamPosition } from "@/lib/teamPosition";
+import { COMMS_LABEL } from "@/lib/commsStatus";
 import {
   ShieldAlert,
   Siren,
@@ -205,7 +206,7 @@ export default function CommandDashboardPage() {
     title: `SOS: ${a.message || "Acil Çağrı"}`,
     type: "sos",
     claimStatus: claimForAlert(a.id) ? "active" : a.status === "RESOLVED" ? "completed" : "unclaimed",
-    popupText: `Durum: ${a.status || "AÇIK"}${claimForAlert(a.id) ? ` | Ekip yolda: ${claimForAlert(a.id)!.teamId}` : ""} | Alındı: ${new Date(a.receivedAt).toLocaleTimeString()}`,
+    popupText: `Durum: ${a.status || "AÇIK"}${claimForAlert(a.id) ? ` | Ekip yolda: ${claimForAlert(a.id)!.teamId}` : ""}${a.batteryPercent != null ? ` | Pil: %${a.batteryPercent}` : ""}${a.commsStatus ? ` | Haberleşme: ${COMMS_LABEL[a.commsStatus]}` : ""} | Alındı: ${new Date(a.receivedAt).toLocaleTimeString()}`,
   }));
 
   const debrisMarkers: MapMarkerItem[] = simulationMode

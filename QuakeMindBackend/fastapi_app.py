@@ -420,6 +420,14 @@ class SOSAlertRequest(BaseModel):
     accuracy: Optional[float] = None
     message: Optional[str] = None
     userId: Optional[str] = None
+    # Akis diyagramindaki "pil durumu" ve "haberlesme durumu" (mesh/BLE
+    # fallback) alanlari -- gercek bir donanim sensoru/BLE yiginimiz olmadigi
+    # icin (bkz. AKIS_DIYAGRAM_KOD_ESLESTIRME_RAPORU.md) temsili/rastgele
+    # deger olarak orkestratorden (benchmark/rich_simulation.py) veya mobil
+    # istemciden gelir -- ama gercek SOS pipeline'indan gecer ve saklanir,
+    # kurgusal bir katman degil.
+    batteryPercent: Optional[int] = None
+    commsStatus: Optional[str] = None  # "online" | "mesh" | "offline"
 
 
 class TeamClaimRequest(BaseModel):
@@ -1398,6 +1406,8 @@ def create_sos_alert(req: SOSAlertRequest):
         "accuracy": req.accuracy,
         "message": req.message,
         "userId": req.userId,
+        "batteryPercent": req.batteryPercent,
+        "commsStatus": req.commsStatus,
         "receivedAt": datetime.now(timezone.utc).isoformat(),
     }
 

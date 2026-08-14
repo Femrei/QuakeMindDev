@@ -15,9 +15,60 @@ import {
 } from "@/lib/api";
 import { deriveUrgencyTier, urgencyLabel, urgencyBadgeClass, urgencyTextClass } from "@/lib/urgency";
 import { useMapLayers } from "@/context/MapLayersContext";
-import { Siren, ShieldAlert, CheckCircle2, Clock, UserCheck, Plus, Filter } from "lucide-react";
+import { COMMS_LABEL } from "@/lib/commsStatus";
+import {
+  Siren,
+  ShieldAlert,
+  CheckCircle2,
+  Clock,
+  UserCheck,
+  Plus,
+  Filter,
+  BatteryFull,
+  BatteryMedium,
+  BatteryWarning,
+  Wifi,
+  Radio,
+  WifiOff,
+} from "lucide-react";
 
 const DISPATCH_POLL_MS = 4000;
+
+/** Pil yuzdesine gore ikon + renk -- diyagramdaki "pil durumu" gostergesi
+ * icin, dusuk pil = daha kritik (telefon her an kapanabilir) vurgusu. */
+function BatteryBadge({ percent }: { percent: number }) {
+  const Icon = percent < 20 ? BatteryWarning : percent < 60 ? BatteryMedium : BatteryFull;
+  const color = percent < 20 ? "text-red-400" : percent < 60 ? "text-amber-400" : "text-emerald-400";
+  return (
+    <span className={`inline-flex items-center gap-1 ${color}`} title="Pil durumu (temsili)">
+      <Icon className="w-3.5 h-3.5" />%{percent}
+    </span>
+  );
+}
+
+/** Diyagramdaki haberlesme durumu -- normal sebeke (online), yakindaki
+ * cihazlar uzerinden BLE mesh rolesi (mesh) veya hic sinyal yok (offline). */
+function CommsBadge({ status }: { status: "online" | "mesh" | "offline" }) {
+  if (status === "online") {
+    return (
+      <span className="inline-flex items-center gap-1 text-slate-400" title="Normal şebeke bağlantısı">
+        <Wifi className="w-3.5 h-3.5" />Şebeke
+      </span>
+    );
+  }
+  if (status === "mesh") {
+    return (
+      <span className="inline-flex items-center gap-1 text-cyan-400" title="Şebeke yok, BLE mesh röleyle ulaştı">
+        <Radio className="w-3.5 h-3.5" />Mesh
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-red-400" title="Hiçbir sinyal yok, ekip sahaya varana kadar ulaşılamaz">
+      <WifiOff className="w-3.5 h-3.5" />Çevrimdışı
+    </span>
+  );
+}
 
 export default function SOSDispatchPage() {
   const { setSosAlerts } = useMapLayers();
@@ -148,7 +199,7 @@ export default function SOSDispatchPage() {
     claimStatus: claimForAlert(a.id) ? "active" : a.status === "RESOLVED" ? "completed" : "unclaimed",
     title: a.message || "SOS İhbarı",
     type: "sos",
-    popupText: `Durum: ${a.status || "AÇIK"}`,
+    popupText: `Durum: ${a.status || "AÇIK"}${a.batteryPercent != null ? ` | Pil: %${a.batteryPercent}` : ""}${a.commsStatus ? ` | Haberleşme: ${COMMS_LABEL[a.commsStatus]}` : ""}`,
   }));
 
   return (
@@ -212,6 +263,13 @@ export default function SOSDispatchPage() {
 
                   <p className="text-xs text-slate-200 font-medium leading-relaxed">{alert.message}</p>
 
+                  {(alert.batteryPercent != null || alert.commsStatus) && (
+                    <div className="flex items-center gap-3 mt-1.5 text-[11px] font-semibold">
+                      {alert.batteryPercent != null && <BatteryBadge percent={alert.batteryPercent} />}
+                      {alert.commsStatus && <CommsBadge status={alert.commsStatus} />}
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
                     <span className="text-[11px] text-slate-400">
                       Konum: {alert.latitude.toFixed(3)}, {alert.longitude.toFixed(3)}
@@ -268,6 +326,13 @@ export default function SOSDispatchPage() {
                 <p className="text-xs text-slate-200 bg-slate-950 p-3 rounded-xl border border-slate-800">
                   {selectedAlert.message}
                 </p>
+
+                {(selectedAlert.batteryPercent != null || selectedAlert.commsStatus) && (
+                  <div className="flex items-center gap-4 text-xs font-semibold px-1">
+                    {selectedAlert.batteryPercent != null && <BatteryBadge percent={selectedAlert.batteryPercent} />}
+                    {selectedAlert.commsStatus && <CommsBadge status={selectedAlert.commsStatus} />}
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-bold text-slate-300">Durumu Güncelle:</span>

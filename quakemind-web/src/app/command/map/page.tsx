@@ -16,6 +16,7 @@ import {
   TeamClaim,
 } from "@/lib/api";
 import { interpolateTeamPosition } from "@/lib/teamPosition";
+import { COMMS_LABEL } from "@/lib/commsStatus";
 import { generateDemoMapData } from "@/lib/demoMapData";
 import {
   Layers,
@@ -263,7 +264,7 @@ export default function UnifiedCommandMapPage() {
           lng: a.longitude,
           title: a.message || "SOS İhbarı",
           type: "sos",
-          popupText: `Durum: ${a.status || "AÇIK"}`,
+          popupText: `Durum: ${a.status || "AÇIK"}${a.batteryPercent != null ? ` | Pil: %${a.batteryPercent}` : ""}${a.commsStatus ? ` | Haberleşme: ${COMMS_LABEL[a.commsStatus]}` : ""}`,
           linkHref: "/command/sos",
           linkLabel: "SOS Sevk Ekranına Git",
         })

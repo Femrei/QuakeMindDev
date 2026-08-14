@@ -133,12 +133,44 @@ def sample_point_in_bounds(bounds: dict, rng: random.Random, margin_frac: float 
     return lat, lon
 
 
+# Diyagramlarda tarif edilen "pil durumu" ve "haberlesme durumu" (mesh/BLE
+# fallback) icin gercek bir donanim sensoru/BLE yiginimiz yok (bkz.
+# AKIS_DIYAGRAM_KOD_ESLESTIRME_RAPORU.md, Bolum 01/06) -- rastgele yol
+# kapanmasinda oldugu gibi TEMSILI deger uretilip gercek SOS pipeline'ina
+# (POST /api/sos/alert) verilir, saklanir ve haritada/ihbar listesinde
+# gosterilir. kritik/mahsur durumlar enkaz altinda GECEN SUREYI temsil
+# ettigi icin pil daha dusuk araliktan secilir (telefon uzun suredir acik).
+BATTERY_RANGE_BY_DURUM = {
+    "kritik": (2, 30),
+    "mahsur": (2, 30),
+    "yarali": (15, 65),
+    "hafif": (35, 100),
+}
+# Sehir sebekesi depremde kismen coktugu icin bir kismi hucresel/wifi yerine
+# BLE mesh uzerinden (yakindaki telefonlar rolelerken) ya da hic ("offline",
+# ekip sahaya varana kadar hicbir bildirim gitmez) ulasiyor.
+COMMS_STATUS_WEIGHTS = [("online", 0.6), ("mesh", 0.28), ("offline", 0.12)]
+
+
+def _pick_comms_status(rng: random.Random) -> str:
+    r = rng.random()
+    cumulative = 0.0
+    for status, weight in COMMS_STATUS_WEIGHTS:
+        cumulative += weight
+        if r < cumulative:
+            return status
+    return COMMS_STATUS_WEIGHTS[-1][0]
+
+
 def generate_incidents(bounds: dict, rng: random.Random, city_key: str, n: int = ACTIVE_PLUS_WAITING) -> list[dict]:
     config = CITY_CONFIG[city_key]
     incidents = []
     for i in range(n):
         durum = _pick_durum(rng)
         lat, lon = sample_point_in_bounds(bounds, rng)
+        battery_lo, battery_hi = BATTERY_RANGE_BY_DURUM[durum]
+        battery_percent = rng.randint(battery_lo, battery_hi)
+        comms_status = _pick_comms_status(rng)
         template = rng.choice(NEED_TEMPLATES[durum])
         # NLP'nin metinden GERCEKTEN bir konum cikarabilmesi (NER + il/ilce
         # sozluk-eslestirmesi + Nominatim geocoding) icin somut bir yer adi
@@ -153,6 +185,7 @@ def generate_incidents(bounds: dict, rng: random.Random, city_key: str, n: int =
         incidents.append({
             "id": f"rich-ihbar-{i+1}", "lat": lat, "lon": lon,
             "durum": durum, "needText": need_text, "sos": sos,
+            "batteryPercent": battery_percent, "commsStatus": comms_status,
         })
     return incidents
 
@@ -180,11 +213,16 @@ def run_nlp_and_sos(logger: RunLogger, incidents: list[dict], speed: float) -> N
             resp = requests.post(f"{API_BASE}/api/sos/alert", json={
                 "latitude": inc["lat"], "longitude": inc["lon"],
                 "message": inc["needText"], "userId": inc["id"],
+                "batteryPercent": inc.get("batteryPercent"),
+                "commsStatus": inc.get("commsStatus"),
             }, timeout=30)
             result = resp.json()
             inc["alertId"] = result.get("id")
             logger.log("sos_alert", incidentId=inc["id"], alertId=inc["alertId"], durum=inc["durum"], result=result)
-            _safe_print(f"  [IHBAR] {inc['id']} ({inc['durum']}, kategori={nlp_result.get('kategori', '?')}) haritada belirdi.")
+            _safe_print(
+                f"  [IHBAR] {inc['id']} ({inc['durum']}, kategori={nlp_result.get('kategori', '?')}, "
+                f"pil=%{inc.get('batteryPercent')}, haberlesme={inc.get('commsStatus')}) haritada belirdi."
+            )
         except Exception as e:
             logger.log("sos_alert_error", incidentId=inc["id"], error=str(e))
 
@@ -409,6 +447,7 @@ def run_city(city_key: str, run_id: str | None, seed: int, speed: float, closure
         "teams": teams,
         "incidents": [{"id": i["id"], "durum": i["durum"], "sos": i["sos"], "lat": i["lat"], "lon": i["lon"],
                        "needText": i["needText"], "alertId": i.get("alertId"),
+                       "batteryPercent": i.get("batteryPercent"), "commsStatus": i.get("commsStatus"),
                        "status": "active" if i["id"] in {a["incidentId"] for a in assignments} else "waiting"}
                       for i in incidents],
         "assignments": assignments,
