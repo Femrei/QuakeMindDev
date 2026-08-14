@@ -17,7 +17,6 @@ import {
 } from "@/lib/api";
 import { interpolateTeamPosition } from "@/lib/teamPosition";
 import { COMMS_LABEL } from "@/lib/commsStatus";
-import { generateDemoMapData } from "@/lib/demoMapData";
 import {
   Layers,
   Siren,
@@ -30,8 +29,6 @@ import {
   AlertTriangle,
   Users,
   Flame,
-  Sparkles,
-  Trash2,
 } from "lucide-react";
 
 const TURKEY_CENTER: [number, number] = [38.9, 35.2];
@@ -68,16 +65,12 @@ export default function UnifiedCommandMapPage() {
     setSosAlerts,
     sosUpdatedAt,
     nlpIncidents,
-    setNlpIncidents,
     riskLayer,
-    setRiskResult,
-    clearRiskResult,
     riskUpdatedAt,
     faultLinesUpdatedAt,
     setAllFaultLines,
     roadDamageAnalyses,
     addRoadDamageAnalysis,
-    setRoadDamageAnalyses,
     assemblyAreas,
     setAssemblyAreas,
     assemblyUpdatedAt,
@@ -213,33 +206,6 @@ export default function UnifiedCommandMapPage() {
     const timer = setInterval(poll, ROAD_DAMAGE_POLL_MS);
     return () => clearInterval(timer);
   }, [addRoadDamageAnalysis, setAssemblyAreas]);
-
-  // Sunucusuz sunum/demo modu -- gercek verinin uzerine gecici olarak
-  // sahte-ama-tutarli ornek veri yukler (canli backend'e bagli olmadan
-  // katmanlarin nasil gorunecegini gostermek icin).
-  const [demoActive, setDemoActive] = useState(false);
-
-  const loadDemoData = () => {
-    const demo = generateDemoMapData();
-    setSosAlerts(demo.sosAlerts);
-    setNlpIncidents(demo.nlpIncidents);
-    setRiskResult(demo.riskResult);
-    setRoadDamageAnalyses(demo.roadDamageAnalyses);
-    setAssemblyAreas(demo.assemblyAreas);
-    (["sos", "nlp", "risk", "roadDamage", "assemblyAreas", "heatmap"] as LayerKey[]).forEach((key) => {
-      if (!layerVisibility[key]) toggleLayer(key);
-    });
-    setDemoActive(true);
-  };
-
-  const clearDemoData = () => {
-    setSosAlerts([]);
-    setNlpIncidents([]);
-    clearRiskResult();
-    setRoadDamageAnalyses([]);
-    setAssemblyAreas([]);
-    setDemoActive(false);
-  };
 
   // Lazy-fetch: Turkiye geneli fay hatti veri seti buyuk oldugu icin sadece
   // katman ilk kez acildiginda ve daha once cekilmediyse indirilir.
@@ -522,30 +488,6 @@ export default function UnifiedCommandMapPage() {
           <div className="flex items-center gap-2 font-bold text-slate-200 border-b border-slate-800 pb-2">
             <Layers className="w-4 h-4 text-blue-400" />
             <span>BİRLEŞİK KOMUTA HARİTASI</span>
-          </div>
-
-          <div className="space-y-1.5 pb-2 border-b border-slate-800">
-            <button
-              onClick={loadDemoData}
-              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-purple-200 font-semibold transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              {demoActive ? "Simülasyon Verisini Yenile" : "Simülasyon Verisi Yükle"}
-            </button>
-            {demoActive && (
-              <button
-                onClick={clearDemoData}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-900 text-slate-400 transition-colors"
-              >
-                <Trash2 className="w-3 h-3" />
-                Simülasyon Verisini Temizle
-              </button>
-            )}
-            {demoActive && (
-              <p className="text-[10px] text-purple-300/80 text-center pt-0.5">
-                Tüm katmanlar sahte/simüle veriyle dolduruldu — test amaçlıdır.
-              </p>
-            )}
           </div>
 
           <div className="space-y-2">
