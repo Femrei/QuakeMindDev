@@ -88,7 +88,7 @@ def load_region_data(city_key: str) -> dict:
         return json.load(f)
 
 
-def select_team_bases(region_data: dict, center: tuple, radius_km: float, margin_frac: float = 0.85) -> list[dict]:
+def select_team_bases(region_data: dict, center: tuple, radius_km: float, margin_frac: float = 0.95) -> list[dict]:
     """Analiz edilen grafın gercekten kapsadigi alanin icinde kalan gercek
     itfaiye/hastane noktalarini secer -- disaridaki bir nokta rota
     hesaplamasinda en yakin dugume yanlislikla "kilitlenir" (bkz. oturum
@@ -114,10 +114,23 @@ def select_team_bases(region_data: dict, center: tuple, radius_km: float, margin
 def generate_teams(bases: list[dict], rng: random.Random, n: int = TEAMS_PER_CITY) -> list[dict]:
     roles = list(EKIP_ROLES.keys())
     teams = []
+    # Ekipler farkli gercek itfaiye/hastane noktalarindan CIKSIN diye
+    # IADESIZ (tekrarsiz) dagitilir -- eskiden her ekip icin bagimsiz
+    # rng.choice(bases) yapiliyordu, bu da (ozellikle bases az sayidaysa,
+    # orn. Hatay'da merkeze yakin sadece 3 gercek nokta var) birden fazla
+    # ekibin AYNI binadan cikmasina yol aciyordu ("hepsi tek noktadan
+    # dagiliyor" diye kullanicinin bildirdigi sorun). Havuz tukenirse
+    # (ekip sayisi > farkli nokta sayisi) YENIDEN karistirilip devam edilir,
+    # boylece hicbir zaman ust uste ayni nokta secilmez.
+    base_pool: list[dict] = []
     for i in range(n):
+        if not base_pool:
+            base_pool = list(bases)
+            rng.shuffle(base_pool)
+        base = base_pool.pop()
+
         role = roles[i % len(roles)]
         unit = rng.choice(EKIP_ROLES[role])
-        base = rng.choice(bases)
         teams.append({
             "id": f"rich-ekip-{i+1}", "role": role, "unit": unit,
             "startName": base["name"], "startLat": base["lat"], "startLon": base["lon"],
