@@ -329,12 +329,37 @@ def simulate_random_closures(bounds, closure_ratio=0.15, network_type='drive', s
     all_edges = sorted(G.edges(keys=True))
     total_nodes = G.number_of_nodes()
 
+    # KRITIK: iki-yonlu her sokak, MultiDiGraph'ta IKI AYRI yonlu kenar olarak
+    # tutulur -- (u,v,k) ve onun fiziksel olarak AYNI yolu temsil eden ters
+    # yonlu esi (v,u,k). Bunlari BAGIMSIZ tek tek ornekleyip sadece BIRINI
+    # kapatirsak, rota motoru "kapali" isaretlenen yolu ters yonden gecen
+    # hala-acik esini kullanarak fiilen o yoldan gecebiliyor -- haritada
+    # kirmizi gorunen bir yoldan ekip rotasinin GECTIGI, kullanici tarafindan
+    # gozlemlenip bildirilen gercek bir bug buydu (dogrulandi: pyrosm yerel
+    # PBF-cache grafinde 40950 kenarin TAMAMI 20475 boyle cift olusturuyordu,
+    # ve kapali secilen kenarlarin ~%99'unun ters-yonlu esi acik kalmisti).
+    # Duzeltme: kapatma islemi kenar degil "fiziksel yol" (ayni dugum cifti +
+    # ayni osmid) bazinda yapilir, secilen fiziksel yolun TUM yonlu kenar
+    # kopyalari birlikte kapatilir.
+    def _physical_road_key(u, v, k):
+        osmid = G[u][v][k].get('osmid')
+        if isinstance(osmid, list):
+            osmid = tuple(sorted(str(o) for o in osmid))
+        node_pair = f"{min(u, v)}:{max(u, v)}"
+        return f"{node_pair}:{osmid}" if osmid is not None else f"{node_pair}:{u}-{v}-{k}"
+
+    physical_groups: dict = {}
+    for u, v, k in all_edges:
+        physical_groups.setdefault(_physical_road_key(u, v, k), []).append((u, v, k))
+    physical_keys = sorted(physical_groups.keys())
+
     closed_keys: set = set()
     candidate_ratio = closure_ratio
     for _attempt in range(6):
-        n_closed = max(1, int(len(all_edges) * candidate_ratio)) if all_edges else 0
-        n_closed = min(n_closed, len(all_edges))
-        trial_closed = set(rng.sample(all_edges, n_closed)) if n_closed else set()
+        n_closed_roads = max(1, int(len(physical_keys) * candidate_ratio)) if physical_keys else 0
+        n_closed_roads = min(n_closed_roads, len(physical_keys))
+        trial_closed_roads = rng.sample(physical_keys, n_closed_roads) if n_closed_roads else []
+        trial_closed = {edge for road_key in trial_closed_roads for edge in physical_groups[road_key]}
 
         trial_G = G.copy()
         trial_G.remove_edges_from([(u, v, k) for (u, v, k) in trial_closed])
