@@ -132,6 +132,12 @@ export interface MapPolylineItem {
   label?: string;
   /** Draws a dark outline underneath so the line stands out against any tile background. */
   casing?: boolean;
+  /** Leaflet dash pattern (orn. "10,8") -- "gercek degil, varsayimsal" bir
+   * rotayi (naif ajanin rotasi gibi) duz cizgilerden ayirt etmek icin. */
+  dashArray?: string;
+  /** Verilince cizgiye tiklaninca acilan bir popup eklenir -- mesafe
+   * karsilastirmasi gibi bilgiyi cizginin uzerine dogrudan koymak icin. */
+  popupText?: string;
 }
 
 interface LeafletContainerProps {
@@ -218,8 +224,15 @@ function PolylineLayer({ polylines }: { polylines: MapPolylineItem[] }) {
               lineCap: "round",
               lineJoin: "round",
               className: poly.casing ? "qm-route-line" : undefined,
+              dashArray: poly.dashArray,
             }}
-          />
+          >
+            {poly.popupText && (
+              <Popup>
+                <div className="text-xs text-slate-700 whitespace-pre-line">{poly.popupText}</div>
+              </Popup>
+            )}
+          </Polyline>
         </React.Fragment>
       ))}
     </>

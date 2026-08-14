@@ -442,6 +442,13 @@ class TeamRouteAttachRequest(BaseModel):
     routeCoords: list
     distanceMeters: float
     assumedSpeedKmh: float = 15.0
+    # "Biz olmasaydik nereden giderdi" karsilastirmasi -- naif ajanin FIILEN
+    # yurudugu rota + mesafesi, haritada bizim rotamizla yan yana cizilip
+    # kazanci gorsel olarak da kanitlamak icin (rich_simulation.py bunu
+    # /api/road_damage/naive_compare'den alip buraya iliştirir).
+    naiveRouteCoords: list | None = None
+    naiveDistanceMeters: float | None = None
+    naiveReachable: bool | None = None
 
 class RiskRequest(BaseModel):
     city: str
@@ -956,8 +963,13 @@ def naive_compare(req: NaiveCompareRequest):
 
     result = simulate_naive_agent(G, real_closed_edges, req.startLat, req.startLon, req.endLat, req.endLon)
     if result is None:
-        return {"reachable": False, "distanceMeters": None, "discoveries": None}
-    return {"reachable": True, "distanceMeters": result["distanceMeters"], "discoveries": result["discoveries"]}
+        return {"reachable": False, "distanceMeters": None, "discoveries": None, "routeCoords": None}
+    return {
+        "reachable": True,
+        "distanceMeters": result["distanceMeters"],
+        "discoveries": result["discoveries"],
+        "routeCoords": [[float(lat), float(lon)] for lat, lon in result["routeCoords"]],
+    }
 
 
 class SafeRouteRequest(BaseModel):
@@ -1498,6 +1510,9 @@ def attach_team_route(target_id: str, req: TeamRouteAttachRequest):
         claim["distanceMeters"] = req.distanceMeters
         claim["assumedSpeedKmh"] = req.assumedSpeedKmh
         claim["startedAt"] = datetime.now(timezone.utc).isoformat()
+        claim["naiveRouteCoords"] = req.naiveRouteCoords
+        claim["naiveDistanceMeters"] = req.naiveDistanceMeters
+        claim["naiveReachable"] = req.naiveReachable
     return claim
 
 

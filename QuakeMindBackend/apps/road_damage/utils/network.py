@@ -413,6 +413,11 @@ def simulate_naive_agent(G, real_closed_edges: set, start_lat, start_lon, end_la
     current = start_node
     total_length = 0.0
     discoveries = 0
+    # Naif ajanin FIILEN yurudugu koordinat izi -- haritada bizim rotamizla
+    # karsilastirmali gosterebilmek icin (kullanicinin istedigi gorsel
+    # kanit). calculate_route/get_route_line'daki ayni ters-geometri
+    # duzeltmesi burada da uygulanir.
+    route_coords: list = [(G.nodes[start_node]['y'], G.nodes[start_node]['x'])]
 
     for _ in range(MAX_NAIVE_ITERATIONS):
         G_view = G.copy()
@@ -446,10 +451,25 @@ def simulate_naive_agent(G, real_closed_edges: set, start_lat, start_lon, end_la
                 discoveries += 1
                 break
             total_length += G[u][v][key].get("length", 0.0)
+            edge_data = G[u][v][key]
+            if 'geometry' in edge_data:
+                coords = [(lat, lon) for lon, lat in edge_data['geometry'].coords]
+                u_node, v_node = G.nodes[u], G.nodes[v]
+                start_to_u = haversine(coords[0][0], coords[0][1], u_node['y'], u_node['x'])
+                start_to_v = haversine(coords[0][0], coords[0][1], v_node['y'], v_node['x'])
+                if start_to_v < start_to_u:
+                    coords = coords[::-1]
+                route_coords.extend(coords[1:])
+            else:
+                route_coords.append((G.nodes[v]['y'], G.nodes[v]['x']))
             current = v
 
         if not blocked_here:
-            return {"distanceMeters": round(total_length, 1), "discoveries": discoveries}
+            return {
+                "distanceMeters": round(total_length, 1),
+                "discoveries": discoveries,
+                "routeCoords": route_coords,
+            }
 
     return None  # cok fazla kesif dongusu -- pratikte yol bulunamadi kabul edilir
 

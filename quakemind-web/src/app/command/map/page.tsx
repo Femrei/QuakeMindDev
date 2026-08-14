@@ -317,13 +317,22 @@ export default function UnifiedCommandMapPage() {
           }
           const pos = interpolateTeamPosition(claim);
           if (!pos) return;
+
+          const hasNaive = claim.naiveReachable && claim.naiveDistanceMeters != null && claim.distanceMeters != null;
+          const savedM = hasNaive ? Math.round(claim.naiveDistanceMeters! - claim.distanceMeters!) : null;
+          const comparisonText = hasNaive
+            ? `Bizim rota: ${Math.round(claim.distanceMeters!)} m | Naif (kapanmayı bilmese) rota: ${Math.round(claim.naiveDistanceMeters!)} m | Kazanç: ${savedM! >= 0 ? "+" : ""}${savedM} m`
+            : claim.naiveReachable === false
+            ? "Naif ajan (kapanmaları bilmeden) bu hedefe hiç ulaşamadı."
+            : null;
+
           list.push({
             id: `team-${claim.teamId}-${claim.targetId}`,
             lat: pos[0],
             lng: pos[1],
             title: `Ekip: ${claim.teamId}`,
             type: "team",
-            popupText: `Hedef: ${claim.targetId} | Tür: ${claim.targetType}`,
+            popupText: `Hedef: ${claim.targetId} | Tür: ${claim.targetType}${comparisonText ? `\n${comparisonText}` : ""}`,
             linkHref: "/command/sos",
             linkLabel: "SOS Sevk Ekranına Git",
           });
@@ -404,20 +413,45 @@ export default function UnifiedCommandMapPage() {
     }
 
     if (layerVisibility.team) {
-      // Ekibin GERCEKTEN gittigi rota -- genel acik/kapali yol katmanindan
-      // (yesil/kirmizi) ayrilsin diye belirgin sari, koyu konturlu kalin cizgi
-      // (command/page.tsx'teki simulasyon modundaki mantikla ayni).
+      // Ekibin GERCEKTEN gittigi (bizim motorumuzun buldugu) rota -- acik/
+      // kapali yol katmanindaki yesil/kirmizidan VE asagidaki naif rotadan
+      // acikca ayrilsin diye canli, elektrik mavisi bir renk (command/
+      // page.tsx'teki simulasyon modundaki mantikla ayni).
       teamClaims
         .filter((c) => c.status === "active" && c.routeCoords)
         .forEach((claim) => {
+          const hasNaive = claim.naiveReachable && claim.naiveDistanceMeters != null && claim.distanceMeters != null;
+          const savedM = hasNaive ? Math.round(claim.naiveDistanceMeters! - claim.distanceMeters!) : null;
+          const comparisonText = hasNaive
+            ? `Bizim rota: ${Math.round(claim.distanceMeters!)} m | Naif (kapanmayı bilmese) rota: ${Math.round(claim.naiveDistanceMeters!)} m | Kazanç: ${savedM! >= 0 ? "+" : ""}${savedM} m`
+            : claim.naiveReachable === false
+            ? "Naif ajan (kapanmaları bilmeden) bu hedefe hiç ulaşamadı."
+            : undefined;
+
           list.push({
             id: `team-route-${claim.teamId}-${claim.targetId}`,
             coords: claim.routeCoords!,
-            color: "#facc15",
+            color: "#00e5ff",
             weight: 5,
             opacity: 0.95,
             casing: true,
+            popupText: comparisonText,
           });
+
+          if (claim.naiveRouteCoords && claim.naiveRouteCoords.length > 1) {
+            // "Biz olmasaydik nereden giderdi" -- naif ajanin kapanmalari
+            // bilmeden fiilen yuruyecegi rota, kesikli/pembe, karsilastirma
+            // icin ayni popup metniyle.
+            list.push({
+              id: `team-naive-route-${claim.teamId}-${claim.targetId}`,
+              coords: claim.naiveRouteCoords,
+              color: "#ec4899",
+              weight: 4,
+              opacity: 0.85,
+              dashArray: "10,8",
+              popupText: comparisonText,
+            });
+          }
         });
     }
 

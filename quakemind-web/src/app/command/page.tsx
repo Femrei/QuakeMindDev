@@ -254,25 +254,53 @@ export default function CommandDashboardPage() {
         }
         const pos = interpolateTeamPosition(claim);
         if (!pos) return;
+
+        // "Biz olmasaydik nereden giderdi" -- naif ajanin FIILEN yurudugu
+        // rota varsa, mesafe karsilastirmasi hem ekip popup'ina hem de
+        // (asagida) kendi rota cizgisinin popup'ina eklenir.
+        const hasNaive = claim.naiveReachable && claim.naiveDistanceMeters != null && claim.distanceMeters != null;
+        const savedM = hasNaive ? Math.round(claim.naiveDistanceMeters! - claim.distanceMeters!) : null;
+        const comparisonText = hasNaive
+          ? `Bizim rota: ${Math.round(claim.distanceMeters!)} m | Naif (kapanmayı bilmese) rota: ${Math.round(claim.naiveDistanceMeters!)} m | Kazanç: ${savedM! >= 0 ? "+" : ""}${savedM} m`
+          : claim.naiveReachable === false
+          ? "Naif ajan (kapanmaları bilmeden) bu hedefe hiç ulaşamadı."
+          : null;
+
         teamMarkers.push({
           id: `team-${claim.teamId}-${claim.targetId}`,
           lat: pos[0],
           lng: pos[1],
           title: `Ekip: ${claim.teamId}`,
           type: "team",
-          popupText: `Hedef: ${claim.targetId} | Tür: ${claim.targetType}`,
+          popupText: `Hedef: ${claim.targetId} | Tür: ${claim.targetType}${comparisonText ? `\n${comparisonText}` : ""}`,
         });
         if (claim.routeCoords) {
-          // Ekibin GERCEKTEN gittigi rota -- genel acik/kapali yol
-          // katmanindan (yesil/kirmizi) ayrilsin diye belirgin sari, koyu
-          // konturlu (casing) kalin bir cizgi.
+          // Ekibin GERCEKTEN gittigi (bizim motorumuzun buldugu) rota --
+          // acik/kapali yol katmanindaki yesil/kirmizden VE naif rotadan
+          // acikca ayrilsin diye canli, elektrik mavisi bir renk.
           teamTrailPolylines.push({
             id: `team-route-${claim.teamId}-${claim.targetId}`,
             coords: claim.routeCoords,
-            color: "#facc15",
+            color: "#00e5ff",
             weight: 5,
             opacity: 0.95,
             casing: true,
+            popupText: comparisonText || undefined,
+          });
+        }
+        if (claim.naiveRouteCoords && claim.naiveRouteCoords.length > 1) {
+          // Karsilastirma icin: ayni ekip, ayni hedef, ama kapanmalari
+          // BILMEDEN naif ajanin fiilen yuruyecegi rota -- kesikli, farkli
+          // (pembe/magenta) bir renkle, "varsayimsal/alternatif" oldugu
+          // acikca belli olsun diye casing'siz.
+          teamTrailPolylines.push({
+            id: `team-naive-route-${claim.teamId}-${claim.targetId}`,
+            coords: claim.naiveRouteCoords,
+            color: "#ec4899",
+            weight: 4,
+            opacity: 0.85,
+            dashArray: "10,8",
+            popupText: comparisonText || undefined,
           });
         }
       });

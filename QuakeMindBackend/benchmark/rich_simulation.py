@@ -133,6 +133,26 @@ def sample_point_in_bounds(bounds: dict, rng: random.Random, margin_frac: float 
     return lat, lon
 
 
+# Ihbarlar arasi minimum mesafe -- SADECE saf rastgele ornekleme kucuk N ile
+# (10 nokta) sans eseri birbirine cok yakin cikabildigi (bazi ciftler
+# ~600m'ye kadar dusuyordu, haritada "ust uste" gibi gorunuyordu) icin
+# eklendi. Alanin KENDISI (bounds/margin_frac) DEGISMEZ -- sadece ayni alan
+# icinde daha esit/seyrek bir dagilim zorlanir (kullanicinin istedigi: "cok
+# genis tutma, mevcut sekil icinde kalsin").
+MIN_INCIDENT_SEPARATION_M = 900
+MAX_SEPARATION_ATTEMPTS = 60
+
+
+def sample_spread_point(bounds: dict, rng: random.Random, existing_points: list[tuple]) -> tuple:
+    candidate = sample_point_in_bounds(bounds, rng)
+    for _ in range(MAX_SEPARATION_ATTEMPTS):
+        if all(_haversine_m(candidate[0], candidate[1], elat, elon) >= MIN_INCIDENT_SEPARATION_M
+               for elat, elon in existing_points):
+            return candidate
+        candidate = sample_point_in_bounds(bounds, rng)
+    return candidate  # 60 denemede bulunamadiysa son adayla devam et (sonsuz donguye girme)
+
+
 # Diyagramlarda tarif edilen "pil durumu" ve "haberlesme durumu" (mesh/BLE
 # fallback) icin gercek bir donanim sensoru/BLE yiginimiz yok (bkz.
 # AKIS_DIYAGRAM_KOD_ESLESTIRME_RAPORU.md, Bolum 01/06) -- rastgele yol
@@ -165,9 +185,11 @@ def _pick_comms_status(rng: random.Random) -> str:
 def generate_incidents(bounds: dict, rng: random.Random, city_key: str, n: int = ACTIVE_PLUS_WAITING) -> list[dict]:
     config = CITY_CONFIG[city_key]
     incidents = []
+    placed_points: list[tuple] = []
     for i in range(n):
         durum = _pick_durum(rng)
-        lat, lon = sample_point_in_bounds(bounds, rng)
+        lat, lon = sample_spread_point(bounds, rng, placed_points)
+        placed_points.append((lat, lon))
         battery_lo, battery_hi = BATTERY_RANGE_BY_DURUM[durum]
         battery_percent = rng.randint(battery_lo, battery_hi)
         comms_status = _pick_comms_status(rng)
@@ -257,6 +279,7 @@ def assign_teams_and_route(
             continue
 
         route_result = None
+        naive_result = None
         try:
             route_resp = requests.post(f"{API_BASE}/api/road_damage/route", json={
                 "analysisId": analysis_id,
@@ -265,12 +288,34 @@ def assign_teams_and_route(
             }, timeout=30)
             if route_resp.status_code == 200:
                 route_result = route_resp.json()
+
+                # "Biz olmasaydik nereden giderdi" -- ayni baslangic/bitis icin
+                # naif ajan simulasyonu HEMEN ARDINDAN cagirilir (aynen bizim
+                # rotamiz gibi taze/senkron), boylece hem raporlama hem harita
+                # (asagida TEK bir attachTeamRoute cagrisiyla) ayni veriyi kullanir.
+                try:
+                    naive_resp = requests.post(f"{API_BASE}/api/road_damage/naive_compare", json={
+                        "analysisId": analysis_id,
+                        "startLat": team["startLat"], "startLon": team["startLon"],
+                        "endLat": victim["lat"], "endLon": victim["lon"],
+                    }, timeout=60)
+                    naive_resp.raise_for_status()
+                    naive_result = naive_resp.json()
+                except Exception as e:
+                    logger.log("naive_compare_error", teamId=team["id"], incidentId=victim["id"], error=str(e))
+                    naive_result = {"reachable": False, "distanceMeters": None, "discoveries": None, "routeCoords": None}
+
                 requests.post(f"{API_BASE}/api/team/claim/{target_id}/route", json={
                     "routeCoords": route_result["routeCoords"],
                     "distanceMeters": route_result["distanceMeters"],
+                    "naiveRouteCoords": naive_result.get("routeCoords") if naive_result.get("reachable") else None,
+                    "naiveDistanceMeters": naive_result.get("distanceMeters"),
+                    "naiveReachable": naive_result.get("reachable"),
                 }, timeout=15)
                 logger.log("team_route", teamId=team["id"], incidentId=victim["id"],
-                          distanceMeters=route_result["distanceMeters"])
+                          distanceMeters=route_result["distanceMeters"],
+                          naiveDistanceMeters=naive_result.get("distanceMeters"),
+                          naiveReachable=naive_result.get("reachable"))
                 _safe_print(f"  [EKIP] {team['id']} ({team['unit']}) -> {victim['id']} icin yola cikti "
                             f"({route_result['distanceMeters']:.0f}m, harita uzerinde ilerliyor).")
             else:
@@ -289,6 +334,9 @@ def assign_teams_and_route(
             "durum": victim["durum"],
             "distanceMeters": route_result.get("distanceMeters") if route_result else None,
             "routeCoords": route_result.get("routeCoords") if route_result else None,
+            "naiveDistanceMeters": naive_result.get("distanceMeters") if naive_result else None,
+            "naiveReachable": naive_result.get("reachable") if naive_result else None,
+            "naiveDiscoveries": naive_result.get("discoveries") if naive_result else None,
         })
         time.sleep(CLAIM_STEP_DELAY_SEC / speed)
 
@@ -296,42 +344,31 @@ def assign_teams_and_route(
 
 
 def compute_naive_comparison(analysis_id: str, assignments: list[dict]) -> dict:
-    """'Biz tespit edip soylemeseydik ne kadar kaybederdiniz' karsilastirmasi
-    -- her atama icin backend'in YENI /api/road_damage/naive_compare uc
-    noktasi cagrilir.
+    """'Biz tespit edip soylemeseydik ne kadar kaybederdiniz' karsilastirmasi.
 
-    ONEMLI (kok neden bulunup duzeltildi): bu hesaplama ONCE burada, AYRI bir
+    Naif-ajan sonucu ARTIK burada AYRICA sorulmuyor -- assign_teams_and_route
+    her atamadan hemen sonra /naive_compare'i zaten cagirip sonucu
+    assignments listesine ekliyor (bkz. o fonksiyonun docstring'i: bunun
+    NEDENI, iki tarafin da AYNI surecteki AYNI G/kapanma kumesini kullanmasi
+    gerektigiydi -- surec-arasi tekrar sorgulama matematiksel olarak imkansiz
+    sonuclara yol aciyordu). Burada sadece rapor icin ozetlenir.
+
+    ONEMLI (kok neden bulunup duzeltildi, tarihce): bu hesaplama once AYRI bir
     Python surecinde (bu script), simulate_random_closures'i backend'le AYNI
-    (bounds, closure_ratio, seed) ile TEKRAR cagirarak yapiliyordu. TEORIDE
-    deterministik olmasi beklenirken, PRATIKTE surecler arasi FARKLI bir
-    kapanma kumesi uretiyordu (all_edges'i sort etmek bile yetmedi --
-    nx.strongly_connected_components'in kapanma-miktarini-otomatik-azaltma
-    donguisu icindeki davranisinin surece ozgu oldugu gozlemlendi) -- bu da
-    "naive ajan bizim motordan DAHA KISA bir rota buluyor" gibi matematiksel
-    olarak IMKANSIZ olmasi gereken sonuclara yol aciyordu (iki taraf da AYNI
-    kapanmayi biliyor/bilmiyor olmali, sadece NE ZAMAN ogrendikleri farkli
-    olmali). Cozum: naif-ajan simulasyonunu ARTIK backend'in KENDI SURECINDE,
-    /route'un FIILEN kullandigi session'daki G ile calistiriyoruz -- surec-
-    arasi hicbir fark kalmiyor."""
+    parametrelerle TEKRAR cagirarak yapiliyordu; surecler arasi FARKLI bir
+    kapanma kumesi uretebildigi (nx.strongly_connected_components'in ic
+    davranisi surece ozgu oldugu icin) gorulunce naif-ajan sorgusu backend'in
+    KENDI SURECINE tasindi. Simdi ise assign_teams_and_route icinde, /route
+    cagrisinin hemen ardindan, AYNI istek dongisu icinde calisiyor."""
     rows = []
     for a in assignments:
-        coords = a.get("routeCoords")
-        if not coords or a.get("distanceMeters") is None:
+        if a.get("distanceMeters") is None:
             continue
-        start_lat, start_lon = coords[0]
-        end_lat, end_lon = coords[-1]
-        try:
-            resp = requests.post(f"{API_BASE}/api/road_damage/naive_compare", json={
-                "analysisId": analysis_id,
-                "startLat": start_lat, "startLon": start_lon,
-                "endLat": end_lat, "endLon": end_lon,
-            }, timeout=60)
-            resp.raise_for_status()
-            naive = resp.json()
-        except Exception as e:
-            naive = {"reachable": False, "distanceMeters": None, "discoveries": None}
-            _safe_print(f"  [UYARI] naive_compare basarisiz ({a['teamId']} -> {a['incidentId']}): {e}")
-
+        naive = {
+            "reachable": a.get("naiveReachable"),
+            "distanceMeters": a.get("naiveDistanceMeters"),
+            "discoveries": a.get("naiveDiscoveries"),
+        }
         our_distance = a["distanceMeters"]
         row = {
             "teamId": a["teamId"], "incidentId": a["incidentId"],

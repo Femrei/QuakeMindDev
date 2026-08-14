@@ -505,6 +505,11 @@ export interface TeamClaim {
   distanceMeters?: number;
   assumedSpeedKmh?: number;
   startedAt?: string;
+  /** "Biz olmasaydik nereden giderdi" -- naif ajanin (kapanmalari bilmeden)
+   * FIILEN yurudugu rota, bizim rotamizla karsilastirmali gostermek icin. */
+  naiveRouteCoords?: [number, number][] | null;
+  naiveDistanceMeters?: number | null;
+  naiveReachable?: boolean | null;
 }
 
 export async function getTeamClaims(): Promise<{ claims: TeamClaim[]; totalClaims: number }> {
