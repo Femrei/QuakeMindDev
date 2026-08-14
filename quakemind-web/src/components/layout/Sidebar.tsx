@@ -1,14 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Siren, 
-  Map, 
-  Activity, 
-  FileText, 
+import {
+  LayoutDashboard,
+  Siren,
+  Map,
+  Activity,
+  FileText,
   Camera,
   Settings,
   Compass,
@@ -16,9 +16,53 @@ import {
   Layers,
   UserCheck
 } from "lucide-react";
+import { getSOSAlerts } from "@/lib/api";
+
+const NETWORK_POLL_MS = 8000;
+
+/** Diyagramdaki "Otonom Fallback / Mesh Aktif · N cihaz" gostergesinin
+ * daha once tamamen sabit metin oldugu yer (bkz.
+ * AKIS_DIYAGRAM_KOD_ESLESTIRME_RAPORU.md, Bolum 01) -- gercek bir BLE/mesh
+ * yiginimiz olmadigi icin sunucunun kendisi hakkinda sahte bir ag iddiasi
+ * KURMUYORUZ; bunun yerine gercek SOS verisindeki (temsili/senaryo kaynakli
+ * olsa da) her ihbarin kendi commsStatus alanindan SAYILARAK turetilen
+ * durustce-etiketlenmis bir "sahadaki cihazlar nasil ulasiyor" ozeti
+ * gosteriyoruz -- sabit "4 cihaz" yerine gercekten sayilan deger.
+ */
+function useFieldConnectivity() {
+  const [counts, setCounts] = useState<{ online: number; mesh: number; offline: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const poll = () => {
+      getSOSAlerts()
+        .then((data) => {
+          if (cancelled) return;
+          const next = { online: 0, mesh: 0, offline: 0 };
+          data.alerts.forEach((a) => {
+            if (a.commsStatus === "mesh") next.mesh += 1;
+            else if (a.commsStatus === "offline") next.offline += 1;
+            else if (a.commsStatus === "online") next.online += 1;
+          });
+          setCounts(next);
+        })
+        .catch(() => {});
+    };
+    poll();
+    const timer = setInterval(poll, NETWORK_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
+
+  return counts;
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const connectivity = useFieldConnectivity();
+  const totalReporting = connectivity ? connectivity.online + connectivity.mesh + connectivity.offline : 0;
 
   const navItems = [
     { name: "Komuta Merkezi", href: "/command", icon: LayoutDashboard },
@@ -79,14 +123,22 @@ export default function Sidebar() {
             <Compass className="w-4 h-4 text-emerald-400" />
             <span>Onboarding Simülasyonu</span>
           </Link>
-          <div className="px-3 py-2 rounded-xl bg-slate-900/40 border border-slate-800/50 text-[11px] text-slate-400 space-y-1">
+          <div className="px-3 py-2 rounded-xl bg-slate-900/40 border border-slate-800/50 text-[11px] text-slate-400 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5">
-                <Radio className="w-3 h-3 text-emerald-400 animate-pulse" /> Node Modu:
+                <Radio className="w-3 h-3 text-emerald-400 animate-pulse" /> Saha Cihaz Bağlantısı
               </span>
-              <span className="font-semibold text-emerald-400">Offline Hotspot</span>
+              <span className="font-semibold text-slate-300">{totalReporting} ihbar</span>
             </div>
-            <p className="text-[9px] text-slate-400">10.42.0.1 (FastAPI Mesh)</p>
+            {totalReporting > 0 && connectivity ? (
+              <p className="text-[10px] flex items-center gap-2 flex-wrap">
+                <span className="text-emerald-400 font-semibold">{connectivity.online} Şebeke</span>
+                <span className="text-cyan-400 font-semibold">{connectivity.mesh} Mesh</span>
+                <span className="text-red-400 font-semibold">{connectivity.offline} Çevrimdışı</span>
+              </p>
+            ) : (
+              <p className="text-[9px] text-slate-500">Henüz raporlanan ihbar yok</p>
+            )}
           </div>
         </div>
       </div>
