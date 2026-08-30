@@ -1,0 +1,107 @@
+{
+  "model": "fasttext",
+  "micro_f1": 0.6003016591251885,
+  "macro_f1": 0.2588689565504035,
+  "samples_f1": 0.5546604215456674,
+  "subset_accuracy": 0.4786885245901639,
+  "micro_precision": 0.8728070175438597,
+  "macro_precision": 0.5018902972027972,
+  "micro_recall": 0.4574712643678161,
+  "macro_recall": 0.20178546029193117,
+  "n_test": 305,
+  "per_class": {
+    "Alakasiz": {
+      "precision": 0.85,
+      "recall": 0.2786885245901639,
+      "f1": 0.41975308641975306,
+      "support": 61
+    },
+    "Arama Ekipmani": {
+      "precision": 1.0,
+      "recall": 0.3684210526315789,
+      "f1": 0.5384615384615384,
+      "support": 19
+    },
+    "Barınma": {
+      "precision": 0.9636363636363636,
+      "recall": 0.6794871794871795,
+      "f1": 0.7969924812030075,
+      "support": 78
+    },
+    "Cenaze": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 1
+    },
+    "Elektrik Kaynagi": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 12
+    },
+    "Enkaz Kaldirma": {
+      "precision": 0.8359375,
+      "recall": 0.8294573643410853,
+      "f1": 0.8326848249027238,
+      "support": 129
+    },
+    "Giysi": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 23
+    },
+    "Isinma": {
+      "precision": 0.875,
+      "recall": 0.23333333333333334,
+      "f1": 0.3684210526315789,
+      "support": 30
+    },
+    "Lojistik": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 6
+    },
+    "Saglik": {
+      "precision": 1.0,
+      "recall": 0.058823529411764705,
+      "f1": 0.1111111111111111,
+      "support": 17
+    },
+    "Su": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 14
+    },
+    "Tuvalet": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 5
+    },
+    "Yemek": {
+      "precision": 1.0,
+      "recall": 0.175,
+      "f1": 0.2978723404255319,
+      "support": 40
+    }
+  },
+  "params": {
+    "epoch": 25,
+    "lr": 0.5,
+    "wordNgrams": 2,
+    "dim": 100,
+    "loss": "ova",
+    "train_seconds": 1.08
+  },
+  "dataset": {
+    "name": "deprem-private/intent_test_v13_anonymized",
+    "seed": 42,
+    "test_size": 0.15,
+    "val_size": 0.15,
+    "threshold": 0.5
+  }
+}

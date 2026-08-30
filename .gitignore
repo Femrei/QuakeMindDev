@@ -1,5 +1,6 @@
 venv/
 .venv/
+.venv*/
 **/venv/
 **/.venv/
 .git_backup_*
@@ -15,3 +16,16 @@ __pycache__/
 *.onnx
 *.safetensors
 *.tflite
+*.zip
+
+# Logs and caches
+.logs/
+**/data_cache/
+**/local_run/_hf_*/
+**/local_run/model_*/
+**/local_colab_run/_hf_*/
+**/local_colab_run/model_*/
+
+# OS
+.DS_Store
+Thumbs.db

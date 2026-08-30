@@ -1,0 +1,143 @@
+{
+  "model": "distilberturk",
+  "micro_f1": 0.5542168674698795,
+  "macro_f1": 0.12947516561974393,
+  "samples_f1": 0.5284777517564402,
+  "subset_accuracy": 0.42295081967213116,
+  "micro_precision": 0.8034934497816594,
+  "macro_precision": 0.12305336507464168,
+  "micro_recall": 0.42298850574712643,
+  "macro_recall": 0.136622173294803,
+  "n_test": 305,
+  "per_class": {
+    "Alakasiz": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 61
+    },
+    "Arama Ekipmani": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 19
+    },
+    "Barınma": {
+      "precision": 0.7840909090909091,
+      "recall": 0.8846153846153846,
+      "f1": 0.8313253012048193,
+      "support": 78
+    },
+    "Cenaze": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 1
+    },
+    "Elektrik Kaynagi": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 12
+    },
+    "Enkaz Kaldirma": {
+      "precision": 0.8156028368794326,
+      "recall": 0.8914728682170543,
+      "f1": 0.8518518518518519,
+      "support": 129
+    },
+    "Giysi": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 23
+    },
+    "Isinma": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 30
+    },
+    "Lojistik": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 6
+    },
+    "Saglik": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 17
+    },
+    "Su": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 14
+    },
+    "Tuvalet": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 5
+    },
+    "Yemek": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 40
+    }
+  },
+  "params": {
+    "epochs": 4,
+    "lr": 2e-05,
+    "batch_size": 8,
+    "eval_batch_size": 16,
+    "max_len": 256,
+    "weight_decay": 0.01,
+    "hf_checkpoint": "dbmdz/distilbert-base-turkish-cased",
+    "train_seconds": 915.9
+  },
+  "dataset": {
+    "name": "deprem-private/intent_test_v13_anonymized",
+    "seed": 42,
+    "test_size": 0.15,
+    "val_size": 0.15,
+    "threshold": 0.5
+  },
+  "extra": {
+    "history": {
+      "epoch": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "train_loss": [
+        0.34619292784272954,
+        0.24873450632845417,
+        0.20029852363500703,
+        0.1761397672503182
+      ],
+      "val_loss": [
+        0.27452054619789124,
+        0.22396942973136902,
+        0.18785658478736877,
+        0.17949344217777252
+      ],
+      "val_micro_f1": [
+        0.0,
+        0.4864864864864865,
+        0.5613496932515337,
+        0.5679389312977099
+      ],
+      "val_macro_f1": [
+        0.0,
+        0.11264035782509436,
+        0.1252955082742317,
+        0.12635989366145362
+      ]
+    }
+  }
+}

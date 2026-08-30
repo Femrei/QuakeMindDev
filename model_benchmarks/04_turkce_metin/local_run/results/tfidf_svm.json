@@ -1,0 +1,105 @@
+{
+  "model": "tfidf_svm",
+  "micro_f1": 0.7595561035758323,
+  "macro_f1": 0.48518376812231295,
+  "samples_f1": 0.7625865209471766,
+  "subset_accuracy": 0.6229508196721312,
+  "micro_precision": 0.8191489361702128,
+  "macro_precision": 0.5943280238770954,
+  "micro_recall": 0.7080459770114943,
+  "macro_recall": 0.4338490722359162,
+  "n_test": 305,
+  "per_class": {
+    "Alakasiz": {
+      "precision": 0.76,
+      "recall": 0.6229508196721312,
+      "f1": 0.6846846846846847,
+      "support": 61
+    },
+    "Arama Ekipmani": {
+      "precision": 0.8333333333333334,
+      "recall": 0.5263157894736842,
+      "f1": 0.6451612903225806,
+      "support": 19
+    },
+    "Barınma": {
+      "precision": 0.8831168831168831,
+      "recall": 0.8717948717948718,
+      "f1": 0.8774193548387097,
+      "support": 78
+    },
+    "Cenaze": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 1
+    },
+    "Elektrik Kaynagi": {
+      "precision": 0.5,
+      "recall": 0.08333333333333333,
+      "f1": 0.14285714285714285,
+      "support": 12
+    },
+    "Enkaz Kaldirma": {
+      "precision": 0.8344827586206897,
+      "recall": 0.937984496124031,
+      "f1": 0.8832116788321168,
+      "support": 129
+    },
+    "Giysi": {
+      "precision": 0.8461538461538461,
+      "recall": 0.4782608695652174,
+      "f1": 0.6111111111111112,
+      "support": 23
+    },
+    "Isinma": {
+      "precision": 0.68,
+      "recall": 0.5666666666666667,
+      "f1": 0.6181818181818182,
+      "support": 30
+    },
+    "Lojistik": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 6
+    },
+    "Saglik": {
+      "precision": 0.7272727272727273,
+      "recall": 0.47058823529411764,
+      "f1": 0.5714285714285714,
+      "support": 17
+    },
+    "Su": {
+      "precision": 0.8333333333333334,
+      "recall": 0.35714285714285715,
+      "f1": 0.5,
+      "support": 14
+    },
+    "Tuvalet": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 5
+    },
+    "Yemek": {
+      "precision": 0.8285714285714286,
+      "recall": 0.725,
+      "f1": 0.7733333333333333,
+      "support": 40
+    }
+  },
+  "params": {
+    "vectorizer": "TfidfVectorizer(max_features=50000, min_df=2, ngram_range=(1, 2),\n                sublinear_tf=True)",
+    "classifier": "LinearSVC(class_weight='balanced', C=1.0)",
+    "strategy": "OneVsRestClassifier",
+    "train_seconds": 0.12
+  },
+  "dataset": {
+    "name": "deprem-private/intent_test_v13_anonymized",
+    "seed": 42,
+    "test_size": 0.15,
+    "val_size": 0.15,
+    "threshold": 0.5
+  }
+}

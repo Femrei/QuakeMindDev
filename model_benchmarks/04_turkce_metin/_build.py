@@ -310,7 +310,7 @@ NOTEBOOKS = {
     "10_turna": transformer(
         "turna", "TURNA", "Turkce icin uretilmis encoder-decoder - siniflandirma + aciklama uretimi. "
         "(Not: seq2seq; burada encoder ozellik cikarici olarak siniflandiriliyor.)",
-        "Turkce transformer", "boun-tabi/TURNA"),
+        "Turkce transformer", "boun-tabi-LMG/TURNA"),
     "11_llm_few_shot": llm_nb(),
 }
 

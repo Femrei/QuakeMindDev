@@ -1,0 +1,28 @@
+{
+  "n_total": 454,
+  "n_features": 18,
+  "feature_names": [
+    "latitude",
+    "longitude",
+    "depth",
+    "rolling_mean_7d",
+    "rolling_std_7d",
+    "rolling_max_7d",
+    "event_count_7d",
+    "year",
+    "month",
+    "day",
+    "hour",
+    "day_of_year",
+    "days_since_start",
+    "sin_month",
+    "cos_month",
+    "sin_hour",
+    "cos_hour",
+    "distance_to_fault"
+  ],
+  "positive_rate": 0.6872246696035242,
+  "time_min": "2022-04-29 17:35:34+00:00",
+  "time_max": "2024-10-04 05:57:19+00:00",
+  "n_splits": 5
+}

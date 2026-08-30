@@ -1,0 +1,143 @@
+{
+  "model": "convberturk",
+  "micro_f1": 0.7198952879581152,
+  "macro_f1": 0.27470259364937194,
+  "samples_f1": 0.7590788446526152,
+  "subset_accuracy": 0.6229508196721312,
+  "micro_precision": 0.8358662613981763,
+  "macro_precision": 0.3188200269128912,
+  "micro_recall": 0.632183908045977,
+  "macro_recall": 0.2673027351044174,
+  "n_test": 305,
+  "per_class": {
+    "Alakasiz": {
+      "precision": 0.8867924528301887,
+      "recall": 0.7704918032786885,
+      "f1": 0.8245614035087719,
+      "support": 61
+    },
+    "Arama Ekipmani": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 19
+    },
+    "Barınma": {
+      "precision": 0.75,
+      "recall": 0.9615384615384616,
+      "f1": 0.8426966292134831,
+      "support": 78
+    },
+    "Cenaze": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 1
+    },
+    "Elektrik Kaynagi": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 12
+    },
+    "Enkaz Kaldirma": {
+      "precision": 0.8802816901408451,
+      "recall": 0.9689922480620154,
+      "f1": 0.922509225092251,
+      "support": 129
+    },
+    "Giysi": {
+      "precision": 0.8,
+      "recall": 0.17391304347826086,
+      "f1": 0.2857142857142857,
+      "support": 23
+    },
+    "Isinma": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 30
+    },
+    "Lojistik": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 6
+    },
+    "Saglik": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 17
+    },
+    "Su": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 14
+    },
+    "Tuvalet": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 5
+    },
+    "Yemek": {
+      "precision": 0.8275862068965517,
+      "recall": 0.6,
+      "f1": 0.6956521739130435,
+      "support": 40
+    }
+  },
+  "params": {
+    "epochs": 4,
+    "lr": 2e-05,
+    "batch_size": 8,
+    "eval_batch_size": 16,
+    "max_len": 256,
+    "weight_decay": 0.01,
+    "hf_checkpoint": "dbmdz/convbert-base-turkish-cased",
+    "train_seconds": 2280.8
+  },
+  "dataset": {
+    "name": "deprem-private/intent_test_v13_anonymized",
+    "seed": 42,
+    "test_size": 0.15,
+    "val_size": 0.15,
+    "threshold": 0.5
+  },
+  "extra": {
+    "history": {
+      "epoch": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "train_loss": [
+        0.3614943000707733,
+        0.21224551254443907,
+        0.16505960400184888,
+        0.14557949880535684
+      ],
+      "val_loss": [
+        0.25066500902175903,
+        0.18385092914104462,
+        0.16390776634216309,
+        0.15926042199134827
+      ],
+      "val_micro_f1": [
+        0.5015576323987538,
+        0.5871559633027523,
+        0.6776406035665294,
+        0.7060402684563758
+      ],
+      "val_macro_f1": [
+        0.10160094777785932,
+        0.13035015969653585,
+        0.22995138898498524,
+        0.26624297839307715
+      ]
+    }
+  }
+}
