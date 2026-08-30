@@ -1,0 +1,39 @@
+{
+  "model": "mlp",
+  "positive_rate_mean": 0.7306666666666667,
+  "positive_rate_std": 0.19494044674663535,
+  "roc_auc_mean": 0.42759818884895767,
+  "roc_auc_std": 0.10876436127864705,
+  "pr_auc_mean": 0.7108375378067736,
+  "pr_auc_std": 0.18801078028670468,
+  "accuracy_mean": 0.592,
+  "accuracy_std": 0.2394957666060555,
+  "balanced_accuracy_mean": 0.45321382428940565,
+  "balanced_accuracy_std": 0.0946662337013763,
+  "precision_mean": 0.714047619047619,
+  "precision_std": 0.17647197589601582,
+  "recall_mean": 0.7513888888888889,
+  "recall_std": 0.3259719559247125,
+  "f1_mean": 0.6742019332581443,
+  "f1_std": 0.23610335326033943,
+  "mcc_mean": -0.04430804904426367,
+  "mcc_std": 0.09080404365583672,
+  "brier_mean": 0.22883377647910122,
+  "brier_std": 0.045616526891976386,
+  "n_folds": 5,
+  "total_test_n": 375,
+  "extra": {
+    "params": {
+      "hidden_layer_sizes": [
+        64,
+        32
+      ],
+      "activation": "relu",
+      "alpha": 0.001,
+      "learning_rate_init": 0.001,
+      "max_iter": 500,
+      "early_stopping": true,
+      "random_state": 42
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "model": "lightgbm",
+  "positive_rate_mean": 0.7306666666666667,
+  "positive_rate_std": 0.19494044674663535,
+  "roc_auc_mean": 0.7167629876887737,
+  "roc_auc_std": 0.22943477708034865,
+  "pr_auc_mean": 0.8766702085654601,
+  "pr_auc_std": 0.12015134004514302,
+  "accuracy_mean": 0.7893333333333333,
+  "accuracy_std": 0.13763720427268206,
+  "balanced_accuracy_mean": 0.6154279960073877,
+  "balanced_accuracy_std": 0.08406797145518952,
+  "precision_mean": 0.8033305932511109,
+  "precision_std": 0.15597141638210016,
+  "recall_mean": 0.866067115251898,
+  "recall_std": 0.14027218342793074,
+  "f1_mean": 0.8274089990949006,
+  "f1_std": 0.14199154705353434,
+  "mcc_mean": 0.2874672014470815,
+  "mcc_std": 0.1875675350536998,
+  "brier_mean": 0.1724408812994394,
+  "brier_std": 0.10063961179345617,
+  "n_folds": 5,
+  "total_test_n": 375,
+  "extra": {
+    "params": {
+      "n_estimators": 800,
+      "num_leaves": 31,
+      "learning_rate": 0.03,
+      "subsample": 0.9,
+      "colsample_bytree": 0.9,
+      "random_state": 42,
+      "n_jobs": -1
+    }
+  }
+}

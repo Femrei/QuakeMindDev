@@ -1,0 +1,35 @@
+{
+  "model": "catboost",
+  "positive_rate_mean": 0.7306666666666667,
+  "positive_rate_std": 0.19494044674663535,
+  "roc_auc_mean": 0.8464703813389697,
+  "roc_auc_std": 0.09347283777648618,
+  "pr_auc_mean": 0.9011096333540424,
+  "pr_auc_std": 0.11832610264226406,
+  "accuracy_mean": 0.8106666666666668,
+  "accuracy_std": 0.10779404230084125,
+  "balanced_accuracy_mean": 0.7091972000463019,
+  "balanced_accuracy_std": 0.05354743352086069,
+  "precision_mean": 0.8216581145675844,
+  "precision_std": 0.15356869097438833,
+  "recall_mean": 0.8975759144237404,
+  "recall_std": 0.08203305820168019,
+  "f1_mean": 0.8524568623226261,
+  "f1_std": 0.11469303155630596,
+  "mcc_mean": 0.44467327794133754,
+  "mcc_std": 0.1098228545735518,
+  "brier_mean": 0.1367690263499391,
+  "brier_std": 0.07349410103275705,
+  "n_folds": 5,
+  "total_test_n": 375,
+  "extra": {
+    "params": {
+      "iterations": 800,
+      "depth": 8,
+      "learning_rate": 0.03,
+      "loss_function": "Logloss",
+      "random_seed": 42,
+      "verbose": false
+    }
+  }
+}

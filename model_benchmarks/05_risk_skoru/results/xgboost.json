@@ -1,0 +1,37 @@
+{
+  "model": "xgboost",
+  "positive_rate_mean": 0.7306666666666667,
+  "positive_rate_std": 0.19494044674663535,
+  "roc_auc_mean": 0.7956535782567742,
+  "roc_auc_std": 0.1601466463673726,
+  "pr_auc_mean": 0.892861867134967,
+  "pr_auc_std": 0.11749270774398332,
+  "accuracy_mean": 0.8186666666666665,
+  "accuracy_std": 0.13025786391274466,
+  "balanced_accuracy_mean": 0.669057188745103,
+  "balanced_accuracy_std": 0.09975854519982372,
+  "precision_mean": 0.8214546861657583,
+  "precision_std": 0.15989186642792758,
+  "recall_mean": 0.9080621016522551,
+  "recall_std": 0.09057506940736638,
+  "f1_mean": 0.8562519501564616,
+  "f1_std": 0.12572585091993332,
+  "mcc_mean": 0.3790352786759631,
+  "mcc_std": 0.23070002888390584,
+  "brier_mean": 0.1362862132489681,
+  "brier_std": 0.09458449274299949,
+  "n_folds": 5,
+  "total_test_n": 375,
+  "extra": {
+    "params": {
+      "n_estimators": 800,
+      "max_depth": 6,
+      "learning_rate": 0.03,
+      "subsample": 0.9,
+      "colsample_bytree": 0.9,
+      "eval_metric": "logloss",
+      "random_state": 42,
+      "n_jobs": -1
+    }
+  }
+}

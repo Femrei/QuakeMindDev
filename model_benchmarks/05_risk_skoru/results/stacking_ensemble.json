@@ -1,0 +1,31 @@
+{
+  "model": "stacking_ensemble",
+  "positive_rate_mean": 0.7306666666666667,
+  "positive_rate_std": 0.19494044674663535,
+  "roc_auc_mean": 0.7338136413742131,
+  "roc_auc_std": 0.26704110318007923,
+  "pr_auc_mean": 0.8729024249583031,
+  "pr_auc_std": 0.1251069295098962,
+  "accuracy_mean": 0.5680000000000001,
+  "accuracy_std": 0.28888752136428464,
+  "balanced_accuracy_mean": 0.4613422455438947,
+  "balanced_accuracy_std": 0.13622722256422481,
+  "precision_mean": 0.6932321428571429,
+  "precision_std": 0.1551554561116833,
+  "recall_mean": 0.8008454106280194,
+  "recall_std": 0.3665717386172158,
+  "f1_mean": 0.6625084169061419,
+  "f1_std": 0.2918527282595649,
+  "mcc_mean": -0.022469195716855017,
+  "mcc_std": 0.22063828383401593,
+  "brier_mean": 0.22591934305234931,
+  "brier_std": 0.09886173909158318,
+  "n_folds": 5,
+  "total_test_n": 375,
+  "extra": {
+    "params": {
+      "final_estimator": "LogisticRegression",
+      "cv": 3
+    }
+  }
+}
