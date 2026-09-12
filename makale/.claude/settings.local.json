@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(python3 *)",
+      "Bash(mkdir -p \"C:/Users/utkuc/AppData/Local/Temp/claude/D--lastdance-QuakeMind-makale/186657d3-a2d8-4db9-817b-05672018cbfa/scratchpad\")",
+      "Bash(python3 -c ' *)",
+      "Bash(python3)",
+      "Bash(python)"
+    ]
+  }
+}
