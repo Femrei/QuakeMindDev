@@ -61,5 +61,5 @@ def write_notebook(path, cells):
         "nbformat": 4,
         "nbformat_minor": 5,
     }
-    Path(path).write_text(json.dumps(nb, indent=1, ensure_ascii=False))
+    Path(path).write_text(json.dumps(nb, indent=1, ensure_ascii=False), encoding="utf-8")
     print("yazildi:", Path(path).name)

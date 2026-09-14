@@ -79,7 +79,9 @@ tanımlanmamış; **(ii)** 187 ölçülmemiş hücre.
 
 Bunlar çözülmeden makale hakeme gönderilmemelidir.
 
-### ☐ M-01 🔴 SegFormer satırı karşılaştırılabilir değil `[B+D]`
+### ✅ M-01 🔴 SegFormer satırı karşılaştırılabilir değil `[B+D]`
+**Durum: TAMAMLANDI** (13 Eylül 2026) — Seçenek (b) uygulandı: Tablo 12'de SegFormer'ın IoU_hasar hücresindeki `0,4276` değeri `[KARŞILAŞTIRILAMAZ]*` ile değiştirildi (dipnot 255, Bölüm 4.2 "Gözlemler" paragrafı ve Bölüm 5.3(o) zaten bu değeri karşılaştırılamaz olarak nitelendiriyordu — artık tablo hücresi de bunu yansıtıyor). Seçenek (a) — SegFormer'ı üç katmanlı bölmeyle yeniden koşup gerçek test IoU_hasar değerini raporlamak — model eğitimi gerektirdiğinden bu oturumda yapılamadı; `02_bina_hasari` yerel dizini boş (ağırlıklar Colab'da, bkz. M-44), bu nedenle yeniden koşum bu ortamdan mümkün değil.
+
 **Nerede:** Öz · Abstract · Bölüm 4.2 (Gözlemler) · Tablo 12 son satır
 
 Tablo 12'deki beş taban **ayrılmış test kümesinde** ölçülmüştür
@@ -245,7 +247,9 @@ hasar derecesi → geçilebilirlik eşlemesi tablo hâlinde:
 *(Yukarıdaki eşleme öneridir; koşulan koddan doğrulanmalıdır.)* Ardından Bölüm
 4.3'teki atfı doğru bölüm numarasına düzelt.
 
-### ☐ M-09 🟠 Vaat edilen iki naif risk tabanı Tablo 22'de yok `[B+D]`
+### ✅ M-09 🟠 Vaat edilen iki naif risk tabanı Tablo 22'de yok `[B+D]`
+**Durum: TAMAMLANDI** (13 Eylül 2026) — İki naif taban `model_benchmarks/05_risk_skoru`'nun yerel, tam koşulabilir veri/koduyla (`common_preprocessing.py`, `query.csv`, aynı beş katlı ileri yürüyen bölme) gerçekten koşuldu ve Tablo 22'ye eklendi: R0a (yalnızca `distance_to_fault`, ROC-AUC 0,6364, PR-AUC 0,7544, MCC 0,4755) ve R0b (yalnızca `rolling_mean_7d` — geçmiş yedi günlük ortalama büyüklük, ROC-AUC 0,5005, PR-AUC 0,7255, MCC −0,0411). Bölüm 4.11'e beşinci bir gözlem paragrafı eklenerek bu iki tabanın öğrenilmiş modellere kıyasla nerede durduğu tartışıldı ("Beş gözlem" olarak güncellendi). **Yan bulgu:** `event_count_7d` özniteliği kodda `rolling(window=7).count()` ile hesaplandığından veri kümesinde sabit değerdir (std = 0, her zaman 7) — "sismisite yoğunluğu" tabanı için bunun yerine gerçek bir değişkenlik taşıyan `rolling_mean_7d` kullanıldı; `event_count_7d`'nin kendisinin ayrıştırıcı gücü olmayan bir öznitelik olduğu ayrıca not edilmelidir (bu oturumda metne eklenmedi, ayrı bir gözden geçirme gerektirir).
+
 **Nerede:** Bölüm 3.7 ↔ Tablo 22
 
 Bölüm 3.7: *"Karşılaştırma tabanı olarak lojistik regresyon, rastgele orman ve
@@ -513,7 +517,9 @@ satır) bu tabloyla karşılanmamaktadır."
 
 **Nerede:** Bölüm 5.3, (m)'den sonra
 
-### ☐ M-63 🟠 Risk skorlamada pozitif sınıf tanımı yok `[D]`
+### ✅ M-63 🟠 Risk skorlamada pozitif sınıf tanımı yok `[D]`
+**Durum: TAMAMLANDI** (13 Eylül 2026) — `common_preprocessing.py`'deki `build_label_30d` fonksiyonu incelenerek pozitif sınıfın resmî tanımı Bölüm 3.7'ye eklendi: katalogdaki i. kayıt için, kayıt zamanından itibaren 30 gün içinde ve 100 km yarıçapta M ≥ 4,0 bir olay gerçekleşirse y_i = 1. Ayrıca birim tutarsızlığı da giderildi: Bölüm 3.7 "ızgara hücresi" diliyle yazılmıştı ama kod hiçbir uzamsal ızgara/hücre kullanmıyor — özellik/etiket hesaplaması her zaman katalogdaki bireysel deprem kaydı bazında yapılıyor. "Izgara hücresi" ifadeleri "katalog kayıtları/katalogdaki her kayıt" ile değiştirildi; bu artık Bölüm 4.11'in 454 kayıtlık kümesiyle birebir tutarlı.
+
 **Nerede:** Bölüm 3.7 ↔ Bölüm 4.11
 
 Tablo 22'nin tamamı "pozitif oran = 0,687" üzerine kurulu ama "pozitif" ne
@@ -605,9 +611,9 @@ Ayrıca bkz. M-16.
 Bu iş aynı anda M-20'yi ve sentetik kapanma bağımlılığını (M-04) da hafifletir.
 
 ### ☐ M-24 🟡 Tablo 14 — Bölgeler arası genelleme `[B]`
-**Eksik:** tablo tamamen boş (6 satır × 5 sütun)
+**Durum (13 Eylül 2026):** Denetlendi, **düzeltilemedi**. Bu maddenin önceki notu ("yeni veri gerektirmez, yalnızca coğrafi bölme yeterli") **yanlış** çıktı — Bölüm 4.4'ün gövde metni doğrudan okunduğunda bunun risk skorlama değil, Hatay↔Kahramanmaraş arası **bina hasarı bölütleme modeli genellemesi** olduğu görüldü ("Bu tablonun değerleri Bölüm 3.10'da tanımlanan protokolle üretilecektir"). Bu, eğitilmiş altı mimarinin (M-01/M-28 ile aynı model ailesi) bölge bazlı yeniden çıkarımını gerektirir; `model_benchmarks/02_bina_hasari` yerel dizini tamamen boş (ağırlıklar/veri Colab'da, bkz. M-44) — bu ortamdan koşulamaz.
 
-Yeni veri gerektirmez; yalnızca bölmenin coğrafi yapılması yeterlidir.
+**Eksik:** tablo tamamen boş (6 satır × 5 sütun)
 
 ### ☐ M-25 🟠 Tablo 16 — R1 ve R2 ara referansları `[B]`
 **Eksik:** iki satır tamamen boş
@@ -634,7 +640,9 @@ gösterilmemiştir. `r_h`, λ(d) basamakları ve morfoloji seviyesi öncelikli.
 Mobil ve uç cihaz argümanı bunlarsız savunulamaz. `seg_common.py` içinde
 `efficiency_stats` fonksiyonu mevcut; yeniden eğitim gerektirmez.
 
-### ☐ M-29 🟡 Tablo 15 — Acil çağrı satırı `[B]`
+### ✅ M-29 🟡 Tablo 15 — Acil çağrı satırı `[B]`
+**Durum: TAMAMLANDI** (13 Eylül 2026) — Ölçüm yapılmadığı için `[ÖLÇÜLECEK]` hücresi "—" ile değiştirildi (fabrikasyon veri yerine dürüst boşluk); not sütununa "Model çıkarımı içermediğinden gecikme bu kanal için ayrıca ölçülmemiştir" eklendi, "Model çıkarımı içermez" notuyla artık çelişmiyor.
+
 **Eksik:** gecikme hücresi
 
 **Not:** Aynı satırın not sütununda "Model çıkarımı içermez" yazıyor. Model yoksa
@@ -657,13 +665,16 @@ olduğunu gösteriyor. Eklenecekler: görev başına fark tablosu, medyan fark,
 çeyrekler arası açıklık, Wilcoxon işaretli sıra testi *p* değeri, Cliff's delta
 etki büyüklüğü. **Yeni koşum gerektirmez**, mevcut 18 gözlemden hesaplanır.
 
-### ☐ M-32 🟡 Bölüm 3.3 — Kalite filtresi eşiği ve elenen karo oranı `[B]`
+### ✅ M-32 🟡 Bölüm 3.3 — Kalite filtresi eşiği ve elenen karo oranı `[B]`
+**Durum: TAMAMLANDI** (13 Eylül 2026) — Modül bu sürümde uygulanmadığından (paragraf zaten bunu açıkça söylüyordu) değer ölçülemez; `[ÖLÇÜLECEK]` etiketi `[GELECEK ÇALIŞMA]` ile değiştirilip "bu sürümde ölçülmesi beklenen bir eksiklik değil, planlı bir gelecek çalışma bileşenidir" cümlesi eklendi — 187 `[ÖLÇÜLECEK]` sayacını yanlış şişirmesin diye.
+
 **Eksik:** `V₀` eşik değeri ve elenen karo oranı
 
 Modül bu sürümde uygulanmamıştır (makalede açıkça yazıyor). Uygulanırsa iki değer
 de ölçülebilir; uygulanmayacaksa bölüm gelecek çalışmaya taşınmalıdır.
 
-### ☐ M-33 🟠 Türkçe metin veri kümesinin kaynağı makalede hiç geçmiyor `[D]`
+### ✅ M-33 🟠 Türkçe metin veri kümesinin kaynağı makalede hiç geçmiyor `[D]`
+**Durum: TAMAMLANDI** (13 Eylül 2026) — `model_benchmarks/04_turkce_metin/local_run/data_multilabel.py` ve önbelleğe alınmış `data_cache/labels.json` + parquet dosyaları incelenerek künye doğrulandı ve Bölüm 3.6'ya eklendi: kaynak `deprem-private/intent_test_v13_anonymized` (HuggingFace, private, HF_TOKEN gerekir), 2 028 kayıt, tohum 42 ile %70/%15/%15 bölme (1 418/305/305 — Tablo 21'in n_sınama=305 değeriyle birebir uyuşuyor), kayıt zaman damgaları 12–14 Şubat 2023 (6 Şubat depreminin hemen ardından). `labeler` alanı kümenin tamamında tek değer taşıyor ("system_consensus") — yani klasik anlamda çoklu-etiketleyici uyumu hesaplanamıyor; bu ve anonimleştirme yöntemi açık eksiklik olarak metne yazıldı (uydurulmadı). Ayrı bir Tablo eklenmedi (M-41'in SEQ/REF alan otomasyonunu bozma riski nedeniyle) — bilgi düz metin paragrafı olarak eklendi.
 **Nerede:** Bölüm 3.6 · Bölüm 4.10 · Veri Erişilebilirliği
 
 **Ölçüm:** `intent_test`, `deprem-private` ve `anonymized` sözcükleri makalede
@@ -789,7 +800,9 @@ Hepsi 2026 tarihli. Yayımlanmış / baskıda / preprint durumları doğrulanmal
 DOI eklenmeli, gerekiyorsa "(baskıda)" belirtilmeli. [7] cilt/sayfa bilgisi de
 eksik.
 
-### ☐ M-74 ⚪ DOI/URL bilgileri genel olarak eksik `[D]`
+### ⚠️ M-74 ⚪ DOI/URL bilgileri genel olarak eksik `[D]` — KISMEN TAMAMLANDI
+**Durum: KISMEN TAMAMLANDI** (13 Eylül 2026) — Web taramasıyla doğrulanan 9 kayda DOI/URL eklendi: [4] FEMA HAZUS (doğrudan PDF URL'si), [8] Copernicus EMSR648 (aktivasyon sayfası URL'si), [26] EIDSeg (arXiv DOI), [30] HeiGIT (blog URL'si), [31] Kowsari (engrXiv DOI 10.31224/7979), [40] Ultralytics YOLOv8 (GitHub deposu URL'si), [48] CatBoost (ACM DL DOI 10.5555/3327757.3327770), [49] Decoupled Weight Decay/AdamW (arXiv DOI), [55] LightGBM (ACM DL DOI 10.5555/3294996.3295074) — hepsi arama sonuçlarında doğrudan görülen bağlantılardan alındı, uydurulmadı. **[1] AFAD raporu, [2] Kandilli basın bülteni ve [6] EMS-98** için güvenilir/doğrulanabilir bir URL bulunamadı (bir aday AFAD URL'si WebFetch ile denendi, geçersiz çıktı) — bu üçü kasıtlı olarak değiştirilmedi; tahmini/kırık bağlantı eklemek doğrulanamayan bilgi eklemekten daha kötü olur.
+
 **Nerede:** Kaynakçanın tamamı
 
 [57], [5], [12] dışında (M-60'ta DOI eklendi) hiçbir kaynakta DOI yok. Web
@@ -1027,7 +1040,9 @@ katkı beyanı buna göre yeniden düzenlenmelidir. Mevcut taslakta dört genel 
 tanımlı; uzman katkısı (yöntem danışmanlığı, deney tasarımı denetimi) için ayrı
 satır gerekir.
 
-### ☐ M-47 🟠 Veri erişilebilirliği beyanı — özel veri kümesi `[B+D]`
+### ⚠️ M-47 🟠 Veri erişilebilirliği beyanı — özel veri kümesi `[B+D]` — KISMEN TAMAMLANDI
+**Durum: KISMEN TAMAMLANDI** (13 Eylül 2026) — `deprem-private/intent_test_v13_anonymized` kümesi Veri Erişilebilirliği beyanına eklendi (bkz. M-33 künyesiyle çapraz referanslı). **Erişim politikası kararı (açık/istek üzerine/kapalı) kullanıcıya bırakıldı** — metinde `[ERİŞİM POLİTİKASI KARARLAŞTIRILACAK]` olarak işaretlendi; bu bir kod/veri incelemesiyle değil yalnızca yazarların kararıyla kapatılabilir.
+
 Beyan yalnızca açık kaynakları listeliyor. Ancak Türkçe metin karşılaştırması
 `deprem-private/intent_test_v13_anonymized` adlı **özel** bir küme kullanıyor
 (bkz. M-33).
@@ -1035,7 +1050,9 @@ Beyan yalnızca açık kaynakları listeliyor. Ancak Türkçe metin karşılaşt
 **Yapılacak.** Kümenin erişim koşulunu beyana ekle. Erişim kapalıysa bunu açıkça
 belirt; hakem yeniden üretilebilirlik açısından sorar.
 
-### ☐ M-48 🟠 Görüntü kaynağı lisansı `[B]`
+### ✅ M-48 🟠 Görüntü kaynağı lisansı `[B]`
+**Durum: TAMAMLANDI** (13 Eylül 2026) — `fetcher.py` doğrulandı: `provider='google'` varsayılan, `mt1.google.com/vt/lyrs=s` karo sunucusuna istek atıyor (ayrıca `esri`/Wayback ve `custom` sağlayıcı seçenekleri de var). Veri Erişilebilirliği beyanına, eğitim/yer gerçeği görüntülerinin (Maxar Open Data, Esri Wayback) canlı sistemin çalışma anında çektiği Google karolarından **farklı ve ayrı bir kaynak** olduğunu açıkça belirten bir paragraf eklendi.
+
 Kodda Google uydu karoları çekiliyor
 (`QuakeMindBackend/apps/road_damage/utils/fetcher.py`, `mt1.google.com/vt/lyrs=s`).
 Makale koşumlarının **Maxar Open Data** ile yapıldığı Veri Erişilebilirliği

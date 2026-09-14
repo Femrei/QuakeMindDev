@@ -6,7 +6,9 @@
       "Bash(mkdir -p \"C:/Users/utkuc/AppData/Local/Temp/claude/D--lastdance-QuakeMind-makale/186657d3-a2d8-4db9-817b-05672018cbfa/scratchpad\")",
       "Bash(python3 -c ' *)",
       "Bash(python3)",
-      "Bash(python)"
+      "Bash(python)",
+      "Bash(awk '/# BÖLÜM 1/,/# BÖLÜM 2/' MAKALE_DUZELTME_LISTESI.md)",
+      "Bash(git add *)"
     ]
   }
 }
