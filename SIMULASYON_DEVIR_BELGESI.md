@@ -451,7 +451,7 @@ multi_seed_refs/multi_seed_tablo.md`; ayrıntı ve yorum: `EKSIKLER_VE_SORUNLAR.
 
 | # | Soru | Cevap |
 |---|---|---|
-| 1 | Hangi commit / dal | `main`, **`32d45a3`** — commit yok, push yok. |
+| 1 | Hangi commit / dal | **`simulasyon-gercek-veri`** dalı (`main` = `32d45a3` üstünde 8 commit; `main` değişmedi). **Push yok.** Makale dosyaları (kökteki `MAKALE_*`, `PROJE_DOSYASI.md`) ve eski `benchmark/reports/senaryo_v2_raporu.*` bilinçli olarak commit dışında; ham koşu klasörleri `.gitignore`'da, özet tablolar izleniyor. |
 | 2 | Kod değişti mi | **Evet.** `network.py`: `simulate_reference_fleet` (R0/R1/R2, başlangıç bilgisi, yumuşak ceza) ve `_shortest_path_avoiding`; `simulate_naive_agent` **değişmedi**. `fastapi_app.py`: `POST /api/road_damage/reference_compare`. `full_scenario.py`: `--references` (varsayılan kapalı). `multi_seed.py`: `--references`, `--out`, `--compare-with`. Yeni: `model_in_real_world.py`. |
 | 3 | Yeni koşum sonucu | `runs/multi_seed_refs/` (R1/R2, 90 koşu) ve `runs/model_gercek_dunya/` (Tablo 18). |
 | 4 | Yeni toplamlar | QuakeMind/R0 toplamları Bölüm 14 ile aynı; R1/R2 yukarıda. Tablo 18: görev başına R3 2,05 / R0 6,52 dk, SegFormer 6,52–6,97 dk. |
