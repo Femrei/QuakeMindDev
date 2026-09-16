@@ -428,6 +428,20 @@ class SOSAlertRequest(BaseModel):
     # kurgusal bir katman degil.
     batteryPercent: Optional[int] = None
     commsStatus: Optional[str] = None  # "online" | "mesh" | "offline"
+    # Cihazin OTONOM davranis durumu (akis diyagramindaki "pil < %20 ->
+    # tasarruf modu / akustik siren dongusu / GPS polling seyreltme" dali).
+    # batteryPercent/commsStatus ile ayni statude: temsili deger, gercek SOS
+    # pipeline'indan gecer, saklanir, haritada ve ihbar listesinde gosterilir.
+    powerMode: Optional[str] = None       # "normal" | "tasarruf"
+    sirenActive: Optional[bool] = None    # 100 dB araliklarla siren + mikrofon dinleme
+    gpsPollingSec: Optional[int] = None   # tasarruf modunda seyreltilir
+    # 2. seviye fallback'te (sebeke yok, BLE mesh) gonderilen hafif JSON
+    # paketinin GERCEKTEN olculmus byte uzunlugu -- tahmin degil, orkestrator
+    # paketi serilestirip len() ile olcup gonderiyor.
+    payloadBytes: Optional[int] = None
+    # Ihbarin hangi uretim kanalindan geldigi -- haritadaki pin standardini
+    # (turuncu YOLO / sari NLP / kirmizi flasor SOS) suren alan.
+    channel: Optional[str] = None         # "yolo" | "nlp" | "sos"
 
 
 class TeamClaimRequest(BaseModel):
@@ -1420,6 +1434,11 @@ def create_sos_alert(req: SOSAlertRequest):
         "userId": req.userId,
         "batteryPercent": req.batteryPercent,
         "commsStatus": req.commsStatus,
+        "powerMode": req.powerMode,
+        "sirenActive": req.sirenActive,
+        "gpsPollingSec": req.gpsPollingSec,
+        "payloadBytes": req.payloadBytes,
+        "channel": req.channel,
         "receivedAt": datetime.now(timezone.utc).isoformat(),
     }
 

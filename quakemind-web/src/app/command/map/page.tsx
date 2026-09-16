@@ -16,7 +16,17 @@ import {
   TeamClaim,
 } from "@/lib/api";
 import { interpolateTeamPosition } from "@/lib/teamPosition";
-import { COMMS_LABEL } from "@/lib/commsStatus";
+import { COMMS_LABEL, CHANNEL_LABEL } from "@/lib/commsStatus";
+
+// Ekip rolu haritada renk olarak gorunsun diye ekip kodundan cikarilir
+// (HATAY-AK1 / MARAS-MED2 / HATAY-LOJ1) -- backend'in claim kaydi rolu ayrica
+// tutmuyor, kod zaten tasiyor.
+function teamRoleFromId(teamId: string): MapMarkerItem["teamRole"] {
+  if (/-MED\d*/i.test(teamId)) return "medikal";
+  if (/-LOJ\d*/i.test(teamId)) return "lojistik";
+  if (/-AK\d*/i.test(teamId)) return "arama-kurtarma";
+  return undefined;
+}
 import {
   Layers,
   Siren,
@@ -230,7 +240,8 @@ export default function UnifiedCommandMapPage() {
           lng: a.longitude,
           title: a.message || "SOS İhbarı",
           type: "sos",
-          popupText: `Durum: ${a.status || "AÇIK"}${a.batteryPercent != null ? ` | Pil: %${a.batteryPercent}` : ""}${a.commsStatus ? ` | Haberleşme: ${COMMS_LABEL[a.commsStatus]}` : ""}`,
+          flashing: a.sirenActive === true,
+          popupText: `Durum: ${a.status || "AÇIK"}${a.channel ? ` | Kanal: ${CHANNEL_LABEL[a.channel]}` : ""}${a.batteryPercent != null ? ` | Pil: %${a.batteryPercent}` : ""}${a.powerMode === "tasarruf" ? " (Tasarruf Modu)" : ""}${a.sirenActive ? " | 🔊 Siren aktif" : ""}${a.commsStatus ? ` | Haberleşme: ${COMMS_LABEL[a.commsStatus]}` : ""}${a.payloadBytes != null ? ` (${a.payloadBytes} B)` : ""}`,
           linkHref: "/command/sos",
           linkLabel: "SOS Sevk Ekranına Git",
         })
@@ -299,21 +310,20 @@ export default function UnifiedCommandMapPage() {
       );
     }
 
+    const hqTeamsByKey = new Map<string, { lat: number; lng: number; teams: string[] }>();
     if (layerVisibility.team) {
       teamClaims
         .filter((c) => c.status === "active")
         .forEach((claim) => {
+          // Cikis noktasi = karargah. Ayni karargahtan birden fazla ekip
+          // cikabildigi icin koordinata gore tekillestirilir (bkz.
+          // command/page.tsx'teki ayni mantik) -- ust uste pin olusmasin.
           if (claim.routeCoords && claim.routeCoords.length > 0) {
-            list.push({
-              id: `team-start-${claim.teamId}-${claim.targetId}`,
-              lat: claim.routeCoords[0][0],
-              lng: claim.routeCoords[0][1],
-              title: `Çıkış Noktası: ${claim.teamId}`,
-              type: "team-start",
-              popupText: `Ekip ${claim.teamId} buradan yola çıktı | Hedef: ${claim.targetId}`,
-              linkHref: "/command/sos",
-              linkLabel: "SOS Sevk Ekranına Git",
-            });
+            const [hqLat, hqLng] = claim.routeCoords[0];
+            const hqKey = `${hqLat.toFixed(5)},${hqLng.toFixed(5)}`;
+            const existing = hqTeamsByKey.get(hqKey);
+            if (existing) existing.teams.push(claim.teamId);
+            else hqTeamsByKey.set(hqKey, { lat: hqLat, lng: hqLng, teams: [claim.teamId] });
           }
           const pos = interpolateTeamPosition(claim);
           if (!pos) return;
@@ -332,11 +342,26 @@ export default function UnifiedCommandMapPage() {
             lng: pos[1],
             title: `Ekip: ${claim.teamId}`,
             type: "team",
+            teamRole: teamRoleFromId(claim.teamId),
             popupText: `Hedef: ${claim.targetId} | Tür: ${claim.targetType}${comparisonText ? `\n${comparisonText}` : ""}`,
             linkHref: "/command/sos",
             linkLabel: "SOS Sevk Ekranına Git",
           });
         });
+
+      // Sabit mavi us ikonu -- senaryodaki karargah pin standardi.
+      hqTeamsByKey.forEach((hq, key) =>
+        list.push({
+          id: `hq-${key}`,
+          lat: hq.lat,
+          lng: hq.lng,
+          title: `Karargâh (${hq.teams.length} ekip)`,
+          type: "hq",
+          popupText: `Buradan çıkan ekipler: ${hq.teams.join(", ")}`,
+          linkHref: "/command/sos",
+          linkLabel: "SOS Sevk Ekranına Git",
+        })
+      );
     }
 
     if (layerVisibility.debris) {

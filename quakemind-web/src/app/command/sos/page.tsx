@@ -15,7 +15,7 @@ import {
 } from "@/lib/api";
 import { deriveUrgencyTier, urgencyLabel, urgencyBadgeClass, urgencyTextClass } from "@/lib/urgency";
 import { useMapLayers } from "@/context/MapLayersContext";
-import { COMMS_LABEL } from "@/lib/commsStatus";
+import { COMMS_LABEL, CHANNEL_LABEL, COMMS_FALLBACK_LABEL, type IncidentChannel } from "@/lib/commsStatus";
 import {
   Siren,
   ShieldAlert,
@@ -30,6 +30,9 @@ import {
   Wifi,
   Radio,
   WifiOff,
+  Moon,
+  Volume2,
+  Radar,
 } from "lucide-react";
 
 const DISPATCH_POLL_MS = 4000;
@@ -66,6 +69,48 @@ function CommsBadge({ status }: { status: "online" | "mesh" | "offline" }) {
   return (
     <span className="inline-flex items-center gap-1 text-red-400" title="Hiçbir sinyal yok, ekip sahaya varana kadar ulaşılamaz">
       <WifiOff className="w-3.5 h-3.5" />Çevrimdışı
+    </span>
+  );
+}
+
+/** Cihazın otonom güç modu -- pil %20'nin altına düştüğünde ekran karartılır,
+ * Edge AI uyutulur, GPS polling seyreltilir. */
+function PowerModeBadge({ mode, gpsPollingSec }: { mode: string; gpsPollingSec?: number | null }) {
+  if (mode !== "tasarruf") return null;
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-amber-400"
+      title={`Tasarruf modu: ekran karartıldı, Edge AI uyutuldu${gpsPollingSec ? `, GPS polling ${gpsPollingSec} sn'ye çekildi` : ""}`}
+    >
+      <Moon className="w-3.5 h-3.5" />Tasarruf
+    </span>
+  );
+}
+
+/** Enkaz altındaki cihazın akustik döngüsü: 100 dB aralıklı siren, ardından
+ * mikrofonla enkaz üstü ses dinleme. */
+function SirenBadge({ active }: { active?: boolean | null }) {
+  if (!active) return null;
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-red-400 animate-pulse"
+      title="Otonom akustik döngü aktif: 100 dB siren + mikrofon dinleme"
+    >
+      <Volume2 className="w-3.5 h-3.5" />Siren
+    </span>
+  );
+}
+
+/** İhbarın hangi veri üretim kanalından geldiği (YOLOv8 / NLP / tek dokunuş SOS). */
+function ChannelBadge({ channel }: { channel: IncidentChannel }) {
+  const styles: Record<IncidentChannel, string> = {
+    yolo: "text-orange-400",
+    nlp: "text-yellow-400",
+    sos: "text-red-400",
+  };
+  return (
+    <span className={`inline-flex items-center gap-1 ${styles[channel]}`} title="İhbarın geldiği kanal">
+      <Radar className="w-3.5 h-3.5" />{CHANNEL_LABEL[channel]}
     </span>
   );
 }
@@ -263,9 +308,14 @@ export default function SOSDispatchPage() {
 
                   <p className="text-xs text-slate-200 font-medium leading-relaxed">{alert.message}</p>
 
-                  {(alert.batteryPercent != null || alert.commsStatus) && (
-                    <div className="flex items-center gap-3 mt-1.5 text-[11px] font-semibold">
+                  {(alert.batteryPercent != null || alert.commsStatus || alert.channel) && (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] font-semibold">
+                      {alert.channel && <ChannelBadge channel={alert.channel} />}
                       {alert.batteryPercent != null && <BatteryBadge percent={alert.batteryPercent} />}
+                      {alert.powerMode && (
+                        <PowerModeBadge mode={alert.powerMode} gpsPollingSec={alert.gpsPollingSec} />
+                      )}
+                      <SirenBadge active={alert.sirenActive} />
                       {alert.commsStatus && <CommsBadge status={alert.commsStatus} />}
                     </div>
                   )}
@@ -327,10 +377,25 @@ export default function SOSDispatchPage() {
                   {selectedAlert.message}
                 </p>
 
-                {(selectedAlert.batteryPercent != null || selectedAlert.commsStatus) && (
-                  <div className="flex items-center gap-4 text-xs font-semibold px-1">
-                    {selectedAlert.batteryPercent != null && <BatteryBadge percent={selectedAlert.batteryPercent} />}
-                    {selectedAlert.commsStatus && <CommsBadge status={selectedAlert.commsStatus} />}
+                {(selectedAlert.batteryPercent != null || selectedAlert.commsStatus || selectedAlert.channel) && (
+                  <div className="space-y-2 px-1">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold">
+                      {selectedAlert.channel && <ChannelBadge channel={selectedAlert.channel} />}
+                      {selectedAlert.batteryPercent != null && <BatteryBadge percent={selectedAlert.batteryPercent} />}
+                      {selectedAlert.powerMode && (
+                        <PowerModeBadge mode={selectedAlert.powerMode} gpsPollingSec={selectedAlert.gpsPollingSec} />
+                      )}
+                      <SirenBadge active={selectedAlert.sirenActive} />
+                      {selectedAlert.commsStatus && <CommsBadge status={selectedAlert.commsStatus} />}
+                    </div>
+                    {/* Iletim zinciri: hangi fallback seviyesinden ulasti ve
+                        mesh paketi kac byte (olculmus deger). */}
+                    {selectedAlert.commsStatus && (
+                      <p className="text-[11px] text-slate-400">
+                        İletim: {COMMS_FALLBACK_LABEL[selectedAlert.commsStatus]}
+                        {selectedAlert.payloadBytes != null && ` · ${selectedAlert.payloadBytes} byte paket`}
+                      </p>
+                    )}
                   </div>
                 )}
 

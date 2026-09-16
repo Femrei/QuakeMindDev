@@ -59,11 +59,14 @@ export interface MapMarkerItem {
   lat: number;
   lng: number;
   title: string;
-  type?: "sos" | "shelter" | "quake" | "damage" | "team" | "team-start" | "debris" | "nlp";
+  type?: "sos" | "shelter" | "quake" | "damage" | "team" | "team-start" | "debris" | "nlp" | "hq";
   popupText?: string;
   magnitude?: number;
   /** "team" marker only: renders a different color/icon per role. */
-  teamRole?: "arama-kurtarma" | "lojistik-ilk-yardim";
+  teamRole?: "arama-kurtarma" | "lojistik-ilk-yardim" | "medikal" | "lojistik";
+  /** "sos" marker only: enkaz altindaki cihazin otonom siren dongusu aktifse
+   * pin yanip soner (senaryodaki "kirmizi flasor pin" standardi). */
+  flashing?: boolean;
   /** "sos" marker only: bir ekip atanmis mi -- kirmizi (bekliyor) / turuncu
    * (ekip yolda) / yesil (tamamlandi) ayrimi icin. */
   claimStatus?: "unclaimed" | "active" | "completed";
@@ -72,8 +75,22 @@ export interface MapMarkerItem {
   linkLabel?: string;
 }
 
+// Ekip rol renkleri. "lojistik-ilk-yardim" tarihsel rol adi -- eski
+// simulasyonlar (rich_simulation.py) hala onu gonderdigi icin korunuyor;
+// senaryo v2 uc rolu ayri ayri gonderiyor (arama-kurtarma / medikal / lojistik).
+const TEAM_ROLE_COLORS: Record<string, string> = {
+  "arama-kurtarma": "#f59e0b",
+  medikal: "#14b8a6",
+  lojistik: "#3b82f6",
+  "lojistik-ilk-yardim": "#3b82f6",
+};
+
+function teamRoleColor(role?: string) {
+  return (role && TEAM_ROLE_COLORS[role]) || "#f59e0b";
+}
+
 function teamDivIcon(role?: string) {
-  const color = role === "lojistik-ilk-yardim" ? "#3b82f6" : "#f59e0b";
+  const color = teamRoleColor(role);
   return L.divIcon({
     className: "",
     html: `<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 8px ${color};"></div>`,
@@ -86,7 +103,7 @@ function teamDivIcon(role?: string) {
 // (teamDivIcon, o anki konum) bilincli olarak ayirt edilsin diye sabit bir
 // bayrak sekli; ekip harekete gectikten sonra bile haritada kalir.
 function teamStartDivIcon(role?: string) {
-  const color = role === "lojistik-ilk-yardim" ? "#3b82f6" : "#f59e0b";
+  const color = teamRoleColor(role);
   return L.divIcon({
     className: "",
     html: `<div style="width:0;height:0;border-left:2px solid ${color};position:relative;"><div style="position:absolute;left:2px;top:-1px;width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:9px solid ${color};filter:drop-shadow(0 0 3px ${color});"></div><div style="position:absolute;left:0;top:9px;width:6px;height:3px;background:#0b0f17;border-radius:1px;"></div></div>`,
@@ -114,6 +131,27 @@ const nlpIcon = L.divIcon({
   html: `<div style="width:14px;height:14px;background:#a855f7;border:2px solid #fff;transform:rotate(45deg);box-shadow:0 0 8px rgba(168,85,247,0.9);"></div>`,
   iconSize: [14, 14],
   iconAnchor: [7, 7],
+});
+
+// Karargah / komuta ussu -- ekiplerin CIKTIGI kurumsal nokta (AFAD koordinasyon
+// merkezi, itfaiye grup amirligi, sahra hastanesi). Ekip pinlerinden (rol
+// renkli daire) ve ekip-cikis bayragindan bilincli olarak ayri: sabit, mavi,
+// kare tabanli bir "us" isareti -- senaryodaki pin standardi.
+const hqIcon = L.divIcon({
+  className: "",
+  html: `<div style="width:18px;height:18px;background:#2563eb;border:2px solid #fff;border-radius:3px;box-shadow:0 0 10px rgba(37,99,235,0.95);display:flex;align-items:center;justify-content:center;"><div style="width:6px;height:6px;background:#fff;border-radius:1px;"></div></div>`,
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
+
+// Otonom siren dongusu aktif olan SOS cagrisi icin yanip sonen kirmizi pin.
+// Normal (sireni kapali) SOS'lar sabit redIcon ile cizilmeye devam eder --
+// hepsi yanip sonerse flasorun isaret degeri kaybolurdu.
+const sosFlashIcon = L.divIcon({
+  className: "",
+  html: `<div class="qm-sos-flash" style="width:18px;height:18px;border-radius:50%;background:#ef4444;border:3px solid #fff;box-shadow:0 0 12px rgba(239,68,68,1);"></div>`,
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
 });
 
 export interface MapPolylineItem {
@@ -323,9 +361,11 @@ export default function LeafletContainer({
           if (marker.type === "sos") {
             if (marker.claimStatus === "active") customIcon = amberIcon;
             else if (marker.claimStatus === "completed") customIcon = greenIcon;
+            else if (marker.flashing) customIcon = sosFlashIcon;
             else customIcon = redIcon;
           }
           if (marker.type === "shelter") customIcon = greenIcon;
+          if (marker.type === "hq") customIcon = hqIcon;
           if (marker.type === "team") customIcon = teamDivIcon(marker.teamRole);
           if (marker.type === "team-start") customIcon = teamStartDivIcon(marker.teamRole);
           if (marker.type === "debris") customIcon = debrisIcon;

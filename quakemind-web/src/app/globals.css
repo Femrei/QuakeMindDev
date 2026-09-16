@@ -99,3 +99,31 @@ body {
   animation: qm-route-flow 0.9s linear infinite;
   filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 10px rgba(0, 255, 255, 0.6));
 }
+
+/* Acil SOS pin'i: enkaz altindaki cihazin otonom siren/akustik dongusu
+   aktifken pin yanip soner (senaryodaki "kirmizi flasor pin" standardi).
+   Sadece siren aktif olan ihbarlarda uygulanir -- her SOS'un yanip sonmesi
+   isaret degerini oldururdu. */
+@keyframes qm-sos-flash {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.55;
+  }
+}
+.qm-sos-flash {
+  animation: qm-sos-flash 1s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qm-route-line {
+    animation: none;
+  }
+  .qm-sos-flash {
+    animation: none;
+  }
+}

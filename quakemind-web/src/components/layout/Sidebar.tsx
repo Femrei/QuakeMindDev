@@ -131,11 +131,22 @@ export default function Sidebar() {
               <span className="font-semibold text-slate-300">{totalReporting} ihbar</span>
             </div>
             {totalReporting > 0 && connectivity ? (
-              <p className="text-[10px] flex items-center gap-2 flex-wrap">
-                <span className="text-emerald-400 font-semibold">{connectivity.online} Şebeke</span>
-                <span className="text-cyan-400 font-semibold">{connectivity.mesh} Mesh</span>
-                <span className="text-red-400 font-semibold">{connectivity.offline} Çevrimdışı</span>
-              </p>
+              // Uc seviyeli iletim fallback zinciri -- hangi seviyeden kac
+              // ihbar geldigi. Sayilar gercek /api/sos/alerts kayitlarindan.
+              <div className="space-y-0.5 text-[10px]">
+                <p className="flex items-center justify-between">
+                  <span className="text-emerald-400 font-semibold">{connectivity.online} Şebeke</span>
+                  <span className="text-[9px] text-slate-500">HTTPS/REST</span>
+                </p>
+                <p className="flex items-center justify-between">
+                  <span className="text-cyan-400 font-semibold">{connectivity.mesh} Mesh</span>
+                  <span className="text-[9px] text-slate-500">P2P BLE</span>
+                </p>
+                <p className="flex items-center justify-between">
+                  <span className="text-red-400 font-semibold">{connectivity.offline} Çevrimdışı</span>
+                  <span className="text-[9px] text-slate-500">SQLite kuyruk</span>
+                </p>
+              </div>
             ) : (
               <p className="text-[9px] text-slate-500">Henüz raporlanan ihbar yok</p>
             )}

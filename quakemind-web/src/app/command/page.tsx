@@ -18,7 +18,7 @@ import {
 } from "@/lib/api";
 import { deriveUrgencyTier, urgencyLabel, urgencyTextClass } from "@/lib/urgency";
 import { interpolateTeamPosition } from "@/lib/teamPosition";
-import { COMMS_LABEL } from "@/lib/commsStatus";
+import { COMMS_LABEL, CHANNEL_LABEL } from "@/lib/commsStatus";
 import {
   ShieldAlert,
   Siren,
@@ -196,6 +196,16 @@ export default function CommandDashboardPage() {
   // Bir ihbara ekip atanmis mi -- atanmissa marker'i kirmizidan turuncuya
   // cevirmek icin (diger ekipler oraya zaten gidildigini gorsun, ayni
   // mantik command/sos/page.tsx'te de kullaniliyor).
+  // Ekip rolu haritada renk olarak gorunsun diye ekip kodundan cikarilir
+  // (HATAY-AK1 / MARAS-MED2 / HATAY-LOJ1). Backend'in claim kaydi rolu ayrica
+  // tutmuyor -- kod zaten rolu tasidigi icin ek bir alan gerekmiyor.
+  const teamRoleFromId = (teamId: string): MapMarkerItem["teamRole"] => {
+    if (/-MED\d*/i.test(teamId)) return "medikal";
+    if (/-LOJ\d*/i.test(teamId)) return "lojistik";
+    if (/-AK\d*/i.test(teamId)) return "arama-kurtarma";
+    return undefined;
+  };
+
   const claimForAlert = (id: string): TeamClaim | undefined =>
     teamClaims.find((c) => c.targetId === id && c.status === "active");
 
@@ -206,7 +216,10 @@ export default function CommandDashboardPage() {
     title: `SOS: ${a.message || "Acil Çağrı"}`,
     type: "sos",
     claimStatus: claimForAlert(a.id) ? "active" : a.status === "RESOLVED" ? "completed" : "unclaimed",
-    popupText: `Durum: ${a.status || "AÇIK"}${claimForAlert(a.id) ? ` | Ekip yolda: ${claimForAlert(a.id)!.teamId}` : ""}${a.batteryPercent != null ? ` | Pil: %${a.batteryPercent}` : ""}${a.commsStatus ? ` | Haberleşme: ${COMMS_LABEL[a.commsStatus]}` : ""} | Alındı: ${new Date(a.receivedAt).toLocaleTimeString()}`,
+    // Enkaz altindaki cihazin otonom siren dongusu aciksa pin yanip soner --
+    // henuz ekip atanmamis olanlarda anlamli (atanmis olan zaten turuncu).
+    flashing: a.sirenActive === true,
+    popupText: `Durum: ${a.status || "AÇIK"}${claimForAlert(a.id) ? ` | Ekip yolda: ${claimForAlert(a.id)!.teamId}` : ""}${a.channel ? ` | Kanal: ${CHANNEL_LABEL[a.channel]}` : ""}${a.batteryPercent != null ? ` | Pil: %${a.batteryPercent}` : ""}${a.powerMode ? ` (${a.powerMode === "tasarruf" ? "Tasarruf Modu" : "Normal"})` : ""}${a.sirenActive ? " | 🔊 Siren aktif" : ""}${a.commsStatus ? ` | Haberleşme: ${COMMS_LABEL[a.commsStatus]}` : ""}${a.payloadBytes != null ? ` (${a.payloadBytes} B)` : ""} | Alındı: ${new Date(a.receivedAt).toLocaleTimeString()}`,
   }));
 
   const debrisMarkers: MapMarkerItem[] = simulationMode
@@ -234,23 +247,27 @@ export default function CommandDashboardPage() {
     : [];
 
   const teamMarkers: MapMarkerItem[] = [];
-  const teamStartMarkers: MapMarkerItem[] = [];
   const teamTrailPolylines: MapPolylineItem[] = [];
+  // Karargah -> oradan cikan ekipler. Koordinata gore tekillestirilir.
+  const hqTeamsByKey = new Map<string, { lat: number; lng: number; teams: string[] }>();
   if (simulationMode) {
     teamClaims
       .filter((c) => c.status === "active")
       .forEach((claim) => {
-        // Ekibin yola CIKTIGI nokta -- rotanin ilk koordinati, ekip
-        // hareket etmeye baslasa bile haritada sabit kalir.
+        // Ekibin yola CIKTIGI nokta = karargah. Rotanin ilk koordinati zaten
+        // karargahin kendisi oldugu icin ayri bir veri kaynagina gerek yok.
+        // AYNI karargahtan birden fazla ekip cikabildigi icin (senaryo v2'de
+        // Maras merkezde 3 karargah 6 ekibi barindiriyor) koordinata gore
+        // TEKILLESTIRILIR -- aksi halde ust uste binen pinler olusur.
         if (claim.routeCoords && claim.routeCoords.length > 0) {
-          teamStartMarkers.push({
-            id: `team-start-${claim.teamId}-${claim.targetId}`,
-            lat: claim.routeCoords[0][0],
-            lng: claim.routeCoords[0][1],
-            title: `Çıkış Noktası: ${claim.teamId}`,
-            type: "team-start",
-            popupText: `Ekip ${claim.teamId} buradan yola çıktı | Hedef: ${claim.targetId}`,
-          });
+          const [hqLat, hqLng] = claim.routeCoords[0];
+          const hqKey = `${hqLat.toFixed(5)},${hqLng.toFixed(5)}`;
+          const existing = hqTeamsByKey.get(hqKey);
+          if (existing) {
+            existing.teams.push(claim.teamId);
+          } else {
+            hqTeamsByKey.set(hqKey, { lat: hqLat, lng: hqLng, teams: [claim.teamId] });
+          }
         }
         const pos = interpolateTeamPosition(claim);
         if (!pos) return;
@@ -272,6 +289,7 @@ export default function CommandDashboardPage() {
           lng: pos[1],
           title: `Ekip: ${claim.teamId}`,
           type: "team",
+          teamRole: teamRoleFromId(claim.teamId),
           popupText: `Hedef: ${claim.targetId} | Tür: ${claim.targetType}${comparisonText ? `\n${comparisonText}` : ""}`,
         });
         if (claim.routeCoords) {
@@ -306,8 +324,18 @@ export default function CommandDashboardPage() {
       });
   }
 
+  // Sabit mavi us ikonu -- senaryodaki karargah pin standardi.
+  const hqMarkers: MapMarkerItem[] = Array.from(hqTeamsByKey.entries()).map(([key, hq]) => ({
+    id: `hq-${key}`,
+    lat: hq.lat,
+    lng: hq.lng,
+    title: `Karargâh (${hq.teams.length} ekip)`,
+    type: "hq",
+    popupText: `Buradan çıkan ekipler: ${hq.teams.join(", ")}`,
+  }));
+
   const allMarkers = simulationMode
-    ? [...markers, ...teamMarkers, ...teamStartMarkers, ...debrisMarkers, ...nlpMarkers]
+    ? [...markers, ...teamMarkers, ...hqMarkers, ...debrisMarkers, ...nlpMarkers]
     : markers;
   const allPolylines = simulationMode ? [...damagePolylines, ...teamTrailPolylines] : [];
   // Sabit Antakya merkezine kilitlenmek yerine, simulasyon aktifken haritayi

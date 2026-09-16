@@ -124,6 +124,20 @@ export interface SOSAlert {
   /** Diyagramlardaki haberlesme durumu -- sebeke normal mi (online), BLE
    * mesh rolesi uzerinden mi (mesh), yoksa hic ulasmiyor mu (offline). */
   commsStatus?: "online" | "mesh" | "offline" | null;
+  /** Cihazin otonom guc modu -- pil %20'nin altina dustugunde ekran karartilir,
+   * Edge AI uyutulur, GPS polling seyreltilir (akis diyagramindaki tasarruf dali). */
+  powerMode?: "normal" | "tasarruf" | null;
+  /** Enkaz altindaki cihazin akustik dongusu (100 dB araliklarla siren + mikrofon
+   * dinleme) aktif mi. */
+  sirenActive?: boolean | null;
+  /** Tasarruf modunda seyreltilen GPS polling araligi (saniye). */
+  gpsPollingSec?: number | null;
+  /** BLE mesh fallback'inde gonderilen hafif JSON paketinin OLCULMUS byte
+   * uzunlugu -- tahmin degil, orkestrator serilestirip olcuyor. */
+  payloadBytes?: number | null;
+  /** Ihbarin uretim kanali -- haritadaki pin standardini surer
+   * (yolo=turuncu, nlp=sari, sos=kirmizi flasor). */
+  channel?: "yolo" | "nlp" | "sos" | null;
 }
 
 export async function fetchServerStatus(): Promise<StatusResponse> {
