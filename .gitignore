@@ -28,3 +28,11 @@ QuakeMindBackend/benchmark/data/copernicus/
 
 # Geocoding onbellegi -- yeniden uretilebilir, makineye ozgu
 QuakeMindBackend/apps/disaster_nlp/data/geocode_cache.json
+
+# Ham benchmark kosu ciktilari (yuzlerce MB, yeniden uretilebilir). Ozet tablolar
+# (multi_seed_tablo.md, tablo18.md, *summary.json) `git add -f` ile izlenir; bir kez
+# izlenen dosyanin sonraki degisiklikleri normal gorunur.
+QuakeMindBackend/benchmark/runs/*/
+
+# Office kilit dosyalari
+~$*

@@ -1,0 +1,5203 @@
+{
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51
+  ],
+  "uTurnPenaltyMin": 20.0,
+  "results": [
+    {
+      "config": "v2-sentetik-8ilce",
+      "args": [
+        "--dataset",
+        "v2",
+        "--closure-source",
+        "synthetic"
+      ],
+      "source": "sentetik %18",
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "victims": 18,
+      "perSeed": [
+        {
+          "seed": 42,
+          "source": "sentetik %18",
+          "victims": 18,
+          "routed": 18,
+          "naiveReached": 18,
+          "naiveStuck": 0,
+          "uTurns": 73,
+          "ourMin": 222.2,
+          "naiveMin": 1744.8,
+          "savedMin": 1522.6,
+          "savedFromDistanceMin": 62.6,
+          "savedFromUTurnPenaltyMin": 1460.0,
+          "uTurnShareOfSaving": 0.9588861158544595,
+          "naiveExtraDistancePct": 28.172817281728182,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z2": 4.496511980588414,
+            "H-Z3": 1.1207443434129838,
+            "H-Z4": 2.2458715596330276,
+            "H-Z5": 0.551828608526293,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363,
+            "K-Z3": 1.1160714285714286
+          },
+          "references": null
+        },
+        {
+          "seed": 43,
+          "source": "sentetik %18",
+          "victims": 18,
+          "routed": 18,
+          "naiveReached": 18,
+          "naiveStuck": 0,
+          "uTurns": 55,
+          "ourMin": 202.9,
+          "naiveMin": 1343.5,
+          "savedMin": 1140.6,
+          "savedFromDistanceMin": 40.6,
+          "savedFromUTurnPenaltyMin": 1100.0,
+          "uTurnShareOfSaving": 0.9644046992810802,
+          "naiveExtraDistancePct": 20.00985707244948,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z2": 4.496511980588414,
+            "H-Z3": 2.2414886868259676,
+            "H-Z4": 1.1229357798165138,
+            "H-Z5": 0.551828608526293,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363,
+            "K-Z3": 1.1160714285714286
+          },
+          "references": null
+        },
+        {
+          "seed": 44,
+          "source": "sentetik %18",
+          "victims": 18,
+          "routed": 18,
+          "naiveReached": 18,
+          "naiveStuck": 0,
+          "uTurns": 66,
+          "ourMin": 184.6,
+          "naiveMin": 1551.3,
+          "savedMin": 1366.7,
+          "savedFromDistanceMin": 46.7,
+          "savedFromUTurnPenaltyMin": 1320.0,
+          "uTurnShareOfSaving": 0.9658301017048364,
+          "naiveExtraDistancePct": 25.297941495124604,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z2": 4.496511980588414,
+            "H-Z3": 1.1207443434129838,
+            "H-Z4": 1.1229357798165138,
+            "H-Z5": 0.551828608526293,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363,
+            "K-Z3": 1.1160714285714286
+          },
+          "references": null
+        },
+        {
+          "seed": 45,
+          "source": "sentetik %18",
+          "victims": 18,
+          "routed": 18,
+          "naiveReached": 18,
+          "naiveStuck": 0,
+          "uTurns": 73,
+          "ourMin": 238.4,
+          "naiveMin": 1762.3,
+          "savedMin": 1523.9,
+          "savedFromDistanceMin": 63.9,
+          "savedFromUTurnPenaltyMin": 1460.0,
+          "uTurnShareOfSaving": 0.9580681147056894,
+          "naiveExtraDistancePct": 26.80369127516779,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z2": 4.496511980588414,
+            "H-Z3": 1.1207443434129838,
+            "H-Z4": 2.2458715596330276,
+            "H-Z5": 0.551828608526293,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363,
+            "K-Z3": 2.232142857142857
+          },
+          "references": null
+        },
+        {
+          "seed": 46,
+          "source": "sentetik %18",
+          "victims": 18,
+          "routed": 17,
+          "naiveReached": 17,
+          "naiveStuck": 0,
+          "uTurns": 50,
+          "ourMin": 200.1,
+          "naiveMin": 1236.6,
+          "savedMin": 1036.5,
+          "savedFromDistanceMin": 36.5,
+          "savedFromUTurnPenaltyMin": 1000.0,
+          "uTurnShareOfSaving": 0.964785335262904,
+          "naiveExtraDistancePct": 18.24087956021989,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z2": 2.2444646648468303,
+            "H-Z3": 1.1207443434129838,
+            "H-Z4": 2.2458715596330276,
+            "H-Z5": 0.551828608526293,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363,
+            "K-Z3": 2.232142857142857
+          },
+          "references": null
+        },
+        {
+          "seed": 47,
+          "source": "sentetik %18",
+          "victims": 18,
+          "routed": 18,
+          "naiveReached": 18,
+          "naiveStuck": 0,
+          "uTurns": 61,
+          "ourMin": 199.7,
+          "naiveMin": 1465.9,
+          "savedMin": 1266.2,
+          "savedFromDistanceMin": 46.2,
+          "savedFromUTurnPenaltyMin": 1220.0,
+          "uTurnShareOfSaving": 0.9635128731637972,
+          "naiveExtraDistancePct": 23.134702053079614,
+          "zoneClosedPct": {
+            "H-Z1": 1.1233211233211233,
+            "H-Z2": 4.496511980588414,
+            "H-Z3": 1.1207443434129838,
+            "H-Z4": 2.2458715596330276,
+            "H-Z5": 0.551828608526293,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363,
+            "K-Z3": 2.232142857142857
+          },
+          "references": null
+        },
+        {
+          "seed": 48,
+          "source": "sentetik %18",
+          "victims": 18,
+          "routed": 18,
+          "naiveReached": 18,
+          "naiveStuck": 0,
+          "uTurns": 77,
+          "ourMin": 190.4,
+          "naiveMin": 1806.0,
+          "savedMin": 1615.6,
+          "savedFromDistanceMin": 75.6,
+          "savedFromUTurnPenaltyMin": 1540.0,
+          "uTurnShareOfSaving": 0.953206239168111,
+          "naiveExtraDistancePct": 39.705882352941174,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z2": 4.496511980588414,
+            "H-Z3": 2.2414886868259676,
+            "H-Z4": 2.2458715596330276,
+            "H-Z5": 0.551828608526293,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363,
+            "K-Z3": 1.1160714285714286
+          },
+          "references": null
+        },
+        {
+          "seed": 49,
+          "source": "sentetik %18",
+          "victims": 18,
+          "routed": 18,
+          "naiveReached": 18,
+          "naiveStuck": 0,
+          "uTurns": 80,
+          "ourMin": 211.7,
+          "naiveMin": 1889.7,
+          "savedMin": 1678.0,
+          "savedFromDistanceMin": 78.0,
+          "savedFromUTurnPenaltyMin": 1600.0,
+          "uTurnShareOfSaving": 0.9535160905840286,
+          "naiveExtraDistancePct": 36.84459140292867,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z2": 2.2444646648468303,
+            "H-Z3": 1.1207443434129838,
+            "H-Z4": 2.2458715596330276,
+            "H-Z5": 0.551828608526293,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363,
+            "K-Z3": 2.232142857142857
+          },
+          "references": null
+        },
+        {
+          "seed": 50,
+          "source": "sentetik %18",
+          "victims": 18,
+          "routed": 18,
+          "naiveReached": 18,
+          "naiveStuck": 0,
+          "uTurns": 65,
+          "ourMin": 211.9,
+          "naiveMin": 1568.7,
+          "savedMin": 1356.8,
+          "savedFromDistanceMin": 56.8,
+          "savedFromUTurnPenaltyMin": 1300.0,
+          "uTurnShareOfSaving": 0.9581367924528302,
+          "naiveExtraDistancePct": 26.80509674374704,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z2": 4.496511980588414,
+            "H-Z3": 1.1207443434129838,
+            "H-Z4": 1.1229357798165138,
+            "H-Z5": 0.551828608526293,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363,
+            "K-Z3": 2.232142857142857
+          },
+          "references": null
+        },
+        {
+          "seed": 51,
+          "source": "sentetik %18",
+          "victims": 18,
+          "routed": 17,
+          "naiveReached": 17,
+          "naiveStuck": 0,
+          "uTurns": 47,
+          "ourMin": 172.8,
+          "naiveMin": 1150.9,
+          "savedMin": 978.1,
+          "savedFromDistanceMin": 38.1,
+          "savedFromUTurnPenaltyMin": 940.0,
+          "uTurnShareOfSaving": 0.9610469277170022,
+          "naiveExtraDistancePct": 22.048611111111107,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z2": 2.2444646648468303,
+            "H-Z3": 1.1207443434129838,
+            "H-Z4": 1.1229357798165138,
+            "H-Z5": 0.551828608526293,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 2.2473063109286815,
+            "K-Z3": 2.232142857142857
+          },
+          "references": null
+        }
+      ],
+      "aggregate": {
+        "routed": {
+          "n": 10,
+          "mean": 17.8,
+          "sd": 0.4216370213557839,
+          "min": 17,
+          "max": 18,
+          "ci95": [
+            17.49837904496024,
+            18.10162095503976
+          ]
+        },
+        "naiveStuck": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "uTurns": {
+          "n": 10,
+          "mean": 64.7,
+          "sd": 11.363195951061577,
+          "min": 47,
+          "max": 80,
+          "ci95": [
+            56.57125930251021,
+            72.82874069748979
+          ]
+        },
+        "ourMin": {
+          "n": 10,
+          "mean": 203.47,
+          "sd": 18.86549171842011,
+          "min": 172.8,
+          "max": 238.4,
+          "ci95": [
+            189.9744402146958,
+            216.9655597853042
+          ]
+        },
+        "naiveMin": {
+          "n": 10,
+          "mean": 1551.97,
+          "sd": 251.9873058972085,
+          "min": 1150.9,
+          "max": 1889.7,
+          "ci95": [
+            1371.7091405094895,
+            1732.2308594905105
+          ]
+        },
+        "savedMin": {
+          "n": 10,
+          "mean": 1348.5,
+          "sd": 241.7355350147944,
+          "min": 978.1,
+          "max": 1678.0,
+          "ci95": [
+            1175.5728156086534,
+            1521.4271843913466
+          ]
+        },
+        "savedFromDistanceMin": {
+          "n": 10,
+          "mean": 54.5,
+          "sd": 15.175345502198986,
+          "min": 36.5,
+          "max": 78.0,
+          "ci95": [
+            43.644211794511094,
+            65.3557882054889
+          ]
+        },
+        "savedFromUTurnPenaltyMin": {
+          "n": 10,
+          "mean": 1294.0,
+          "sd": 227.26391902123154,
+          "min": 940.0,
+          "max": 1600.0,
+          "ci95": [
+            1131.425186050204,
+            1456.574813949796
+          ]
+        },
+        "uTurnShareOfSaving": {
+          "n": 10,
+          "mean": 0.960139328989474,
+          "sd": 0.004548184419935239,
+          "min": 0.953206239168111,
+          "max": 0.9658301017048364,
+          "ci95": [
+            0.9568857538550452,
+            0.9633929041239028
+          ]
+        },
+        "naiveExtraDistancePct": {
+          "n": 10,
+          "mean": 26.706407034849757,
+          "sd": 6.887053514983842,
+          "min": 18.24087956021989,
+          "max": 39.705882352941174,
+          "ci95": [
+            21.779705741116526,
+            31.63310832858299
+          ]
+        },
+        "zoneClosedPct": {
+          "H-Z1": {
+            "n": 10,
+            "mean": 2.1343101343101343,
+            "sd": 0.3552253293473637,
+            "min": 1.1233211233211233,
+            "max": 2.2466422466422467,
+            "ci95": [
+              1.880197241785794,
+              2.3884230268344746
+            ]
+          },
+          "H-Z2": {
+            "n": 10,
+            "mean": 3.820897785865939,
+            "sd": 1.0878422034218644,
+            "min": 2.2444646648468303,
+            "max": 4.496511980588414,
+            "ci95": [
+              3.0427023530417636,
+              4.599093218690114
+            ]
+          },
+          "H-Z3": {
+            "n": 10,
+            "mean": 1.3448932120955805,
+            "sd": 0.47254730665799427,
+            "min": 1.1207443434129838,
+            "max": 2.2414886868259676,
+            "ci95": [
+              1.0068532328799469,
+              1.6829331913112142
+            ]
+          },
+          "H-Z4": {
+            "n": 10,
+            "mean": 1.796697247706422,
+            "sd": 0.5798815432119729,
+            "min": 1.1229357798165138,
+            "max": 2.2458715596330276,
+            "ci95": [
+              1.3818749811248108,
+              2.2115195142880335
+            ]
+          },
+          "H-Z5": {
+            "n": 10,
+            "mean": 0.551828608526293,
+            "sd": 0.0,
+            "min": 0.551828608526293,
+            "max": 0.551828608526293,
+            "ci95": [
+              0.551828608526293,
+              0.551828608526293
+            ]
+          },
+          "K-Z1": {
+            "n": 10,
+            "mean": 4.498046953650385,
+            "sd": 0.0,
+            "min": 4.498046953650385,
+            "max": 4.498046953650385,
+            "ci95": [
+              4.498046953650385,
+              4.498046953650385
+            ]
+          },
+          "K-Z2": {
+            "n": 10,
+            "mean": 4.269881990764494,
+            "sd": 0.7106606542605183,
+            "min": 2.2473063109286815,
+            "max": 4.494612621857363,
+            "ci95": [
+              3.7615059839376017,
+              4.778257997591387
+            ]
+          },
+          "K-Z3": {
+            "n": 10,
+            "mean": 1.7857142857142858,
+            "sd": 0.5763368074713419,
+            "min": 1.1160714285714286,
+            "max": 2.232142857142857,
+            "ci95": [
+              1.373427770324576,
+              2.1980008011039955
+            ]
+          }
+        },
+        "savedByUTurnPenalty": {
+          "0": {
+            "n": 10,
+            "mean": 54.5,
+            "sd": 15.175345502198986,
+            "min": 36.5,
+            "max": 78.0,
+            "ci95": [
+              43.644211794511094,
+              65.3557882054889
+            ]
+          },
+          "5": {
+            "n": 10,
+            "mean": 378.0,
+            "sd": 71.39726107413986,
+            "min": 273.1,
+            "max": 478.0,
+            "ci95": [
+              326.92547622322354,
+              429.07452377677646
+            ]
+          },
+          "10": {
+            "n": 10,
+            "mean": 701.5,
+            "sd": 128.14428499850385,
+            "min": 508.1,
+            "max": 878.0,
+            "ci95": [
+              609.8311007656472,
+              793.1688992343528
+            ]
+          },
+          "20": {
+            "n": 10,
+            "mean": 1348.5,
+            "sd": 241.7355350147944,
+            "min": 978.1,
+            "max": 1678.0,
+            "ci95": [
+              1175.5728156086534,
+              1521.4271843913466
+            ]
+          },
+          "30": {
+            "n": 10,
+            "mean": 1995.5,
+            "sd": 355.3528168517093,
+            "min": 1448.1,
+            "max": 2478.0,
+            "ci95": [
+              1741.295908409001,
+              2249.7040915909993
+            ]
+          }
+        }
+      },
+      "pooledTasks": {
+        "taskCount": 178,
+        "savedPerTask": {
+          "median": 60.3,
+          "q1": 20.0,
+          "q3": 104.85,
+          "mean": 75.75842696629213,
+          "n": 178,
+          "nNonZero": 140,
+          "sharePositive": 0.7865168539325843,
+          "shareZero": 0.21348314606741572,
+          "shareNegative": 0.0,
+          "p": 5.040270275676648e-25,
+          "rankBiserial": 1.0
+        },
+        "distanceSavedPerTask": {
+          "median": 1.0,
+          "q1": 0.0,
+          "q3": 4.274999999999999,
+          "mean": 3.061797752808989,
+          "n": 178,
+          "nNonZero": 129,
+          "sharePositive": 0.7247191011235955,
+          "shareZero": 0.2752808988764045,
+          "shareNegative": 0.0,
+          "p": 3.244230381278168e-23,
+          "rankBiserial": 1.0
+        },
+        "naiveExtraDistancePctPerTask": {
+          "median": 9.028213166144209,
+          "q1": 0.0,
+          "q3": 30.65025252525252,
+          "mean": 22.846027062791556
+        },
+        "discoveriesPerTask": {
+          "median": 3.0,
+          "q1": 1.0,
+          "q3": 5.0,
+          "mean": 3.634831460674157
+        },
+        "shareTasksWithDiscovery": 0.7865168539325843,
+        "discoveriesMaxPerTask": 16,
+        "discoveriesTotal": 647,
+        "top10PctTasksShareOfDiscoveries": 0.3044822256568779,
+        "discoveriesByZone": {
+          "H-Z1": 100,
+          "H-Z2": 61,
+          "H-Z3": 24,
+          "H-Z4": 22,
+          "H-Z5": 7,
+          "K-Z1": 400,
+          "K-Z2": 19,
+          "K-Z3": 14
+        },
+        "note": "Gorevler tohumlar arasi havuzlandi; ayni ekip/karargahlari paylastiklari icin tam bagimsiz degiller -- birincil birim tohum basina toplamdir. Naif ajan yalniz acik kenarlarda yurudugu icin yolu, kapanmalari bilen en kisa yoldan kisa OLAMAZ: fark yapi geregi >= 0, bu yuzden Wilcoxon p ve r = 1 bilgi tasimaz (yalniz kayit icin tutuldu)."
+      },
+      "reproducesSingleSeedRun": {
+        "identical": true,
+        "reference": {
+          "routed": 18,
+          "naiveStuck": 0,
+          "uTurns": 73,
+          "ourMin": 222.2,
+          "naiveMin": 1744.8
+        },
+        "seed42": {
+          "routed": 18,
+          "naiveStuck": 0,
+          "uTurns": 73,
+          "ourMin": 222.2,
+          "naiveMin": 1744.8
+        }
+      },
+      "references": null
+    },
+    {
+      "config": "v2-sentetik-4ilce",
+      "args": [
+        "--dataset",
+        "v2",
+        "--closure-source",
+        "synthetic",
+        "--zones",
+        "H-Z1",
+        "H-Z3",
+        "K-Z1",
+        "K-Z2"
+      ],
+      "source": "sentetik %18",
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "victims": 13,
+      "perSeed": [
+        {
+          "seed": 42,
+          "source": "sentetik %18",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 68,
+          "ourMin": 180.3,
+          "naiveMin": 1600.3,
+          "savedMin": 1420.0,
+          "savedFromDistanceMin": 60.0,
+          "savedFromUTurnPenaltyMin": 1360.0,
+          "uTurnShareOfSaving": 0.9577464788732394,
+          "naiveExtraDistancePct": 33.277870216306155,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z3": 1.1207443434129838,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363
+          },
+          "references": null
+        },
+        {
+          "seed": 43,
+          "source": "sentetik %18",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 46,
+          "ourMin": 127.6,
+          "naiveMin": 1076.5,
+          "savedMin": 948.9,
+          "savedFromDistanceMin": 28.9,
+          "savedFromUTurnPenaltyMin": 920.0,
+          "uTurnShareOfSaving": 0.9695436821582886,
+          "naiveExtraDistancePct": 22.648902821316607,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z3": 2.2414886868259676,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363
+          },
+          "references": null
+        },
+        {
+          "seed": 44,
+          "source": "sentetik %18",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 49,
+          "ourMin": 162.1,
+          "naiveMin": 1182.3,
+          "savedMin": 1020.2,
+          "savedFromDistanceMin": 40.2,
+          "savedFromUTurnPenaltyMin": 980.0,
+          "uTurnShareOfSaving": 0.9605959615761616,
+          "naiveExtraDistancePct": 24.799506477483046,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z3": 2.2414886868259676,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363
+          },
+          "references": null
+        },
+        {
+          "seed": 45,
+          "source": "sentetik %18",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 61,
+          "ourMin": 179.2,
+          "naiveMin": 1434.3,
+          "savedMin": 1255.1,
+          "savedFromDistanceMin": 35.1,
+          "savedFromUTurnPenaltyMin": 1220.0,
+          "uTurnShareOfSaving": 0.9720341008684568,
+          "naiveExtraDistancePct": 19.587053571428584,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z3": 1.1207443434129838,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363
+          },
+          "references": null
+        },
+        {
+          "seed": 46,
+          "source": "sentetik %18",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 45,
+          "ourMin": 149.9,
+          "naiveMin": 1071.5,
+          "savedMin": 921.6,
+          "savedFromDistanceMin": 21.6,
+          "savedFromUTurnPenaltyMin": 900.0,
+          "uTurnShareOfSaving": 0.9765625,
+          "naiveExtraDistancePct": 14.409606404269509,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z3": 2.2414886868259676,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363
+          },
+          "references": null
+        },
+        {
+          "seed": 47,
+          "source": "sentetik %18",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 46,
+          "ourMin": 160.6,
+          "naiveMin": 1107.4,
+          "savedMin": 946.8,
+          "savedFromDistanceMin": 26.8,
+          "savedFromUTurnPenaltyMin": 920.0,
+          "uTurnShareOfSaving": 0.9716941275876636,
+          "naiveExtraDistancePct": 16.687422166874228,
+          "zoneClosedPct": {
+            "H-Z1": 1.1233211233211233,
+            "H-Z3": 2.2414886868259676,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363
+          },
+          "references": null
+        },
+        {
+          "seed": 48,
+          "source": "sentetik %18",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 55,
+          "ourMin": 134.9,
+          "naiveMin": 1254.9,
+          "savedMin": 1120.0,
+          "savedFromDistanceMin": 20.0,
+          "savedFromUTurnPenaltyMin": 1100.0,
+          "uTurnShareOfSaving": 0.9821428571428573,
+          "naiveExtraDistancePct": 14.825796886582653,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z3": 1.1207443434129838,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363
+          },
+          "references": null
+        },
+        {
+          "seed": 49,
+          "source": "sentetik %18",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 68,
+          "ourMin": 153.1,
+          "naiveMin": 1562.7,
+          "savedMin": 1409.6,
+          "savedFromDistanceMin": 49.6,
+          "savedFromUTurnPenaltyMin": 1360.0,
+          "uTurnShareOfSaving": 0.9648127128263336,
+          "naiveExtraDistancePct": 32.39712606139778,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z3": 1.1207443434129838,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363
+          },
+          "references": null
+        },
+        {
+          "seed": 50,
+          "source": "sentetik %18",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 59,
+          "ourMin": 150.5,
+          "naiveMin": 1371.7,
+          "savedMin": 1221.2,
+          "savedFromDistanceMin": 41.2,
+          "savedFromUTurnPenaltyMin": 1180.0,
+          "uTurnShareOfSaving": 0.9662626924336718,
+          "naiveExtraDistancePct": 27.37541528239202,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z3": 2.2414886868259676,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 4.494612621857363
+          },
+          "references": null
+        },
+        {
+          "seed": 51,
+          "source": "sentetik %18",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 40,
+          "ourMin": 136.1,
+          "naiveMin": 965.7,
+          "savedMin": 829.6,
+          "savedFromDistanceMin": 29.6,
+          "savedFromUTurnPenaltyMin": 800.0,
+          "uTurnShareOfSaving": 0.9643201542912246,
+          "naiveExtraDistancePct": 21.748714180749467,
+          "zoneClosedPct": {
+            "H-Z1": 2.2466422466422467,
+            "H-Z3": 2.2414886868259676,
+            "K-Z1": 4.498046953650385,
+            "K-Z2": 2.2473063109286815
+          },
+          "references": null
+        }
+      ],
+      "aggregate": {
+        "routed": {
+          "n": 10,
+          "mean": 13.0,
+          "sd": 0.0,
+          "min": 13,
+          "max": 13,
+          "ci95": [
+            13.0,
+            13.0
+          ]
+        },
+        "naiveStuck": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "uTurns": {
+          "n": 10,
+          "mean": 53.7,
+          "sd": 9.978309810116475,
+          "min": 40,
+          "max": 68,
+          "ci95": [
+            46.56194716741835,
+            60.83805283258165
+          ]
+        },
+        "ourMin": {
+          "n": 10,
+          "mean": 153.43,
+          "sd": 17.778579495811496,
+          "min": 127.6,
+          "max": 180.3,
+          "ci95": [
+            140.7119703793228,
+            166.14802962067722
+          ]
+        },
+        "naiveMin": {
+          "n": 10,
+          "mean": 1262.73,
+          "sd": 219.9447609944117,
+          "min": 965.7,
+          "max": 1600.3,
+          "ci95": [
+            1105.3909962905805,
+            1420.0690037094196
+          ]
+        },
+        "savedMin": {
+          "n": 10,
+          "mean": 1109.3,
+          "sd": 209.2698736082191,
+          "min": 829.6,
+          "max": 1420.0,
+          "ci95": [
+            959.5973507027522,
+            1259.0026492972477
+          ]
+        },
+        "savedFromDistanceMin": {
+          "n": 10,
+          "mean": 35.3,
+          "sd": 12.65315068361324,
+          "min": 20.0,
+          "max": 60.0,
+          "ci95": [
+            26.24848127618983,
+            44.351518723810166
+          ]
+        },
+        "savedFromUTurnPenaltyMin": {
+          "n": 10,
+          "mean": 1074.0,
+          "sd": 199.56619620232948,
+          "min": 800.0,
+          "max": 1360.0,
+          "ci95": [
+            931.238943348367,
+            1216.761056651633
+          ]
+        },
+        "uTurnShareOfSaving": {
+          "n": 10,
+          "mean": 0.9685715267757897,
+          "sd": 0.007371466542930531,
+          "min": 0.9577464788732394,
+          "max": 0.9821428571428573,
+          "ci95": [
+            0.9632982972771726,
+            0.9738447562744068
+          ]
+        },
+        "naiveExtraDistancePct": {
+          "n": 10,
+          "mean": 22.775741406880005,
+          "sd": 6.746344228213293,
+          "min": 14.409606404269509,
+          "max": 33.277870216306155,
+          "ci95": [
+            17.949697473172293,
+            27.601785340587718
+          ]
+        },
+        "zoneClosedPct": {
+          "H-Z1": {
+            "n": 10,
+            "mean": 2.1343101343101343,
+            "sd": 0.3552253293473637,
+            "min": 1.1233211233211233,
+            "max": 2.2466422466422467,
+            "ci95": [
+              1.880197241785794,
+              2.3884230268344746
+            ]
+          },
+          "H-Z3": {
+            "n": 10,
+            "mean": 1.793190949460774,
+            "sd": 0.5787498903192869,
+            "min": 1.1207443434129838,
+            "max": 2.2414886868259676,
+            "ci95": [
+              1.3791782185911075,
+              2.2072036803304407
+            ]
+          },
+          "K-Z1": {
+            "n": 10,
+            "mean": 4.498046953650385,
+            "sd": 0.0,
+            "min": 4.498046953650385,
+            "max": 4.498046953650385,
+            "ci95": [
+              4.498046953650385,
+              4.498046953650385
+            ]
+          },
+          "K-Z2": {
+            "n": 10,
+            "mean": 4.269881990764494,
+            "sd": 0.7106606542605183,
+            "min": 2.2473063109286815,
+            "max": 4.494612621857363,
+            "ci95": [
+              3.7615059839376017,
+              4.778257997591387
+            ]
+          }
+        },
+        "savedByUTurnPenalty": {
+          "0": {
+            "n": 10,
+            "mean": 35.3,
+            "sd": 12.65315068361324,
+            "min": 20.0,
+            "max": 60.0,
+            "ci95": [
+              26.24848127618983,
+              44.351518723810166
+            ]
+          },
+          "5": {
+            "n": 10,
+            "mean": 303.8,
+            "sd": 60.008721588338034,
+            "min": 229.6,
+            "max": 400.0,
+            "ci95": [
+              260.8723465933115,
+              346.72765340668855
+            ]
+          },
+          "10": {
+            "n": 10,
+            "mean": 572.3,
+            "sd": 109.63724022632293,
+            "min": 429.6,
+            "max": 740.0,
+            "ci95": [
+              493.8702430525351,
+              650.7297569474648
+            ]
+          },
+          "20": {
+            "n": 10,
+            "mean": 1109.3,
+            "sd": 209.2698736082191,
+            "min": 829.6,
+            "max": 1420.0,
+            "ci95": [
+              959.5973507027522,
+              1259.0026492972477
+            ]
+          },
+          "30": {
+            "n": 10,
+            "mean": 1646.3,
+            "sd": 308.9996260335745,
+            "min": 1229.6,
+            "max": 2100.0,
+            "ci95": [
+              1425.2549835745297,
+              1867.3450164254702
+            ]
+          }
+        }
+      },
+      "pooledTasks": {
+        "taskCount": 130,
+        "savedPerTask": {
+          "median": 61.25,
+          "q1": 20.3,
+          "q3": 123.65,
+          "mean": 85.33076923076923,
+          "n": 130,
+          "nNonZero": 106,
+          "sharePositive": 0.8153846153846154,
+          "shareZero": 0.18461538461538463,
+          "shareNegative": 0.0,
+          "p": 1.9919808889800008e-19,
+          "rankBiserial": 1.0
+        },
+        "distanceSavedPerTask": {
+          "median": 1.0,
+          "q1": 0.09999999999999831,
+          "q3": 3.6999999999999993,
+          "mean": 2.7153846153846155,
+          "n": 130,
+          "nNonZero": 98,
+          "sharePositive": 0.7538461538461538,
+          "shareZero": 0.24615384615384617,
+          "shareNegative": 0.0,
+          "p": 4.148592711048255e-18,
+          "rankBiserial": 1.0
+        },
+        "naiveExtraDistancePctPerTask": {
+          "median": 9.456740442655928,
+          "q1": 0.6507061127718694,
+          "q3": 30.525362318840582,
+          "mean": 19.619340396628083
+        },
+        "discoveriesPerTask": {
+          "median": 3.0,
+          "q1": 1.0,
+          "q3": 6.0,
+          "mean": 4.130769230769231
+        },
+        "shareTasksWithDiscovery": 0.8153846153846154,
+        "discoveriesMaxPerTask": 16,
+        "discoveriesTotal": 537,
+        "top10PctTasksShareOfDiscoveries": 0.2886405959031657,
+        "discoveriesByZone": {
+          "H-Z1": 100,
+          "H-Z3": 18,
+          "K-Z1": 400,
+          "K-Z2": 19
+        },
+        "note": "Gorevler tohumlar arasi havuzlandi; ayni ekip/karargahlari paylastiklari icin tam bagimsiz degiller -- birincil birim tohum basina toplamdir. Naif ajan yalniz acik kenarlarda yurudugu icin yolu, kapanmalari bilen en kisa yoldan kisa OLAMAZ: fark yapi geregi >= 0, bu yuzden Wilcoxon p ve r = 1 bilgi tasimaz (yalniz kayit icin tutuldu)."
+      },
+      "reproducesSingleSeedRun": {
+        "identical": true,
+        "reference": {
+          "routed": 13,
+          "naiveStuck": 0,
+          "uTurns": 68,
+          "ourMin": 180.3,
+          "naiveMin": 1600.3
+        },
+        "seed42": {
+          "routed": 13,
+          "naiveStuck": 0,
+          "uTurns": 68,
+          "ourMin": 180.3,
+          "naiveMin": 1600.3
+        }
+      },
+      "references": null
+    },
+    {
+      "config": "v2-emsr-strict",
+      "args": [
+        "--dataset",
+        "v2",
+        "--closure-source",
+        "emsr",
+        "--emsr-rule",
+        "strict",
+        "--zones",
+        "H-Z1",
+        "H-Z3",
+        "K-Z1",
+        "K-Z2"
+      ],
+      "source": "EMSR648 strict",
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "victims": 13,
+      "perSeed": [
+        {
+          "seed": 42,
+          "source": "EMSR648 strict",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 3,
+          "ourMin": 177.6,
+          "naiveMin": 238.0,
+          "savedMin": 60.4,
+          "savedFromDistanceMin": 0.4,
+          "savedFromUTurnPenaltyMin": 60.0,
+          "uTurnShareOfSaving": 0.9933774834437085,
+          "naiveExtraDistancePct": 0.22522522522522842,
+          "zoneClosedPct": {
+            "H-Z1": 0.3028083028083028,
+            "H-Z3": 0.0,
+            "K-Z1": 0.0,
+            "K-Z2": 0.0
+          },
+          "references": null
+        },
+        {
+          "seed": 43,
+          "source": "EMSR648 strict",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 6,
+          "ourMin": 123.6,
+          "naiveMin": 244.7,
+          "savedMin": 121.1,
+          "savedFromDistanceMin": 1.1,
+          "savedFromUTurnPenaltyMin": 120.0,
+          "uTurnShareOfSaving": 0.9909165978530139,
+          "naiveExtraDistancePct": 0.88996763754046,
+          "zoneClosedPct": {
+            "H-Z1": 0.3028083028083028,
+            "H-Z3": 0.0,
+            "K-Z1": 0.0,
+            "K-Z2": 0.0
+          },
+          "references": null
+        },
+        {
+          "seed": 44,
+          "source": "EMSR648 strict",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 3,
+          "ourMin": 151.4,
+          "naiveMin": 211.9,
+          "savedMin": 60.5,
+          "savedFromDistanceMin": 0.5,
+          "savedFromUTurnPenaltyMin": 60.0,
+          "uTurnShareOfSaving": 0.9917355371900827,
+          "naiveExtraDistancePct": 0.33025099075297226,
+          "zoneClosedPct": {
+            "H-Z1": 0.3028083028083028,
+            "H-Z3": 0.0,
+            "K-Z1": 0.0,
+            "K-Z2": 0.0
+          },
+          "references": null
+        },
+        {
+          "seed": 45,
+          "source": "EMSR648 strict",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 6,
+          "ourMin": 180.0,
+          "naiveMin": 301.9,
+          "savedMin": 121.9,
+          "savedFromDistanceMin": 1.9,
+          "savedFromUTurnPenaltyMin": 120.0,
+          "uTurnShareOfSaving": 0.9844134536505335,
+          "naiveExtraDistancePct": 1.0555555555555587,
+          "zoneClosedPct": {
+            "H-Z1": 0.3028083028083028,
+            "H-Z3": 0.0,
+            "K-Z1": 0.0,
+            "K-Z2": 0.0
+          },
+          "references": null
+        },
+        {
+          "seed": 46,
+          "source": "EMSR648 strict",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 1,
+          "ourMin": 141.8,
+          "naiveMin": 161.8,
+          "savedMin": 20.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 20.0,
+          "uTurnShareOfSaving": 1.0,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-Z1": 0.3028083028083028,
+            "H-Z3": 0.0,
+            "K-Z1": 0.0,
+            "K-Z2": 0.0
+          },
+          "references": null
+        },
+        {
+          "seed": 47,
+          "source": "EMSR648 strict",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 154.0,
+          "naiveMin": 154.0,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-Z1": 0.3028083028083028,
+            "H-Z3": 0.0,
+            "K-Z1": 0.0,
+            "K-Z2": 0.0
+          },
+          "references": null
+        },
+        {
+          "seed": 48,
+          "source": "EMSR648 strict",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 125.6,
+          "naiveMin": 125.6,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-Z1": 0.3028083028083028,
+            "H-Z3": 0.0,
+            "K-Z1": 0.0,
+            "K-Z2": 0.0
+          },
+          "references": null
+        },
+        {
+          "seed": 49,
+          "source": "EMSR648 strict",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 3,
+          "ourMin": 141.1,
+          "naiveMin": 201.6,
+          "savedMin": 60.5,
+          "savedFromDistanceMin": 0.5,
+          "savedFromUTurnPenaltyMin": 60.0,
+          "uTurnShareOfSaving": 0.9917355371900827,
+          "naiveExtraDistancePct": 0.35435861091424525,
+          "zoneClosedPct": {
+            "H-Z1": 0.3028083028083028,
+            "H-Z3": 0.0,
+            "K-Z1": 0.0,
+            "K-Z2": 0.0
+          },
+          "references": null
+        },
+        {
+          "seed": 50,
+          "source": "EMSR648 strict",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 4,
+          "ourMin": 141.2,
+          "naiveMin": 224.6,
+          "savedMin": 83.4,
+          "savedFromDistanceMin": 3.4,
+          "savedFromUTurnPenaltyMin": 80.0,
+          "uTurnShareOfSaving": 0.9592326139088728,
+          "naiveExtraDistancePct": 2.407932011331449,
+          "zoneClosedPct": {
+            "H-Z1": 0.3028083028083028,
+            "H-Z3": 0.0,
+            "K-Z1": 0.0,
+            "K-Z2": 0.0
+          },
+          "references": null
+        },
+        {
+          "seed": 51,
+          "source": "EMSR648 strict",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 106.7,
+          "naiveMin": 106.7,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-Z1": 0.3028083028083028,
+            "H-Z3": 0.0,
+            "K-Z1": 0.0,
+            "K-Z2": 0.0
+          },
+          "references": null
+        }
+      ],
+      "aggregate": {
+        "routed": {
+          "n": 10,
+          "mean": 13.0,
+          "sd": 0.0,
+          "min": 13,
+          "max": 13,
+          "ci95": [
+            13.0,
+            13.0
+          ]
+        },
+        "naiveStuck": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "uTurns": {
+          "n": 10,
+          "mean": 2.6,
+          "sd": 2.3190036174568114,
+          "min": 0,
+          "max": 6,
+          "ci95": [
+            0.9410847472813166,
+            4.258915252718683
+          ]
+        },
+        "ourMin": {
+          "n": 10,
+          "mean": 144.3,
+          "sd": 22.963545990209013,
+          "min": 106.7,
+          "max": 180.0,
+          "ci95": [
+            127.87286879032902,
+            160.727131209671
+          ]
+        },
+        "naiveMin": {
+          "n": 10,
+          "mean": 197.07999999999998,
+          "sd": 59.91220984815105,
+          "min": 106.7,
+          "max": 301.9,
+          "ci95": [
+            154.22138693316145,
+            239.9386130668385
+          ]
+        },
+        "savedMin": {
+          "n": 10,
+          "mean": 52.779999999999994,
+          "sd": 47.130735430525824,
+          "min": 0.0,
+          "max": 121.9,
+          "ci95": [
+            19.06470292629706,
+            86.49529707370293
+          ]
+        },
+        "savedFromDistanceMin": {
+          "n": 10,
+          "mean": 0.78,
+          "sd": 1.1033282980751167,
+          "min": 0.0,
+          "max": 3.4,
+          "ci95": [
+            -0.009273517580894675,
+            1.5692735175808947
+          ]
+        },
+        "savedFromUTurnPenaltyMin": {
+          "n": 10,
+          "mean": 52.0,
+          "sd": 46.380072349136235,
+          "min": 0.0,
+          "max": 120.0,
+          "ci95": [
+            18.821694945626327,
+            85.17830505437368
+          ]
+        },
+        "uTurnShareOfSaving": {
+          "n": 7,
+          "mean": 0.9873444604623277,
+          "sd": 0.013208267865591065,
+          "min": 0.9592326139088728,
+          "max": 1.0,
+          "ci95": [
+            0.9751288500841899,
+            0.9995600708404655
+          ]
+        },
+        "naiveExtraDistancePct": {
+          "n": 10,
+          "mean": 0.5263290031319914,
+          "sd": 0.7615420355107902,
+          "min": 0.0,
+          "max": 2.407932011331449,
+          "ci95": [
+            -0.01844535115760959,
+            1.0711033574215922
+          ]
+        },
+        "zoneClosedPct": {
+          "H-Z1": {
+            "n": 10,
+            "mean": 0.3028083028083028,
+            "sd": 0.0,
+            "min": 0.3028083028083028,
+            "max": 0.3028083028083028,
+            "ci95": [
+              0.3028083028083028,
+              0.3028083028083028
+            ]
+          },
+          "H-Z3": {
+            "n": 10,
+            "mean": 0.0,
+            "sd": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "ci95": [
+              0.0,
+              0.0
+            ]
+          },
+          "K-Z1": {
+            "n": 10,
+            "mean": 0.0,
+            "sd": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "ci95": [
+              0.0,
+              0.0
+            ]
+          },
+          "K-Z2": {
+            "n": 10,
+            "mean": 0.0,
+            "sd": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "ci95": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        "savedByUTurnPenalty": {
+          "0": {
+            "n": 10,
+            "mean": 0.78,
+            "sd": 1.1033282980751167,
+            "min": 0.0,
+            "max": 3.4,
+            "ci95": [
+              -0.009273517580894675,
+              1.5692735175808947
+            ]
+          },
+          "5": {
+            "n": 10,
+            "mean": 13.780000000000001,
+            "sd": 12.365525553821893,
+            "min": 0.0,
+            "max": 31.9,
+            "ci95": [
+              4.934235899116782,
+              22.62576410088322
+            ]
+          },
+          "10": {
+            "n": 10,
+            "mean": 26.78,
+            "sd": 23.947525968249828,
+            "min": 0.0,
+            "max": 61.9,
+            "ci95": [
+              9.64897191770066,
+              43.91102808229934
+            ]
+          },
+          "20": {
+            "n": 10,
+            "mean": 52.779999999999994,
+            "sd": 47.130735430525824,
+            "min": 0.0,
+            "max": 121.9,
+            "ci95": [
+              19.06470292629706,
+              86.49529707370293
+            ]
+          },
+          "30": {
+            "n": 10,
+            "mean": 78.78,
+            "sd": 70.3184470818291,
+            "min": 0.0,
+            "max": 181.9,
+            "ci95": [
+              28.477213262880817,
+              129.0827867371192
+            ]
+          }
+        }
+      },
+      "pooledTasks": {
+        "taskCount": 130,
+        "savedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 4.06,
+          "n": 130,
+          "nNonZero": 8,
+          "sharePositive": 0.06153846153846154,
+          "shareZero": 0.9384615384615385,
+          "shareNegative": 0.0,
+          "p": 0.00390625,
+          "rankBiserial": 1.0
+        },
+        "distanceSavedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.059999999999999984,
+          "n": 130,
+          "nNonZero": 7,
+          "sharePositive": 0.05384615384615385,
+          "shareZero": 0.9461538461538461,
+          "shareNegative": 0.0,
+          "p": 0.0078125,
+          "rankBiserial": 1.0
+        },
+        "naiveExtraDistancePctPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.5555390399111397
+        },
+        "discoveriesPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.2
+        },
+        "shareTasksWithDiscovery": 0.06153846153846154,
+        "discoveriesMaxPerTask": 6,
+        "discoveriesTotal": 26,
+        "top10PctTasksShareOfDiscoveries": 1.0,
+        "discoveriesByZone": {
+          "H-Z1": 26,
+          "H-Z3": 0,
+          "K-Z1": 0,
+          "K-Z2": 0
+        },
+        "note": "Gorevler tohumlar arasi havuzlandi; ayni ekip/karargahlari paylastiklari icin tam bagimsiz degiller -- birincil birim tohum basina toplamdir. Naif ajan yalniz acik kenarlarda yurudugu icin yolu, kapanmalari bilen en kisa yoldan kisa OLAMAZ: fark yapi geregi >= 0, bu yuzden Wilcoxon p ve r = 1 bilgi tasimaz (yalniz kayit icin tutuldu)."
+      },
+      "reproducesSingleSeedRun": {
+        "identical": true,
+        "reference": {
+          "routed": 13,
+          "naiveStuck": 0,
+          "uTurns": 3,
+          "ourMin": 177.6,
+          "naiveMin": 238.0
+        },
+        "seed42": {
+          "routed": 13,
+          "naiveStuck": 0,
+          "uTurns": 3,
+          "ourMin": 177.6,
+          "naiveMin": 238.0
+        }
+      },
+      "references": null,
+      "pairedAgainstReference": {
+        "reference": "v2-sentetik-4ilce",
+        "seedsPaired": 10,
+        "savedMinusReference": {
+          "n": 10,
+          "mean": -1056.52,
+          "sd": 195.2761110723878,
+          "min": -1359.6,
+          "max": -827.8,
+          "ci95": [
+            -1196.2121146267273,
+            -916.8278853732728
+          ]
+        },
+        "distanceSavedMinusReference": {
+          "n": 10,
+          "mean": -34.519999999999996,
+          "sd": 12.416995521372222,
+          "min": -59.6,
+          "max": -20.0,
+          "ci95": [
+            -43.40258349762043,
+            -25.637416502379565
+          ]
+        },
+        "sameSetTasksThis": {
+          "n": 10,
+          "mean": 13.0,
+          "sd": 0.0,
+          "min": 13,
+          "max": 13,
+          "ci95": [
+            13.0,
+            13.0
+          ]
+        },
+        "sameSetTasksReference": {
+          "n": 10,
+          "mean": 13.0,
+          "sd": 0.0,
+          "min": 13,
+          "max": 13,
+          "ci95": [
+            13.0,
+            13.0
+          ]
+        },
+        "samePlacementShare": 0.8692307692307693
+      }
+    },
+    {
+      "config": "v2-emsr-medium",
+      "args": [
+        "--dataset",
+        "v2",
+        "--closure-source",
+        "emsr",
+        "--emsr-rule",
+        "medium",
+        "--zones",
+        "H-Z1",
+        "H-Z3",
+        "K-Z1",
+        "K-Z2"
+      ],
+      "source": "EMSR648 medium",
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "victims": 13,
+      "perSeed": [
+        {
+          "seed": 42,
+          "source": "EMSR648 medium",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 83,
+          "ourMin": 189.1,
+          "naiveMin": 1924.7,
+          "savedMin": 1735.6,
+          "savedFromDistanceMin": 75.6,
+          "savedFromUTurnPenaltyMin": 1660.0,
+          "uTurnShareOfSaving": 0.9564415764000921,
+          "naiveExtraDistancePct": 39.97884717080909,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.0,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.45151359671626473
+          },
+          "references": null
+        },
+        {
+          "seed": 43,
+          "source": "EMSR648 medium",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 57,
+          "ourMin": 136.2,
+          "naiveMin": 1306.5,
+          "savedMin": 1170.3,
+          "savedFromDistanceMin": 30.3,
+          "savedFromUTurnPenaltyMin": 1140.0,
+          "uTurnShareOfSaving": 0.974109202768521,
+          "naiveExtraDistancePct": 22.246696035242298,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.0,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.45151359671626473
+          },
+          "references": null
+        },
+        {
+          "seed": 44,
+          "source": "EMSR648 medium",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 73,
+          "ourMin": 165.5,
+          "naiveMin": 1683.2,
+          "savedMin": 1517.7,
+          "savedFromDistanceMin": 57.7,
+          "savedFromUTurnPenaltyMin": 1460.0,
+          "uTurnShareOfSaving": 0.961981946366212,
+          "naiveExtraDistancePct": 34.864048338368576,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.0,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.45151359671626473
+          },
+          "references": null
+        },
+        {
+          "seed": 45,
+          "source": "EMSR648 medium",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 78,
+          "ourMin": 189.0,
+          "naiveMin": 1820.4,
+          "savedMin": 1631.4,
+          "savedFromDistanceMin": 71.4,
+          "savedFromUTurnPenaltyMin": 1560.0,
+          "uTurnShareOfSaving": 0.9562339095255609,
+          "naiveExtraDistancePct": 37.77777777777777,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.0,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.45151359671626473
+          },
+          "references": null
+        },
+        {
+          "seed": 46,
+          "source": "EMSR648 medium",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 107,
+          "ourMin": 152.4,
+          "naiveMin": 2400.4,
+          "savedMin": 2248.0,
+          "savedFromDistanceMin": 108.0,
+          "savedFromUTurnPenaltyMin": 2140.0,
+          "uTurnShareOfSaving": 0.9519572953736655,
+          "naiveExtraDistancePct": 70.86614173228344,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.0,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.45151359671626473
+          },
+          "references": null
+        },
+        {
+          "seed": 47,
+          "source": "EMSR648 medium",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 15,
+          "ourMin": 159.7,
+          "naiveMin": 464.2,
+          "savedMin": 304.5,
+          "savedFromDistanceMin": 4.5,
+          "savedFromUTurnPenaltyMin": 300.0,
+          "uTurnShareOfSaving": 0.9852216748768473,
+          "naiveExtraDistancePct": 2.8177833437695683,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.0,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.45151359671626473
+          },
+          "references": null
+        },
+        {
+          "seed": 48,
+          "source": "EMSR648 medium",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 32,
+          "ourMin": 134.8,
+          "naiveMin": 793.1,
+          "savedMin": 658.3,
+          "savedFromDistanceMin": 18.3,
+          "savedFromUTurnPenaltyMin": 640.0,
+          "uTurnShareOfSaving": 0.9722011241075498,
+          "naiveExtraDistancePct": 13.575667655786335,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.0,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.45151359671626473
+          },
+          "references": null
+        },
+        {
+          "seed": 49,
+          "source": "EMSR648 medium",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 70,
+          "ourMin": 151.6,
+          "naiveMin": 1612.3,
+          "savedMin": 1460.7,
+          "savedFromDistanceMin": 60.7,
+          "savedFromUTurnPenaltyMin": 1400.0,
+          "uTurnShareOfSaving": 0.9584445813650989,
+          "naiveExtraDistancePct": 40.0395778364116,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.0,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.45151359671626473
+          },
+          "references": null
+        },
+        {
+          "seed": 50,
+          "source": "EMSR648 medium",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 37,
+          "ourMin": 146.0,
+          "naiveMin": 919.4,
+          "savedMin": 773.4,
+          "savedFromDistanceMin": 33.4,
+          "savedFromUTurnPenaltyMin": 740.0,
+          "uTurnShareOfSaving": 0.95681406775278,
+          "naiveExtraDistancePct": 22.876712328767127,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.0,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.45151359671626473
+          },
+          "references": null
+        },
+        {
+          "seed": 51,
+          "source": "EMSR648 medium",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 49,
+          "ourMin": 115.7,
+          "naiveMin": 1138.1,
+          "savedMin": 1022.4,
+          "savedFromDistanceMin": 42.4,
+          "savedFromUTurnPenaltyMin": 980.0,
+          "uTurnShareOfSaving": 0.9585289514866981,
+          "naiveExtraDistancePct": 36.646499567847876,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.0,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.45151359671626473
+          },
+          "references": null
+        }
+      ],
+      "aggregate": {
+        "routed": {
+          "n": 10,
+          "mean": 13.0,
+          "sd": 0.0,
+          "min": 13,
+          "max": 13,
+          "ci95": [
+            13.0,
+            13.0
+          ]
+        },
+        "naiveStuck": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "uTurns": {
+          "n": 10,
+          "mean": 60.1,
+          "sd": 27.485147504303725,
+          "min": 15,
+          "max": 107,
+          "ci95": [
+            40.43830992117395,
+            79.76169007882605
+          ]
+        },
+        "ourMin": {
+          "n": 10,
+          "mean": 154.0,
+          "sd": 23.205459127828806,
+          "min": 115.7,
+          "max": 189.1,
+          "ci95": [
+            137.39981455668766,
+            170.60018544331234
+          ]
+        },
+        "naiveMin": {
+          "n": 10,
+          "mean": 1406.23,
+          "sd": 589.7354662143961,
+          "min": 464.2,
+          "max": 2400.4,
+          "ci95": [
+            984.3586615477022,
+            1828.1013384522978
+          ]
+        },
+        "savedMin": {
+          "n": 10,
+          "mean": 1252.23,
+          "sd": 579.5271943576074,
+          "min": 304.5,
+          "max": 2248.0,
+          "ci95": [
+            837.6612193184819,
+            1666.798780681518
+          ]
+        },
+        "savedFromDistanceMin": {
+          "n": 10,
+          "mean": 50.230000000000004,
+          "sd": 30.63607350820271,
+          "min": 4.5,
+          "max": 108.0,
+          "ci95": [
+            28.314273244082266,
+            72.14572675591774
+          ]
+        },
+        "savedFromUTurnPenaltyMin": {
+          "n": 10,
+          "mean": 1202.0,
+          "sd": 549.7029500860745,
+          "min": 300.0,
+          "max": 2140.0,
+          "ci95": [
+            808.7661984234791,
+            1595.2338015765208
+          ]
+        },
+        "uTurnShareOfSaving": {
+          "n": 10,
+          "mean": 0.9631934330023025,
+          "sd": 0.010500170753467245,
+          "min": 0.9519572953736655,
+          "max": 0.9852216748768473,
+          "ci95": [
+            0.9556820633399385,
+            0.9707048026646665
+          ]
+        },
+        "naiveExtraDistancePct": {
+          "n": 10,
+          "mean": 32.16897517870637,
+          "sd": 18.472751150566335,
+          "min": 2.8177833437695683,
+          "max": 70.86614173228344,
+          "ci95": [
+            18.954365070871198,
+            45.38358528654154
+          ]
+        },
+        "zoneClosedPct": {
+          "H-Z1": {
+            "n": 10,
+            "mean": 0.8400488400488401,
+            "sd": 0.0,
+            "min": 0.8400488400488401,
+            "max": 0.8400488400488401,
+            "ci95": [
+              0.8400488400488401,
+              0.8400488400488401
+            ]
+          },
+          "H-Z3": {
+            "n": 10,
+            "mean": 0.0,
+            "sd": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "ci95": [
+              0.0,
+              0.0
+            ]
+          },
+          "K-Z1": {
+            "n": 10,
+            "mean": 1.795997261708211,
+            "sd": 0.0,
+            "min": 1.795997261708211,
+            "max": 1.795997261708211,
+            "ci95": [
+              1.795997261708211,
+              1.795997261708211
+            ]
+          },
+          "K-Z2": {
+            "n": 10,
+            "mean": 0.4515135967162648,
+            "sd": 5.851389114294502e-17,
+            "min": 0.45151359671626473,
+            "max": 0.45151359671626473,
+            "ci95": [
+              0.45151359671626473,
+              0.45151359671626484
+            ]
+          }
+        },
+        "savedByUTurnPenalty": {
+          "0": {
+            "n": 10,
+            "mean": 50.230000000000004,
+            "sd": 30.63607350820271,
+            "min": 4.5,
+            "max": 108.0,
+            "ci95": [
+              28.314273244082266,
+              72.14572675591774
+            ]
+          },
+          "5": {
+            "n": 10,
+            "mean": 350.73,
+            "sd": 167.35999820745695,
+            "min": 79.5,
+            "max": 643.0,
+            "ci95": [
+              231.00786949905762,
+              470.4521305009424
+            ]
+          },
+          "10": {
+            "n": 10,
+            "mean": 651.23,
+            "sd": 304.7159918131418,
+            "min": 154.5,
+            "max": 1178.0,
+            "ci95": [
+              433.2493108967685,
+              869.2106891032315
+            ]
+          },
+          "20": {
+            "n": 10,
+            "mean": 1252.23,
+            "sd": 579.5271943576074,
+            "min": 304.5,
+            "max": 2248.0,
+            "ci95": [
+              837.6612193184819,
+              1666.798780681518
+            ]
+          },
+          "30": {
+            "n": 10,
+            "mean": 1853.23,
+            "sd": 854.3643069557622,
+            "min": 454.5,
+            "max": 3318.0,
+            "ci95": [
+              1242.0545928043548,
+              2464.4054071956452
+            ]
+          }
+        }
+      },
+      "pooledTasks": {
+        "taskCount": 130,
+        "savedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 142.27499999999998,
+          "mean": 96.3253846153846,
+          "n": 130,
+          "nNonZero": 52,
+          "sharePositive": 0.4,
+          "shareZero": 0.6,
+          "shareNegative": 0.0,
+          "p": 1.7490050366638701e-10,
+          "rankBiserial": 1.0
+        },
+        "distanceSavedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 2.3,
+          "mean": 3.8638461538461537,
+          "n": 130,
+          "nNonZero": 51,
+          "sharePositive": 0.3923076923076923,
+          "shareZero": 0.6076923076923076,
+          "shareNegative": 0.0,
+          "p": 2.565936798615117e-10,
+          "rankBiserial": 1.0
+        },
+        "naiveExtraDistancePctPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 17.95072511535926,
+          "mean": 26.71909867625811
+        },
+        "discoveriesPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 7.0,
+          "mean": 4.623076923076923
+        },
+        "shareTasksWithDiscovery": 0.4,
+        "discoveriesMaxPerTask": 38,
+        "discoveriesTotal": 601,
+        "top10PctTasksShareOfDiscoveries": 0.6023294509151415,
+        "discoveriesByZone": {
+          "H-Z1": 54,
+          "H-Z3": 0,
+          "K-Z1": 545,
+          "K-Z2": 2
+        },
+        "note": "Gorevler tohumlar arasi havuzlandi; ayni ekip/karargahlari paylastiklari icin tam bagimsiz degiller -- birincil birim tohum basina toplamdir. Naif ajan yalniz acik kenarlarda yurudugu icin yolu, kapanmalari bilen en kisa yoldan kisa OLAMAZ: fark yapi geregi >= 0, bu yuzden Wilcoxon p ve r = 1 bilgi tasimaz (yalniz kayit icin tutuldu)."
+      },
+      "reproducesSingleSeedRun": {
+        "identical": true,
+        "reference": {
+          "routed": 13,
+          "naiveStuck": 0,
+          "uTurns": 83,
+          "ourMin": 189.1,
+          "naiveMin": 1924.7
+        },
+        "seed42": {
+          "routed": 13,
+          "naiveStuck": 0,
+          "uTurns": 83,
+          "ourMin": 189.1,
+          "naiveMin": 1924.7
+        }
+      },
+      "references": null,
+      "pairedAgainstReference": {
+        "reference": "v2-sentetik-4ilce",
+        "seedsPaired": 10,
+        "savedMinusReference": {
+          "n": 10,
+          "mean": 142.93,
+          "sd": 573.3721344428551,
+          "min": -642.3,
+          "max": 1326.4,
+          "ci95": [
+            -267.23571606483677,
+            553.0957160648368
+          ]
+        },
+        "distanceSavedMinusReference": {
+          "n": 10,
+          "mean": 14.930000000000001,
+          "sd": 29.72698175806694,
+          "min": -22.3,
+          "max": 86.4,
+          "ci95": [
+            -6.335401694297156,
+            36.19540169429716
+          ]
+        },
+        "sameSetTasksThis": {
+          "n": 10,
+          "mean": 13.0,
+          "sd": 0.0,
+          "min": 13,
+          "max": 13,
+          "ci95": [
+            13.0,
+            13.0
+          ]
+        },
+        "sameSetTasksReference": {
+          "n": 10,
+          "mean": 13.0,
+          "sd": 0.0,
+          "min": 13,
+          "max": 13,
+          "ci95": [
+            13.0,
+            13.0
+          ]
+        },
+        "samePlacementShare": 0.8846153846153846
+      }
+    },
+    {
+      "config": "v2-emsr-loose",
+      "args": [
+        "--dataset",
+        "v2",
+        "--closure-source",
+        "emsr",
+        "--emsr-rule",
+        "loose",
+        "--zones",
+        "H-Z1",
+        "H-Z3",
+        "K-Z1",
+        "K-Z2"
+      ],
+      "source": "EMSR648 loose",
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "victims": 13,
+      "perSeed": [
+        {
+          "seed": 42,
+          "source": "EMSR648 loose",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 87,
+          "ourMin": 189.5,
+          "naiveMin": 2006.7,
+          "savedMin": 1817.2,
+          "savedFromDistanceMin": 77.2,
+          "savedFromUTurnPenaltyMin": 1740.0,
+          "uTurnShareOfSaving": 0.9575170592119745,
+          "naiveExtraDistancePct": 40.738786279683374,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.3171917953055614,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.5336069779374037
+          },
+          "references": null
+        },
+        {
+          "seed": 43,
+          "source": "EMSR648 loose",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 57,
+          "ourMin": 136.2,
+          "naiveMin": 1306.5,
+          "savedMin": 1170.3,
+          "savedFromDistanceMin": 30.3,
+          "savedFromUTurnPenaltyMin": 1140.0,
+          "uTurnShareOfSaving": 0.974109202768521,
+          "naiveExtraDistancePct": 22.246696035242298,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.3171917953055614,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.5336069779374037
+          },
+          "references": null
+        },
+        {
+          "seed": 44,
+          "source": "EMSR648 loose",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 73,
+          "ourMin": 165.5,
+          "naiveMin": 1683.2,
+          "savedMin": 1517.7,
+          "savedFromDistanceMin": 57.7,
+          "savedFromUTurnPenaltyMin": 1460.0,
+          "uTurnShareOfSaving": 0.961981946366212,
+          "naiveExtraDistancePct": 34.864048338368576,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.3171917953055614,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.5336069779374037
+          },
+          "references": null
+        },
+        {
+          "seed": 45,
+          "source": "EMSR648 loose",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 81,
+          "ourMin": 189.3,
+          "naiveMin": 1882.3,
+          "savedMin": 1693.0,
+          "savedFromDistanceMin": 73.0,
+          "savedFromUTurnPenaltyMin": 1620.0,
+          "uTurnShareOfSaving": 0.9568812758417011,
+          "naiveExtraDistancePct": 38.563127311146324,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.3171917953055614,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.5336069779374037
+          },
+          "references": null
+        },
+        {
+          "seed": 46,
+          "source": "EMSR648 loose",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 110,
+          "ourMin": 152.5,
+          "naiveMin": 2462.3,
+          "savedMin": 2309.8,
+          "savedFromDistanceMin": 109.8,
+          "savedFromUTurnPenaltyMin": 2200.0,
+          "uTurnShareOfSaving": 0.9524634167460385,
+          "naiveExtraDistancePct": 72.00000000000001,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.3171917953055614,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.5336069779374037
+          },
+          "references": null
+        },
+        {
+          "seed": 47,
+          "source": "EMSR648 loose",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 15,
+          "ourMin": 159.7,
+          "naiveMin": 464.2,
+          "savedMin": 304.5,
+          "savedFromDistanceMin": 4.5,
+          "savedFromUTurnPenaltyMin": 300.0,
+          "uTurnShareOfSaving": 0.9852216748768473,
+          "naiveExtraDistancePct": 2.8177833437695683,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.3171917953055614,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.5336069779374037
+          },
+          "references": null
+        },
+        {
+          "seed": 48,
+          "source": "EMSR648 loose",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 35,
+          "ourMin": 135.2,
+          "naiveMin": 855.0,
+          "savedMin": 719.8,
+          "savedFromDistanceMin": 19.8,
+          "savedFromUTurnPenaltyMin": 700.0,
+          "uTurnShareOfSaving": 0.972492358988608,
+          "naiveExtraDistancePct": 14.644970414201193,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.3171917953055614,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.5336069779374037
+          },
+          "references": null
+        },
+        {
+          "seed": 49,
+          "source": "EMSR648 loose",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 70,
+          "ourMin": 151.6,
+          "naiveMin": 1612.3,
+          "savedMin": 1460.7,
+          "savedFromDistanceMin": 60.7,
+          "savedFromUTurnPenaltyMin": 1400.0,
+          "uTurnShareOfSaving": 0.9584445813650989,
+          "naiveExtraDistancePct": 40.0395778364116,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.3171917953055614,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.5336069779374037
+          },
+          "references": null
+        },
+        {
+          "seed": 50,
+          "source": "EMSR648 loose",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 37,
+          "ourMin": 146.0,
+          "naiveMin": 919.4,
+          "savedMin": 773.4,
+          "savedFromDistanceMin": 33.4,
+          "savedFromUTurnPenaltyMin": 740.0,
+          "uTurnShareOfSaving": 0.95681406775278,
+          "naiveExtraDistancePct": 22.876712328767127,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.3171917953055614,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.5336069779374037
+          },
+          "references": null
+        },
+        {
+          "seed": 51,
+          "source": "EMSR648 loose",
+          "victims": 13,
+          "routed": 13,
+          "naiveReached": 13,
+          "naiveStuck": 0,
+          "uTurns": 49,
+          "ourMin": 115.7,
+          "naiveMin": 1138.1,
+          "savedMin": 1022.4,
+          "savedFromDistanceMin": 42.4,
+          "savedFromUTurnPenaltyMin": 980.0,
+          "uTurnShareOfSaving": 0.9585289514866981,
+          "naiveExtraDistancePct": 36.646499567847876,
+          "zoneClosedPct": {
+            "H-Z1": 0.8400488400488401,
+            "H-Z3": 0.3171917953055614,
+            "K-Z1": 1.795997261708211,
+            "K-Z2": 0.5336069779374037
+          },
+          "references": null
+        }
+      ],
+      "aggregate": {
+        "routed": {
+          "n": 10,
+          "mean": 13.0,
+          "sd": 0.0,
+          "min": 13,
+          "max": 13,
+          "ci95": [
+            13.0,
+            13.0
+          ]
+        },
+        "naiveStuck": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "uTurns": {
+          "n": 10,
+          "mean": 61.4,
+          "sd": 28.339999215870765,
+          "min": 15,
+          "max": 110,
+          "ci95": [
+            41.126785845723624,
+            81.67321415427637
+          ]
+        },
+        "ourMin": {
+          "n": 10,
+          "mean": 154.12,
+          "sd": 23.28594234964759,
+          "min": 115.7,
+          "max": 189.5,
+          "ci95": [
+            137.46224032814484,
+            170.77775967185516
+          ]
+        },
+        "naiveMin": {
+          "n": 10,
+          "mean": 1433.0,
+          "sd": 607.7846712995209,
+          "min": 464.2,
+          "max": 2462.3,
+          "ci95": [
+            998.2170380427773,
+            1867.7829619572226
+          ]
+        },
+        "savedMin": {
+          "n": 10,
+          "mean": 1278.8799999999999,
+          "sd": 597.1452285667198,
+          "min": 304.5,
+          "max": 2309.8,
+          "ci95": [
+            851.7080368773659,
+            1706.0519631226339
+          ]
+        },
+        "savedFromDistanceMin": {
+          "n": 10,
+          "mean": 50.88,
+          "sd": 31.117369211851226,
+          "min": 4.5,
+          "max": 109.8,
+          "ci95": [
+            28.619975038663288,
+            73.14002496133672
+          ]
+        },
+        "savedFromUTurnPenaltyMin": {
+          "n": 10,
+          "mean": 1228.0,
+          "sd": 566.7999843174154,
+          "min": 300.0,
+          "max": 2200.0,
+          "ci95": [
+            822.5357169144725,
+            1633.4642830855275
+          ]
+        },
+        "uTurnShareOfSaving": {
+          "n": 10,
+          "mean": 0.963445453540448,
+          "sd": 0.010348929775478261,
+          "min": 0.9524634167460385,
+          "max": 0.9852216748768473,
+          "ci95": [
+            0.9560422751561541,
+            0.9708486319247418
+          ]
+        },
+        "naiveExtraDistancePct": {
+          "n": 10,
+          "mean": 32.54382014554379,
+          "sd": 18.684727281331792,
+          "min": 2.8177833437695683,
+          "max": 72.00000000000001,
+          "ci95": [
+            19.17757144866461,
+            45.91006884242297
+          ]
+        },
+        "zoneClosedPct": {
+          "H-Z1": {
+            "n": 10,
+            "mean": 0.8400488400488401,
+            "sd": 0.0,
+            "min": 0.8400488400488401,
+            "max": 0.8400488400488401,
+            "ci95": [
+              0.8400488400488401,
+              0.8400488400488401
+            ]
+          },
+          "H-Z3": {
+            "n": 10,
+            "mean": 0.3171917953055614,
+            "sd": 0.0,
+            "min": 0.3171917953055614,
+            "max": 0.3171917953055614,
+            "ci95": [
+              0.3171917953055614,
+              0.3171917953055614
+            ]
+          },
+          "K-Z1": {
+            "n": 10,
+            "mean": 1.795997261708211,
+            "sd": 0.0,
+            "min": 1.795997261708211,
+            "max": 1.795997261708211,
+            "ci95": [
+              1.795997261708211,
+              1.795997261708211
+            ]
+          },
+          "K-Z2": {
+            "n": 10,
+            "mean": 0.5336069779374037,
+            "sd": 0.0,
+            "min": 0.5336069779374037,
+            "max": 0.5336069779374037,
+            "ci95": [
+              0.5336069779374037,
+              0.5336069779374037
+            ]
+          }
+        },
+        "savedByUTurnPenalty": {
+          "0": {
+            "n": 10,
+            "mean": 50.88,
+            "sd": 31.117369211851226,
+            "min": 4.5,
+            "max": 109.8,
+            "ci95": [
+              28.619975038663288,
+              73.14002496133672
+            ]
+          },
+          "5": {
+            "n": 10,
+            "mean": 357.88,
+            "sd": 172.14864894425784,
+            "min": 79.5,
+            "max": 659.8,
+            "ci95": [
+              234.7322751242056,
+              481.02772487579443
+            ]
+          },
+          "10": {
+            "n": 10,
+            "mean": 664.88,
+            "sd": 313.78304890127157,
+            "min": 154.5,
+            "max": 1209.8,
+            "ci95": [
+              440.41312899194463,
+              889.3468710080554
+            ]
+          },
+          "20": {
+            "n": 10,
+            "mean": 1278.8799999999999,
+            "sd": 597.1452285667198,
+            "min": 304.5,
+            "max": 2309.8,
+            "ci95": [
+              851.7080368773659,
+              1706.0519631226339
+            ]
+          },
+          "30": {
+            "n": 10,
+            "mean": 1892.8799999999999,
+            "sd": 880.5317469196289,
+            "min": 454.5,
+            "max": 3409.8,
+            "ci95": [
+              1262.9855339146297,
+              2522.77446608537
+            ]
+          }
+        }
+      },
+      "pooledTasks": {
+        "taskCount": 130,
+        "savedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 142.27499999999998,
+          "mean": 98.3753846153846,
+          "n": 130,
+          "nNonZero": 56,
+          "sharePositive": 0.4307692307692308,
+          "shareZero": 0.5692307692307692,
+          "shareNegative": 0.0,
+          "p": 3.768312727815804e-11,
+          "rankBiserial": 1.0
+        },
+        "distanceSavedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 2.3,
+          "mean": 3.913846153846154,
+          "n": 130,
+          "nNonZero": 55,
+          "sharePositive": 0.4230769230769231,
+          "shareZero": 0.5769230769230769,
+          "shareNegative": 0.0,
+          "p": 5.5225766826326146e-11,
+          "rankBiserial": 1.0
+        },
+        "naiveExtraDistancePctPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 18.691245593419517,
+          "mean": 27.229016946770724
+        },
+        "discoveriesPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 7.0,
+          "mean": 4.723076923076923
+        },
+        "shareTasksWithDiscovery": 0.4307692307692308,
+        "discoveriesMaxPerTask": 38,
+        "discoveriesTotal": 614,
+        "top10PctTasksShareOfDiscoveries": 0.5895765472312704,
+        "discoveriesByZone": {
+          "H-Z1": 54,
+          "H-Z3": 13,
+          "K-Z1": 545,
+          "K-Z2": 2
+        },
+        "note": "Gorevler tohumlar arasi havuzlandi; ayni ekip/karargahlari paylastiklari icin tam bagimsiz degiller -- birincil birim tohum basina toplamdir. Naif ajan yalniz acik kenarlarda yurudugu icin yolu, kapanmalari bilen en kisa yoldan kisa OLAMAZ: fark yapi geregi >= 0, bu yuzden Wilcoxon p ve r = 1 bilgi tasimaz (yalniz kayit icin tutuldu)."
+      },
+      "reproducesSingleSeedRun": {
+        "identical": true,
+        "reference": {
+          "routed": 13,
+          "naiveStuck": 0,
+          "uTurns": 87,
+          "ourMin": 189.5,
+          "naiveMin": 2006.7
+        },
+        "seed42": {
+          "routed": 13,
+          "naiveStuck": 0,
+          "uTurns": 87,
+          "ourMin": 189.5,
+          "naiveMin": 2006.7
+        }
+      },
+      "references": null,
+      "pairedAgainstReference": {
+        "reference": "v2-sentetik-4ilce",
+        "seedsPaired": 10,
+        "savedMinusReference": {
+          "n": 10,
+          "mean": 169.58000000000004,
+          "sd": 586.7605186293828,
+          "min": -642.3,
+          "max": 1388.2000000000003,
+          "ci95": [
+            -250.16318915245773,
+            589.3231891524579
+          ]
+        },
+        "distanceSavedMinusReference": {
+          "n": 10,
+          "mean": 15.579999999999998,
+          "sd": 30.253660935496715,
+          "min": -22.3,
+          "max": 88.19999999999999,
+          "ci95": [
+            -6.062165281102498,
+            37.22216528110249
+          ]
+        },
+        "sameSetTasksThis": {
+          "n": 10,
+          "mean": 13.0,
+          "sd": 0.0,
+          "min": 13,
+          "max": 13,
+          "ci95": [
+            13.0,
+            13.0
+          ]
+        },
+        "sameSetTasksReference": {
+          "n": 10,
+          "mean": 13.0,
+          "sd": 0.0,
+          "min": 13,
+          "max": 13,
+          "ci95": [
+            13.0,
+            13.0
+          ]
+        },
+        "samePlacementShare": 0.8846153846153846
+      }
+    },
+    {
+      "config": "drone-sentetik",
+      "args": [
+        "--dataset",
+        "drone",
+        "--closure-source",
+        "synthetic"
+      ],
+      "source": "sentetik %18",
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "victims": 9,
+      "perSeed": [
+        {
+          "seed": 42,
+          "source": "sentetik %18",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 7,
+          "ourMin": 20.4,
+          "naiveMin": 161.8,
+          "savedMin": 141.4,
+          "savedFromDistanceMin": 1.4,
+          "savedFromUTurnPenaltyMin": 140.0,
+          "uTurnShareOfSaving": 0.9900990099009901,
+          "naiveExtraDistancePct": 6.862745098039228,
+          "zoneClosedPct": {
+            "H-D1": 4.18848167539267,
+            "H-D2": 4.072398190045249,
+            "K-D1": 2.030456852791878
+          },
+          "references": null
+        },
+        {
+          "seed": 43,
+          "source": "sentetik %18",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 1,
+          "ourMin": 18.7,
+          "naiveMin": 38.9,
+          "savedMin": 20.2,
+          "savedFromDistanceMin": 0.2,
+          "savedFromUTurnPenaltyMin": 20.0,
+          "uTurnShareOfSaving": 0.9900990099009901,
+          "naiveExtraDistancePct": 1.0695187165775364,
+          "zoneClosedPct": {
+            "H-D1": 8.900523560209423,
+            "H-D2": 1.8099547511312217,
+            "K-D1": 4.060913705583756
+          },
+          "references": null
+        },
+        {
+          "seed": 44,
+          "source": "sentetik %18",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 4,
+          "ourMin": 16.9,
+          "naiveMin": 97.3,
+          "savedMin": 80.4,
+          "savedFromDistanceMin": 0.4,
+          "savedFromUTurnPenaltyMin": 80.0,
+          "uTurnShareOfSaving": 0.9950248756218905,
+          "naiveExtraDistancePct": 2.3668639053254568,
+          "zoneClosedPct": {
+            "H-D1": 4.18848167539267,
+            "H-D2": 1.8099547511312217,
+            "K-D1": 4.060913705583756
+          },
+          "references": null
+        },
+        {
+          "seed": 45,
+          "source": "sentetik %18",
+          "victims": 9,
+          "routed": 6,
+          "naiveReached": 6,
+          "naiveStuck": 0,
+          "uTurns": 2,
+          "ourMin": 9.9,
+          "naiveMin": 51.0,
+          "savedMin": 41.1,
+          "savedFromDistanceMin": 1.1,
+          "savedFromUTurnPenaltyMin": 40.0,
+          "uTurnShareOfSaving": 0.97323600973236,
+          "naiveExtraDistancePct": 11.111111111111107,
+          "zoneClosedPct": {
+            "H-D1": 8.900523560209423,
+            "H-D2": 4.072398190045249,
+            "K-D1": 8.629441624365482
+          },
+          "references": null
+        },
+        {
+          "seed": 46,
+          "source": "sentetik %18",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 3,
+          "ourMin": 17.0,
+          "naiveMin": 79.0,
+          "savedMin": 62.0,
+          "savedFromDistanceMin": 2.0,
+          "savedFromUTurnPenaltyMin": 60.0,
+          "uTurnShareOfSaving": 0.967741935483871,
+          "naiveExtraDistancePct": 11.764705882352942,
+          "zoneClosedPct": {
+            "H-D1": 8.900523560209423,
+            "H-D2": 4.072398190045249,
+            "K-D1": 4.060913705583756
+          },
+          "references": null
+        },
+        {
+          "seed": 47,
+          "source": "sentetik %18",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 1,
+          "ourMin": 14.6,
+          "naiveMin": 35.9,
+          "savedMin": 21.3,
+          "savedFromDistanceMin": 1.3,
+          "savedFromUTurnPenaltyMin": 20.0,
+          "uTurnShareOfSaving": 0.9389671361502349,
+          "naiveExtraDistancePct": 8.9041095890411,
+          "zoneClosedPct": {
+            "H-D1": 4.18848167539267,
+            "H-D2": 4.072398190045249,
+            "K-D1": 2.030456852791878
+          },
+          "references": null
+        },
+        {
+          "seed": 48,
+          "source": "sentetik %18",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 9,
+          "ourMin": 18.9,
+          "naiveMin": 200.7,
+          "savedMin": 181.8,
+          "savedFromDistanceMin": 1.8,
+          "savedFromUTurnPenaltyMin": 180.0,
+          "uTurnShareOfSaving": 0.9900990099009902,
+          "naiveExtraDistancePct": 9.523809523809508,
+          "zoneClosedPct": {
+            "H-D1": 8.900523560209423,
+            "H-D2": 4.072398190045249,
+            "K-D1": 2.030456852791878
+          },
+          "references": null
+        },
+        {
+          "seed": 49,
+          "source": "sentetik %18",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 15.7,
+          "naiveMin": 15.7,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 4.18848167539267,
+            "H-D2": 1.8099547511312217,
+            "K-D1": 4.060913705583756
+          },
+          "references": null
+        },
+        {
+          "seed": 50,
+          "source": "sentetik %18",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 4,
+          "ourMin": 16.2,
+          "naiveMin": 96.3,
+          "savedMin": 80.1,
+          "savedFromDistanceMin": 0.1,
+          "savedFromUTurnPenaltyMin": 80.0,
+          "uTurnShareOfSaving": 0.9987515605493135,
+          "naiveExtraDistancePct": 0.6172839506172928,
+          "zoneClosedPct": {
+            "H-D1": 4.18848167539267,
+            "H-D2": 0.9049773755656109,
+            "K-D1": 4.060913705583756
+          },
+          "references": null
+        },
+        {
+          "seed": 51,
+          "source": "sentetik %18",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 1,
+          "ourMin": 16.4,
+          "naiveMin": 36.6,
+          "savedMin": 20.2,
+          "savedFromDistanceMin": 0.2,
+          "savedFromUTurnPenaltyMin": 20.0,
+          "uTurnShareOfSaving": 0.99009900990099,
+          "naiveExtraDistancePct": 1.2195121951219687,
+          "zoneClosedPct": {
+            "H-D1": 8.900523560209423,
+            "H-D2": 4.072398190045249,
+            "K-D1": 8.629441624365482
+          },
+          "references": null
+        }
+      ],
+      "aggregate": {
+        "routed": {
+          "n": 10,
+          "mean": 8.7,
+          "sd": 0.9486832980505138,
+          "min": 6,
+          "max": 9,
+          "ci95": [
+            8.021352851160538,
+            9.37864714883946
+          ]
+        },
+        "naiveStuck": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "uTurns": {
+          "n": 10,
+          "mean": 3.2,
+          "sd": 2.898275349237888,
+          "min": 0,
+          "max": 9,
+          "ci95": [
+            1.1266987135181372,
+            5.273301286481863
+          ]
+        },
+        "ourMin": {
+          "n": 10,
+          "mean": 16.47,
+          "sd": 2.8697851255218856,
+          "min": 9.9,
+          "max": 20.4,
+          "ci95": [
+            14.417079391806027,
+            18.52292060819397
+          ]
+        },
+        "naiveMin": {
+          "n": 10,
+          "mean": 81.32000000000001,
+          "sd": 59.908593336478496,
+          "min": 15.7,
+          "max": 200.7,
+          "ci95": [
+            38.46397402976197,
+            124.17602597023804
+          ]
+        },
+        "savedMin": {
+          "n": 10,
+          "mean": 64.85,
+          "sd": 58.37914867484795,
+          "min": 0.0,
+          "max": 181.8,
+          "ci95": [
+            23.088072830759337,
+            106.61192716924066
+          ]
+        },
+        "savedFromDistanceMin": {
+          "n": 10,
+          "mean": 0.85,
+          "sd": 0.754615428178118,
+          "min": 0.0,
+          "max": 2.0,
+          "ci95": [
+            0.3101806421007731,
+            1.3898193578992268
+          ]
+        },
+        "savedFromUTurnPenaltyMin": {
+          "n": 10,
+          "mean": 64.0,
+          "sd": 57.96550698475775,
+          "min": 0.0,
+          "max": 180.0,
+          "ci95": [
+            22.533974270362748,
+            105.46602572963725
+          ]
+        },
+        "uTurnShareOfSaving": {
+          "n": 9,
+          "mean": 0.9815686174601811,
+          "sd": 0.018851029459678183,
+          "min": 0.9389671361502349,
+          "max": 0.9987515605493135,
+          "ci95": [
+            0.9670784334978899,
+            0.9960588014224723
+          ]
+        },
+        "naiveExtraDistancePct": {
+          "n": 10,
+          "mean": 5.343965997199614,
+          "sd": 4.737356494815939,
+          "min": 0.0,
+          "max": 11.764705882352942,
+          "ci95": [
+            1.9550653125880513,
+            8.732866681811178
+          ]
+        },
+        "zoneClosedPct": {
+          "H-D1": {
+            "n": 10,
+            "mean": 6.544502617801046,
+            "sd": 2.4834641310222874,
+            "min": 4.18848167539267,
+            "max": 8.900523560209423,
+            "ci95": [
+              4.767939400943817,
+              8.321065834658276
+            ]
+          },
+          "H-D2": {
+            "n": 10,
+            "mean": 3.0769230769230766,
+            "sd": 1.3114368096099038,
+            "min": 0.9049773755656109,
+            "max": 4.072398190045249,
+            "ci95": [
+              2.138777698424496,
+              4.015068455421657
+            ]
+          },
+          "K-D1": {
+            "n": 10,
+            "mean": 4.365482233502538,
+            "sd": 2.430901522310385,
+            "min": 2.030456852791878,
+            "max": 8.629441624365482,
+            "ci95": [
+              2.626520041783203,
+              6.104444425221874
+            ]
+          }
+        },
+        "savedByUTurnPenalty": {
+          "0": {
+            "n": 10,
+            "mean": 0.85,
+            "sd": 0.754615428178118,
+            "min": 0.0,
+            "max": 2.0,
+            "ci95": [
+              0.3101806421007731,
+              1.3898193578992268
+            ]
+          },
+          "5": {
+            "n": 10,
+            "mean": 16.85,
+            "sd": 14.915037154943105,
+            "min": 0.0,
+            "max": 46.8,
+            "ci95": [
+              6.180425168402396,
+              27.51957483159761
+            ]
+          },
+          "10": {
+            "n": 10,
+            "mean": 32.85,
+            "sd": 29.399782690050994,
+            "min": 0.0,
+            "max": 91.8,
+            "ci95": [
+              11.818662418635217,
+              53.88133758136479
+            ]
+          },
+          "20": {
+            "n": 10,
+            "mean": 64.85,
+            "sd": 58.37914867484795,
+            "min": 0.0,
+            "max": 181.8,
+            "ci95": [
+              23.088072830759337,
+              106.61192716924066
+            ]
+          },
+          "30": {
+            "n": 10,
+            "mean": 96.85,
+            "sd": 87.36076223212443,
+            "min": 0.0,
+            "max": 271.8,
+            "ci95": [
+              34.35587542638857,
+              159.34412457361142
+            ]
+          }
+        }
+      },
+      "pooledTasks": {
+        "taskCount": 87,
+        "savedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 10.0,
+          "mean": 7.454022988505747,
+          "n": 87,
+          "nNonZero": 22,
+          "sharePositive": 0.25287356321839083,
+          "shareZero": 0.7471264367816092,
+          "shareNegative": 0.0,
+          "p": 1.949257289718347e-05,
+          "rankBiserial": 1.0
+        },
+        "distanceSavedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.09770114942528736,
+          "n": 87,
+          "nNonZero": 17,
+          "sharePositive": 0.19540229885057472,
+          "shareZero": 0.8045977011494253,
+          "shareNegative": 0.0,
+          "p": 0.00014538026616415104,
+          "rankBiserial": 1.0
+        },
+        "naiveExtraDistancePctPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 4.259940222225904
+        },
+        "discoveriesPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.5,
+          "mean": 0.367816091954023
+        },
+        "shareTasksWithDiscovery": 0.25287356321839083,
+        "discoveriesMaxPerTask": 3,
+        "discoveriesTotal": 32,
+        "top10PctTasksShareOfDiscoveries": 0.5625,
+        "discoveriesByZone": {
+          "H-D1": 16,
+          "H-D2": 8,
+          "K-D1": 8
+        },
+        "note": "Gorevler tohumlar arasi havuzlandi; ayni ekip/karargahlari paylastiklari icin tam bagimsiz degiller -- birincil birim tohum basina toplamdir. Naif ajan yalniz acik kenarlarda yurudugu icin yolu, kapanmalari bilen en kisa yoldan kisa OLAMAZ: fark yapi geregi >= 0, bu yuzden Wilcoxon p ve r = 1 bilgi tasimaz (yalniz kayit icin tutuldu)."
+      },
+      "reproducesSingleSeedRun": {
+        "identical": true,
+        "reference": {
+          "routed": 9,
+          "naiveStuck": 0,
+          "uTurns": 7,
+          "ourMin": 20.4,
+          "naiveMin": 161.8
+        },
+        "seed42": {
+          "routed": 9,
+          "naiveStuck": 0,
+          "uTurns": 7,
+          "ourMin": 20.4,
+          "naiveMin": 161.8
+        }
+      },
+      "references": null
+    },
+    {
+      "config": "drone-emsr-loose",
+      "args": [
+        "--dataset",
+        "drone",
+        "--closure-source",
+        "emsr",
+        "--emsr-rule",
+        "loose"
+      ],
+      "source": "EMSR648 loose",
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "victims": 9,
+      "perSeed": [
+        {
+          "seed": 42,
+          "source": "EMSR648 loose",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 2,
+          "ourMin": 20.7,
+          "naiveMin": 60.9,
+          "savedMin": 40.2,
+          "savedFromDistanceMin": 0.2,
+          "savedFromUTurnPenaltyMin": 40.0,
+          "uTurnShareOfSaving": 0.9950248756218905,
+          "naiveExtraDistancePct": 0.9661835748792408,
+          "zoneClosedPct": {
+            "H-D1": 0.0,
+            "H-D2": 0.0,
+            "K-D1": 24.365482233502537
+          },
+          "references": null
+        },
+        {
+          "seed": 43,
+          "source": "EMSR648 loose",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 2,
+          "ourMin": 18.4,
+          "naiveMin": 58.8,
+          "savedMin": 40.4,
+          "savedFromDistanceMin": 0.4,
+          "savedFromUTurnPenaltyMin": 40.0,
+          "uTurnShareOfSaving": 0.9900990099009901,
+          "naiveExtraDistancePct": 2.1739130434782727,
+          "zoneClosedPct": {
+            "H-D1": 0.0,
+            "H-D2": 0.0,
+            "K-D1": 24.365482233502537
+          },
+          "references": null
+        },
+        {
+          "seed": 44,
+          "source": "EMSR648 loose",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 3,
+          "ourMin": 19.0,
+          "naiveMin": 79.3,
+          "savedMin": 60.3,
+          "savedFromDistanceMin": 0.3,
+          "savedFromUTurnPenaltyMin": 60.0,
+          "uTurnShareOfSaving": 0.9950248756218906,
+          "naiveExtraDistancePct": 1.5789473684210564,
+          "zoneClosedPct": {
+            "H-D1": 0.0,
+            "H-D2": 0.0,
+            "K-D1": 24.365482233502537
+          },
+          "references": null
+        },
+        {
+          "seed": 45,
+          "source": "EMSR648 loose",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 2,
+          "ourMin": 17.8,
+          "naiveMin": 58.0,
+          "savedMin": 40.2,
+          "savedFromDistanceMin": 0.2,
+          "savedFromUTurnPenaltyMin": 40.0,
+          "uTurnShareOfSaving": 0.9950248756218905,
+          "naiveExtraDistancePct": 1.1235955056179734,
+          "zoneClosedPct": {
+            "H-D1": 0.0,
+            "H-D2": 0.0,
+            "K-D1": 24.365482233502537
+          },
+          "references": null
+        },
+        {
+          "seed": 46,
+          "source": "EMSR648 loose",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 2,
+          "ourMin": 19.6,
+          "naiveMin": 59.8,
+          "savedMin": 40.2,
+          "savedFromDistanceMin": 0.2,
+          "savedFromUTurnPenaltyMin": 40.0,
+          "uTurnShareOfSaving": 0.9950248756218905,
+          "naiveExtraDistancePct": 1.0204081632653024,
+          "zoneClosedPct": {
+            "H-D1": 0.0,
+            "H-D2": 0.0,
+            "K-D1": 24.365482233502537
+          },
+          "references": null
+        },
+        {
+          "seed": 47,
+          "source": "EMSR648 loose",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 2,
+          "ourMin": 16.4,
+          "naiveMin": 56.7,
+          "savedMin": 40.3,
+          "savedFromDistanceMin": 0.3,
+          "savedFromUTurnPenaltyMin": 40.0,
+          "uTurnShareOfSaving": 0.9925558312655086,
+          "naiveExtraDistancePct": 1.8292682926829313,
+          "zoneClosedPct": {
+            "H-D1": 0.0,
+            "H-D2": 0.0,
+            "K-D1": 24.365482233502537
+          },
+          "references": null
+        },
+        {
+          "seed": 48,
+          "source": "EMSR648 loose",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 2,
+          "ourMin": 18.7,
+          "naiveMin": 59.0,
+          "savedMin": 40.3,
+          "savedFromDistanceMin": 0.3,
+          "savedFromUTurnPenaltyMin": 40.0,
+          "uTurnShareOfSaving": 0.9925558312655087,
+          "naiveExtraDistancePct": 1.6042780748663141,
+          "zoneClosedPct": {
+            "H-D1": 0.0,
+            "H-D2": 0.0,
+            "K-D1": 24.365482233502537
+          },
+          "references": null
+        },
+        {
+          "seed": 49,
+          "source": "EMSR648 loose",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 16.2,
+          "naiveMin": 16.2,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 0.0,
+            "H-D2": 0.0,
+            "K-D1": 24.365482233502537
+          },
+          "references": null
+        },
+        {
+          "seed": 50,
+          "source": "EMSR648 loose",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 2,
+          "ourMin": 18.1,
+          "naiveMin": 58.5,
+          "savedMin": 40.4,
+          "savedFromDistanceMin": 0.4,
+          "savedFromUTurnPenaltyMin": 40.0,
+          "uTurnShareOfSaving": 0.9900990099009901,
+          "naiveExtraDistancePct": 2.2099447513812076,
+          "zoneClosedPct": {
+            "H-D1": 0.0,
+            "H-D2": 0.0,
+            "K-D1": 24.365482233502537
+          },
+          "references": null
+        },
+        {
+          "seed": 51,
+          "source": "EMSR648 loose",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 3,
+          "ourMin": 19.2,
+          "naiveMin": 79.6,
+          "savedMin": 60.4,
+          "savedFromDistanceMin": 0.4,
+          "savedFromUTurnPenaltyMin": 60.0,
+          "uTurnShareOfSaving": 0.9933774834437088,
+          "naiveExtraDistancePct": 2.0833333333333446,
+          "zoneClosedPct": {
+            "H-D1": 0.0,
+            "H-D2": 0.0,
+            "K-D1": 24.365482233502537
+          },
+          "references": null
+        }
+      ],
+      "aggregate": {
+        "routed": {
+          "n": 10,
+          "mean": 9.0,
+          "sd": 0.0,
+          "min": 9,
+          "max": 9,
+          "ci95": [
+            9.0,
+            9.0
+          ]
+        },
+        "naiveStuck": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "uTurns": {
+          "n": 10,
+          "mean": 2.0,
+          "sd": 0.816496580927726,
+          "min": 0,
+          "max": 3,
+          "ci95": [
+            1.4159135321319156,
+            2.5840864678680844
+          ]
+        },
+        "ourMin": {
+          "n": 10,
+          "mean": 18.41,
+          "sd": 1.3787675656179328,
+          "min": 16.2,
+          "max": 20.7,
+          "ci95": [
+            17.42368910020685,
+            19.39631089979315
+          ]
+        },
+        "naiveMin": {
+          "n": 10,
+          "mean": 58.67999999999999,
+          "sd": 17.250107890161793,
+          "min": 16.2,
+          "max": 79.6,
+          "ci95": [
+            46.3400161920337,
+            71.01998380796628
+          ]
+        },
+        "savedMin": {
+          "n": 10,
+          "mean": 40.269999999999996,
+          "sd": 16.42539023720424,
+          "min": 0.0,
+          "max": 60.4,
+          "ci95": [
+            28.51998366055281,
+            52.02001633944718
+          ]
+        },
+        "savedFromDistanceMin": {
+          "n": 10,
+          "mean": 0.27,
+          "sd": 0.12516655570345725,
+          "min": 0.0,
+          "max": 0.4,
+          "ci95": [
+            0.18046123998096997,
+            0.35953876001903007
+          ]
+        },
+        "savedFromUTurnPenaltyMin": {
+          "n": 10,
+          "mean": 40.0,
+          "sd": 16.32993161855452,
+          "min": 0.0,
+          "max": 60.0,
+          "ci95": [
+            28.31827064263831,
+            51.68172935736169
+          ]
+        },
+        "uTurnShareOfSaving": {
+          "n": 9,
+          "mean": 0.9931985186960297,
+          "sd": 0.0020437205860643513,
+          "min": 0.9900990099009901,
+          "max": 0.9950248756218906,
+          "ci95": [
+            0.9916275759884743,
+            0.9947694614035851
+          ]
+        },
+        "naiveExtraDistancePct": {
+          "n": 10,
+          "mean": 1.4589872107925643,
+          "sd": 0.6923238236068879,
+          "min": 0.0,
+          "max": 2.2099447513812076,
+          "ci95": [
+            0.9637285824073608,
+            1.954245839177768
+          ]
+        },
+        "zoneClosedPct": {
+          "H-D1": {
+            "n": 10,
+            "mean": 0.0,
+            "sd": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "ci95": [
+              0.0,
+              0.0
+            ]
+          },
+          "H-D2": {
+            "n": 10,
+            "mean": 0.0,
+            "sd": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "ci95": [
+              0.0,
+              0.0
+            ]
+          },
+          "K-D1": {
+            "n": 10,
+            "mean": 24.365482233502537,
+            "sd": 0.0,
+            "min": 24.365482233502537,
+            "max": 24.365482233502537,
+            "ci95": [
+              24.365482233502537,
+              24.365482233502537
+            ]
+          }
+        },
+        "savedByUTurnPenalty": {
+          "0": {
+            "n": 10,
+            "mean": 0.27,
+            "sd": 0.12516655570345725,
+            "min": 0.0,
+            "max": 0.4,
+            "ci95": [
+              0.18046123998096997,
+              0.35953876001903007
+            ]
+          },
+          "5": {
+            "n": 10,
+            "mean": 10.27,
+            "sd": 4.17852977865554,
+            "min": 0.0,
+            "max": 15.4,
+            "ci95": [
+              7.280859866034686,
+              13.259140133965314
+            ]
+          },
+          "10": {
+            "n": 10,
+            "mean": 20.27,
+            "sd": 8.260622790618688,
+            "min": 0.0,
+            "max": 30.4,
+            "ci95": [
+              14.360706439112256,
+              26.179293560887743
+            ]
+          },
+          "20": {
+            "n": 10,
+            "mean": 40.269999999999996,
+            "sd": 16.42539023720424,
+            "min": 0.0,
+            "max": 60.4,
+            "ci95": [
+              28.51998366055281,
+              52.02001633944718
+            ]
+          },
+          "30": {
+            "n": 10,
+            "mean": 60.27,
+            "sd": 24.590289411337423,
+            "min": 0.0,
+            "max": 90.4,
+            "ci95": [
+              42.679166649782466,
+              77.86083335021755
+            ]
+          }
+        }
+      },
+      "pooledTasks": {
+        "taskCount": 90,
+        "savedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 4.474444444444444,
+          "n": 90,
+          "nNonZero": 20,
+          "sharePositive": 0.2222222222222222,
+          "shareZero": 0.7777777777777778,
+          "shareNegative": 0.0,
+          "p": 3.5081428752780755e-05,
+          "rankBiserial": 1.0
+        },
+        "distanceSavedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.029999999999999992,
+          "n": 90,
+          "nNonZero": 20,
+          "sharePositive": 0.2222222222222222,
+          "shareZero": 0.7777777777777778,
+          "shareNegative": 0.0,
+          "p": 3.592951532853599e-05,
+          "rankBiserial": 1.0
+        },
+        "naiveExtraDistancePctPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 1.0721091756539873
+        },
+        "discoveriesPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.2222222222222222
+        },
+        "shareTasksWithDiscovery": 0.2222222222222222,
+        "discoveriesMaxPerTask": 1,
+        "discoveriesTotal": 20,
+        "top10PctTasksShareOfDiscoveries": 0.45,
+        "discoveriesByZone": {
+          "H-D1": 0,
+          "H-D2": 0,
+          "K-D1": 20
+        },
+        "note": "Gorevler tohumlar arasi havuzlandi; ayni ekip/karargahlari paylastiklari icin tam bagimsiz degiller -- birincil birim tohum basina toplamdir. Naif ajan yalniz acik kenarlarda yurudugu icin yolu, kapanmalari bilen en kisa yoldan kisa OLAMAZ: fark yapi geregi >= 0, bu yuzden Wilcoxon p ve r = 1 bilgi tasimaz (yalniz kayit icin tutuldu)."
+      },
+      "reproducesSingleSeedRun": {
+        "identical": true,
+        "reference": {
+          "routed": 9,
+          "naiveStuck": 0,
+          "uTurns": 2,
+          "ourMin": 20.7,
+          "naiveMin": 60.9
+        },
+        "seed42": {
+          "routed": 9,
+          "naiveStuck": 0,
+          "uTurns": 2,
+          "ourMin": 20.7,
+          "naiveMin": 60.9
+        }
+      },
+      "references": null,
+      "pairedAgainstReference": {
+        "reference": "drone-sentetik",
+        "seedsPaired": 10,
+        "savedMinusReference": {
+          "n": 10,
+          "mean": -24.580000000000002,
+          "sd": 56.826398403871735,
+          "min": -141.5,
+          "max": 40.2,
+          "ci95": [
+            -65.23115653965,
+            16.07115653965
+          ]
+        },
+        "distanceSavedMinusReference": {
+          "n": 10,
+          "mean": -0.58,
+          "sd": 0.7857056276579247,
+          "min": -1.8,
+          "max": 0.30000000000000004,
+          "ci95": [
+            -1.142059946805112,
+            -0.017940053194887895
+          ]
+        },
+        "sameSetTasksThis": {
+          "n": 10,
+          "mean": 9.0,
+          "sd": 0.0,
+          "min": 9,
+          "max": 9,
+          "ci95": [
+            9.0,
+            9.0
+          ]
+        },
+        "sameSetTasksReference": {
+          "n": 10,
+          "mean": 8.7,
+          "sd": 0.9486832980505138,
+          "min": 6,
+          "max": 9,
+          "ci95": [
+            8.021352851160538,
+            9.37864714883946
+          ]
+        },
+        "samePlacementShare": 0.7777777777777778
+      }
+    },
+    {
+      "config": "drone-model-z18-r0",
+      "args": [
+        "--dataset",
+        "drone",
+        "--closure-source",
+        "model",
+        "--mask-suffix=-z18",
+        "--blockage-radius-m",
+        "0"
+      ],
+      "source": "model -z18 r_h=0.0",
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "victims": 9,
+      "perSeed": [
+        {
+          "seed": 42,
+          "source": "model -z18 r_h=0.0",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 19.5,
+          "naiveMin": 19.5,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 2.094240837696335,
+            "H-D2": 0.0,
+            "K-D1": 1.015228426395939
+          },
+          "references": null
+        },
+        {
+          "seed": 43,
+          "source": "model -z18 r_h=0.0",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 18.2,
+          "naiveMin": 18.2,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 2.094240837696335,
+            "H-D2": 0.0,
+            "K-D1": 1.015228426395939
+          },
+          "references": null
+        },
+        {
+          "seed": 44,
+          "source": "model -z18 r_h=0.0",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 16.0,
+          "naiveMin": 16.0,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 2.094240837696335,
+            "H-D2": 0.0,
+            "K-D1": 1.015228426395939
+          },
+          "references": null
+        },
+        {
+          "seed": 45,
+          "source": "model -z18 r_h=0.0",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 17.3,
+          "naiveMin": 17.3,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 2.094240837696335,
+            "H-D2": 0.0,
+            "K-D1": 1.015228426395939
+          },
+          "references": null
+        },
+        {
+          "seed": 46,
+          "source": "model -z18 r_h=0.0",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 1,
+          "ourMin": 15.4,
+          "naiveMin": 35.4,
+          "savedMin": 20.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 20.0,
+          "uTurnShareOfSaving": 1.0,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 2.094240837696335,
+            "H-D2": 0.0,
+            "K-D1": 1.015228426395939
+          },
+          "references": null
+        },
+        {
+          "seed": 47,
+          "source": "model -z18 r_h=0.0",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 14.4,
+          "naiveMin": 14.4,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 2.094240837696335,
+            "H-D2": 0.0,
+            "K-D1": 1.015228426395939
+          },
+          "references": null
+        },
+        {
+          "seed": 48,
+          "source": "model -z18 r_h=0.0",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 18.5,
+          "naiveMin": 18.5,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 2.094240837696335,
+            "H-D2": 0.0,
+            "K-D1": 1.015228426395939
+          },
+          "references": null
+        },
+        {
+          "seed": 49,
+          "source": "model -z18 r_h=0.0",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 15.7,
+          "naiveMin": 15.7,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 2.094240837696335,
+            "H-D2": 0.0,
+            "K-D1": 1.015228426395939
+          },
+          "references": null
+        },
+        {
+          "seed": 50,
+          "source": "model -z18 r_h=0.0",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 1,
+          "ourMin": 16.3,
+          "naiveMin": 36.3,
+          "savedMin": 20.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 20.0,
+          "uTurnShareOfSaving": 1.0000000000000002,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 2.094240837696335,
+            "H-D2": 0.0,
+            "K-D1": 1.015228426395939
+          },
+          "references": null
+        },
+        {
+          "seed": 51,
+          "source": "model -z18 r_h=0.0",
+          "victims": 9,
+          "routed": 9,
+          "naiveReached": 9,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 15.9,
+          "naiveMin": 15.9,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 2.094240837696335,
+            "H-D2": 0.0,
+            "K-D1": 1.015228426395939
+          },
+          "references": null
+        }
+      ],
+      "aggregate": {
+        "routed": {
+          "n": 10,
+          "mean": 9.0,
+          "sd": 0.0,
+          "min": 9,
+          "max": 9,
+          "ci95": [
+            9.0,
+            9.0
+          ]
+        },
+        "naiveStuck": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "uTurns": {
+          "n": 10,
+          "mean": 0.2,
+          "sd": 0.42163702135578396,
+          "min": 0,
+          "max": 1,
+          "ci95": [
+            -0.10162095503976065,
+            0.5016209550397607
+          ]
+        },
+        "ourMin": {
+          "n": 10,
+          "mean": 16.72,
+          "sd": 1.5970806700560451,
+          "min": 14.4,
+          "max": 19.5,
+          "ci95": [
+            15.57751731328315,
+            17.86248268671685
+          ]
+        },
+        "naiveMin": {
+          "n": 10,
+          "mean": 20.72,
+          "sd": 8.119633270317351,
+          "min": 14.4,
+          "max": 36.3,
+          "ci95": [
+            14.911564266129309,
+            26.528435733870687
+          ]
+        },
+        "savedMin": {
+          "n": 10,
+          "mean": 4.0,
+          "sd": 8.432740427115679,
+          "min": 0.0,
+          "max": 20.0,
+          "ci95": [
+            -2.032419100795212,
+            10.032419100795213
+          ]
+        },
+        "savedFromDistanceMin": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "savedFromUTurnPenaltyMin": {
+          "n": 10,
+          "mean": 4.0,
+          "sd": 8.432740427115679,
+          "min": 0.0,
+          "max": 20.0,
+          "ci95": [
+            -2.032419100795212,
+            10.032419100795213
+          ]
+        },
+        "uTurnShareOfSaving": {
+          "n": 2,
+          "mean": 1.0,
+          "sd": 2.220446049250313e-16,
+          "min": 1.0,
+          "max": 1.0000000000000002,
+          "ci95": [
+            0.999999999999998,
+            1.000000000000002
+          ]
+        },
+        "naiveExtraDistancePct": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "zoneClosedPct": {
+          "H-D1": {
+            "n": 10,
+            "mean": 2.094240837696335,
+            "sd": 0.0,
+            "min": 2.094240837696335,
+            "max": 2.094240837696335,
+            "ci95": [
+              2.094240837696335,
+              2.094240837696335
+            ]
+          },
+          "H-D2": {
+            "n": 10,
+            "mean": 0.0,
+            "sd": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "ci95": [
+              0.0,
+              0.0
+            ]
+          },
+          "K-D1": {
+            "n": 10,
+            "mean": 1.015228426395939,
+            "sd": 0.0,
+            "min": 1.015228426395939,
+            "max": 1.015228426395939,
+            "ci95": [
+              1.015228426395939,
+              1.015228426395939
+            ]
+          }
+        },
+        "savedByUTurnPenalty": {
+          "0": {
+            "n": 10,
+            "mean": 0.0,
+            "sd": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "ci95": [
+              0.0,
+              0.0
+            ]
+          },
+          "5": {
+            "n": 10,
+            "mean": 1.0,
+            "sd": 2.1081851067789197,
+            "min": 0.0,
+            "max": 5.0,
+            "ci95": [
+              -0.508104775198803,
+              2.5081047751988033
+            ]
+          },
+          "10": {
+            "n": 10,
+            "mean": 2.0,
+            "sd": 4.216370213557839,
+            "min": 0.0,
+            "max": 10.0,
+            "ci95": [
+              -1.016209550397606,
+              5.0162095503976065
+            ]
+          },
+          "20": {
+            "n": 10,
+            "mean": 4.0,
+            "sd": 8.432740427115679,
+            "min": 0.0,
+            "max": 20.0,
+            "ci95": [
+              -2.032419100795212,
+              10.032419100795213
+            ]
+          },
+          "30": {
+            "n": 10,
+            "mean": 6.0,
+            "sd": 12.649110640673518,
+            "min": 0.0,
+            "max": 30.0,
+            "ci95": [
+              -3.0486286511928196,
+              15.04862865119282
+            ]
+          }
+        }
+      },
+      "pooledTasks": {
+        "taskCount": 90,
+        "savedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.4444444444444444,
+          "n": 90,
+          "nNonZero": 2,
+          "sharePositive": 0.022222222222222223,
+          "shareZero": 0.9777777777777777,
+          "shareNegative": 0.0,
+          "p": 0.25,
+          "rankBiserial": 1.0
+        },
+        "distanceSavedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.0,
+          "n": 90,
+          "nNonZero": 0,
+          "sharePositive": 0.0,
+          "shareZero": 1.0,
+          "shareNegative": 0.0,
+          "p": null,
+          "rankBiserial": null
+        },
+        "naiveExtraDistancePctPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.0
+        },
+        "discoveriesPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.022222222222222223
+        },
+        "shareTasksWithDiscovery": 0.022222222222222223,
+        "discoveriesMaxPerTask": 1,
+        "discoveriesTotal": 2,
+        "top10PctTasksShareOfDiscoveries": 1.0,
+        "discoveriesByZone": {
+          "H-D1": 2,
+          "H-D2": 0,
+          "K-D1": 0
+        },
+        "note": "Gorevler tohumlar arasi havuzlandi; ayni ekip/karargahlari paylastiklari icin tam bagimsiz degiller -- birincil birim tohum basina toplamdir. Naif ajan yalniz acik kenarlarda yurudugu icin yolu, kapanmalari bilen en kisa yoldan kisa OLAMAZ: fark yapi geregi >= 0, bu yuzden Wilcoxon p ve r = 1 bilgi tasimaz (yalniz kayit icin tutuldu)."
+      },
+      "reproducesSingleSeedRun": {
+        "identical": true,
+        "reference": {
+          "routed": 9,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 19.5,
+          "naiveMin": 19.5
+        },
+        "seed42": {
+          "routed": 9,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 19.5,
+          "naiveMin": 19.5
+        }
+      },
+      "references": null,
+      "pairedAgainstReference": {
+        "reference": "drone-sentetik",
+        "seedsPaired": 10,
+        "savedMinusReference": {
+          "n": 10,
+          "mean": -60.85,
+          "sd": 58.516023446574025,
+          "min": -181.8,
+          "max": 0.0,
+          "ci95": [
+            -102.70984148244807,
+            -18.99015851755194
+          ]
+        },
+        "distanceSavedMinusReference": {
+          "n": 10,
+          "mean": -0.85,
+          "sd": 0.754615428178118,
+          "min": -2.0,
+          "max": 0.0,
+          "ci95": [
+            -1.3898193578992268,
+            -0.3101806421007731
+          ]
+        },
+        "sameSetTasksThis": {
+          "n": 10,
+          "mean": 9.0,
+          "sd": 0.0,
+          "min": 9,
+          "max": 9,
+          "ci95": [
+            9.0,
+            9.0
+          ]
+        },
+        "sameSetTasksReference": {
+          "n": 10,
+          "mean": 8.7,
+          "sd": 0.9486832980505138,
+          "min": 6,
+          "max": 9,
+          "ci95": [
+            8.021352851160538,
+            9.37864714883946
+          ]
+        },
+        "samePlacementShare": 0.9444444444444444
+      }
+    },
+    {
+      "config": "drone-model-z19-r15",
+      "args": [
+        "--dataset",
+        "drone",
+        "--closure-source",
+        "model",
+        "--mask-suffix=-z19",
+        "--blockage-radius-m",
+        "15"
+      ],
+      "source": "model -z19 r_h=15.0",
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "victims": 9,
+      "perSeed": [
+        {
+          "seed": 42,
+          "source": "model -z19 r_h=15.0",
+          "victims": 9,
+          "routed": 1,
+          "naiveReached": 1,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 0.2,
+          "naiveMin": 0.2,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 25.654450261780106,
+            "H-D2": 18.099547511312217,
+            "K-D1": 29.949238578680202
+          },
+          "references": null
+        },
+        {
+          "seed": 43,
+          "source": "model -z19 r_h=15.0",
+          "victims": 9,
+          "routed": 2,
+          "naiveReached": 2,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 2.0,
+          "naiveMin": 2.0,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 25.654450261780106,
+            "H-D2": 18.099547511312217,
+            "K-D1": 29.949238578680202
+          },
+          "references": null
+        },
+        {
+          "seed": 44,
+          "source": "model -z19 r_h=15.0",
+          "victims": 9,
+          "routed": 3,
+          "naiveReached": 3,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 2.1,
+          "naiveMin": 2.1,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 25.654450261780106,
+            "H-D2": 18.099547511312217,
+            "K-D1": 29.949238578680202
+          },
+          "references": null
+        },
+        {
+          "seed": 45,
+          "source": "model -z19 r_h=15.0",
+          "victims": 9,
+          "routed": 2,
+          "naiveReached": 2,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 1.1,
+          "naiveMin": 1.1,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 25.654450261780106,
+            "H-D2": 18.099547511312217,
+            "K-D1": 29.949238578680202
+          },
+          "references": null
+        },
+        {
+          "seed": 46,
+          "source": "model -z19 r_h=15.0",
+          "victims": 9,
+          "routed": 2,
+          "naiveReached": 2,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 2.4,
+          "naiveMin": 2.4,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 25.654450261780106,
+            "H-D2": 18.099547511312217,
+            "K-D1": 29.949238578680202
+          },
+          "references": null
+        },
+        {
+          "seed": 47,
+          "source": "model -z19 r_h=15.0",
+          "victims": 9,
+          "routed": 2,
+          "naiveReached": 2,
+          "naiveStuck": 0,
+          "uTurns": 1,
+          "ourMin": 1.6,
+          "naiveMin": 21.6,
+          "savedMin": 20.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 20.0,
+          "uTurnShareOfSaving": 1.0000000000000002,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 25.654450261780106,
+            "H-D2": 18.099547511312217,
+            "K-D1": 29.949238578680202
+          },
+          "references": null
+        },
+        {
+          "seed": 48,
+          "source": "model -z19 r_h=15.0",
+          "victims": 9,
+          "routed": 2,
+          "naiveReached": 2,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 1.2,
+          "naiveMin": 1.2,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 25.654450261780106,
+            "H-D2": 18.099547511312217,
+            "K-D1": 29.949238578680202
+          },
+          "references": null
+        },
+        {
+          "seed": 49,
+          "source": "model -z19 r_h=15.0",
+          "victims": 9,
+          "routed": 2,
+          "naiveReached": 2,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 2.2,
+          "naiveMin": 2.2,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 25.654450261780106,
+            "H-D2": 18.099547511312217,
+            "K-D1": 29.949238578680202
+          },
+          "references": null
+        },
+        {
+          "seed": 50,
+          "source": "model -z19 r_h=15.0",
+          "victims": 9,
+          "routed": 3,
+          "naiveReached": 3,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 3.5,
+          "naiveMin": 3.5,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 25.654450261780106,
+            "H-D2": 18.099547511312217,
+            "K-D1": 29.949238578680202
+          },
+          "references": null
+        },
+        {
+          "seed": 51,
+          "source": "model -z19 r_h=15.0",
+          "victims": 9,
+          "routed": 2,
+          "naiveReached": 2,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 2.5,
+          "naiveMin": 2.5,
+          "savedMin": 0.0,
+          "savedFromDistanceMin": 0.0,
+          "savedFromUTurnPenaltyMin": 0.0,
+          "uTurnShareOfSaving": null,
+          "naiveExtraDistancePct": 0.0,
+          "zoneClosedPct": {
+            "H-D1": 25.654450261780106,
+            "H-D2": 18.099547511312217,
+            "K-D1": 29.949238578680202
+          },
+          "references": null
+        }
+      ],
+      "aggregate": {
+        "routed": {
+          "n": 10,
+          "mean": 2.1,
+          "sd": 0.5676462121975466,
+          "min": 1,
+          "max": 3,
+          "ci95": [
+            1.693930361956396,
+            2.5060696380436043
+          ]
+        },
+        "naiveStuck": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "uTurns": {
+          "n": 10,
+          "mean": 0.1,
+          "sd": 0.31622776601683794,
+          "min": 0,
+          "max": 1,
+          "ci95": [
+            -0.12621571627982048,
+            0.3262157162798205
+          ]
+        },
+        "ourMin": {
+          "n": 10,
+          "mean": 1.8800000000000001,
+          "sd": 0.9077444574328174,
+          "min": 0.2,
+          "max": 3.5,
+          "ci95": [
+            1.2306387335188402,
+            2.52936126648116
+          ]
+        },
+        "naiveMin": {
+          "n": 10,
+          "mean": 3.8800000000000003,
+          "sd": 6.29122846156103,
+          "min": 0.2,
+          "max": 21.6,
+          "ci95": [
+            -0.6204737270168823,
+            8.380473727016883
+          ]
+        },
+        "savedMin": {
+          "n": 10,
+          "mean": 2.0,
+          "sd": 6.324555320336759,
+          "min": 0.0,
+          "max": 20.0,
+          "ci95": [
+            -2.52431432559641,
+            6.52431432559641
+          ]
+        },
+        "savedFromDistanceMin": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "savedFromUTurnPenaltyMin": {
+          "n": 10,
+          "mean": 2.0,
+          "sd": 6.324555320336759,
+          "min": 0.0,
+          "max": 20.0,
+          "ci95": [
+            -2.52431432559641,
+            6.52431432559641
+          ]
+        },
+        "uTurnShareOfSaving": {
+          "n": 1,
+          "mean": 1.0000000000000002,
+          "sd": 0.0,
+          "min": 1.0000000000000002,
+          "max": 1.0000000000000002,
+          "ci95": [
+            1.0000000000000002,
+            1.0000000000000002
+          ]
+        },
+        "naiveExtraDistancePct": {
+          "n": 10,
+          "mean": 0.0,
+          "sd": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "zoneClosedPct": {
+          "H-D1": {
+            "n": 10,
+            "mean": 25.654450261780106,
+            "sd": 0.0,
+            "min": 25.654450261780106,
+            "max": 25.654450261780106,
+            "ci95": [
+              25.654450261780106,
+              25.654450261780106
+            ]
+          },
+          "H-D2": {
+            "n": 10,
+            "mean": 18.099547511312217,
+            "sd": 0.0,
+            "min": 18.099547511312217,
+            "max": 18.099547511312217,
+            "ci95": [
+              18.099547511312217,
+              18.099547511312217
+            ]
+          },
+          "K-D1": {
+            "n": 10,
+            "mean": 29.949238578680202,
+            "sd": 0.0,
+            "min": 29.949238578680202,
+            "max": 29.949238578680202,
+            "ci95": [
+              29.949238578680202,
+              29.949238578680202
+            ]
+          }
+        },
+        "savedByUTurnPenalty": {
+          "0": {
+            "n": 10,
+            "mean": 0.0,
+            "sd": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "ci95": [
+              0.0,
+              0.0
+            ]
+          },
+          "5": {
+            "n": 10,
+            "mean": 0.5,
+            "sd": 1.5811388300841898,
+            "min": 0.0,
+            "max": 5.0,
+            "ci95": [
+              -0.6310785813991024,
+              1.6310785813991024
+            ]
+          },
+          "10": {
+            "n": 10,
+            "mean": 1.0,
+            "sd": 3.1622776601683795,
+            "min": 0.0,
+            "max": 10.0,
+            "ci95": [
+              -1.262157162798205,
+              3.262157162798205
+            ]
+          },
+          "20": {
+            "n": 10,
+            "mean": 2.0,
+            "sd": 6.324555320336759,
+            "min": 0.0,
+            "max": 20.0,
+            "ci95": [
+              -2.52431432559641,
+              6.52431432559641
+            ]
+          },
+          "30": {
+            "n": 10,
+            "mean": 3.0,
+            "sd": 9.486832980505138,
+            "min": 0.0,
+            "max": 30.0,
+            "ci95": [
+              -3.7864714883946142,
+              9.786471488394614
+            ]
+          }
+        }
+      },
+      "pooledTasks": {
+        "taskCount": 21,
+        "savedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.9523809523809523,
+          "n": 21,
+          "nNonZero": 1,
+          "sharePositive": 0.047619047619047616,
+          "shareZero": 0.9523809523809523,
+          "shareNegative": 0.0,
+          "p": null,
+          "rankBiserial": null
+        },
+        "distanceSavedPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.0,
+          "n": 21,
+          "nNonZero": 0,
+          "sharePositive": 0.0,
+          "shareZero": 1.0,
+          "shareNegative": 0.0,
+          "p": null,
+          "rankBiserial": null
+        },
+        "naiveExtraDistancePctPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.0
+        },
+        "discoveriesPerTask": {
+          "median": 0.0,
+          "q1": 0.0,
+          "q3": 0.0,
+          "mean": 0.047619047619047616
+        },
+        "shareTasksWithDiscovery": 0.047619047619047616,
+        "discoveriesMaxPerTask": 1,
+        "discoveriesTotal": 1,
+        "top10PctTasksShareOfDiscoveries": 1.0,
+        "discoveriesByZone": {
+          "K-D1": 1
+        },
+        "note": "Gorevler tohumlar arasi havuzlandi; ayni ekip/karargahlari paylastiklari icin tam bagimsiz degiller -- birincil birim tohum basina toplamdir. Naif ajan yalniz acik kenarlarda yurudugu icin yolu, kapanmalari bilen en kisa yoldan kisa OLAMAZ: fark yapi geregi >= 0, bu yuzden Wilcoxon p ve r = 1 bilgi tasimaz (yalniz kayit icin tutuldu)."
+      },
+      "reproducesSingleSeedRun": {
+        "identical": true,
+        "reference": {
+          "routed": 1,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 0.2,
+          "naiveMin": 0.2
+        },
+        "seed42": {
+          "routed": 1,
+          "naiveStuck": 0,
+          "uTurns": 0,
+          "ourMin": 0.2,
+          "naiveMin": 0.2
+        }
+      },
+      "references": null,
+      "pairedAgainstReference": {
+        "reference": "drone-sentetik",
+        "seedsPaired": 10,
+        "savedMinusReference": {
+          "n": 10,
+          "mean": -62.85,
+          "sd": 60.346338377366,
+          "min": -181.8,
+          "max": 0.0,
+          "ci95": [
+            -106.01916990829133,
+            -19.68083009170868
+          ]
+        },
+        "distanceSavedMinusReference": {
+          "n": 10,
+          "mean": -0.85,
+          "sd": 0.754615428178118,
+          "min": -2.0,
+          "max": 0.0,
+          "ci95": [
+            -1.3898193578992268,
+            -0.3101806421007731
+          ]
+        },
+        "sameSetTasksThis": {
+          "n": 10,
+          "mean": 2.1,
+          "sd": 0.5676462121975466,
+          "min": 1,
+          "max": 3,
+          "ci95": [
+            1.693930361956396,
+            2.5060696380436043
+          ]
+        },
+        "sameSetTasksReference": {
+          "n": 10,
+          "mean": 8.7,
+          "sd": 0.9486832980505138,
+          "min": 6,
+          "max": 9,
+          "ci95": [
+            8.021352851160538,
+            9.37864714883946
+          ]
+        },
+        "samePlacementShare": 0.022222222222222223
+      }
+    }
+  ]
+}
