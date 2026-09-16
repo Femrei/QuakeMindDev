@@ -48,6 +48,25 @@ EDGE_MATCH_RADIUS_M = 60.0  # copernicus hasarli yol noktasi <-> osmnx kenari es
 AVERAGE_SPEED_KMH = 15.0    # afet sonrasi molozlu sokakta ortalama saha ilerleme hizi varsayimi
 MAX_NAIVE_ITERATIONS = 60
 
+# Naive ajan kapali bir yola VARDIGINDA kaybettigi sure. AVERAGE_SPEED_KMH
+# gibi ACIKCA BELIRTILEN, tartisilabilir bir varsayimdir ve raporda oyle
+# gosterilir. Sadece yol uzunlugundan gelen fark, sahadaki gercek maliyeti
+# eksik anlatiyor: ekip molozla karsilasinca duruyor, durumu degerlendiriyor,
+# arac cevirecek yer ariyor ve telsizle merkeze bildiriyor. Senaryo
+# spesifikasyonunda bu 15-25 dk araligi olarak veriliyor; ortasi alindi.
+#
+# ONEMLI: bu ceza SADECE naive (klasik navigasyon) tarafina uygulanir --
+# bizim motorumuz kapali yola hic varmadigi icin boyle bir kaybi yoktur.
+# Cezayi 0 yaparak kapatmak, karsilastirmayi salt mesafe farkina indirger.
+U_TURN_PENALTY_MIN = 20.0
+
+
+def naive_time_minutes(distance_m: float, discoveries: int | None) -> float:
+    """Klasik navigasyonun toplam intikal suresi: yol suresi + her kapali-yol
+    kesfi icin U-donusu cezasi."""
+    travel_min = distance_m / 1000.0 / AVERAGE_SPEED_KMH * 60.0
+    return travel_min + (discoveries or 0) * U_TURN_PENALTY_MIN
+
 
 def _haversine_m(lat1, lon1, lat2, lon2):
     import math
@@ -148,7 +167,12 @@ def run_for_run_dir(run_dir: Path) -> dict:
             }
             if naive is not None:
                 row["distanceSavedMeters"] = round(naive["distanceMeters"] - our_distance, 1)
-                row["naiveTimeMin"] = round(naive["distanceMeters"] / 1000 / AVERAGE_SPEED_KMH * 60, 1)
+                row["naiveTravelOnlyTimeMin"] = round(
+                    naive["distanceMeters"] / 1000 / AVERAGE_SPEED_KMH * 60, 1)
+                row["naiveUTurnPenaltyMin"] = round(
+                    (naive["discoveries"] or 0) * U_TURN_PENALTY_MIN, 1)
+                row["naiveTimeMin"] = round(
+                    naive_time_minutes(naive["distanceMeters"], naive["discoveries"]), 1)
                 row["timeSavedMin"] = round(row["naiveTimeMin"] - row["ourEngineTimeMin"], 1)
             rows.append(row)
 
@@ -178,6 +202,7 @@ def run_for_run_dir(run_dir: Path) -> dict:
     result = {
         "runId": summary["runId"], "region": region,
         "averageSpeedKmhAssumption": AVERAGE_SPEED_KMH,
+        "uTurnPenaltyMinAssumption": U_TURN_PENALTY_MIN,
         "edgeMatchRadiusM": EDGE_MATCH_RADIUS_M,
         "comparisons": comparisons,
     }
