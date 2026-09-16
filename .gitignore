@@ -25,3 +25,6 @@ QuakeMindBackend/apps/road_damage/data/osm_graph_cache/
 # Large manually-downloaded third-party ground-truth data (Copernicus EMS) --
 # too large for git history, user re-downloads from the Copernicus portal
 QuakeMindBackend/benchmark/data/copernicus/
+
+# Geocoding onbellegi -- yeniden uretilebilir, makineye ozgu
+QuakeMindBackend/apps/disaster_nlp/data/geocode_cache.json

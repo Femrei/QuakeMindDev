@@ -1,7 +1,6 @@
 import re
 import nltk
 from nltk.corpus import stopwords
-import zeyrek
 
 # Download Turkish stopwords if not present
 try:
@@ -9,8 +8,23 @@ try:
 except LookupError:
     nltk.download('stopwords')
 
-# Initialize Zeyrek Morphological Analyzer (acts as a Python replacement for Zemberek)
-analyzer = zeyrek.MorphAnalyzer()
+# Zeyrek (Zemberek'in Python portu) MODUL YUKLENIRKEN DEGIL, ilk gercek
+# lemmatizasyon cagrisinda kurulur. Bu modulu `clean_text` icin import eden
+# her yol (fastapi_app -> DisasterPipeline dahil) eskiden Zeyrek'in tum
+# morfoloji sozlugunu de acilista yukluyordu; bugun boru hattinda hicbir
+# yerde lemmatizasyon KULLANILMADIGI icin (bkz. pipeline.py'deki not) bu
+# tamamen bosa giden bir acilis maliyetiydi.
+_analyzer = None
+
+
+def _get_analyzer():
+    global _analyzer
+    if _analyzer is None:
+        import zeyrek
+        _analyzer = zeyrek.MorphAnalyzer()
+    return _analyzer
+
+
 stop_words = set(stopwords.words('turkish'))
 
 def clean_text(text, lowercase=True):
@@ -44,7 +58,7 @@ def zemberek_lemmatize(text):
             continue
         try:
             # Zeyrek returns a list of tuples, e.g., [('kelime', ['kök1', 'kök2'])]
-            analysis = analyzer.lemmatize(word)
+            analysis = _get_analyzer().lemmatize(word)
             if analysis and len(analysis) > 0 and len(analysis[0][1]) > 0:
                 # Take the first possible root
                 root = analysis[0][1][0]
