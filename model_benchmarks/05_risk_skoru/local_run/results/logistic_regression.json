@@ -116,7 +116,7 @@
     "max_iter": 2000,
     "random_state": 42
   },
-  "train_seconds": 0.32,
+  "train_seconds": 0.14,
   "feature_importance": {
     "distance_to_fault": 0.8704352239483208,
     "longitude": 0.7820094801091019,

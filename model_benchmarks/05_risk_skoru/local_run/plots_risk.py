@@ -24,11 +24,11 @@ def plot_roc_overlay(all_results):
         auc = roc_auc_score(r["oof_true"], r["oof_prob"])
         ax.plot(fpr, tpr, label=f"{r['title']} (AUC={auc:.3f})", color=_color(i), linewidth=1.8)
     ax.plot([0, 1], [0, 1], "--", color="gray", linewidth=1)
-    ax.set_xlabel("Yanlis Pozitif Orani"); ax.set_ylabel("Dogru Pozitif Orani")
-    ax.set_title("ROC Egrileri (birlestirilmis OOF tahminler)")
+    ax.set_xlabel("Yanlış Pozitif Oranı"); ax.set_ylabel("Doğru Pozitif Oranı")
+    ax.set_title("ROC Eğrileri (birleştirilmiş OOF tahminler)")
     ax.legend(fontsize=8, loc="lower right")
     plt.tight_layout()
-    plt.savefig(RESULTS / "roc_overlay.png", dpi=160)
+    plt.savefig(RESULTS / "roc_overlay.png", dpi=300)
     plt.close(fig)
 
 
@@ -43,11 +43,11 @@ def plot_pr_overlay(all_results):
         base_rate = float(np.mean(r["oof_true"]))
     if base_rate is not None:
         ax.axhline(base_rate, ls="--", color="gray", linewidth=1, label=f"taban oran ({base_rate:.2f})")
-    ax.set_xlabel("Duyarlilik (Recall)"); ax.set_ylabel("Kesinlik (Precision)")
-    ax.set_title("Kesinlik-Duyarlilik Egrileri (birlestirilmis OOF tahminler)")
+    ax.set_xlabel("Duyarlılık (Recall)"); ax.set_ylabel("Kesinlik (Precision)")
+    ax.set_title("Kesinlik-Duyarlılık Eğrileri (birleştirilmiş OOF tahminler)")
     ax.legend(fontsize=8, loc="lower left")
     plt.tight_layout()
-    plt.savefig(RESULTS / "pr_overlay.png", dpi=160)
+    plt.savefig(RESULTS / "pr_overlay.png", dpi=300)
     plt.close(fig)
 
 
@@ -69,10 +69,10 @@ def plot_comparison_bar(all_results):
     ax.bar(x + w/2, f1, w, yerr=f1_std, capsize=3, label="F1 (ort +/- std, 5-fold)", color="#DD8452")
     ax.set_xticks(x); ax.set_xticklabels(names, rotation=30, ha="right")
     ax.set_ylim(0, 1.05); ax.set_ylabel("Skor")
-    ax.set_title("05 Deprem Risk Skoru - Model Karsilastirmasi (walk-forward 5-fold)")
+    ax.set_title("05 Deprem Risk Skoru – Model Karşılaştırması (walk-forward 5-fold)")
     ax.legend()
     plt.tight_layout()
-    plt.savefig(RESULTS / "00_comparison_chart.png", dpi=160)
+    plt.savefig(RESULTS / "00_comparison_chart.png", dpi=300)
     plt.close(fig)
 
 
@@ -86,11 +86,11 @@ def plot_calibration(all_results):
             continue
         ax.plot(mean_pred, frac_pos, "o-", label=r["title"], color=_color(i), markersize=4)
     ax.plot([0, 1], [0, 1], "--", color="gray")
-    ax.set_xlabel("Ortalama Tahmin Olasiligi"); ax.set_ylabel("Gercek Pozitif Orani")
-    ax.set_title("Kalibrasyon Egrileri (OOF)")
+    ax.set_xlabel("Ortalama Tahmin Olasılığı"); ax.set_ylabel("Gerçek Pozitif Oranı")
+    ax.set_title("Kalibrasyon Eğrileri (OOF)")
     ax.legend(fontsize=8)
     plt.tight_layout()
-    plt.savefig(RESULTS / "calibration_overlay.png", dpi=160)
+    plt.savefig(RESULTS / "calibration_overlay.png", dpi=300)
     plt.close(fig)
 
 
@@ -106,10 +106,10 @@ def plot_confusion(all_results, best_name):
                  color="white" if v > cm.max()/2 else "black")
     ax.set_xticks([0, 1]); ax.set_xticklabels(["deprem yok", "deprem var"])
     ax.set_yticks([0, 1]); ax.set_yticklabels(["deprem yok", "deprem var"])
-    ax.set_xlabel("Tahmin"); ax.set_ylabel("Gercek")
-    ax.set_title(f"{r['title']} - Karisiklik Matrisi (OOF, esik=0.5)")
+    ax.set_xlabel("Tahmin"); ax.set_ylabel("Gerçek")
+    ax.set_title(f"{r['title']} - Karışıklık Matrisi (OOF, eşik=0.5)")
     plt.tight_layout()
-    plt.savefig(RESULTS / f"{best_name}_confusion.png", dpi=160)
+    plt.savefig(RESULTS / f"{best_name}_confusion.png", dpi=300)
     plt.close(fig)
 
 
@@ -122,10 +122,10 @@ def plot_feature_importance(all_results, name):
     labels, vals = zip(*items)
     fig, ax = plt.subplots(figsize=(7, max(4, 0.35 * len(labels))))
     ax.barh(labels, vals, color="#55A868")
-    ax.set_xlabel("Ortalama Oznitelik Onemi (5-fold ortalamasi)")
-    ax.set_title(f"{r['title']} - Oznitelik Onem Siralamasi")
+    ax.set_xlabel("Ortalama Öznitelik Önemi (5-fold ortalaması)")
+    ax.set_title(f"{r['title']} - Öznitelik Önem Sıralaması")
     plt.tight_layout()
-    plt.savefig(RESULTS / f"{name}_feature_importance.png", dpi=160)
+    plt.savefig(RESULTS / f"{name}_feature_importance.png", dpi=300)
     plt.close(fig)
 
 
@@ -151,10 +151,10 @@ def plot_fold_variance(all_results):
     for i, vals in enumerate(data):
         ax.scatter([i + 1] * len(vals), vals, color="black", s=15, zorder=3)
     ax.set_xticklabels(names, rotation=30, ha="right")
-    ax.set_ylabel("Fold Bazli ROC-AUC")
-    ax.set_title("Model Basina Fold Varyansi (5-fold walk-forward)")
+    ax.set_ylabel("Fold Bazlı ROC-AUC")
+    ax.set_title("Model Başına Fold Varyansı (5-fold walk-forward)")
     plt.tight_layout()
-    plt.savefig(RESULTS / "fold_variance.png", dpi=160)
+    plt.savefig(RESULTS / "fold_variance.png", dpi=300)
     plt.close(fig)
 
 

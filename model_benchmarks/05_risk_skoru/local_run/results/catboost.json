@@ -118,7 +118,7 @@
     "random_seed": 42,
     "verbose": false
   },
-  "train_seconds": 14.61,
+  "train_seconds": 14.97,
   "feature_importance": {
     "longitude": 13.213245314765663,
     "latitude": 13.060515666430828,

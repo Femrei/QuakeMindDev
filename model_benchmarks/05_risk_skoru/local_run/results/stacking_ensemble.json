@@ -1,6 +1,6 @@
 {
   "model": "stacking_ensemble",
-  "title": "Yiginlanmis Topluluk (Cat+LGBM+RF)",
+  "title": "Yığınlanmış Topluluk (Cat+LGBM+RF)",
   "positive_rate_mean": 0.7306666666666667,
   "positive_rate_std": 0.19494044674663535,
   "roc_auc_mean": 0.7338136413742131,
@@ -114,6 +114,6 @@
     "final_estimator": "LogisticRegression",
     "cv": 3
   },
-  "train_seconds": 33.88,
+  "train_seconds": 36.46,
   "feature_importance": null
 }
