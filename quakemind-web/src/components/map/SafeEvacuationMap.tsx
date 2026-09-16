@@ -13,6 +13,7 @@ import {
   getDebrisReports,
   getSafeRoute,
   getRecentRoadDamage,
+  getRoadDamageSegments,
   EvacuationAssemblyRecord,
   EvacuationAssemblyResponse,
   DebrisReport,
@@ -97,11 +98,15 @@ async function findSharedRoadDamageAnalysis(
         boundsContainPoint(a.bounds, originLat, originLon, marginDeg) &&
         boundsContainPoint(a.bounds, destLat, destLon, marginDeg)
       ) {
+        // /recent yalnizca ozet doner; agir segmentler SADECE gercekten
+        // eslesen tek analiz icin cekilir (eskiden listedeki TUM analizlerin
+        // segmentleri bosuna geliyordu).
+        const seg = await getRoadDamageSegments(a.analysisId);
         return {
           analysisId: a.analysisId,
           bounds: a.bounds,
-          safeRoadSegments: a.safeRoadSegments,
-          blockedRoadSegments: a.blockedRoadSegments,
+          safeRoadSegments: seg.safeRoadSegments,
+          blockedRoadSegments: seg.blockedRoadSegments,
         };
       }
     }

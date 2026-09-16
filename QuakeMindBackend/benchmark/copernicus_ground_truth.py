@@ -14,8 +14,10 @@ MONIT01 kullaniliyor, PRODUCT sadece capraz referans icin saklaniyor.
 """
 
 import json
+import re
 import sys
 import zipfile
+from functools import lru_cache
 from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -144,6 +146,93 @@ def load_region_ground_truth(region_key: str) -> dict:
         "totalBuildings": len(buildings_gj["features"]),
         "damagedBuildings": damaged_buildings,
     }
+
+
+# --------------------------------------------------------------------------
+# Kapanma katmani icin: paketten dogrudan okuma (zip icinden, cikartmadan)
+# --------------------------------------------------------------------------
+# Hangi EMSR derecelerinin yolu KAPATTIGI bir karardir (M-26 / Tablo 19);
+# uc kural birlikte raporlanabilsin diye adlandirilmistir. Projenin geri
+# kalaninda (dogrulama, J-12) "hasarli" = DAMAGED_GRADES = gevsek kural.
+ROAD_GRADE_RULES = {
+    "strict": frozenset({"Destroyed"}),
+    "medium": frozenset({"Destroyed", "Damaged"}),
+    "loose": frozenset(DAMAGED_GRADES),
+}
+# Yalnizca bu klasordeki, bu bicimdeki dosya adlari kabul edilir (API'den
+# gelen bir degerle dosya sisteminde gezinilmesin).
+EMSR_PACKAGE_RE = re.compile(r"EMSR648_AOI\d{2}_GRA_[A-Z0-9]+_r1_[A-Z0-9]+_v\d+_vector\.zip")
+
+
+def _iter_line_parts(geometry):
+    if geometry["type"] == "LineString":
+        yield geometry["coordinates"]
+    elif geometry["type"] == "MultiLineString":
+        yield from geometry["coordinates"]
+
+
+@lru_cache(maxsize=16)
+def _package_layers(package: str):
+    """(yol kayitlari, AOI halkalari) -- paket basina bir kez okunur."""
+    if not EMSR_PACKAGE_RE.fullmatch(package or ""):
+        raise ValueError(f"Gecersiz EMSR paket adi: {package!r}")
+    path = COPERNICUS_DIR / package
+    if not path.exists():
+        raise FileNotFoundError(f"{path} yok -- paketi benchmark/data/copernicus/ altina indirin.")
+    with zipfile.ZipFile(path) as zf:
+        def layer(pattern):
+            names = [n for n in zf.namelist() if n.endswith(".json") and pattern in n]
+            return json.loads(zf.read(names[0]))["features"] if names else []
+
+        roads = tuple(
+            (f["properties"].get("damage_gra"),
+             tuple(tuple((float(x), float(y)) for x, y, *_ in part) for part in _iter_line_parts(f["geometry"])))
+            for f in layer("transportationL")
+        )
+        rings = []
+        for f in layer("areaOfInterestA"):
+            g = f["geometry"]
+            polys = [g["coordinates"]] if g["type"] == "Polygon" else g["coordinates"]
+            for poly in polys:
+                rings.append(tuple((float(x), float(y)) for x, y, *_ in poly[0]))
+    return roads, tuple(rings)
+
+
+def damaged_road_lines(package: str, rule: str = "loose", bbox=None, margin_deg: float = 0.002):
+    """Kurala gore hasarli sayilan yol cizgileri: [[(lon, lat), ...], ...].
+    `bbox` verilirse yalnizca kutuya (payla) degen cizgiler doner."""
+    grades = ROAD_GRADE_RULES[rule]
+    roads, _ = _package_layers(package)
+    out = []
+    for grade, parts in roads:
+        if grade not in grades:
+            continue
+        for part in parts:
+            if bbox is not None:
+                w, s, e, n = bbox
+                if not any(w - margin_deg <= x <= e + margin_deg and s - margin_deg <= y <= n + margin_deg
+                           for x, y in part):
+                    continue
+            out.append(list(part))
+    return out
+
+
+def road_grade_counts(package: str, bbox=None):
+    """Kutudaki EMSR yol kayitlarinin derece dagilimi (raporlama icin)."""
+    roads, _ = _package_layers(package)
+    counts = {}
+    for grade, parts in roads:
+        if bbox is not None:
+            w, s, e, n = bbox
+            if not any(w <= x <= e and s <= y <= n for part in parts for x, y in part):
+                continue
+        counts[grade] = counts.get(grade, 0) + 1
+    return counts
+
+
+def aoi_rings(package: str):
+    """Copernicus'un GERCEKTEN inceledigi alanin halkalari."""
+    return [list(r) for r in _package_layers(package)[1]]
 
 
 def main():

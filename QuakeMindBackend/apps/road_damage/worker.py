@@ -110,6 +110,10 @@ def run_analysis_job(req: dict) -> dict:
     use_imagenet_norm = req.get("useImagenetNorm", True)
     post_process_level = req.get("postProcessLevel", 2)
     network_type = req.get("networkType") or "drive"
+    # r_h -- sert kapatma yaricapi (bkz. network.analyze_road_network_graph).
+    # Varsayilan 0 = uygulamanin her zamanki kurali (hasar yol maskesinin
+    # ustunde). Yaricap kurali yalnizca acikca istenirse (bkz. J-26).
+    blockage_radius_m = float(req.get("blockageRadiusM", 0.0))
 
     started_at = time.perf_counter()
     t0 = started_at
@@ -363,9 +367,15 @@ def run_analysis_job(req: dict) -> dict:
         # harmless (unlike when this ran inline in the main API process).
         logistics_executor = ThreadPoolExecutor(max_workers=1)
         try:
+            # Yaricap kurali acikken TUM hasar maskesi (pred_mask_binary)
+            # gonderilir: yandaki binadan sokaga dokulen moloz da yolu
+            # kapatir. `intersection` (yalniz yol rasterinin USTUNDEKI hasar)
+            # buna izin vermiyordu -- olculdu: %1,26 hasarli goruntude
+            # kapali yol SIFIR. Yaricap 0 ise eski davranis aynen korunur.
+            closure_mask = pred_mask_binary if blockage_radius_m > 0 else intersection
             future = logistics_executor.submit(
                 analyze_road_network_graph,
-                bounds, w, h, intersection, network_type,
+                bounds, w, h, closure_mask, network_type, blockage_radius_m,
             )
             G, safe_G, safe_edges, blocked_edges = future.result(timeout=45)
         finally:
@@ -418,6 +428,10 @@ def run_analysis_job(req: dict) -> dict:
         "damageRate": round(damage_rate, 4),
         "openRoads": safe_count,
         "blockedRoads": blocked_count,
+        # Kapanma kurali ciktiya yazilir: ayni goruntu farkli r_h ile
+        # cok farkli sayida kapanma uretir, sonuc bu olmadan yorumlanamaz.
+        "blockageRadiusM": blockage_radius_m,
+        "closureRule": "radius" if blockage_radius_m > 0 else "on_road_pixel",
         "openRoadPct": round(open_road_pct, 4),
         "blockedRoadPct": round(blocked_road_pct, 4),
         "logLines": log_lines,

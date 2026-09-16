@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import bcrypt
 import math
+import re
 import sys
 import os
 import site
@@ -13,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from contextlib import contextmanager, asynccontextmanager
 from typing import Optional
-from threading import Lock, Thread
+from threading import Event, Lock, Thread
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, TimeoutError as FutureTimeoutError
 import functools
 import multiprocessing
@@ -145,14 +146,24 @@ if _IS_APP_PROCESS:
 
 
 def _load_road_runtime():
+    # DIKKAT: SegFormer'i BU surece yuklemeyin. Gercek cikarim
+    # apps/road_damage/worker.py icinde, AYRI bir surecte, o surecin KENDI
+    # model kopyasiyla kosuyor (_init_worker -> load_simple_model). Burada bir
+    # zamanlar `load_simple_model` cagriliyor ve sonuc `model`/`device`
+    # anahtarlarina konuyordu, ama bu anahtarlar bu dosyada HIC okunmuyordu --
+    # olculdu: +618 MB RSS ve +5,3sn acilis, okunmayan bir sozluk girdisi
+    # icin (ayrica `inference` modulunun kendisi transformers/SegFormer
+    # yiginini da suruklerdi). `run_inference` ve
+    # `analyze_road_network_graph` de ayni sekilde yalnizca worker'da
+    # kullaniliyor. Streamlit tarafi (main.py, apps/road_damage/app.py)
+    # bunlari kendi kopyalarinda yuklemeye devam eder -- oraya dokunulmadi.
     from apps.road_damage.utils.fetcher import (
         fetch_satellite_area,
         get_osm_roads_overpass,
         get_wayback_versions,
         search_oam_images,
     )
-    from apps.road_damage.utils.inference import load_simple_model, run_inference
-    from apps.road_damage.utils.network import analyze_road_network_graph, calculate_route
+    from apps.road_damage.utils.network import calculate_route
     from apps.road_damage.utils.assembly import (
         bbox_from_center,
         fetch_osm_safety_areas,
@@ -166,18 +177,11 @@ def _load_road_runtime():
         shortest_route_from_local_roads,
     )
 
-    model_path = str(ROAD_ROOT / "models" / "optimized_mitb4_focal_dice30.pth")
-    model, device = load_simple_model(model_path)
-    if model is None:
-        raise RuntimeError("Segformer modeli yuklenemedi.")
-
     return {
         "fetch_satellite_area": fetch_satellite_area,
         "get_osm_roads_overpass": get_osm_roads_overpass,
         "get_wayback_versions": get_wayback_versions,
         "search_oam_images": search_oam_images,
-        "run_inference": run_inference,
-        "analyze_road_network_graph": analyze_road_network_graph,
         "calculate_route": calculate_route,
         "bbox_from_center": bbox_from_center,
         "fetch_osm_safety_areas": fetch_osm_safety_areas,
@@ -187,8 +191,6 @@ def _load_road_runtime():
         "has_local_safety_dataset": has_local_safety_dataset,
         "load_local_safety_areas": load_local_safety_areas,
         "shortest_route_from_local_roads": shortest_route_from_local_roads,
-        "model": model,
-        "device": device,
     }
 
 
@@ -198,7 +200,7 @@ def _get_road_runtime():
         return road_runtime
     if road_runtime_load_attempted:
         # Already tried and failed once this process lifetime -- don't retry the
-        # (slow, torch/osmnx-importing) load on every single request. A server
+        # (slow, osmnx/geopandas-importing) load on every single request. A server
         # restart is required to retry, matching the singleton-with-cached-failure
         # pattern used for the other lazily-loaded engines above.
         raise RuntimeError(road_runtime_error or "Road Damage runtime yuklenemedi.")
@@ -253,21 +255,141 @@ team_claims_lock = Lock()
 
 # In-memory road-damage analysis session store: keeps the routable "safe roads"
 # graph around so a later /route call can compute a real path without re-running
-# the whole satellite fetch + inference pipeline. Bounded FIFO eviction since
-# networkx graphs are memory-heavy and this is PoC/process-only state.
+# the whole satellite fetch + inference pipeline.
+#
+# Tahliye UC olcute birden bakar. Eskiden yalnizca sayi sinirlamasi vardi
+# (20 oturum) ve bu iki soruna yol aciyordu:
+#   1. Bellek tavani gorunmezdi. Olculdu: tek bir 3 km bolge grafi bellekte
+#      130-137 MB (20 643 dugum / 49 666 kenar), yani 20 oturum ~2,7 GB
+#      edebiliyordu -- 16,9 GB'lik makinede kabul edilemez.
+#   2. Bellek HIC geri gelmiyordu: zaman asimi yoktu, bir graf ancak 20 yenisi
+#      onu tasirana kadar tutuluyordu. Dokuz bolgeli bir senaryo kosumundan
+#      sonra ~600 MB sunucu kapatilana kadar bosa duruyordu.
 road_damage_sessions: "dict[str, dict]" = {}
 road_damage_sessions_order: list = []
 road_damage_sessions_lock = Lock()
-ROAD_DAMAGE_SESSION_LIMIT = 20
+ROAD_DAMAGE_SESSION_LIMIT = int(os.environ.get("QUAKEMIND_SESSION_LIMIT", "20"))
+ROAD_DAMAGE_SESSION_TTL_SEC = float(os.environ.get("QUAKEMIND_SESSION_TTL_SEC", str(30 * 60)))
+ROAD_DAMAGE_SESSION_BUDGET_MB = float(os.environ.get("QUAKEMIND_SESSION_BUDGET_MB", "1024"))
+
+# Graf basina bellek tahmini icin OLCULMUS sabit. Bes gercek bolge grafinda
+# (2 535 - 70 309 eleman) RSS artisi elemani basina 792 - 1 855 bayt cikti;
+# oran graf buyudukce artiyor, bu yuzden butce hesabinda ORTALAMA degil UST
+# deger kullanilir -- kucuk graflarda fazladan temkinli olmak, buyuklerde
+# bellegi olduğundan az saymaktan iyidir.
+_GRAPH_BYTES_PER_ELEMENT = 1900
+
+# Referans: dokuz bolgeli Senaryo v2'nin TAMAMI ~97 300 dugum + 222 300 kenar
+# = ~319 600 eleman ~ 607 MB. Yani 1024 MB'lik varsayilan butce tam bir senaryo
+# kosumunu ~1,7x paylayla tasir; senaryo bu degisiklikten etkilenmez.
+
+
+def _estimate_session_bytes(data) -> int:
+    """Oturumun tuttugu grafin kaba bellek maliyeti.
+
+    `simulate_closures` oturumlari hem `G` (gercek graf) hem `safe_G`
+    (nx.restricted_view -- AYNI depolamayi paylasan salt-okunur gorunum)
+    tutar; `/analyze` oturumlari yalnizca `safe_G` tutar ve o GERCEK bir
+    kopyadir. Ikisini de toplamak gorunumu iki kez saymak olurdu, bu yuzden
+    en buyuk tek graf esas alinir."""
+    biggest = 0
+    for key in ("G", "safe_G"):
+        graph = data.get(key)
+        if graph is None:
+            continue
+        try:
+            biggest = max(biggest, graph.number_of_nodes() + graph.number_of_edges())
+        except Exception:
+            continue
+    return biggest * _GRAPH_BYTES_PER_ELEMENT
+
+
+def _evict_road_damage_sessions_locked(protect=None):
+    """road_damage_sessions_lock TUTULUYORKEN cagrilir. Sirasiyla: suresi
+    dolanlar, sayi sinirini asanlar, bellek butcesini asanlar.
+
+    `protect`, hicbir kosulda atilmayacak analiz kimligi (yeni saklanan
+    oturum). Onsuz, tek basina butceden buyuk bir graf saklandigi anda
+    tahliye edilir ve /route hemen 422 dondururdu."""
+    now = time.time()
+    dropped = []
+
+    def _drop(analysis_id):
+        road_damage_sessions.pop(analysis_id, None)
+        if analysis_id in road_damage_sessions_order:
+            road_damage_sessions_order.remove(analysis_id)
+        dropped.append(analysis_id)
+
+    if ROAD_DAMAGE_SESSION_TTL_SEC > 0:
+        for analysis_id in list(road_damage_sessions_order):
+            if analysis_id == protect:
+                continue
+            stored_at = road_damage_sessions.get(analysis_id, {}).get("storedAt", now)
+            if now - stored_at > ROAD_DAMAGE_SESSION_TTL_SEC:
+                _drop(analysis_id)
+
+    while len(road_damage_sessions_order) > ROAD_DAMAGE_SESSION_LIMIT:
+        oldest = next((a for a in road_damage_sessions_order if a != protect), None)
+        if oldest is None:
+            break
+        _drop(oldest)
+
+    budget_bytes = ROAD_DAMAGE_SESSION_BUDGET_MB * 1e6
+    def _total():
+        return sum(s.get("estimatedBytes", 0) for s in road_damage_sessions.values())
+    while _total() > budget_bytes:
+        # Butce ASLA son oturumu dusurmez. Tek basina butceden buyuk bir graf
+        # (cok genis yaricapli bir bolge) aksi halde saklandiktan hemen sonra,
+        # ILK OKUMADA tahliye edilir ve /route 422 dondururdu -- `protect`
+        # yalnizca saklama anini koruyor, okuma yolunu korumuyordu.
+        if len(road_damage_sessions_order) <= 1:
+            break
+        oldest = next((a for a in road_damage_sessions_order if a != protect), None)
+        if oldest is None:
+            break
+        _drop(oldest)
+
+    if dropped:
+        print(
+            f"Road damage sessions evicted: {len(dropped)} "
+            f"(kalan {len(road_damage_sessions)}, ~{_total()/1e6:.0f} MB)",
+            flush=True,
+        )
+    return dropped
 
 
 def _store_road_damage_session(analysis_id, data):
     with road_damage_sessions_lock:
+        data["storedAt"] = time.time()
+        data["estimatedBytes"] = _estimate_session_bytes(data)
+        # Ayni kimlik ikinci kez saklanirsa sira listesinde MUKERRER girdi
+        # olusur ve tahliye, hala gecerli bir oturumun kimligini dusurebilir.
+        if analysis_id in road_damage_sessions_order:
+            road_damage_sessions_order.remove(analysis_id)
         road_damage_sessions[analysis_id] = data
         road_damage_sessions_order.append(analysis_id)
-        while len(road_damage_sessions_order) > ROAD_DAMAGE_SESSION_LIMIT:
-            oldest = road_damage_sessions_order.pop(0)
-            road_damage_sessions.pop(oldest, None)
+        _evict_road_damage_sessions_locked(protect=analysis_id)
+
+
+def _get_road_damage_session(analysis_id):
+    """Oturumu okur ve bu firsatla suresi dolmuslari temizler. Suresi dolmus
+    bir oturum None doner -- cagiranlarin zaten verdigi "oturum bulunamadi
+    veya suresi doldu" hatasi bu durumu dogru anlatiyor."""
+    with road_damage_sessions_lock:
+        _evict_road_damage_sessions_locked()
+        return road_damage_sessions.get(analysis_id)
+
+
+def _sweep_road_damage_sessions(stop_event, interval_sec=60.0):
+    """Arka plan temizleyicisi. Tahliyeyi SADECE saklama/okuma anlarina
+    baglamak yetmiyordu: bir senaryo kosumu bittikten sonra baska istek
+    gelmezse ~600 MB, sunucu kapanana kadar bosa duruyordu."""
+    while not stop_event.wait(interval_sec):
+        try:
+            with road_damage_sessions_lock:
+                _evict_road_damage_sessions_locked()
+        except Exception:
+            pass
 
 
 # In-memory road-damage *job* store (separate from road_damage_sessions
@@ -295,6 +417,9 @@ road_damage_pool: "ProcessPoolExecutor | None" = None
 # a process boundary.
 road_damage_progress_queue = None
 road_damage_progress_thread = None
+# Oturum temizleyicisi (bkz. _sweep_road_damage_sessions)
+road_damage_sweeper_stop = None
+road_damage_sweeper_thread = None
 
 
 def _store_road_damage_job(analysis_id, data):
@@ -364,6 +489,7 @@ def _drain_road_damage_progress(queue):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global road_damage_pool, road_damage_progress_queue, road_damage_progress_thread
+    global road_damage_sweeper_stop, road_damage_sweeper_thread
     from apps.road_damage import worker as road_damage_worker
 
     model_path = str(ROAD_ROOT / "models" / "optimized_mitb4_focal_dice30.pth")
@@ -375,6 +501,14 @@ async def lifespan(app: FastAPI):
         daemon=True,
     )
     road_damage_progress_thread.start()
+
+    road_damage_sweeper_stop = Event()
+    road_damage_sweeper_thread = Thread(
+        target=_sweep_road_damage_sessions,
+        args=(road_damage_sweeper_stop,),
+        daemon=True,
+    )
+    road_damage_sweeper_thread.start()
 
     road_damage_pool = ProcessPoolExecutor(
         max_workers=pool_size,
@@ -393,6 +527,8 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    if road_damage_sweeper_stop is not None:
+        road_damage_sweeper_stop.set()
     road_damage_pool.shutdown(wait=False, cancel_futures=True)
     try:
         road_damage_progress_queue.put_nowait(None)
@@ -492,6 +628,15 @@ class RoadDamageRequest(BaseModel):
     # meters) whenever the caller (mobile app) sent no bbox at all -- this
     # makes sure a real, requested-size area is always analyzed instead.
     radiusKm: float = 2.5
+    # r_h -- sert kapatma yaricapi (metre). Bir yol, bu mesafe icinde
+    # hasar tespit edilirse kapali sayilir. 0 = uygulamanin HER ZAMANKI kurali
+    # (hasar, cizilmis yol maskesinin ustunde olmali).
+    # VARSAYILAN 0: web uygulamasi bu alani gondermiyor; yaricap kurali
+    # varsayilan yapildiginda uygulamanin yol hasari sonuclari kullaniciya
+    # sorulmadan degismisti, ustelik drone sahnelerinde EMSR648'e karsi
+    # olculen dogrulugu dusuk cikti (bkz. J-26). Yaricap kurali yalnizca
+    # acikca istenirse (arastirma/duyarlilik) kullanilir.
+    blockageRadiusM: float = 0.0
 
 
 class SimulateClosuresRequest(BaseModel):
@@ -500,6 +645,13 @@ class SimulateClosuresRequest(BaseModel):
     radiusKm: float = 1.0
     closureRatio: float = 0.15
     seed: Optional[int] = None
+    # Istege bagli ACIK sinir kutusu. Dordu de verilirse merkez+yaricaptan
+    # turetilen kare yerine bu kutu kullanilir (drone sahneleri: graf ve
+    # maske sahnenin kendi kapsama kutusu uzerinde, bkz. scenario_dataset_drone).
+    bboxWest: Optional[float] = None
+    bboxSouth: Optional[float] = None
+    bboxEast: Optional[float] = None
+    bboxNorth: Optional[float] = None
 
 
 class RoadDamageRouteRequest(BaseModel):
@@ -852,8 +1004,7 @@ def get_road_damage_status(analysis_id: str):
 
 @app.post("/api/road_damage/route")
 def road_damage_route(req: RoadDamageRouteRequest):
-    with road_damage_sessions_lock:
-        session = road_damage_sessions.get(req.analysisId)
+    session = _get_road_damage_session(req.analysisId)
     if session is None:
         raise HTTPException(status_code=422, detail="Analiz oturumu bulunamadi veya suresi doldu. Once analizi tekrar calistirin.")
 
@@ -869,21 +1020,27 @@ def road_damage_route(req: RoadDamageRouteRequest):
     safe_G = session["safe_G"]
 
     try:
-        dijkstra_coords, _astar_coords, _dijkstra_cost, _astar_cost = calculate_route(
+        # Yalnizca A* kosulur: bu uc nokta eskiden Dijkstra + A*'in IKISINI de
+        # hesaplatip A* sonucunu ATIYORDU. Olculdu: Dijkstra 0,039sn, A*
+        # 0,013sn ve ikisi ayni yolu buluyor (haversine sezgisi kabul
+        # edilebilir oldugu icin A*'in optimalligi garantili; dolayisiyla
+        # dondurulen mesafe degismez).
+        _dijkstra_coords, astar_coords, _dijkstra_cost, _astar_cost = calculate_route(
             safe_G, req.startLat, req.startLon, req.endLat, req.endLon,
+            algorithms=('astar',),
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Rota hesaplanamadi: {e}")
 
-    if not dijkstra_coords:
+    if not astar_coords:
         raise HTTPException(status_code=422, detail="Bu iki nokta arasinda guvenli bir baglanti bulunamadi. Yol tamamen kapali olabilir.")
 
     distance_m = 0.0
-    for (lat1, lon1), (lat2, lon2) in zip(dijkstra_coords[:-1], dijkstra_coords[1:]):
+    for (lat1, lon1), (lat2, lon2) in zip(astar_coords[:-1], astar_coords[1:]):
         distance_m += _haversine_m(lat1, lon1, lat2, lon2)
 
     return {
-        "routeCoords": [[float(lat), float(lon)] for lat, lon in dijkstra_coords],
+        "routeCoords": [[float(lat), float(lon)] for lat, lon in astar_coords],
         "distanceMeters": round(distance_m, 1),
     }
 
@@ -897,10 +1054,9 @@ def simulate_road_closures(req: SimulateClosuresRequest):
     /route, /recent ve frontend hicbir fark gozetmeden kullanir. Senkron
     calisir (worker pool YOK) cunku SegFormer inference yok, sadece graf
     edinme var (fetch_osm_road_graph zaten cache-first, hizli)."""
-    from apps.road_damage.utils.assembly import bbox_from_center
     from apps.road_damage.utils.network import simulate_random_closures
 
-    bbox = bbox_from_center(req.latitude, req.longitude, req.radiusKm)
+    bbox = _request_bbox(req)
     # network_type='walk' (varsayilan 'drive' yerine): CARTO taban haritasi
     # yaya sokaklarini/ara yollari da ciziyor, 'drive' grafigi bunlari hic
     # icermedigi icin haritada "bos" (renksiz) kalan bir suru yol goruluyordu.
@@ -920,6 +1076,12 @@ def simulate_road_closures(req: SimulateClosuresRequest):
         "safeRoadSegments": _serialize_segments(safe_edges),
         "blockedRoadSegments": _serialize_segments(blocked_edges),
         "simulated": True,
+        # Kapanmalarin KAYNAGI her ciktida acikca yazilir: bu uc rastgele
+        # (rng.sample) kapanma uretir; model tabanli olan
+        # /closures_from_mask ile karistirilmasin (bkz. J-12, J-23).
+        "closureSource": "synthetic",
+        "closedEdgeCount": len({(u, v, k) for u, v, k, _line in blocked_edges}),
+        "edgeCount": G.number_of_edges(),
     }
 
     # G (kapatmasiz TAM graf) + kapali kenar (u,v,key) kumesi de saklanir --
@@ -935,6 +1097,221 @@ def simulate_road_closures(req: SimulateClosuresRequest):
     _store_road_damage_job(analysis_id, {
         "status": "done", "result": result, "progress": 100,
         "progressMessage": "Simulasyon tamamlandi.",
+        "createdAt": time.time(), "finishedAt": time.time(),
+    })
+    return {"analysisId": analysis_id, "status": "done", **result}
+
+
+# Colab/GPU'da uretilen hasar maskeleri (benchmark/colab/make_model_masks.py).
+# Kullanicinin bilgisayarinda GPU yok; tam bolge (3 km) z=18 cikarimi CPU'da
+# bolge basina saatler suruyor (olculdu: 0,3 km yaricapta bile 306,8 sn). Bu
+# yuzden cikarim Colab T4'te bir kez yapilir, maskeler dosya olarak buraya
+# konur ve senaryo bu HAZIR maskelerle yerelde hizla kosar.
+MODEL_MASK_ROOT = BASE_DIR / "benchmark" / "data" / "model_masks"
+_MASK_ID_RE = re.compile(r"[A-Za-z0-9_-]{1,64}")
+
+
+class ClosuresFromMaskRequest(BaseModel):
+    maskId: str                    # MODEL_MASK_ROOT altindaki klasor adi (orn. "H-Z1")
+    latitude: float
+    longitude: float
+    radiusKm: float = 3.0
+    blockageRadiusM: float = 25.0  # r_h -- bkz. J-19 / J-22
+    networkType: str = "walk"      # /simulate_closures ile ayni graf (onbellek anahtari)
+    # Istege bagli ACIK sinir kutusu. Dordu de verilirse merkez+yaricaptan
+    # turetilen kare yerine bu kutu kullanilir (drone sahneleri: graf ve
+    # maske sahnenin kendi kapsama kutusu uzerinde, bkz. scenario_dataset_drone).
+    bboxWest: Optional[float] = None
+    bboxSouth: Optional[float] = None
+    bboxEast: Optional[float] = None
+    bboxNorth: Optional[float] = None
+
+
+def _request_bbox(req):
+    """Istek acik bir kutu tasiyorsa onu, yoksa merkez+yaricap karesini dondurur."""
+    from apps.road_damage.utils.assembly import bbox_from_center
+
+    explicit = (req.bboxWest, req.bboxSouth, req.bboxEast, req.bboxNorth)
+    if all(v is not None for v in explicit):
+        if not (explicit[0] < explicit[2] and explicit[1] < explicit[3]):
+            raise HTTPException(status_code=422, detail="Gecersiz bbox (bati<dogu, guney<kuzey olmali).")
+        return explicit
+    return bbox_from_center(req.latitude, req.longitude, req.radiusKm)
+
+
+def _load_model_mask(mask_id: str):
+    """maskId'yi YALNIZCA MODEL_MASK_ROOT altinda cozer -- istemciden gelen
+    bir degerle dosya sisteminde gezinilmesine izin verilmez."""
+    import json as _json
+
+    import numpy as _np
+    from PIL import Image as _Image
+
+    if not _MASK_ID_RE.fullmatch(mask_id or ""):
+        raise HTTPException(status_code=422, detail="Gecersiz maskId.")
+    mask_dir = (MODEL_MASK_ROOT / mask_id).resolve()
+    if MODEL_MASK_ROOT.resolve() not in mask_dir.parents:
+        raise HTTPException(status_code=422, detail="Gecersiz maskId.")
+    meta_path = mask_dir / "meta.json"
+    damage_path = mask_dir / "damage_mask.png"
+    if not meta_path.exists() or not damage_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=(f"'{mask_id}' icin hazir hasar maskesi yok. Once Colab defterini "
+                    "(benchmark/colab/) calistirip ciktisini "
+                    f"benchmark/data/model_masks/{mask_id}/ altina koyun."),
+        )
+    meta = _json.loads(meta_path.read_text(encoding="utf-8"))
+    damage = (_np.array(_Image.open(damage_path).convert("L")) > 0).astype(_np.uint8)
+    valid = None
+    valid_path = mask_dir / "valid_mask.png"
+    if valid_path.exists():
+        valid = (_np.array(_Image.open(valid_path).convert("L")) > 0).astype(_np.uint8)
+    if (damage.shape[1], damage.shape[0]) != (meta.get("width"), meta.get("height")):
+        raise HTTPException(status_code=422, detail=f"'{mask_id}': maske boyutu meta.json ile uyusmuyor.")
+    return meta, damage, valid
+
+
+@app.post("/api/road_damage/closures_from_mask")
+def closures_from_mask(req: ClosuresFromMaskRequest):
+    """MODEL TABANLI kapanmalar: Colab'da SegFormer ile uretilmis hazir bir
+    hasar maskesinden, canli /analyze ile AYNI kuralla (r_h yaricapi) yol
+    kapanmalari cikarir. Yanit /simulate_closures ile birebir ayni sekildedir;
+    oturum da ayni alanlari (G, safe_G, closedEdgeKeys) tasidigi icin /route,
+    /naive_compare, /recent ve harita hicbir fark gozetmeden calisir.
+
+    /simulate_closures'tan farki: hangi yolun kapali oldugunu rastgele
+    ornekleme DEGIL, modelin deprem sonrasi goruntude gordugu hasar belirler."""
+    import networkx as _nx
+
+    from apps.road_damage.utils.network import closures_from_damage_mask, fetch_osm_road_graph
+
+    meta, damage, valid = _load_model_mask(req.maskId)
+    bbox = _request_bbox(req)
+    G, error = fetch_osm_road_graph(bbox, network_type=req.networkType)
+    if G is None:
+        raise HTTPException(status_code=503, detail=f"Yol grafigi alinamadi: {error}")
+
+    mb = meta["bounds"]
+    mask_bounds = (mb["west"], mb["south"], mb["east"], mb["north"])
+    safe_edges, blocked_edges, closed_keys, coverage = closures_from_damage_mask(
+        G, mask_bounds, damage, valid, req.blockageRadiusM,
+    )
+    # Kopya DEGIL gorunum -- /simulate_closures ile ayni desen (bkz. J-02, J-17).
+    safe_G = _nx.restricted_view(G, [], closed_keys)
+
+    analysis_id = str(uuid.uuid4())
+    bounds_dict = {"west": bbox[0], "south": bbox[1], "east": bbox[2], "north": bbox[3]}
+    mask_summary = {
+        k: meta.get(k) for k in (
+            "zoneId", "zoom", "metresPerPixel", "scenes", "model", "createdAt",
+            "threshold", "damageBooster", "useImagenetNorm", "postProcessLevel",
+            "damagePixelFraction", "validPixelFraction", "inferenceDevice",
+        )
+    }
+    result = {
+        "bounds": bounds_dict,
+        "safeRoadSegments": _serialize_segments(safe_edges),
+        "blockedRoadSegments": _serialize_segments(blocked_edges),
+        "simulated": False,
+        "closureSource": "model",
+        "maskId": req.maskId,
+        "blockageRadiusM": req.blockageRadiusM,
+        "closedEdgeCount": len(closed_keys),
+        "edgeCount": G.number_of_edges(),
+        "coverage": coverage,
+        "maskMeta": mask_summary,
+    }
+    _store_road_damage_session(analysis_id, {
+        "safe_G": safe_G, "G": G, "closedEdgeKeys": closed_keys, "bounds": bounds_dict,
+        "closureSource": "model",
+    })
+    _store_road_damage_job(analysis_id, {
+        "status": "done", "result": result, "progress": 100,
+        "progressMessage": "Model tabanli kapanmalar hazir.",
+        "createdAt": time.time(), "finishedAt": time.time(),
+    })
+    return {"analysisId": analysis_id, "status": "done", **result}
+
+
+class ClosuresFromEmsrRequest(BaseModel):
+    emsrPackage: str               # benchmark/data/copernicus/ altindaki EMSR648 Grading paketi
+    latitude: float
+    longitude: float
+    radiusKm: float = 3.0
+    gradeRule: str = "loose"       # strict | medium | loose (bkz. copernicus_ground_truth.ROAD_GRADE_RULES)
+    bufferM: float = 8.0           # EMSR cizgisi <-> OSM kenari eslestirme tamponu
+    minOverlap: float = 0.5        # kenarin tampon icinde kalmasi gereken orani
+    networkType: str = "walk"
+    bboxWest: Optional[float] = None
+    bboxSouth: Optional[float] = None
+    bboxEast: Optional[float] = None
+    bboxNorth: Optional[float] = None
+
+
+@app.post("/api/road_damage/closures_from_emsr")
+def closures_from_emsr(req: ClosuresFromEmsrRequest):
+    """YER GERCEGI kapanmalar: Copernicus EMSR648 Grading'in hasarli yol
+    cizgilerini OSM grafina esleyerek kapanma cikarir. Yanit ve oturum
+    /simulate_closures ve /closures_from_mask ile ayni sekildedir; boylece
+    ayni afetzede/ekip/rota/naif akisi uc farkli kapanma kaynagiyla
+    (sentetik / model / yer gercegi) birebir karsilastirilabilir.
+
+    EMSR'in incelemedigi (AOI disi) yollar hakkinda yer gercegi yoktur ve
+    acik kabul edilir; bunlarin orani `stats.edgesInsideObservedFraction`
+    ile raporlanir."""
+    import networkx as _nx
+
+    from apps.road_damage.utils.network import closures_from_lines, fetch_osm_road_graph
+    from benchmark.copernicus_ground_truth import (
+        ROAD_GRADE_RULES, aoi_rings, damaged_road_lines, road_grade_counts,
+    )
+
+    if req.gradeRule not in ROAD_GRADE_RULES:
+        raise HTTPException(status_code=422, detail=f"gradeRule {sorted(ROAD_GRADE_RULES)} olmali.")
+    if not (0 < req.bufferM <= 50) or not (0 < req.minOverlap <= 1):
+        raise HTTPException(status_code=422, detail="bufferM (0,50] ve minOverlap (0,1] araliginda olmali.")
+    bbox = _request_bbox(req)
+    try:
+        lines = damaged_road_lines(req.emsrPackage, req.gradeRule, bbox)
+        rings = aoi_rings(req.emsrPackage)
+        grades = road_grade_counts(req.emsrPackage, bbox)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Gecersiz emsrPackage.")
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"EMSR paketi bulunamadi: {req.emsrPackage}")
+
+    G, error = fetch_osm_road_graph(bbox, network_type=req.networkType)
+    if G is None:
+        raise HTTPException(status_code=503, detail=f"Yol grafigi alinamadi: {error}")
+
+    safe_edges, blocked_edges, closed_keys, stats = closures_from_lines(
+        G, lines, buffer_m=req.bufferM, min_overlap=req.minOverlap, observed_polygons=rings,
+    )
+    safe_G = _nx.restricted_view(G, [], closed_keys)
+
+    analysis_id = str(uuid.uuid4())
+    bounds_dict = {"west": bbox[0], "south": bbox[1], "east": bbox[2], "north": bbox[3]}
+    result = {
+        "bounds": bounds_dict,
+        "safeRoadSegments": _serialize_segments(safe_edges),
+        "blockedRoadSegments": _serialize_segments(blocked_edges),
+        "simulated": False,
+        "closureSource": "emsr648",
+        "emsrPackage": req.emsrPackage,
+        "gradeRule": req.gradeRule,
+        "closedEdgeCount": len(closed_keys),
+        "edgeCount": G.number_of_edges(),
+        "emsrRoadGradesInBbox": grades,
+        "stats": stats,
+    }
+    _store_road_damage_session(analysis_id, {
+        "safe_G": safe_G, "G": G, "closedEdgeKeys": closed_keys, "bounds": bounds_dict,
+        "closureSource": "emsr648",
+    })
+    _store_road_damage_job(analysis_id, {
+        "status": "done", "result": result, "progress": 100,
+        "progressMessage": "EMSR648 yer gercegi kapanmalari hazir.",
         "createdAt": time.time(), "finishedAt": time.time(),
     })
     return {"analysisId": analysis_id, "status": "done", **result}
@@ -958,8 +1335,7 @@ def naive_compare(req: NaiveCompareRequest):
     BIREBIR ayni nesneleri kullanir, boylece 'ayni kapanmayi biliyor/bilmiyor
     olma' matematiksel garantisi (naive >= bizim motor) hicbir surec-arasi
     farkla bozulmaz."""
-    with road_damage_sessions_lock:
-        session = road_damage_sessions.get(req.analysisId)
+    session = _get_road_damage_session(req.analysisId)
     if session is None or "G" not in session or "closedEdgeKeys" not in session:
         raise HTTPException(
             status_code=422,
@@ -984,6 +1360,101 @@ def naive_compare(req: NaiveCompareRequest):
         "discoveries": result["discoveries"],
         "routeCoords": [[float(lat), float(lon)] for lat, lon in result["routeCoords"]],
     }
+
+
+class ReferenceTask(BaseModel):
+    id: str
+    startLat: float
+    startLon: float
+    endLat: float
+    endLon: float
+
+
+class ReferenceVariant(BaseModel):
+    name: str
+    sightM: float = 0.0
+    share: bool = False
+    # Paylasimda ayni anda ogrenilen kapanma bilinir mi (kafile kurali); bkz.
+    # simulate_reference_fleet.
+    simultaneousKnown: bool = True
+
+
+class ReferenceCompareRequest(BaseModel):
+    analysisId: str
+    tasks: list[ReferenceTask]
+    variants: list[ReferenceVariant]
+    speedKmh: float = 15.0
+    # Paylasimli (R2) varyantlarda sonuc t_u'ya bagli (kim once ogrenir), bu yuzden
+    # her deger icin ayri simule edilir; paylasimsizlarda tek sonuc tum degerlere yazilir.
+    uTurnPenaltyMinValues: list[float] = [20.0]
+
+
+_REFERENCE_NAME_RE = re.compile(r"[A-Za-z0-9_-]{1,32}")
+
+
+@app.post("/api/road_damage/reference_compare")
+def reference_compare(req: ReferenceCompareRequest):
+    """Makalenin ara karsilastirma referanslari (Bolum 3.8): R1 gorus mesafeli
+    ajan, R2 bilgi paylasan filo. naive_compare ile ayni gerekceyle ayni surecte,
+    oturumdaki AYNI G ve kapanma kumesiyle calisir. Gorevler bir bolgenin tum
+    atamalaridir -- R2'de bilgi bu gorevler arasinda paylasilir."""
+    session = _get_road_damage_session(req.analysisId)
+    if session is None or "G" not in session or "closedEdgeKeys" not in session:
+        raise HTTPException(
+            status_code=422,
+            detail="Bu analiz oturumu referans karsilastirmasi icin gerekli veriyi tasimiyor.",
+        )
+    if not 1 <= len(req.tasks) <= 50:
+        raise HTTPException(status_code=422, detail="Gorev sayisi 1-50 arasinda olmali.")
+    if not 1 <= len(req.variants) <= 8:
+        raise HTTPException(status_code=422, detail="Varyant sayisi 1-8 arasinda olmali.")
+    if not 1 <= len(req.uTurnPenaltyMinValues) <= 8 or any(
+            not 0.0 <= tu <= 120.0 for tu in req.uTurnPenaltyMinValues):
+        raise HTTPException(status_code=422, detail="uTurnPenaltyMinValues 1-8 deger, her biri 0-120 dk.")
+    if not 0.0 < req.speedKmh <= 200.0:
+        raise HTTPException(status_code=422, detail="speedKmh 0-200 arasinda olmali.")
+    names = [v.name for v in req.variants]
+    if len(set(names)) != len(names) or not all(_REFERENCE_NAME_RE.fullmatch(n) for n in names):
+        raise HTTPException(status_code=422, detail="Varyant adlari benzersiz ve [A-Za-z0-9_-] olmali.")
+    if any(not 0.0 <= v.sightM <= 1000.0 for v in req.variants):
+        raise HTTPException(status_code=422, detail="sightM 0-1000 m arasinda olmali.")
+
+    from apps.road_damage.utils.network import simulate_reference_fleet
+
+    G = session["G"]
+    real_closed_edges = set()
+    for u, v, k in session["closedEdgeKeys"]:
+        real_closed_edges.add((u, v, k))
+        real_closed_edges.add((v, u, k))
+    tasks = [t.model_dump() for t in req.tasks]
+
+    variants = []
+    for var in req.variants:
+        by_tu = {}
+        t0 = time.perf_counter()
+        if var.share:
+            for tu in req.uTurnPenaltyMinValues:
+                by_tu[f"{tu:g}"] = simulate_reference_fleet(
+                    G, real_closed_edges, tasks, sight_m=var.sightM, share=True,
+                    speed_kmh=req.speedKmh, u_turn_penalty_min=tu,
+                    simultaneous_known=var.simultaneousKnown)
+        else:
+            once = simulate_reference_fleet(
+                G, real_closed_edges, tasks, sight_m=var.sightM, share=False,
+                speed_kmh=req.speedKmh, u_turn_penalty_min=req.uTurnPenaltyMinValues[0])
+            by_tu = {f"{tu:g}": once for tu in req.uTurnPenaltyMinValues}
+        variants.append({
+            "name": var.name, "sightM": var.sightM, "share": var.share,
+            "simultaneousKnown": var.simultaneousKnown,
+            "tuDependent": var.share,
+            "elapsedSec": round(time.perf_counter() - t0, 2),
+            "byUTurnPenalty": {
+                tu: [dict(r, id=task["id"], reachable=True) if r else {"id": task["id"], "reachable": False}
+                     for task, r in zip(tasks, results)]
+                for tu, results in by_tu.items()
+            },
+        })
+    return {"analysisId": req.analysisId, "taskCount": len(tasks), "variants": variants}
 
 
 class SafeRouteRequest(BaseModel):
@@ -1539,7 +2010,17 @@ def attach_team_route(target_id: str, req: TeamRouteAttachRequest):
 def recent_road_damage_analyses(minutes: float = 60.0):
     """Canli simulasyon icin: son N dakikada tamamlanmis analizleri listeler
     -- frontend'in hangi analysisId'lerin haritada 'canli' gosterilecegini
-    ayrica bir mekanizma icat etmeden bilmesini saglar."""
+    ayrica bir mekanizma icat etmeden bilmesini saglar.
+
+    SADECE HAFIF OZET doner. Eskiden burada her analizin TUM safe/blocked
+    segment dizileri vardi ve frontend bunu 20 saniyede bir cekip neredeyse
+    tamamini atiyordu (yalnizca "kume degisti mi" imzasina bakiyordu).
+    Olculdu: tek bolge 39.285 kenar = 2,10 MB JSON; dokuz bolgeli senaryoda
+    her turda ~19 MB uretiliyor, serilestiriliyor (~5sn CPU, bu sure boyunca
+    GIL tutuldugu icin TUM diger uc noktalar bekliyor), aga veriliyor ve
+    tarayicida ayristiriliyordu. Segmentler artik /segments/{analysisId}
+    ucundan analiz basina BIR KEZ cekilir -- segmentler uretildikten sonra
+    hic degismedigi icin bu tamamen guvenlidir."""
     cutoff = time.time() - minutes * 60
     results = []
     with road_damage_jobs_lock:
@@ -1551,11 +2032,33 @@ def recent_road_damage_analyses(minutes: float = 60.0):
                 "analysisId": analysis_id,
                 "createdAt": job.get("createdAt"),
                 "bounds": result.get("bounds"),
-                "blockedRoadSegments": result.get("blockedRoadSegments", []),
-                "safeRoadSegments": result.get("safeRoadSegments", []),
+                "safeSegmentCount": len(result.get("safeRoadSegments", [])),
+                "blockedSegmentCount": len(result.get("blockedRoadSegments", [])),
             })
     results.sort(key=lambda r: r["createdAt"], reverse=True)
     return {"analyses": results}
+
+
+@app.get("/api/road_damage/segments/{analysis_id}")
+def road_damage_segments(analysis_id: str, response: Response):
+    """Tek bir analizin agir safe/blocked segment dizileri. /recent'ten
+    ayrilmistir (bkz. oradaki not): bu veri analiz uretildikten sonra ASLA
+    degismez, bu yuzden istemci analiz basina bir kez ceker ve tarayici
+    onbellegi de ETag ile calisir."""
+    with road_damage_jobs_lock:
+        job = road_damage_jobs.get(analysis_id)
+        if job is None or job.get("status") != "done":
+            raise HTTPException(status_code=404, detail="Analiz bulunamadi veya henuz tamamlanmadi.")
+        result = job.get("result", {})
+        payload = {
+            "analysisId": analysis_id,
+            "bounds": result.get("bounds"),
+            "safeRoadSegments": result.get("safeRoadSegments", []),
+            "blockedRoadSegments": result.get("blockedRoadSegments", []),
+        }
+    response.headers["Cache-Control"] = "private, max-age=3600"
+    response.headers["ETag"] = f'"{analysis_id}"'
+    return payload
 
 
 @app.post("/api/team/claim/{target_id}/release")

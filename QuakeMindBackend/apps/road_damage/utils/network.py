@@ -2,9 +2,11 @@ import hashlib
 import math
 import os
 import pickle
+import weakref
 from pathlib import Path
 
 import networkx as nx
+import numpy as np
 import osmnx as ox
 from shapely.geometry import LineString
 
@@ -88,28 +90,77 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return R * c
 
-def calculate_route(G, start_lat, start_lon, end_lat, end_lon, weight='length'):
+
+# ox.distance.nearest_nodes, HER cagrida grafin tum dugumlerinden yeni bir
+# dizi + BallTree uretir -- olculdu: ilk cagri 0,265sn, sonraki cagrilar
+# 0,088sn (18.004 dugumlu graf). Rota hesabi ve naif-ajan karsilastirmasi
+# nokta basina iki kez cagirdigi icin tek bir senaryo kosumunda ~70 cagri
+# ediyor, yani ~6sn yalnizca AYNI agaci tekrar tekrar kurmaya gidiyordu.
+# Agac grafa GORE bir kez kurulup zayif referansla (graf cop toplandiginda
+# kendiliginden dusen) saklanir. Metrik osmnx'in kendi projeksiyonsuz-graf
+# yolunun BIREBIR aynisidir (radyan haversine BallTree), dolayisiyla
+# dondurulen dugum de aynidir.
+_NODE_INDEX_CACHE: "weakref.WeakKeyDictionary" = weakref.WeakKeyDictionary()
+
+
+def _node_index(G):
+    entry = _NODE_INDEX_CACHE.get(G)
+    if entry is not None:
+        return entry
+
+    from sklearn.neighbors import BallTree
+
+    node_ids = list(G.nodes)
+    coords = np.deg2rad(
+        np.array([[G.nodes[n]['y'], G.nodes[n]['x']] for n in node_ids], dtype=float)
+    )
+    entry = (node_ids, BallTree(coords, metric='haversine'))
+    _NODE_INDEX_CACHE[G] = entry
+    return entry
+
+
+def nearest_node(G, lat, lon):
+    """ox.distance.nearest_nodes'un onbellekli esdegeri."""
+    node_ids, tree = _node_index(G)
+    _, idx = tree.query(np.deg2rad([[float(lat), float(lon)]]), k=1)
+    return node_ids[int(idx[0][0])]
+
+
+def calculate_route(G, start_lat, start_lon, end_lat, end_lon, weight='length',
+                    algorithms=('dijkstra', 'astar')):
     """weight='length' (default) preserves the plain shortest-path behavior
     used by /api/road_damage/route. Pass weight='risk_cost' (after running
     apply_risk_penalties on G) to get a risk-aware route instead.
+
+    `algorithms` hangi arama(lar)in KOSULACAGINI secer. Eskiden ikisi de
+    kosulurdu ve /route yalnizca Dijkstra sonucunu kullanip A* sonucunu
+    ATIYORDU -- olculdu: Dijkstra 0,039sn, A* 0,013sn, ikisi de AYNI yolu
+    buluyor (haversine sezgisi kabul edilebilir oldugu icin A*'in optimalligi
+    garantilidir). /safe_route ikisini bilerek KARSILASTIRDIGI icin varsayilan
+    degismedi; tek algoritma isteyen cagrilar algorithms=('astar',) gecer ve
+    kullanilmayan aramanin bedelini odemez.
     """
-    start_node = ox.distance.nearest_nodes(G, X=start_lon, Y=start_lat)
-    end_node = ox.distance.nearest_nodes(G, X=end_lon, Y=end_lat)
+    start_node = nearest_node(G, start_lat, start_lon)
+    end_node = nearest_node(G, end_lat, end_lon)
 
     def astar_heuristic(u, v):
         u_node = G.nodes[u]
         v_node = G.nodes[v]
         return haversine(u_node['y'], u_node['x'], v_node['y'], v_node['x'])
 
-    try:
-        path_dijkstra = nx.shortest_path(G, start_node, end_node, weight=weight)
-    except nx.NetworkXNoPath:
-        path_dijkstra = None
+    path_dijkstra = None
+    if 'dijkstra' in algorithms:
+        try:
+            path_dijkstra = nx.shortest_path(G, start_node, end_node, weight=weight)
+        except nx.NetworkXNoPath:
+            path_dijkstra = None
 
-    try:
-        path_astar = nx.astar_path(G, start_node, end_node, heuristic=astar_heuristic, weight=weight)
-    except nx.NetworkXNoPath:
-        path_astar = None
+    path_astar = None
+    if 'astar' in algorithms:
+        try:
+            path_astar = nx.astar_path(G, start_node, end_node, heuristic=astar_heuristic, weight=weight)
+        except nx.NetworkXNoPath:
+            path_astar = None
 
     def get_route_line(path):
         if not path:
@@ -209,27 +260,55 @@ def apply_risk_penalties(G, damage_points, blockages=None, blockage_hard_radius_
       kalan kenarlar tamamen kaldırılır (hard-block).
     - Kalan her kenara `risk_cost = length * risk_weight(min_dist_to_damage_point)`
       atanır.
+
+    Mesafe aramasi VEKTORIZE'dir. Eskiden her kenar icin TUM hasar noktalarina
+    ve TUM kapanma noktalarina tek tek saf-Python `haversine` cagriliyordu,
+    yani O(kenar x nokta). Kucuk nokta kumelerinde bu gizli kaliyordu; EMSR648
+    gercek hasar katmani baglandiginda (394 + 927 hasarli bina) 39 285 kenar x
+    1 321 nokta ~ 52 MILYON haversine cagrisi demek olacakti. Onun yerine nokta
+    kumelerinden birer BallTree (radyan haversine -- kurenin uzerinde gercek
+    buyuk-daire mesafesi, `haversine()` ile ayni R = 6 371 000 m) kurulur ve tum
+    kenar orta noktalari TEK toplu sorguda islenir.
     """
     damage_coords = _as_latlon_list(damage_points)
     blockage_coords = _as_latlon_list(blockages)
 
-    edges_to_remove = []
-    for u, v, key, data in G.edges(keys=True, data=True):
-        mid_lat, mid_lon = _edge_midpoint(G, u, v, data)
+    edges = list(G.edges(keys=True, data=True))
+    if not edges:
+        return G
 
-        if blockage_coords and any(
-            haversine(mid_lat, mid_lon, blat, blon) <= blockage_hard_radius_m
-            for blat, blon in blockage_coords
-        ):
+    midpoints = np.empty((len(edges), 2), dtype=float)
+    for i, (u, v, _key, data) in enumerate(edges):
+        midpoints[i] = _edge_midpoint(G, u, v, data)
+    midpoints_rad = np.deg2rad(midpoints)
+
+    def _nearest_distances_m(points):
+        """Her kenar orta noktasi icin `points` kumesindeki en yakin noktaya
+        metre cinsinden buyuk-daire mesafesi."""
+        from sklearn.neighbors import BallTree
+
+        tree = BallTree(np.deg2rad(np.asarray(points, dtype=float)), metric='haversine')
+        distances, _ = tree.query(midpoints_rad, k=1)
+        return distances[:, 0] * 6371000.0
+
+    if blockage_coords:
+        blocked_mask = _nearest_distances_m(blockage_coords) <= blockage_hard_radius_m
+    else:
+        blocked_mask = np.zeros(len(edges), dtype=bool)
+
+    if damage_coords:
+        min_distances = _nearest_distances_m(damage_coords)
+    else:
+        min_distances = np.full(len(edges), float('inf'))
+
+    edges_to_remove = []
+    for i, (u, v, key, data) in enumerate(edges):
+        if blocked_mask[i]:
             edges_to_remove.append((u, v, key))
             continue
-
-        min_dist = min(
-            (haversine(mid_lat, mid_lon, dlat, dlon) for dlat, dlon in damage_coords),
-            default=float('inf'),
-        )
-        length = data.get('length', 0.0)
-        data['risk_cost'] = length * risk_weight(min_dist)
+        # float() sarmalayicilari SART: numpy skalerleri JSON'a serilestirilemez
+        # ve risk_cost, /safe_route'un dondurdugu `riskScore`'a kadar tasiniyor.
+        data['risk_cost'] = float(data.get('length', 0.0)) * risk_weight(float(min_distances[i]))
 
     for u, v, key in edges_to_remove:
         if G.has_edge(u, v, key):
@@ -327,7 +406,6 @@ def simulate_random_closures(bounds, closure_ratio=0.15, network_type='drive', s
     # etmek, "ayni seed = ayni kapanma" garantisini surecler arasi da
     # gecerli kilar.
     all_edges = sorted(G.edges(keys=True))
-    total_nodes = G.number_of_nodes()
 
     # KRITIK: iki-yonlu her sokak, MultiDiGraph'ta IKI AYRI yonlu kenar olarak
     # tutulur -- (u,v,k) ve onun fiziksel olarak AYNI yolu temsil eden ters
@@ -353,6 +431,20 @@ def simulate_random_closures(bounds, closure_ratio=0.15, network_type='drive', s
         physical_groups.setdefault(_physical_road_key(u, v, k), []).append((u, v, k))
     physical_keys = sorted(physical_groups.keys())
 
+    # Esik, grafin KENDI baslangic baglantiligina GORE olculur -- mutlak
+    # "tum dugumlerin %92'si" degil. Neden: gercek yaya/yol aglarinda pek cok
+    # bolge zaten dogal olarak parcalidir (cikmaz sokaklar, tek yonlu
+    # merdivenler, kopru/gecit topolojileri). Belen Gecidi grafinde en buyuk
+    # guclu-bagli bilesen HICBIR kapanma olmadan bile toplam dugumlerin
+    # %92'sinin altindaydi; mutlak esik bu yuzden 6 denemenin HEPSINDE
+    # basarisiz oluyor ve fonksiyon sessizce SIFIR kapanma dondurüyordu
+    # (dogrulandi: 18484 kenarli Belen grafinda 0 kapali segment).
+    # Goreli esik, "kapanmalar mevcut baglantiligi ciddi olcude BOZMASIN"
+    # seklindeki asil niyeti korur ve zaten parcali graflarda da calisir.
+    base_scc_size = (len(max(nx.strongly_connected_components(G), key=len))
+                     if G.number_of_nodes() else 0)
+    connectivity_floor = base_scc_size * 0.92
+
     closed_keys: set = set()
     candidate_ratio = closure_ratio
     for _attempt in range(6):
@@ -361,14 +453,27 @@ def simulate_random_closures(bounds, closure_ratio=0.15, network_type='drive', s
         trial_closed_roads = rng.sample(physical_keys, n_closed_roads) if n_closed_roads else []
         trial_closed = {edge for road_key in trial_closed_roads for edge in physical_groups[road_key]}
 
-        trial_G = G.copy()
-        trial_G.remove_edges_from([(u, v, k) for (u, v, k) in trial_closed])
+        # nx.restricted_view: kenarlari GIZLEYEN salt-okunur bir gorunum
+        # dondurur, grafi KOPYALAMAZ. Onceden burada G.copy() vardi ve dongu
+        # 6 kez calisabildigi icin 40.950 kenarlik bir MultiDiGraph'in tam
+        # kopyasi arka arkaya 6 kez cikariliyordu -- backend'in bellegini
+        # tuketip MemoryError'a dusuruyordu (olculdu: Antakya grafinda ilk
+        # istekte cokme, ardindan 503). Gorunum ile ayni SCC hesabi bellekte
+        # ek yer kaplamadan yapilir.
+        trial_G = nx.restricted_view(G, [], trial_closed)
         largest_scc_size = len(max(nx.strongly_connected_components(trial_G), key=len)) if trial_G.number_of_nodes() else 0
 
-        if not trial_closed or largest_scc_size >= total_nodes * 0.92:
+        if not trial_closed or largest_scc_size >= connectivity_floor:
             closed_keys = trial_closed
             break
         candidate_ratio /= 2
+    else:
+        # 6 denemenin hepsi esigi gecemediyse ELI BOS DONME -- eskiden
+        # closed_keys bos kaliyordu ve "kapanma yok" gibi gorunuyordu, ki bu
+        # sessiz bir basarisizlik. Bunun yerine son (en kucuk) denemeyi
+        # kullaniriz: az sayida da olsa gercek bir kapanma kumesi, hic
+        # kapanma olmamasindan daha dogru bir sonuctur.
+        closed_keys = trial_closed
 
     blocked_edges = []
     safe_edges = []
@@ -381,8 +486,10 @@ def simulate_random_closures(bounds, closure_ratio=0.15, network_type='drive', s
         target = blocked_edges if (u, v, key) in closed_keys else safe_edges
         target.append((u, v, key, line))
 
-    safe_G = G.copy()
-    safe_G.remove_edges_from([(u, v, k) for (u, v, k, _) in blocked_edges])
+    # Burada da kopya yerine gorunum: safe_G yalnizca rota hesaplamak icin
+    # OKUNUYOR, uzerinde degisiklik yapilmiyor. Ikinci bir tam graf kopyasi
+    # cikarmak bellegi gereksiz yere ikiye katliyordu.
+    safe_G = nx.restricted_view(G, [], {(u, v, k) for (u, v, k, _) in blocked_edges})
 
     return G, safe_G, safe_edges, blocked_edges, None
 
@@ -406,8 +513,8 @@ def simulate_naive_agent(G, real_closed_edges: set, start_lat, start_lon, end_la
     davranisina bagli oldugu dusunuluyor) -- bu da naive-ajan karsilastirmasini
     GECERSIZ kilan (bazen naive'in bizim motordan 'daha kisa' cikmasi gibi
     imkansiz olmasi gereken sonuclar) bir sinif hataya yol aciyordu.)"""
-    start_node = ox.distance.nearest_nodes(G, X=start_lon, Y=start_lat)
-    end_node = ox.distance.nearest_nodes(G, X=end_lon, Y=end_lat)
+    start_node = nearest_node(G, start_lat, start_lon)
+    end_node = nearest_node(G, end_lat, end_lon)
 
     known_closed: set = set()
     current = start_node
@@ -420,9 +527,18 @@ def simulate_naive_agent(G, real_closed_edges: set, start_lat, start_lon, end_la
     route_coords: list = [(G.nodes[start_node]['y'], G.nodes[start_node]['x'])]
 
     for _ in range(MAX_NAIVE_ITERATIONS):
-        G_view = G.copy()
-        if known_closed:
-            G_view.remove_edges_from([(u, v, k) for (u, v, k) in known_closed if G_view.has_edge(u, v, k)])
+        # nx.restricted_view: kenarlari GIZLEYEN salt-okunur gorunum -- grafi
+        # KOPYALAMAZ. Burada eskiden dongunun HER yinelemesinde G.copy()
+        # vardi; olculdu: 39.285 kenarli MultiDiGraph'ta kopya 0,91sn,
+        # gorunum 0,0001sn (~9000 kat). Tek bir senaryo kosumu 18 atama + 68
+        # kesif = ~86 yineleme ettigi icin bu, ~78 SANIYE saf kopyalama
+        # demekti. simulate_random_closures'ta ayni duzeltme zaten yapilmis
+        # ve "kopya almaya geri donulmemeli" notu dusulmustu (bellek de
+        # tukeniyordu) -- bu fonksiyon o gecişte atlanmisti.
+        # Dongu G_view uzerinde hicbir degisiklik yapmadigi icin (yalnizca
+        # shortest_path ve okuma) gorunum birebir ayni sonucu verir.
+        hidden = {(u, v, k) for (u, v, k) in known_closed if G.has_edge(u, v, k)}
+        G_view = nx.restricted_view(G, [], hidden) if hidden else G
         try:
             path = nx.shortest_path(G_view, current, end_node, weight="length")
         except (nx.NetworkXNoPath, nx.NodeNotFound):
@@ -474,8 +590,285 @@ def simulate_naive_agent(G, real_closed_edges: set, start_lat, start_lon, end_la
     return None  # cok fazla kesif dongusu -- pratikte yol bulunamadi kabul edilir
 
 
-def analyze_road_network_graph(bounds, w, h, blockage_mask, network_type='drive'):
-    """Fetches OSM graph, evaluates blockages, and returns safe/blocked lists."""
+def _shortest_path_avoiding(G, source, target, hidden: set, penalized: set | None = None,
+                            factor: float = 1.0):
+    """nx.shortest_path(nx.restricted_view(G, [], hidden), ..., weight="length")
+    ve ardindan ayni gorunumde en kisa paralel kenar secimi -- gorunum KURMADAN.
+
+    Gizli kenar, agirlik fonksiyonunun None dondurmesiyle atlanir. networkx
+    (3.6) iki nokta arasinda bidirectional_dijkstra kullanir ve geri yonde
+    agirligi weight(w, v, d) ile, yani kenarin GERCEK yonuyle sorar; komsu
+    sirasi ve esitlik bozma gorunumle aynidir. Esdegerlik her kosuda R0
+    kontrolu ile dogrulanir (simulate_naive_agent gorunum kullanir).
+
+    `penalized` verilirse bu kenarlar gizlenmez, uzunluklari `factor` ile
+    carpilir (yumusak kapanma -- makale Denklem 8)."""
+    penalized = penalized or set()
+
+    def cost(u, v, k, attr, default):
+        w = attr.get("length", default)
+        return w * factor if (u, v, k) in penalized else w
+
+    if hidden or penalized:
+        def weight(u, v, keydict):
+            best = None
+            for k, attr in keydict.items():
+                if (u, v, k) in hidden:
+                    continue
+                w = cost(u, v, k, attr, 1)
+                if best is None or w < best:
+                    best = w
+            return best
+    else:
+        weight = "length"
+    path = nx.shortest_path(G, source, target, weight=weight)
+    keys = []
+    for u, v in zip(path, path[1:]):
+        visible = [k for k in G[u][v] if (u, v, k) not in hidden]
+        keys.append(min(visible, key=lambda k, u=u, v=v: cost(u, v, k, G[u][v][k], float("inf"))))
+    return path, keys
+
+
+def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: float = 0.0,
+                             share: bool = False, speed_kmh: float = 15.0,
+                             u_turn_penalty_min: float = 20.0,
+                             max_iterations: int = MAX_NAIVE_ITERATIONS,
+                             pathfinder: str = "weight",
+                             simultaneous_known: bool = True,
+                             prior_closed: set | None = None,
+                             prior_fallback: bool = True,
+                             prior_penalty_factor: float | None = None) -> list:
+    """Karsilastirma referanslari R0 / R1 / R2 (makale Bolum 3.8) -- tek bir
+    zaman sirali simulasyon.
+
+    Her ajan Algoritma 1'in ajanidir: kapanmalari bilmez, bildigi cizgede en
+    kisa yolu izler, kapali kenara girmez, kapanmayi kavsakta ogrenir ve orada
+    yeniden planlar. Iki anahtar onu R1/R2'ye cevirir:
+
+      sight_m = 0, share = False -> R0. simulate_naive_agent ile BIREBIR ayni
+          sonucu vermelidir (mesafe ve kesif sayisi) -- dogrulama bununla yapilir.
+      sight_m > 0 -> R1 (gorus mesafeli ajan). Her kavsakta, planli yol uzerinde
+          onundeki sight_m metre icinde BASLAYAN kapali kenarlari gorur. Ayni
+          kavsakta gorulen kapanmalar TEK bir durum degerlendirmesidir: ceza
+          (t_u) kesif basina degil durak basina islenir -- aksi halde daha cok
+          gormek ajani cezalandirirdi. Gorus yol boyunca olculur (kose
+          donusleri gorusu kesmez) -- R1 icin iyimser bir varsayim.
+      share = True -> R2 (bilgi paylasan filo). Bir ajanin ogrendigi kapanma o
+          anda ayni gorevler kumesindeki tum ajanlara yayilir. Telsizle ogrenilen
+          kapanma ajanin planli yolundaysa ajan bir sonraki kavsakta CEZASIZ
+          yeniden planlar (kapanmaya varmadi, durum degerlendirmesi yok).
+          Ajanin kendi kesfi R0'daki gibi cezalidir.
+      prior_closed -> ajan yola bu kenarlari KAPALI bilerek cikar (J-30: model
+          bilgili ekip; prior = modelin kapanmalari, dunya = real_closed_edges =
+          EMSR648). Yanlis alarmlar hic sorgulanmaz (ekip o yollara girmez);
+          modelin kacirdigi gercek kapanmaya varinca kesfeder (t_u). prior =
+          dunya ise R3 (kusursuz bilgi). Yanlis alarmlar hedefi baglantisiz
+          birakirsa ("rota bulunamadi") prior_fallback=True iken ekip modeli
+          birakir, kendi kesifleriyle R0 gibi devam eder (sonucta fallback=True).
+      prior_penalty_factor -> prior kenarlari GIZLENMEZ, planlamada uzunluklari bu
+          carpanla pahalilasir (yumusak kullanim; ag hicbir zaman kopmaz).
+
+    Zaman yalniz paylasimda sonucu etkiler (kim once ogrendi): ajan saati
+    L / v + ceza, olaylar saat sirasiyla islenir (en erken saatli ajan bir kenar
+    ilerler). Ayni karargahtan ayni anda cikan ekipler ortak yol basinda ayni
+    anda ilerler; simultaneous_known=True (varsayilan, "aninda yayilir"):
+    baskasinin AYNI anda ogrendigi kapanma bilinir -- kafilede one dusen
+    kesfeder, digerleri cezasiz yon degistirir. False: ayni anda varan her
+    ajan kendisi kesfeder (duyarlilik; bu durumda R2 kafilede R0'a esitlenir).
+
+    Donus: tasks ile ayni sirada, ulasilamayan gorev icin None.
+    """
+    import heapq
+
+    per_stop = sight_m > 0
+    min_per_m = 60.0 / (speed_kmh * 1000.0)
+    fleet_time: dict = {}   # kenar -> filoya ilk bildirildigi an (dk)
+
+    prior = set()
+    for (u, v, k) in (prior_closed or ()):
+        prior.add((u, v, k))
+        prior.add((v, u, k))
+
+    agents = []
+    for i, task in enumerate(tasks):
+        agents.append({
+            "node": nearest_node(G, task["startLat"], task["startLon"]),
+            "goal": nearest_node(G, task["endLat"], task["endLon"]),
+            "clock": 0.0, "length": 0.0, "own": set(), "prior": prior, "fallback": False,
+            "discoveries": 0, "stops": 0, "radioReplans": 0, "iterations": 0,
+            "path": None, "keys": None, "idx": 0, "pathEdges": set(), "status": "moving",
+        })
+
+    soft = prior_penalty_factor is not None
+    if soft and pathfinder != "weight":
+        raise ValueError("yumusak prior yalniz pathfinder='weight' ile desteklenir")
+
+    def known(agent):
+        base = (agent["prior"] | agent["own"]) if (agent["prior"] and not soft) else agent["own"]
+        if not share:
+            return base
+        t = agent["clock"]
+        if simultaneous_known:
+            return base | {e for e, te in fleet_time.items() if te <= t}
+        return base | {e for e, te in fleet_time.items() if te < t}
+
+    def plan(agent) -> bool:
+        # simulate_naive_agent ile ayni kurallar: en cok max_iterations yol hesabi,
+        # ayni gizleme, ayni paralel kenar secimi (ajanin INANDIGI cizge uzerinden).
+        if agent["iterations"] >= max_iterations:
+            agent["status"] = "unreachable"
+            return False
+        agent["iterations"] += 1
+        hidden = {(u, v, k) for (u, v, k) in known(agent) if G.has_edge(u, v, k)}
+        try:
+            if pathfinder == "view":
+                G_view = nx.restricted_view(G, [], hidden) if hidden else G
+                path = nx.shortest_path(G_view, agent["node"], agent["goal"], weight="length")
+                keys = [min(G_view[u][v], key=lambda k, u=u, v=v: G_view[u][v][k].get("length", float("inf")))
+                        for u, v in zip(path, path[1:])]
+            elif soft:
+                path, keys = _shortest_path_avoiding(G, agent["node"], agent["goal"], hidden,
+                                                     agent["prior"], prior_penalty_factor)
+            else:
+                path, keys = _shortest_path_avoiding(G, agent["node"], agent["goal"], hidden)
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
+            if agent["prior"] and prior_fallback:
+                # Baslangic bilgisi (model) hedefi baglantisiz birakti: ekip modeli birakir.
+                agent["prior"] = set()
+                agent["fallback"] = True
+                return plan(agent)
+            agent["status"] = "unreachable"
+            return False
+        agent["path"], agent["keys"], agent["idx"] = path, keys, 0
+        agent["pathEdges"] = set(zip(path, path[1:], keys))
+        return True
+
+    def learn(agent, edges, t_obs):
+        for (u, v, k) in edges:
+            for e in ((u, v, k), (v, u, k)):
+                agent["own"].add(e)
+                if share and t_obs < fleet_time.get(e, float("inf")):
+                    fleet_time[e] = t_obs
+
+    def step(agent):
+        """Ajan bulundugu kavsakta: telsiz -> gorus -> bir kenar ilerle."""
+        if agent["path"] is None and not plan(agent):
+            return
+        t_arrive = agent["clock"]
+        stopped = False
+        while True:
+            if agent["node"] == agent["goal"]:
+                agent["status"] = "arrived"
+                break
+            if share:
+                pe = agent["pathEdges"]
+                if any(e in pe for e in known(agent)):
+                    agent["radioReplans"] += 1
+                    if not plan(agent):
+                        return
+                    continue
+            path, keys, idx = agent["path"], agent["keys"], agent["idx"]
+            seen, dist = [], 0.0
+            for j in range(idx, len(path) - 1):
+                if dist > sight_m:
+                    break
+                e = (path[j], path[j + 1], keys[j])
+                if e in real_closed_edges:
+                    seen.append(e)
+                    if not per_stop:
+                        break   # R0/R2: yalniz siradaki kenara bakar
+                dist += G[path[j]][path[j + 1]][keys[j]].get("length", 0.0)
+            if not seen:
+                break
+            learn(agent, seen, t_arrive)
+            agent["discoveries"] += len(seen)
+            if per_stop:
+                if not stopped:
+                    agent["clock"] += u_turn_penalty_min
+            else:
+                agent["clock"] += u_turn_penalty_min
+            stopped = True
+            if not plan(agent):
+                return
+        if stopped:
+            agent["stops"] += 1
+        if agent["status"] != "moving":
+            return
+        j = agent["idx"]
+        u, v, k = agent["path"][j], agent["path"][j + 1], agent["keys"][j]
+        w = G[u][v][k].get("length", 0.0)
+        agent["length"] += w
+        agent["clock"] += w * min_per_m
+        agent["node"] = v
+        agent["idx"] = j + 1
+
+    heap = [(0.0, i) for i in range(len(agents))]
+    heapq.heapify(heap)
+    while heap:
+        _, i = heapq.heappop(heap)
+        agent = agents[i]
+        if agent["status"] != "moving":
+            continue
+        step(agent)
+        if agent["status"] == "moving":
+            heapq.heappush(heap, (agent["clock"], i))
+
+    out = []
+    for agent in agents:
+        if agent["status"] != "arrived":
+            out.append(None)
+            continue
+        out.append({
+            "distanceMeters": round(agent["length"], 1),
+            "discoveries": agent["discoveries"],
+            "stops": agent["stops"],
+            # t_u ile carpilan olay sayisi: R0/R2 kesif basina, R1 durak basina
+            "penaltyEvents": agent["stops"] if per_stop else agent["discoveries"],
+            "radioReplans": agent["radioReplans"],
+            "arrivalMin": round(agent["clock"], 2),
+            "pathComputations": agent["iterations"],
+            "fallback": agent["fallback"],
+        })
+    return out
+
+
+def dilate_mask_by_metres(mask, bounds, w, radius_m):
+    """`mask`'taki her hasar pikselini `radius_m` metre yaricapli bir daireye
+    genisletir. Metre -> piksel donusumu goruntunun kendi sinirlarindan
+    (bounds) hesaplanir, yani zoom seviyesinden bagimsizdir: 0,48 m/px'te
+    25 m ~ 52 piksel, 3,86 m/px'te ~ 6 piksel."""
+    import cv2
+
+    if radius_m <= 0 or mask is None:
+        return mask
+    west, south, east, north = bounds
+    mid_lat = (south + north) / 2.0
+    width_m = haversine(mid_lat, west, mid_lat, east)
+    metres_per_px = width_m / max(1, w)
+    radius_px = int(round(radius_m / metres_per_px))
+    if radius_px < 1:
+        return mask
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * radius_px + 1, 2 * radius_px + 1))
+    return cv2.dilate(mask.astype(np.uint8), kernel)
+
+
+def analyze_road_network_graph(bounds, w, h, blockage_mask, network_type='drive',
+                               blockage_radius_m=0.0):
+    """Fetches OSM graph, evaluates blockages, and returns safe/blocked lists.
+
+    `blockage_radius_m` (varsayilan 0 = eski davranis): bir kenar, uzerindeki
+    orneklenen noktalardan birinin `blockage_radius_m` metre YAKININDA hasar
+    varsa kapali sayilir.
+
+    Neden: eski kural hasarin yolun CIZILMIS MERKEZ CIZGISI pikselinin tam
+    ustune dusmesini istiyordu. Gercekte baskin kapanma mekanizmasi yandaki
+    binanin cokup molozunu sokaga dokmesidir; OSM merkez cizgisi 1-2 piksel
+    genisliginde oldugu icin kesisim pratikte hep bos cikiyordu. Olculdu
+    (Antakya, Maxar Open Data 2023-02-11, gercek deprem sonrasi goruntu):
+    model z=18'de goruntunun %1,26'sini hasarli buldu, ama kapali yol SIFIR.
+    Yaricap kurali makaledeki r_h parametresinin (sert kapatma yaricapi)
+    tanimiyla aynidir ve `apply_risk_penalties`'teki
+    `blockage_hard_radius_m` ile tutarlidir."""
     west, south, east, north = bounds
     G, last_error = fetch_osm_road_graph(bounds, network_type=network_type)
 
@@ -483,10 +876,40 @@ def analyze_road_network_graph(bounds, w, h, blockage_mask, network_type='drive'
         print("OSMnx error (yerel cache yok, tum Overpass aynalari denendi):", last_error)
         return None, None, None, None
 
+    blockage_mask = dilate_mask_by_metres(blockage_mask, bounds, w, blockage_radius_m)
+    safe_edges, blocked_edges, edges_to_remove, _coverage = _classify_edges(
+        G, bounds, w, h, blockage_mask)
+
+    safe_G = G.copy()
+    safe_G.remove_edges_from(edges_to_remove)
+
+    return G, safe_G, safe_edges, blocked_edges
+
+
+def _classify_edges(G, bounds, w, h, blockage_mask, valid_mask=None):
+    """Grafin her kenarini `blockage_mask` uzerinde orneklenen noktalara gore
+    acik/kapali alt-segmentlere boler.
+
+    `analyze_road_network_graph` (canli /analyze) ve
+    `closures_from_damage_mask` (Colab'da uretilmis hazir maske) AYNI
+    orneklemeyi kullansin diye tek yerde tutulur -- iki yolun sessizce
+    birbirinden ayrismasi, makaledeki kapanma sayilarini hangi yoldan
+    uretildigine bagli hale getirirdi.
+
+    `valid_mask` verilirse (goruntunun gercekten GORULEN pikselleri), her
+    orneklenen noktanin gorulen bir piksele dusup dusmedigi sayilir ve
+    kapsama istatistigi doner. Karar mantigini DEGISTIRMEZ; yalnizca raporlar.
+
+    Donus: (safe_edges, blocked_edges, edges_to_remove, coverage)
+    """
+    west, south, east, north = bounds
     blocked_edges = []
     safe_edges = []
     edges_to_remove = []
-    
+    total_samples = 0
+    observed_samples = 0
+    edges_observed = 0
+
     for u, v, key, data in G.edges(keys=True, data=True):
         if 'geometry' in data:
             line = data['geometry']
@@ -494,26 +917,29 @@ def analyze_road_network_graph(bounds, w, h, blockage_mask, network_type='drive'
             u_node = G.nodes[u]
             v_node = G.nodes[v]
             line = LineString([(u_node['x'], u_node['y']), (v_node['x'], v_node['y'])])
-            
+
         length = line.length
         # Örnekleme sıklığını ~5 metreye düşürüyoruz (eskiden ~2 metreydi)
         num_samples = max(int(length / 0.00005), 3)
-        
+
         current_type = None
         current_segment = []
         has_blocked_part = False
-        
+        edge_observed = 0
+
         for i in range(num_samples):
             pt = line.interpolate(float(i) / (num_samples - 1), normalized=True)
             px = int((pt.x - west) / (east - west) * w)
             py = int((north - pt.y) / (north - south) * h)
-            
+
             is_blocked = False
             if 0 <= px < w and 0 <= py < h:
                 if blockage_mask[py, px] > 0:
                     is_blocked = True
                     has_blocked_part = True
-                    
+                if valid_mask is not None and valid_mask[py, px] > 0:
+                    edge_observed += 1
+
             if current_type is None:
                 current_type = is_blocked
                 current_segment.append((pt.x, pt.y))
@@ -526,7 +952,7 @@ def analyze_road_network_graph(bounds, w, h, blockage_mask, network_type='drive'
                         blocked_edges.append((u, v, key, LineString(current_segment)))
                     else:
                         safe_edges.append((u, v, key, LineString(current_segment)))
-                
+
                 current_type = is_blocked
                 current_segment = [(pt.x, pt.y)]
 
@@ -535,11 +961,134 @@ def analyze_road_network_graph(bounds, w, h, blockage_mask, network_type='drive'
                 blocked_edges.append((u, v, key, LineString(current_segment)))
             else:
                 safe_edges.append((u, v, key, LineString(current_segment)))
-                
+
         if has_blocked_part:
             edges_to_remove.append((u, v, key))
 
-    safe_G = G.copy()
-    safe_G.remove_edges_from(edges_to_remove)
-                
-    return G, safe_G, safe_edges, blocked_edges
+        total_samples += num_samples
+        observed_samples += edge_observed
+        # Ornek noktalarinin en az yarisi gorulen piksele dusen kenar "gorulmus"
+        # sayilir -- kapanma karari bu kenarlar icin anlamlidir.
+        if edge_observed * 2 >= num_samples:
+            edges_observed += 1
+
+    coverage = None
+    if valid_mask is not None:
+        n_edges = G.number_of_edges()
+        coverage = {
+            "edgesTotal": n_edges,
+            "edgesObserved": edges_observed,
+            "edgesObservedFraction": round(edges_observed / n_edges, 4) if n_edges else 0.0,
+            "sampleObservedFraction": round(observed_samples / total_samples, 4) if total_samples else 0.0,
+        }
+    return safe_edges, blocked_edges, edges_to_remove, coverage
+
+
+def closures_from_damage_mask(G, mask_bounds, damage_mask, valid_mask=None, blockage_radius_m=25.0):
+    """Onceden uretilmis bir hasar maskesinden (Colab/GPU, bkz.
+    benchmark/colab/make_model_masks.py) yol kapanmalari cikarir.
+
+    Canli /analyze ile ayni kural ve ayni ornekleme kullanilir
+    (`dilate_mask_by_metres` + `_classify_edges`). Tek fark: graf ve maske
+    AYRI gelir -- graf senaryonun kendi bolge sinirlariyla onbellekten
+    okunur (`mask_bounds`, karo hizali oldugu icin bolge sinirindan biraz
+    genistir ve yalnizca piksel izdusumunde kullanilir).
+
+    Donus: (safe_edges, blocked_edges, closed_edge_keys, coverage)
+    """
+    h, w = damage_mask.shape[:2]
+    mask = dilate_mask_by_metres(damage_mask, mask_bounds, w, blockage_radius_m)
+    safe_edges, blocked_edges, edges_to_remove, coverage = _classify_edges(
+        G, mask_bounds, w, h, mask, valid_mask)
+    return safe_edges, blocked_edges, set(edges_to_remove), coverage
+
+
+def _edge_geometry(G, u, v, data):
+    line = data.get('geometry')
+    if line is None:
+        u_node, v_node = G.nodes[u], G.nodes[v]
+        line = LineString([(u_node['x'], u_node['y']), (v_node['x'], v_node['y'])])
+    return line
+
+
+def closures_from_lines(G, damaged_lines, buffer_m=8.0, min_overlap=0.5,
+                        sample_step_m=2.0, observed_polygons=None):
+    """Yer gercegi hasarli YOL CIZGILERINDEN (orn. EMSR648 Grading
+    `transportationL`) OSM grafinda kapanma cikarir.
+
+    Kural: bir kenar, geometrisi boyunca ~`sample_step_m` arayla orneklenen
+    noktalarinin en az `min_overlap` orani herhangi bir hasarli cizginin
+    `buffer_m` metre yakinindaysa kapali sayilir. Oran esigi, hasarli yolu
+    yalnizca TEK NOKTADA kesen (kavsakta degen) sokaklarin kapanmasini onler.
+    Tampon, iki kaynagin geometri farkini karsilar -- olculdu (drone
+    sahneleri): EMSR kose noktalarinin en yakin OSM kenarina medyan uzakligi
+    0,1-2,2 m, %75'i 3-6 m icinde.
+
+    Iki yonlu bir sokagin iki yonlu kenari ayni geometriyi tasidigi icin
+    ikisi birlikte kapanir (J-19 oncesi duzeltilen hata burada yeniden
+    olusamaz).
+
+    `damaged_lines`   : [[(lon, lat), ...], ...]
+    `observed_polygons`: yer gercegi kaynaginin GERCEKTEN inceledigi alan
+                         (EMSR AOI poligonlari, [(lon, lat), ...] halkalari).
+                         Verilirse orta noktasi bu alanin disinda kalan kenar
+                         sayisi raporlanir -- o kenarlar hakkinda yer gercegi
+                         YOKTUR ve acik kabul edilmistir.
+
+    Donus: (safe_edges, blocked_edges, closed_edge_keys, stats)
+    """
+    from shapely.geometry import Polygon
+    from shapely.strtree import STRtree
+
+    edges = list(G.edges(keys=True, data=True))
+    stats = {"edgeCount": len(edges), "damagedLineCount": len(damaged_lines),
+             "bufferM": buffer_m, "minOverlap": min_overlap}
+    if not edges:
+        return [], [], set(), stats
+
+    ys = [d['y'] for _, d in G.nodes(data=True)]
+    xs = [d['x'] for _, d in G.nodes(data=True)]
+    lat0, lon0 = (min(ys) + max(ys)) / 2.0, (min(xs) + max(xs)) / 2.0
+    kx, ky = 111320.0 * math.cos(math.radians(lat0)), 110574.0
+
+    def to_m(coords):
+        return [((lon - lon0) * kx, (lat - lat0) * ky) for lon, lat in coords]
+
+    geoms = [_edge_geometry(G, u, v, d) for u, v, _k, d in edges]
+    edge_lines_m = [LineString(to_m(g.coords)) for g in geoms]
+
+    damaged_m = [LineString(to_m(l)) for l in damaged_lines if len(l) >= 2]
+    closed = set()
+    if damaged_m:
+        tree = STRtree(damaged_m)
+        pairs = tree.query(np.array(edge_lines_m, dtype=object), predicate="dwithin", distance=buffer_m)
+        candidates = {}
+        for ei, li in zip(pairs[0], pairs[1]):
+            candidates.setdefault(int(ei), []).append(damaged_m[int(li)])
+        for ei, near_lines in candidates.items():
+            line = edge_lines_m[ei]
+            n = max(3, int(line.length / sample_step_m) + 1)
+            hit = 0
+            for i in range(n):
+                p = line.interpolate(i / (n - 1), normalized=True)
+                if any(dl.distance(p) <= buffer_m for dl in near_lines):
+                    hit += 1
+            if hit / n >= min_overlap:
+                u, v, k, _d = edges[ei]
+                closed.add((u, v, k))
+
+    safe_edges, blocked_edges = [], []
+    for (u, v, k, _d), g in zip(edges, geoms):
+        (blocked_edges if (u, v, k) in closed else safe_edges).append((u, v, k, g))
+
+    stats["closedEdgeCount"] = len(closed)
+    if observed_polygons:
+        polys = [Polygon(to_m(ring)) for ring in observed_polygons if len(ring) >= 3]
+        inside = 0
+        for g in edge_lines_m:
+            mid = g.interpolate(0.5, normalized=True)
+            if any(p.contains(mid) for p in polys):
+                inside += 1
+        stats["edgesInsideObservedArea"] = inside
+        stats["edgesInsideObservedFraction"] = round(inside / len(edges), 4)
+    return safe_edges, blocked_edges, closed, stats

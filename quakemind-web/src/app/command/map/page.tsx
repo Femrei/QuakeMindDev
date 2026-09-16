@@ -8,6 +8,7 @@ import {
   getFaultLines,
   getDebrisReports,
   getRecentRoadDamage,
+  getRoadDamageSegments,
   getAssemblyAreas,
   getNlpLocations,
   NLPLocation,
@@ -177,11 +178,12 @@ export default function UnifiedCommandMapPage() {
     const poll = () => {
       getRecentRoadDamage(180)
         .then((data) => {
-          // Bir sehrin tam yol agi ~4,5MB JSON eder; analiz kumesi
-          // degismediyse (ayni id'ler + ayni segment sayilari) 90.000
-          // elemanli diziler bosuna context'e yeniden yazilmaz.
+          // /recent artik yalnizca hafif ozet doner (id + bounds + segment
+          // SAYILARI). Imza yine ayni bilgiden kurulur; agir diziler
+          // getRoadDamageSegments'ten analiz basina BIR KEZ cekilir ve
+          // orada onbeleklenir.
           const signature = data.analyses
-            .map((a) => `${a.analysisId}:${a.safeRoadSegments.length}:${a.blockedRoadSegments.length}`)
+            .map((a) => `${a.analysisId}:${a.safeSegmentCount}:${a.blockedSegmentCount}`)
             .join("|");
           const changed = signature !== roadSignatureRef.current;
           roadSignatureRef.current = signature;
@@ -191,13 +193,17 @@ export default function UnifiedCommandMapPage() {
             // context'e yazilir; toplanma-alani sorgusu ise her zaman
             // (analysisId basina bir kez) tetiklenir.
             if (changed) {
-              addRoadDamageAnalysis({
-                analysisId: a.analysisId,
-                city: "Canlı Simülasyon",
-                safeRoadSegments: a.safeRoadSegments,
-                blockedRoadSegments: a.blockedRoadSegments,
-                bounds: a.bounds || { west: 0, south: 0, east: 0, north: 0 },
-              });
+              getRoadDamageSegments(a.analysisId)
+                .then((seg) => {
+                  addRoadDamageAnalysis({
+                    analysisId: a.analysisId,
+                    city: "Canlı Simülasyon",
+                    safeRoadSegments: seg.safeRoadSegments,
+                    blockedRoadSegments: seg.blockedRoadSegments,
+                    bounds: a.bounds || seg.bounds || { west: 0, south: 0, east: 0, north: 0 },
+                  });
+                })
+                .catch(() => {});
             }
 
             if (a.bounds && !assemblyFetchedForRef.current.has(a.analysisId)) {

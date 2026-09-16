@@ -578,18 +578,56 @@ export async function updateSOSAlertStatus(
   return res.json();
 }
 
+/** /recent artik SADECE hafif ozet doner -- agir segment dizileri
+ *  getRoadDamageSegments ile analiz basina BIR KEZ cekilir. Sebep: bir
+ *  bolgenin tam yol agi 2,1 MB JSON eder; dokuz bolgeli senaryoda /recent
+ *  her 20 saniyede ~19 MB gonderiyordu ve cagiranlarin hepsi bu verinin
+ *  neredeyse tamamini atiyordu (yalnizca "kume degisti mi" imzasina
+ *  bakiliyordu). */
 export interface RecentRoadDamageAnalysis {
   analysisId: string;
   createdAt: number;
   bounds: { west: number; south: number; east: number; north: number } | null;
-  blockedRoadSegments: [number, number][][];
+  safeSegmentCount: number;
+  blockedSegmentCount: number;
+}
+
+export interface RoadDamageSegments {
+  analysisId: string;
+  bounds: { west: number; south: number; east: number; north: number } | null;
   safeRoadSegments: [number, number][][];
+  blockedRoadSegments: [number, number][][];
 }
 
 export async function getRecentRoadDamage(minutes: number = 60): Promise<{ analyses: RecentRoadDamageAnalysis[] }> {
   const res = await fetch(`${API_BASE_URL}/api/road_damage/recent?minutes=${minutes}`);
   if (!res.ok) throw new Error("Güncel yol hasarı analizleri çekilemedi.");
   return res.json();
+}
+
+/** Bir analizin segmentleri uretildikten sonra ASLA degismez, bu yuzden
+ *  sonuc sekmede kalici olarak onbelleklenir; ayni analizi birden fazla
+ *  sayfa/bilesen isterse (harita, komuta paneli, tahliye haritasi) ag
+ *  istegi yalnizca BIR kez yapilir. Ucus halindeki istek de paylasilir. */
+const roadDamageSegmentsCache = new Map<string, Promise<RoadDamageSegments>>();
+
+export function getRoadDamageSegments(analysisId: string): Promise<RoadDamageSegments> {
+  const cached = roadDamageSegmentsCache.get(analysisId);
+  if (cached) return cached;
+
+  const request = fetch(`${API_BASE_URL}/api/road_damage/segments/${analysisId}`)
+    .then((res) => {
+      if (!res.ok) throw new Error("Yol segmentleri çekilemedi.");
+      return res.json() as Promise<RoadDamageSegments>;
+    })
+    .catch((err) => {
+      // Basarisiz istek onbellekte kalirsa analiz bir daha HIC cekilemez.
+      roadDamageSegmentsCache.delete(analysisId);
+      throw err;
+    });
+
+  roadDamageSegmentsCache.set(analysisId, request);
+  return request;
 }
 
 export interface CameraDetection {

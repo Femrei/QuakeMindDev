@@ -10,6 +10,7 @@ import {
   SOSAlert,
   getTeamClaims,
   getRecentRoadDamage,
+  getRoadDamageSegments,
   getDebrisReports,
   getNlpLocations,
   TeamClaim,
@@ -101,37 +102,46 @@ export default function CommandDashboardPage() {
     const pollRoads = async () => {
       try {
         const damageData = await getRecentRoadDamage(120);
+        // /recent artik yalnizca hafif ozet doner (bkz. api.ts). Imza
+        // degismediyse tek bir agir istek bile atilmaz; degistiyse agir
+        // diziler analiz basina BIR KEZ (getRoadDamageSegments onbellegi)
+        // cekilir.
         const signature = damageData.analyses
-          .map((a) => `${a.analysisId}:${a.safeRoadSegments.length}:${a.blockedRoadSegments.length}`)
+          .map((a) => `${a.analysisId}:${a.safeSegmentCount}:${a.blockedSegmentCount}`)
           .join("|");
         if (signature === roadSignatureRef.current) return;
         roadSignatureRef.current = signature;
 
+        const segments = await Promise.all(
+          damageData.analyses.map((a) => getRoadDamageSegments(a.analysisId).catch(() => null))
+        );
+
         const polylines: MapPolylineItem[] = [];
         let safeCount = 0;
         let blockedCount = 0;
-        damageData.analyses.forEach((a) => {
-          safeCount += a.safeRoadSegments.length;
-          blockedCount += a.blockedRoadSegments.length;
+        segments.forEach((seg) => {
+          if (!seg) return;
+          safeCount += seg.safeRoadSegments.length;
+          blockedCount += seg.blockedRoadSegments.length;
           // Bir sehrin TAM yol agi ~50.000 segment surer -- her segmenti ayri
           // bir <Polyline> yapmak React'i ve Leaflet'i kilitliyordu (olculdu:
           // katmani acmak tarayiciyi 30sn+ dondurdu). Acik yollarin hepsi TEK,
           // kapalilarin hepsi TEK cok-parcali katman olarak cizilir.
-          if (a.safeRoadSegments.length > 0) {
+          if (seg.safeRoadSegments.length > 0) {
             polylines.push({
-              id: `${a.analysisId}-safe`,
+              id: `${seg.analysisId}-safe`,
               coords: [],
-              coordGroups: a.safeRoadSegments as [number, number][][],
+              coordGroups: seg.safeRoadSegments as [number, number][][],
               color: "#22c55e",
               weight: 2,
               opacity: 0.75,
             });
           }
-          if (a.blockedRoadSegments.length > 0) {
+          if (seg.blockedRoadSegments.length > 0) {
             polylines.push({
-              id: `${a.analysisId}-blocked`,
+              id: `${seg.analysisId}-blocked`,
               coords: [],
-              coordGroups: a.blockedRoadSegments as [number, number][][],
+              coordGroups: seg.blockedRoadSegments as [number, number][][],
               color: "#ef4444",
               weight: 3,
               opacity: 0.95,
