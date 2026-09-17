@@ -97,8 +97,8 @@ MODELS = {
     "lightgbm": ("LightGBM", build_lightgbm),
     "random_forest": ("Random Forest", build_random_forest),
     "logistic_regression": ("Lojistik Regresyon", build_logreg),
-    "mlp": ("MLP (Sinir Agi)", build_mlp),
-    "stacking_ensemble": ("Yiginlanmis Topluluk (Cat+LGBM+RF)", build_stacking),
+    "mlp": ("MLP (Sinir Ağı)", build_mlp),
+    "stacking_ensemble": ("Yığınlanmış Topluluk (Cat+LGBM+RF)", build_stacking),
 }
 
 

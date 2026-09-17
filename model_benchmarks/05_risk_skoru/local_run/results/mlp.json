@@ -1,6 +1,6 @@
 {
   "model": "mlp",
-  "title": "MLP (Sinir Agi)",
+  "title": "MLP (Sinir Ağı)",
   "positive_rate_mean": 0.7306666666666667,
   "positive_rate_std": 0.19494044674663535,
   "roc_auc_mean": 0.42759818884895767,
@@ -122,6 +122,6 @@
     "early_stopping": true,
     "random_state": 42
   },
-  "train_seconds": 0.4,
+  "train_seconds": 0.33,
   "feature_importance": null
 }
