@@ -6,23 +6,26 @@ import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem, MapPolylineItem } from "@/components/map/InteractiveMap";
 import { getSOSAlerts, fetchServerStatus, SOSAlert } from "@/lib/api";
 import { deriveUrgencyTier, urgencyLabel, urgencyTextClass } from "@/lib/urgency";
-import { 
-  ShieldAlert, 
-  Siren, 
-  Map as MapIcon, 
-  Activity, 
-  FileText, 
-  Camera, 
-  CheckCircle2, 
-  AlertTriangle, 
-  TrendingUp, 
+import { useMapLayers } from "@/context/MapLayersContext";
+import {
+  ShieldAlert,
+  Siren,
+  Map as MapIcon,
+  Activity,
+  FileText,
+  Camera,
+  CheckCircle2,
+  AlertTriangle,
+  TrendingUp,
   Users,
-  ArrowUpRight
+  ArrowUpRight,
+  Sparkles,
 } from "lucide-react";
 
 const ANTAKYA_CENTER: [number, number] = [36.202, 36.161];
 
 export default function CommandDashboardPage() {
+  const { sosAlerts: contextSosAlerts, demoActive } = useMapLayers();
   const [alerts, setAlerts] = useState<SOSAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<{ nlp: boolean; risk: boolean; road_damage: boolean }>({
@@ -31,7 +34,14 @@ export default function CommandDashboardPage() {
     road_damage: true,
   });
 
+  // Global simülasyon aktifken war-room haritası ve metrikler de Navbar'ın
+  // ürettiği ortak SOS veri setini kullanır.
   useEffect(() => {
+    if (demoActive) {
+      setAlerts(contextSosAlerts);
+      setLoading(false);
+      return;
+    }
     getSOSAlerts()
       .then((data) => {
         setAlerts(data.alerts);
@@ -72,7 +82,8 @@ export default function CommandDashboardPage() {
       });
 
     fetchServerStatus().then((res) => setStatus(res.modules)).catch(() => {});
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoActive]);
 
   const markers: MapMarkerItem[] = alerts.map((a) => ({
     id: a.id,
@@ -99,6 +110,11 @@ export default function CommandDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {demoActive && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-purple-500/10 text-purple-200 border border-purple-500/40">
+                <Sparkles className="w-3.5 h-3.5" /> Simülasyon Modu Aktif
+              </span>
+            )}
             <Link
               href="/command/sos"
               className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 flex items-center gap-2 transition-all"

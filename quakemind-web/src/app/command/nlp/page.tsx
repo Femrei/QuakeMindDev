@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem } from "@/components/map/InteractiveMap";
 import { analyzeNLP, NLPResponse } from "@/lib/api";
 import { useMapLayers } from "@/context/MapLayersContext";
-import { FileText, MapPin, Send, Layers, AlertTriangle } from "lucide-react";
+import { FileText, MapPin, Send, Layers, AlertTriangle, Sparkles } from "lucide-react";
 
 const SAMPLES = [
   "Hatay antakya cebrail mahallesi yıkıldı, enkaz altında kalanlar var lütfen yardım edin ses geliyor!",
@@ -17,7 +17,7 @@ const SAMPLES = [
 const DEFAULT_MAP_CENTER: [number, number] = [37.5, 36.5];
 
 export default function NLPPage() {
-  const { addNlpIncident } = useMapLayers();
+  const { addNlpIncident, nlpIncidents, demoActive } = useMapLayers();
   const [text, setText] = useState(SAMPLES[0]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<NLPResponse | null>(null);
@@ -63,6 +63,24 @@ export default function NLPPage() {
           popupText: result.kategori,
         }
       : null;
+
+  // Global simülasyon aktifken, tüm sistemin ortak veri setinden gelen NLP
+  // ihbarlarını da haritada göster -- sadece son analiz sonucuyla sınırlı kalma.
+  const mapMarkers: MapMarkerItem[] = useMemo(() => {
+    const list: MapMarkerItem[] = [];
+    if (demoActive) {
+      nlpIncidents.forEach((n) => list.push(n.marker));
+    }
+    if (marker) list.push(marker);
+    return list;
+  }, [demoActive, nlpIncidents, marker]);
+
+  const mapCenter: [number, number] = marker
+    ? [marker.lat, marker.lng]
+    : demoActive && nlpIncidents.length > 0
+    ? [nlpIncidents[0].marker.lat, nlpIncidents[0].marker.lng]
+    : DEFAULT_MAP_CENTER;
+  const mapZoom = marker ? 14 : demoActive && nlpIncidents.length > 0 ? 6 : 6;
 
   return (
     <div className="flex-1 flex w-full">
@@ -205,16 +223,18 @@ export default function NLPPage() {
               <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
                 <Layers className="w-4 h-4 text-cyan-400" /> NER İLE ÇIKARILAN KONUM
               </span>
-              {!result?.konum && (
-                <span className="text-[10px] text-slate-500">Henüz bir konum tespit edilmedi</span>
+              {demoActive ? (
+                <span className="flex items-center gap-1 text-[10px] font-bold text-purple-300 bg-purple-500/10 border border-purple-500/40 px-2 py-1 rounded-full">
+                  <Sparkles className="w-3 h-3" /> Simülasyon: {nlpIncidents.length} ihbar
+                </span>
+              ) : (
+                !result?.konum && (
+                  <span className="text-[10px] text-slate-500">Henüz bir konum tespit edilmedi</span>
+                )
               )}
             </div>
             <div className="flex-1 rounded-2xl overflow-hidden border border-slate-800">
-              <InteractiveMap
-                center={marker ? [marker.lat, marker.lng] : DEFAULT_MAP_CENTER}
-                zoom={marker ? 14 : 6}
-                markers={marker ? [marker] : []}
-              />
+              <InteractiveMap center={mapCenter} zoom={mapZoom} markers={mapMarkers} />
             </div>
           </div>
         </div>

@@ -42,7 +42,13 @@ class _IpConfigDialogState extends State<IpConfigDialog> {
         children: [
           const Icon(Icons.dns_outlined, color: AppTheme.neonCyan, size: 20),
           const SizedBox(width: 10),
-          const Text('Sunucu Baglanti Ayari'),
+          const Expanded(
+            child: Text(
+              'Sunucu Baglanti Ayari',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       content: SingleChildScrollView(
