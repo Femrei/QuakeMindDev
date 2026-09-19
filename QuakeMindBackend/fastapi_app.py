@@ -1440,8 +1440,11 @@ def _demo_user(id_suffix, name, email, role, unit, city="Hatay"):
     }
 
 # Demo accounts for development/testing -- multiple per role so team-chat and
-# multi-user flows can be tried without needing real registrations. TODO:
-# remove or gate behind an env flag before production.
+# multi-user flows can be tried without needing real registrations. Gated by
+# QUAKEMIND_DEMO_TOKEN below; set to "false" before a real deployment so the
+# "demo-token" shortcut in /api/auth/me stops granting unauthenticated access.
+DEMO_TOKEN_ENABLED = os.environ.get("QUAKEMIND_DEMO_TOKEN", "true").lower() not in ("false", "0", "off")
+
 USER_DATABASE = {
     u["email"]: u
     for u in [
@@ -1543,7 +1546,7 @@ def auth_me(token: Optional[str] = None):
             return {"status": "success", "user": user_profile}
 
     for email, u in USER_DATABASE.items():
-        if u.get("token") == token or token == "demo-token":
+        if u.get("token") == token or (DEMO_TOKEN_ENABLED and token == "demo-token"):
             user_profile = dict(u)
             user_profile.pop("password", None)
             return {

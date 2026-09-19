@@ -76,7 +76,7 @@ class LocationExtractor:
             
         try:
             return self.ner(text[:512])
-        except:
+        except Exception:
             return []
 
     def _normalize_location_text(self, text):

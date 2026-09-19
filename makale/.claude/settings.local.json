@@ -8,7 +8,8 @@
       "Bash(python3)",
       "Bash(python)",
       "Bash(awk '/# BÖLÜM 1/,/# BÖLÜM 2/' MAKALE_DUZELTME_LISTESI.md)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(python -c \"import docx\")"
     ]
   }
 }

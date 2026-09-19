@@ -1,0 +1,230 @@
+{
+"type": "FeatureCollection",
+                                                                                
+"features": [
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.854349200000058, 37.590735800000061 ], [ 36.854157500000042, 37.59063320000007 ], [ 36.853291400000046, 37.590312700000027 ], [ 36.85293530000007, 37.590302 ], [ 36.852482, 37.590357800000049 ], [ 36.852240600000073, 37.59041140000005 ], [ 36.852100300000075, 37.590383100000054 ], [ 36.851993100000072, 37.590305200000046 ], [ 36.85154650000004, 37.589837100000068 ], [ 36.850733800000057, 37.589239600000042 ], [ 36.850095900000042, 37.589310400000045 ], [ 36.849955500000078, 37.589370100000053 ], [ 36.849226400000077, 37.58935850000006 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.860568300000068, 37.597304600000029 ], [ 36.860521200000051, 37.597177700000032 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.860521200000051, 37.597177700000032 ], [ 36.860419400000069, 37.596868100000052 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.860419400000069, 37.596868100000052 ], [ 36.860331900000062, 37.596649700000057 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.85969440000008, 37.595432500000072 ], [ 36.859615800000029, 37.595313600000054 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.860331900000062, 37.596649700000057 ], [ 36.860126900000068, 37.596208500000046 ], [ 36.85969440000008, 37.595432500000072 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.859615800000029, 37.595313600000054 ], [ 36.859444100000076, 37.595020300000044 ], [ 36.859175900000025, 37.594423200000051 ], [ 36.859012300000074, 37.593998100000078 ], [ 36.858982800000035, 37.593755800000054 ], [ 36.858988600000032, 37.593591600000025 ], [ 36.858947900000032, 37.593526300000065 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.863417800000036, 37.600336300000038 ], [ 36.863289700000053, 37.600221700000077 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.863289700000053, 37.600221700000077 ], [ 36.862740600000052, 37.599765600000069 ], [ 36.8624, 37.599510600000031 ], [ 36.86107590000006, 37.598391200000037 ], [ 36.860935500000039, 37.598148400000071 ], [ 36.860836300000074, 37.597940200000039 ], [ 36.860568300000068, 37.597304600000029 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.858947900000032, 37.593526300000065 ], [ 36.858314900000039, 37.593128900000067 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.855033200000037, 37.591318400000034 ], [ 36.85491630000007, 37.591218100000049 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.85549560000004, 37.591674600000033 ], [ 36.855033200000037, 37.591318400000034 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.855611300000078, 37.591742600000032 ], [ 36.85549560000004, 37.591674600000033 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.858314900000039, 37.593128900000067 ], [ 36.857684600000027, 37.592708100000038 ], [ 36.857515600000056, 37.592633700000079 ], [ 36.85717040000003, 37.592553600000031 ], [ 36.856909100000053, 37.592452800000046 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.856674300000066, 37.59235220000005 ], [ 36.856322200000079, 37.592135300000052 ], [ 36.855611300000078, 37.591742600000032 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.856909100000053, 37.592452800000046 ], [ 36.856674300000066, 37.59235220000005 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.865405600000031, 37.587983400000041 ], [ 36.864631800000041, 37.587712300000078 ], [ 36.864148500000056, 37.58756470000003 ], [ 36.862295900000049, 37.586534400000062 ], [ 36.861807500000054, 37.586186600000076 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.854479, 37.590854 ], [ 36.854349200000058, 37.590735800000061 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.85491630000007, 37.591218100000049 ], [ 36.854479, 37.590854 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.847327500000063, 37.589160800000059 ], [ 36.847171700000047, 37.588996400000042 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.847171700000047, 37.588996400000042 ], [ 36.846506700000077, 37.58862460000006 ], [ 36.84639210000006, 37.588438 ], [ 36.84599860000003, 37.588194700000031 ], [ 36.845605600000056, 37.587980900000048 ], [ 36.845331900000076, 37.587742500000047 ], [ 36.845193600000073, 37.587476700000025 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.849226400000077, 37.58935850000006 ], [ 36.847527400000047, 37.589278600000057 ], [ 36.847327500000063, 37.589160800000059 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.845193600000073, 37.587476700000025 ], [ 36.844936800000028, 37.58709680000004 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.844936800000028, 37.58709680000004 ], [ 36.844755, 37.586786600000039 ], [ 36.844738800000073, 37.586679500000059 ], [ 36.844755600000042, 37.586377700000071 ], [ 36.844701800000053, 37.585898100000065 ], [ 36.844656200000031, 37.585713300000066 ], [ 36.843964500000027, 37.58468380000005 ], [ 36.843874300000039, 37.584663800000044 ], [ 36.84366250000005, 37.584617 ], [ 36.843531, 37.584538400000042 ], [ 36.843209200000047, 37.584007 ], [ 36.843096500000058, 37.583890100000076 ], [ 36.842951700000071, 37.583726400000046 ], [ 36.842841700000065, 37.583309800000052 ], [ 36.842793400000062, 37.583173800000054 ], [ 36.842782700000043, 37.582710400000053 ], [ 36.842812200000026, 37.582557400000042 ], [ 36.842951700000071, 37.582219400000042 ], [ 36.843002600000034, 37.582019600000081 ], [ 36.843088500000079, 37.581705 ], [ 36.843225300000029, 37.581460600000071 ], [ 36.843426400000055, 37.581154500000025 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.865843, 37.588123300000063 ], [ 36.865405600000031, 37.587983400000041 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.867016500000034, 37.589263900000049 ], [ 36.866150800000071, 37.588383900000053 ], [ 36.865966900000046, 37.588201600000048 ], [ 36.865843, 37.588123300000063 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.914476600000057, 37.565216 ], [ 36.91497, 37.564970800000026 ], [ 36.915277700000047, 37.564747100000034 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.917964400000074, 37.561947800000041 ], [ 36.919755200000054, 37.561319400000059 ], [ 36.920809900000052, 37.560993900000028 ], [ 36.921440200000063, 37.560905200000036 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.915277700000047, 37.564747100000034 ], [ 36.916778900000054, 37.562593400000026 ], [ 36.916953800000044, 37.562402500000076 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.921440200000063, 37.560905200000036 ], [ 36.922090500000024, 37.56081370000004 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.916953800000044, 37.562402500000076 ], [ 36.917964400000074, 37.561947800000041 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.848311100000046, 37.577319200000034 ], [ 36.848052100000075, 37.577134700000045 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.850951800000075, 37.58010610000008 ], [ 36.850816400000042, 37.579577 ], [ 36.850541300000032, 37.579291 ], [ 36.850415, 37.57903710000005 ], [ 36.849280700000065, 37.578161 ], [ 36.848811800000078, 37.57768580000004 ], [ 36.848311100000046, 37.577319200000034 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.848194, 37.57715630000007 ], [ 36.848212100000069, 37.577032900000063 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.848175900000058, 37.577279700000076 ], [ 36.848194, 37.57715630000007 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.843295700000056, 37.579799700000081 ], [ 36.844633, 37.579745 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.848212100000069, 37.577032900000063 ], [ 36.848221800000033, 37.576967100000047 ], [ 36.848392, 37.576519400000052 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.844633, 37.579745 ], [ 36.844734, 37.579740900000047 ], [ 36.845214600000077, 37.579701900000032 ], [ 36.845522800000026, 37.579467500000078 ], [ 36.846028, 37.578891200000044 ], [ 36.846348500000033, 37.578305200000045 ], [ 36.846644300000037, 37.578021900000067 ], [ 36.846989300000075, 37.577797300000043 ], [ 36.847827400000028, 37.577650800000072 ], [ 36.84816010000003, 37.577387100000067 ], [ 36.848175900000058, 37.577279700000076 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.85523210000008, 37.58430560000005 ], [ 36.854916500000058, 37.584158500000058 ], [ 36.854755700000055, 37.583895600000062 ], [ 36.854566900000066, 37.583776300000068 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.855545200000051, 37.584462900000062 ], [ 36.85523210000008, 37.58430560000005 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.860170100000062, 37.584857600000078 ], [ 36.859350800000072, 37.584448800000075 ], [ 36.859218, 37.584295500000053 ], [ 36.85871730000008, 37.584286500000076 ], [ 36.858429, 37.584319600000072 ], [ 36.858228, 37.584310600000038 ], [ 36.857700700000066, 37.584379700000056 ], [ 36.85721140000004, 37.584551 ], [ 36.856805500000064, 37.584635200000037 ], [ 36.856392100000051, 37.584539 ], [ 36.856077200000072, 37.584478900000079 ], [ 36.855545200000051, 37.584462900000062 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.872101200000031, 37.595604800000046 ], [ 36.871520900000064, 37.595075800000075 ], [ 36.87142220000004, 37.594991700000037 ], [ 36.871183300000041, 37.594763200000045 ], [ 36.871099800000025, 37.594628 ], [ 36.87102770000007, 37.594288400000039 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.874241200000029, 37.595144600000026 ], [ 36.873781100000031, 37.595066 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.971469900000045, 37.577881 ], [ 36.97262610000007, 37.577885200000026 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.970768400000054, 37.577878400000031 ], [ 36.97133690000004, 37.577880500000049 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.97133690000004, 37.577880500000049 ], [ 36.971469900000045, 37.577881 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.880024100000071, 37.601134 ], [ 36.879894900000068, 37.600907900000038 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.880090200000041, 37.601827900000046 ], [ 36.880086400000039, 37.601374100000044 ], [ 36.880024100000071, 37.601134 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.880078800000035, 37.602326 ], [ 36.880090200000041, 37.601827900000046 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.880609904000039, 37.60347835400006 ], [ 36.880560600000024, 37.603389200000038 ], [ 36.880423900000039, 37.603189900000075 ], [ 36.880214400000057, 37.602803800000061 ], [ 36.880078800000035, 37.602326 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.884481674000028, 37.60347835400006 ], [ 36.884049600000026, 37.603165100000069 ], [ 36.883746600000052, 37.603013500000031 ], [ 36.883357400000079, 37.60292 ], [ 36.882949100000076, 37.602846700000043 ], [ 36.882687600000054, 37.60283910000004 ], [ 36.882215500000029, 37.603003400000034 ], [ 36.881695600000057, 37.603251 ], [ 36.881395700000041, 37.603407700000048 ], [ 36.881143800000075, 37.603435500000046 ], [ 36.880560600000024, 37.603389200000038 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.889677800000072, 37.60331860000008 ], [ 36.889306200000078, 37.603137300000071 ], [ 36.888690600000075, 37.602788600000054 ], [ 36.888445, 37.602702700000066 ], [ 36.888170700000046, 37.602667300000064 ], [ 36.887146800000039, 37.60266480000007 ], [ 36.886965, 37.602707700000053 ], [ 36.88581350000004, 37.60318280000007 ], [ 36.885631700000033, 37.603299100000072 ], [ 36.885542400000077, 37.603433 ], [ 36.885527909000075, 37.60347835400006 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.889813400000037, 37.603384300000073 ], [ 36.889677800000072, 37.60331860000008 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.89006541100008, 37.60347835400006 ], [ 36.889813400000037, 37.603384300000073 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.879894900000068, 37.600907900000038 ], [ 36.87964930000004, 37.600619700000038 ], [ 36.879323, 37.600187800000072 ], [ 36.879122100000075, 37.599849200000051 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.842375773000072, 37.579869731000031 ], [ 36.843295700000056, 37.579799700000081 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.863609, 37.600599800000055 ], [ 36.863605500000062, 37.600595600000077 ], [ 36.863417800000036, 37.600336300000038 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.863677700000039, 37.600682400000039 ], [ 36.863609, 37.600599800000055 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.964866500000028, 37.580284900000038 ], [ 36.966250200000047, 37.580339 ], [ 36.966826800000035, 37.580351 ], [ 36.967090800000051, 37.580310100000077 ], [ 36.967248600000062, 37.580254800000034 ], [ 36.96791010000004, 37.579747400000031 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.972867700000052, 37.577896900000042 ], [ 36.97420690000007, 37.577902800000061 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.96791010000004, 37.579747400000031 ], [ 36.968053, 37.579627100000039 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.968053, 37.579627100000039 ], [ 36.969888600000047, 37.578083100000072 ], [ 36.970046400000058, 37.57801580000006 ], [ 36.970522, 37.577896600000031 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.970522, 37.577896600000031 ], [ 36.970768400000054, 37.577878400000031 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.97262610000007, 37.577885200000026 ], [ 36.972867700000052, 37.577896900000042 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.97420690000007, 37.577902800000061 ], [ 36.97482750000006, 37.57791050000003 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.870944300000076, 37.594195200000058 ], [ 36.870686300000045, 37.593894600000056 ], [ 36.870602900000051, 37.59372030000003 ], [ 36.870560600000033, 37.593526700000041 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.87102770000007, 37.594288400000039 ], [ 36.870944300000076, 37.594195200000058 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.87052570000003, 37.593498600000032 ], [ 36.869736200000034, 37.59251050000006 ], [ 36.869159800000034, 37.591399900000056 ], [ 36.869016500000043, 37.591061900000057 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 36.848392, 37.576519400000052 ], [ 36.848442424000041, 37.576386770000056 ] ], [ [ 36.866350303000047, 37.568487707000031 ], [ 36.867287300000044, 37.568527600000039 ], [ 36.868162300000051, 37.568390800000032 ], [ 36.868803200000059, 37.568029400000057 ], [ 36.870072600000071, 37.567120900000077 ], [ 36.870736773000033, 37.56656711100004 ] ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.908167300000059, 37.559948 ], [ 36.90779924900005, 37.559695760000068 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.847867700000052, 37.577003200000036 ], [ 36.847601239000028, 37.576654751000035 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.848052100000075, 37.577134700000045 ], [ 36.847867700000052, 37.577003200000036 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.864008800000079, 37.601052300000049 ], [ 36.863677700000039, 37.600682400000039 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.864262600000075, 37.601385100000073 ], [ 36.864095700000064, 37.601158200000043 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.864095700000064, 37.601158200000043 ], [ 36.864008800000079, 37.601052300000049 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.879122100000075, 37.599849200000051 ], [ 36.878786800000057, 37.599254600000052 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.876685700000053, 37.597048400000062 ], [ 36.876170300000069, 37.596455 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.878786800000057, 37.599254600000052 ], [ 36.878472700000032, 37.598974100000078 ], [ 36.877990900000043, 37.598577400000067 ], [ 36.877501600000073, 37.598096500000054 ], [ 36.877042500000073, 37.597571500000072 ], [ 36.876979300000073, 37.597403500000041 ], [ 36.876685700000053, 37.597048400000062 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.886489700000027, 37.574051700000041 ], [ 36.886583500000029, 37.57382 ], [ 36.886583500000029, 37.573514 ], [ 36.886522200000059, 37.573319500000025 ], [ 36.886551, 37.573182200000076 ], [ 36.886966, 37.572684500000037 ], [ 36.887106800000026, 37.57247 ], [ 36.887160900000026, 37.572169700000074 ], [ 36.887224100000026, 37.571908800000074 ], [ 36.887219100000038, 37.571585500000026 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.886273200000062, 37.574372 ], [ 36.886489700000027, 37.574051700000041 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.905029700000057, 37.566863900000044 ], [ 36.906853600000034, 37.566749 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.886469700000077, 37.577332400000046 ], [ 36.886372300000062, 37.577163700000028 ], [ 36.886123300000065, 37.576886300000069 ], [ 36.886170200000038, 37.576565900000048 ], [ 36.886224300000038, 37.576337100000046 ], [ 36.88633260000006, 37.576005400000042 ], [ 36.886269600000048, 37.575784900000031 ], [ 36.886132400000065, 37.575621900000044 ], [ 36.886204600000042, 37.574826800000039 ], [ 36.886168500000053, 37.574583700000062 ], [ 36.886273200000062, 37.574372 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.887542300000064, 37.566728 ], [ 36.88793620000007, 37.566563700000074 ], [ 36.889030300000059, 37.566197100000068 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.889519900000039, 37.565830500000061 ], [ 36.889675500000067, 37.56574020000005 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.889196200000072, 37.566103500000054 ], [ 36.889519900000039, 37.565830500000061 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.889030300000059, 37.566197100000068 ], [ 36.889196200000072, 37.566103500000054 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.896015800000043, 37.563883500000031 ], [ 36.896146600000066, 37.563532200000054 ], [ 36.896162400000037, 37.563224700000035 ], [ 36.896118600000079, 37.561465800000065 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.895757900000035, 37.564239800000053 ], [ 36.896015800000043, 37.563883500000031 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.889675500000067, 37.56574020000005 ], [ 36.88980440000006, 37.565701100000069 ], [ 36.891077100000075, 37.565591400000073 ], [ 36.891371, 37.565564300000062 ], [ 36.891691600000058, 37.565463600000044 ], [ 36.893307500000049, 37.565239600000041 ], [ 36.893732300000067, 37.565156900000034 ], [ 36.894786800000077, 37.564829200000077 ], [ 36.895321700000068, 37.564612700000055 ], [ 36.895592900000054, 37.564439800000059 ], [ 36.895757900000035, 37.564239800000053 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.886893600000064, 37.565458400000068 ], [ 36.888867, 37.565841200000079 ], [ 36.88979130000007, 37.565938900000049 ], [ 36.890518400000076, 37.565929100000062 ], [ 36.892083600000035, 37.565899800000068 ], [ 36.892823, 37.565870500000074 ], [ 36.89374730000003, 37.566134300000044 ], [ 36.895608300000049, 37.566984200000036 ], [ 36.896310800000037, 37.567120900000077 ], [ 36.897272100000066, 37.567062300000032 ], [ 36.900032700000054, 37.566857200000072 ], [ 36.903187700000046, 37.566915800000061 ], [ 36.905029700000057, 37.566863900000044 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.874627348000047, 37.565285485000061 ], [ 36.87611140000007, 37.565235500000028 ], [ 36.880116800000053, 37.565811900000028 ], [ 36.880856200000039, 37.565919400000041 ], [ 36.881620300000066, 37.565909600000055 ], [ 36.883234800000025, 37.565391900000066 ], [ 36.884491900000057, 37.564932700000043 ], [ 36.885268300000064, 37.564942500000029 ], [ 36.886009100000024, 37.565212300000042 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.886009100000024, 37.565212300000042 ], [ 36.886893600000064, 37.565458400000068 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.922090500000024, 37.56081370000004 ], [ 36.92291890000007, 37.560697 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.92291890000007, 37.560697 ], [ 36.923657200000036, 37.560593100000062 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.926868700000057, 37.557715 ], [ 36.927270600000043, 37.555252500000051 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.927270600000043, 37.555252500000051 ], [ 36.927327800000057, 37.554901800000039 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.926826800000072, 37.558071100000063 ], [ 36.926868700000057, 37.557715 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.927327800000057, 37.554901800000039 ], [ 36.927357400000062, 37.55472050000003 ], [ 36.927481645000057, 37.553637081000034 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.925481700000034, 37.55976510000005 ], [ 36.926465600000029, 37.558710200000064 ], [ 36.926784100000077, 37.558233200000075 ], [ 36.926826800000072, 37.558071100000063 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.924158, 37.56052260000007 ], [ 36.924964900000077, 37.560219600000039 ], [ 36.925481700000034, 37.55976510000005 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.923657200000036, 37.560593100000062 ], [ 36.924158, 37.56052260000007 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.97482750000006, 37.57791050000003 ], [ 36.975543200000061, 37.577921700000047 ], [ 36.975973900000042, 37.577887800000042 ], [ 36.976292661000059, 37.577815710000039 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.912478400000055, 37.565690500000073 ], [ 36.912725500000079, 37.565631800000062 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.912725500000079, 37.565631800000062 ], [ 36.914476600000057, 37.565216 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Sulama Kanalı", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.906853600000034, 37.566749 ], [ 36.908425500000078, 37.566671600000063 ], [ 36.911679, 37.56588030000006 ], [ 36.912478400000055, 37.565690500000073 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.963418900000079, 37.580228300000044 ], [ 36.964724700000033, 37.580279400000052 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.964724700000033, 37.580279400000052 ], [ 36.964866500000028, 37.580284900000038 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.876170300000069, 37.596455 ], [ 36.875765900000033, 37.596081100000049 ], [ 36.874922400000059, 37.595598500000051 ], [ 36.874417100000073, 37.595234 ], [ 36.874241200000029, 37.595144600000026 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.873781100000031, 37.595066 ], [ 36.873605200000043, 37.595008800000073 ], [ 36.872427800000025, 37.594408300000055 ], [ 36.87176020000004, 37.594036600000038 ], [ 36.870560600000033, 37.593526700000041 ], [ 36.87052570000003, 37.593498600000032 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.911554800000033, 37.563118200000076 ], [ 36.91111090000004, 37.562168300000053 ], [ 36.910944, 37.561915700000043 ], [ 36.908968400000049, 37.560525300000052 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.908968400000049, 37.560525300000052 ], [ 36.908167300000059, 37.559948 ] ] } }
+,
+{ "type": "Feature", "properties": { "obj_type": "BH141-Stream", "name": "Unknown", "notation": "Not Applicable", "or_src_id": 994, "cd_value": "Not Applicable" }, "geometry": { "type": "LineString", "coordinates": [ [ 36.887219100000038, 37.571585500000026 ], [ 36.887149100000045, 37.571020100000055 ] ] } }
+
+]
+}

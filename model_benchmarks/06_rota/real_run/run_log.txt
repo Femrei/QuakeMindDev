@@ -1,0 +1,29 @@
+
+=== H-Z1 (Antakya, Hatay, Turkiye) ===
+graf: 4981 dugum, 14594 kenar, merkez=(36.2025574, 36.1640991)
+EMSR648 AOI11 hasar dagilimi (tum AOI, bu bolgeyle sinirli degil): {'No visible damage': 4540, 'Destroyed': 39, 'Damaged': 31, 'Possibly damaged': 3}
+    [emsr648] AOI11/strict: bbox-aday kenar=5134/14594, kapali=70
+  EMSR648 [strict] bu bolge grafinde kapali kenar sayisi: 70 / 14594
+    [emsr648] AOI11/medium: bbox-aday kenar=7266/14594, kapali=194
+  EMSR648 [medium] bu bolge grafinde kapali kenar sayisi: 194 / 14594
+    [emsr648] AOI11/loose: bbox-aday kenar=14576/14594, kapali=194
+  EMSR648 [loose] bu bolge grafinde kapali kenar sayisi: 194 / 14594
+  seed=42: sentetik kapanma -> 1312 kenar (etkin oran=0.0900, yarilama=1)
+  seed=43: sentetik kapanma -> 2626 kenar (etkin oran=0.1800, yarilama=0)
+  seed=44: sentetik kapanma -> 1312 kenar (etkin oran=0.0900, yarilama=1)
+
+--- OZET: H-Z1 ---
+  [synthetic] R0 ortalama sure=173.0 dk (k ortalama=7.83) | R3 ortalama sure=13.8 dk | R0 ulasilamayan=0
+  [emsr648_medium] R0 ortalama sure=30.6 dk (k ortalama=0.89) | R3 ortalama sure=12.5 dk | R0 ulasilamayan=0
+
+=== K-Z1 (Onikisubat, Kahramanmaras, Turkiye) ===
+graf: 8326 dugum, 24970 kenar, merkez=(37.5777575, 36.923735)
+EMSR648 AOI04 hasar dagilimi (tum AOI, bu bolgeyle sinirli degil): {'No visible damage': 7709, 'Damaged': 134}
+  EMSR648 [strict] bu bolge grafinde kapali kenar sayisi: 0 / 24970
+    [emsr648] AOI04/medium: bbox-aday kenar=21162/24970, kapali=406
+  EMSR648 [medium] bu bolge grafinde kapali kenar sayisi: 406 / 24970
+    [emsr648] AOI04/loose: bbox-aday kenar=21162/24970, kapali=406
+  EMSR648 [loose] bu bolge grafinde kapali kenar sayisi: 406 / 24970
+  seed=42: sentetik kapanma -> 4492 kenar (etkin oran=0.1800, yarilama=0)
+  seed=43: sentetik kapanma -> 4492 kenar (etkin oran=0.1800, yarilama=0)
+  seed=44: sentetik kapanma -> 4494 kenar (etkin oran=0.1800, yarilama=0)

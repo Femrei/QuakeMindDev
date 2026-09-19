@@ -1,0 +1,143 @@
+
+=== H-Z1 (Antakya, Hatay, Turkiye) ===
+graf: 4981 dugum, 14594 kenar, merkez=(36.2025574, 36.1640991)
+EMSR648 AOI11 hasar dagilimi (tum AOI, bu bolgeyle sinirli degil): {'No visible damage': 4540, 'Destroyed': 39, 'Damaged': 31, 'Possibly damaged': 3}
+    [emsr648] AOI11/strict: bbox-aday kenar=5134/14594, kapali=70
+  EMSR648 [strict] bu bolge grafinde kapali kenar sayisi: 70 / 14594
+    [emsr648] AOI11/medium: bbox-aday kenar=7266/14594, kapali=194
+  EMSR648 [medium] bu bolge grafinde kapali kenar sayisi: 194 / 14594
+    [emsr648] AOI11/loose: bbox-aday kenar=14576/14594, kapali=194
+  EMSR648 [loose] bu bolge grafinde kapali kenar sayisi: 194 / 14594
+  seed=42: sentetik kapanma -> 1312 kenar (etkin oran=0.0900, yarilama=1)
+    seed=42 pair#0 (10718906337->1186555137) [synthetic]: R0=0.27s R1=0.30s R3=0.09s
+    seed=42 pair#0 (10718906337->1186555137) [emsr648_medium]: R0=0.02s R1=0.03s R3=0.08s
+    -> pair#0 toplam 0.79s
+    seed=42 pair#1 (1179139287->10630773311) [synthetic]: R0=0.12s R1=0.12s R3=0.06s
+    seed=42 pair#1 (1179139287->10630773311) [emsr648_medium]: R0=0.02s R1=0.02s R3=0.08s
+    -> pair#1 toplam 0.41s
+    seed=42 pair#2 (2232016273->2232027068) [synthetic]: R0=0.12s R1=0.20s R3=0.04s
+    seed=42 pair#2 (2232016273->2232027068) [emsr648_medium]: R0=0.01s R1=0.01s R3=0.04s
+    -> pair#2 toplam 0.42s
+    seed=42 pair#3 (10718906404->2234994031) [synthetic]: R0=1.23s R1=1.20s R3=0.16s
+    seed=42 pair#3 (10718906404->2234994031) [emsr648_medium]: R0=0.04s R1=0.04s R3=0.13s
+    -> pair#3 toplam 2.80s
+    seed=42 pair#4 (1186554823->2231887022) [synthetic]: R0=0.15s R1=0.29s R3=0.10s
+    seed=42 pair#4 (1186554823->2231887022) [emsr648_medium]: R0=0.02s R1=0.03s R3=0.10s
+    -> pair#4 toplam 0.69s
+    seed=42 pair#5 (2235026260->6025635203) [synthetic]: R0=0.09s R1=0.11s R3=0.06s
+    seed=42 pair#5 (2235026260->6025635203) [emsr648_medium]: R0=0.02s R1=0.01s R3=0.04s
+    -> pair#5 toplam 0.33s
+  seed=43: sentetik kapanma -> 2626 kenar (etkin oran=0.1800, yarilama=0)
+    seed=43 pair#0 (2234964926->2231945598) [synthetic]: R0=0.45s R1=0.35s R3=0.06s
+    seed=43 pair#0 (2234964926->2231945598) [emsr648_medium]: R0=0.02s R1=0.02s R3=0.08s
+    -> pair#0 toplam 0.99s
+    seed=43 pair#1 (2231947764->2231994005) [synthetic]: R0=0.00s R1=0.00s R3=0.00s
+    seed=43 pair#1 (2231947764->2231994005) [emsr648_medium]: R0=0.00s R1=0.00s R3=0.01s
+    -> pair#1 toplam 0.02s
+    seed=43 pair#2 (2234969067->2234164142) [synthetic]: R0=1.05s R1=0.75s R3=0.13s
+    seed=43 pair#2 (2234969067->2234164142) [emsr648_medium]: R0=0.05s R1=0.04s R3=0.14s
+    -> pair#2 toplam 2.16s
+    seed=43 pair#3 (10720770540->2234766028) [synthetic]: R0=1.54s R1=1.87s R3=0.18s
+    seed=43 pair#3 (10720770540->2234766028) [emsr648_medium]: R0=0.08s R1=0.07s R3=0.23s
+    -> pair#3 toplam 3.96s
+    seed=43 pair#4 (2231886961->2234969209) [synthetic]: R0=1.00s R1=0.72s R3=0.15s
+    seed=43 pair#4 (2231886961->2234969209) [emsr648_medium]: R0=0.06s R1=0.05s R3=0.20s
+    -> pair#4 toplam 2.18s
+    seed=43 pair#5 (2234164099->2234426155) [synthetic]: R0=0.50s R1=0.83s R3=0.07s
+    seed=43 pair#5 (2234164099->2234426155) [emsr648_medium]: R0=0.02s R1=0.02s R3=0.06s
+    -> pair#5 toplam 1.50s
+  seed=44: sentetik kapanma -> 1312 kenar (etkin oran=0.0900, yarilama=1)
+    seed=44 pair#0 (2234965027->1633195241) [synthetic]: R0=0.08s R1=0.10s R3=0.10s
+    seed=44 pair#0 (2234965027->1633195241) [emsr648_medium]: R0=0.03s R1=0.03s R3=0.10s
+    -> pair#0 toplam 0.43s
+    seed=44 pair#1 (2234211360->1186571022) [synthetic]: R0=0.09s R1=0.12s R3=0.05s
+    seed=44 pair#1 (2234211360->1186571022) [emsr648_medium]: R0=0.03s R1=0.04s R3=0.06s
+    -> pair#1 toplam 0.38s
+    seed=44 pair#2 (2232027097->1186265657) [synthetic]: R0=0.24s R1=0.16s R3=0.09s
+    seed=44 pair#2 (2232027097->1186265657) [emsr648_medium]: R0=0.03s R1=0.03s R3=0.09s
+    -> pair#2 toplam 0.64s
+    seed=44 pair#3 (2234555106->2232024922) [synthetic]: R0=0.61s R1=0.86s R3=0.12s
+    seed=44 pair#3 (2234555106->2232024922) [emsr648_medium]: R0=0.02s R1=0.04s R3=0.11s
+    -> pair#3 toplam 1.77s
+    seed=44 pair#4 (2234555116->3706487281) [synthetic]: R0=0.13s R1=0.16s R3=0.05s
+    seed=44 pair#4 (2234555116->3706487281) [emsr648_medium]: R0=0.01s R1=0.01s R3=0.04s
+    -> pair#4 toplam 0.40s
+    seed=44 pair#5 (2234298286->1982051349) [synthetic]: R0=0.03s R1=0.04s R3=0.11s
+    seed=44 pair#5 (2234298286->1982051349) [emsr648_medium]: R0=1.03s R1=0.89s R3=0.14s
+    -> pair#5 toplam 2.24s
+
+--- OZET: H-Z1 ---
+  [synthetic] R0 ortalama sure=173.0 dk (k ortalama=7.83) | R3 ortalama sure=13.8 dk | R0 ulasilamayan=0
+  [emsr648_medium] R0 ortalama sure=30.6 dk (k ortalama=0.89) | R3 ortalama sure=12.5 dk | R0 ulasilamayan=0
+
+=== K-Z1 (Onikisubat, Kahramanmaras, Turkiye) ===
+graf: 8326 dugum, 24970 kenar, merkez=(37.5777575, 36.923735)
+EMSR648 AOI04 hasar dagilimi (tum AOI, bu bolgeyle sinirli degil): {'No visible damage': 7709, 'Damaged': 134}
+  EMSR648 [strict] bu bolge grafinde kapali kenar sayisi: 0 / 24970
+    [emsr648] AOI04/medium: bbox-aday kenar=21162/24970, kapali=406
+  EMSR648 [medium] bu bolge grafinde kapali kenar sayisi: 406 / 24970
+    [emsr648] AOI04/loose: bbox-aday kenar=21162/24970, kapali=406
+  EMSR648 [loose] bu bolge grafinde kapali kenar sayisi: 406 / 24970
+  seed=42: sentetik kapanma -> 4492 kenar (etkin oran=0.1800, yarilama=0)
+    seed=42 pair#0 (6804932603->2214588561) [synthetic]: R0=0.06s R1=0.07s R3=0.02s
+    seed=42 pair#0 (6804932603->2214588561) [emsr648_medium]: R0=0.00s R1=0.01s R3=0.02s
+    -> pair#0 toplam 0.17s
+    seed=42 pair#1 (5669437118->2078490198) [synthetic]: R0=9.23s R1=3.76s R3=0.22s
+    seed=42 pair#1 (5669437118->2078490198) [emsr648_medium]: R0=0.05s R1=0.04s R3=0.19s
+    -> pair#1 toplam 13.49s
+    seed=42 pair#2 (2215863331->2214791033) [synthetic]: R0=0.04s R1=0.08s R3=0.02s
+    seed=42 pair#2 (2215863331->2214791033) [emsr648_medium]: R0=0.01s R1=0.01s R3=0.03s
+    -> pair#2 toplam 0.19s
+    seed=42 pair#3 (2215872981->2216185116) [synthetic]: R0=0.73s R1=1.04s R3=0.15s
+    seed=42 pair#3 (2215872981->2216185116) [emsr648_medium]: R0=0.09s R1=0.12s R3=0.17s
+    -> pair#3 toplam 2.30s
+    seed=42 pair#4 (1936714755->2214588386) [synthetic]: R0=3.92s R1=1.84s R3=0.12s
+    seed=42 pair#4 (1936714755->2214588386) [emsr648_medium]: R0=0.09s R1=0.06s R3=0.11s
+    -> pair#4 toplam 6.14s
+    seed=42 pair#5 (2216315982->5709459788) [synthetic]: R0=3.47s R1=1.33s R3=0.00s
+    seed=42 pair#5 (2216315982->5709459788) [emsr648_medium]: R0=1.01s R1=0.42s R3=0.27s
+    -> pair#5 toplam 6.51s
+  seed=43: sentetik kapanma -> 4492 kenar (etkin oran=0.1800, yarilama=0)
+    seed=43 pair#0 (10281704734->2216315853) [synthetic]: R0=1.23s R1=1.05s R3=0.41s
+    seed=43 pair#0 (10281704734->2216315853) [emsr648_medium]: R0=0.06s R1=0.06s R3=0.23s
+    -> pair#0 toplam 3.04s
+    seed=43 pair#1 (10290746897->10795189153) [synthetic]: R0=1.97s R1=1.44s R3=0.12s
+    seed=43 pair#1 (10290746897->10795189153) [emsr648_medium]: R0=0.04s R1=0.03s R3=0.14s
+    -> pair#1 toplam 3.74s
+    seed=43 pair#2 (2216293967->2216175082) [synthetic]: R0=6.74s R1=3.57s R3=0.20s
+    seed=43 pair#2 (2216293967->2216175082) [emsr648_medium]: R0=0.29s R1=0.38s R3=0.26s
+    -> pair#2 toplam 11.44s
+    seed=43 pair#3 (10224827291->10118093065) [synthetic]: R0=0.22s R1=0.29s R3=0.03s
+    seed=43 pair#3 (10224827291->10118093065) [emsr648_medium]: R0=0.00s R1=0.01s R3=0.02s
+    -> pair#3 toplam 0.57s
+    seed=43 pair#4 (7114190434->10232212554) [synthetic]: R0=0.04s R1=0.04s R3=0.01s
+    seed=43 pair#4 (7114190434->10232212554) [emsr648_medium]: R0=1.76s R1=0.61s R3=0.17s
+    -> pair#4 toplam 2.63s
+    seed=43 pair#5 (6638577087->2216174854) [synthetic]: R0=10.09s R1=3.54s R3=0.44s
+    seed=43 pair#5 (6638577087->2216174854) [emsr648_medium]: R0=0.80s R1=0.89s R3=0.27s
+    -> pair#5 toplam 16.03s
+  seed=44: sentetik kapanma -> 4494 kenar (etkin oran=0.1800, yarilama=0)
+    seed=44 pair#0 (10288815785->1881018409) [synthetic]: R0=0.31s R1=0.11s R3=0.01s
+    seed=44 pair#0 (10288815785->1881018409) [emsr648_medium]: R0=0.00s R1=0.01s R3=0.02s
+    -> pair#0 toplam 0.47s
+    seed=44 pair#1 (10288815771->2215551752) [synthetic]: R0=0.41s R1=0.38s R3=0.14s
+    seed=44 pair#1 (10288815771->2215551752) [emsr648_medium]: R0=1.31s R1=0.41s R3=0.23s
+    -> pair#1 toplam 2.88s
+    seed=44 pair#2 (1839597526->2214788032) [synthetic]: R0=1.17s R1=1.05s R3=0.11s
+    seed=44 pair#2 (1839597526->2214788032) [emsr648_medium]: R0=0.56s R1=0.63s R3=0.13s
+    -> pair#2 toplam 3.65s
+    seed=44 pair#3 (10289126042->2214624972) [synthetic]: R0=1.10s R1=0.83s R3=0.16s
+    seed=44 pair#3 (10289126042->2214624972) [emsr648_medium]: R0=2.22s R1=1.46s R3=0.18s
+    -> pair#3 toplam 5.96s
+    seed=44 pair#4 (10289126048->2214592788) [synthetic]: R0=0.05s R1=0.05s R3=0.01s
+    seed=44 pair#4 (10289126048->2214592788) [emsr648_medium]: R0=0.26s R1=0.11s R3=0.24s
+    -> pair#4 toplam 0.72s
+    seed=44 pair#5 (2216143898->13361395884) [synthetic]: R0=2.00s R1=1.61s R3=0.22s
+    seed=44 pair#5 (2216143898->13361395884) [emsr648_medium]: R0=0.43s R1=0.13s R3=0.47s
+    -> pair#5 toplam 4.86s
+
+--- OZET: K-Z1 ---
+  [synthetic] R0 ortalama sure=570.7 dk (k ortalama=27.00) | R3 ortalama sure=16.6 dk | R0 ulasilamayan=3
+  [emsr648_medium] R0 ortalama sure=139.5 dk (k ortalama=6.00) | R3 ortalama sure=14.6 dk | R0 ulasilamayan=0
+
+Toplam sure: 260.6 sn. Sonuc: D:\quakemind_final\QuakeMind\model_benchmarks\06_rota\real_run\results\small_validation_run.json

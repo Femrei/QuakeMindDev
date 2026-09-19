@@ -1,0 +1,50 @@
+{
+  "Bina tamamen yikildi enkaz altinda kaldik lutfen yardim edin": {
+    "category": "Enkaz Bildirimi",
+    "score": 0.8633300065994263
+  },
+  "Ust kat cokmus icerde iki kisi var enkaz kaldirma ekibi lazim": {
+    "category": "Enkaz Bildirimi",
+    "score": 0.9650502800941467
+  },
+  "Duvar uzerimize devrildi cikamiyoruz enkazdan sesleniyoruz": {
+    "category": "Enkaz Bildirimi",
+    "score": 0.8763994574546814
+  },
+  "Su ve gida ihtiyacimiz var cocuklarimiz ac kaldik": {
+    "category": "Acil Yardım İhtiyacı",
+    "score": 0.9226001501083374
+  },
+  "Yarali var kanama var acil saglik ekibi gerekiyor": {
+    "category": "Enkaz Bildirimi",
+    "score": 0.8255931735038757
+  },
+  "Isinamiyoruz battaniye ve giysi ihtiyacimiz var soguktan donuyoruz": {
+    "category": "Lojistik İhtiyaç Bildirimi",
+    "score": 0.7847001552581787
+  },
+  "Cadir ve barinma malzemesi lazim disarida kaldik": {
+    "category": "Lojistik İhtiyaç Bildirimi",
+    "score": 0.9197486639022827
+  },
+  "Is makinesi ve jenerator lazim molozu kaldiramiyoruz": {
+    "category": "Enkaz Bildirimi",
+    "score": 0.6834028959274292
+  },
+  "Elektrik yok jenerator ve yakit ihtiyaci var": {
+    "category": "Acil Yardım İhtiyacı",
+    "score": 0.6786141395568848
+  },
+  "Tuvalet ve hijyen malzemesi ihtiyacimiz var": {
+    "category": "Alakasız",
+    "score": 0.26950085163116455
+  },
+  "Sadece bilgi almak istiyorum tesekkur ederim": {
+    "category": "Alakasız",
+    "score": 0.9041678309440613
+  },
+  "Komsumuzu merak ediyorum haber alamiyoruz": {
+    "category": "Alakasız",
+    "score": 0.7258961796760559
+  }
+}

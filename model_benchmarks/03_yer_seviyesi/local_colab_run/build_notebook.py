@@ -29,11 +29,13 @@ sys.path.insert(0, str(HERE.parent.parent))
 from _nbtools import md, code, write_notebook  # noqa: E402
 
 # --- Roboflow erisim bilgileri (kullanicidan) ------------------------------
+# api_key BURADA TUTULMAZ: uretilen defter, anahtari Colab userdata sirrindan
+# / ROBOFLOW_API_KEY ortam degiskeninden / getpass ile okur (bkz. ds_lines).
 DATASETS = {
-    "catlak": dict(api_key="VjVedHy8GcB2HOWgjUAs", workspace="akash-roy-edivz",
+    "catlak": dict(workspace="akash-roy-edivz",
                    project="building-crack-detection-ys4zf", version=3,
                    title="Catlak Tespiti"),
-    "bina": dict(api_key="VjVedHy8GcB2HOWgjUAs", workspace="ofgg",
+    "bina": dict(workspace="ofgg",
                  project="maras-tpx5p", version=4,
                  title="Bina Hasari Tespiti"),
 }
@@ -83,11 +85,18 @@ def cells():
         "import os",
         "from roboflow import Roboflow",
         "",
+        "try:",
+        "    from google.colab import userdata",
+        "    ROBOFLOW_API_KEY = userdata.get('ROBOFLOW_API_KEY')",
+        "except Exception:",
+        "    import getpass",
+        "    ROBOFLOW_API_KEY = os.environ.get('ROBOFLOW_API_KEY') or getpass.getpass('Roboflow API key: ')",
+        "",
         "DATASETS = {",
     ]
     for key, d in DATASETS.items():
         ds_lines.append(
-            f"    '{key}': dict(api_key='{d['api_key']}', workspace='{d['workspace']}', "
+            f"    '{key}': dict(api_key=ROBOFLOW_API_KEY, workspace='{d['workspace']}', "
             f"project='{d['project']}', version={d['version']}, title='{d['title']}'),"
         )
     ds_lines.append("}")

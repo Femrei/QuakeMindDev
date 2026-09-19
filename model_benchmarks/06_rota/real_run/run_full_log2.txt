@@ -1,0 +1,140 @@
+
+=== H-Z1 (Antakya, Hatay, Turkiye) ===
+graf: 4981 dugum, 14594 kenar (15.4s)
+    [emsr648] AOI11/strict: bbox-aday kenar=5134/14594, kapali=70
+  EMSR648[strict]: 70 kenar
+    [emsr648] AOI11/medium: bbox-aday kenar=7266/14594, kapali=194
+  EMSR648[medium]: 194 kenar
+    [emsr648] AOI11/loose: bbox-aday kenar=14576/14594, kapali=194
+  EMSR648[loose]: 194 kenar
+  seed=42 tamam (10.4s, sentetik kapali=1312)
+  seed=43 tamam (16.0s, sentetik kapali=2626)
+  seed=44 tamam (11.6s, sentetik kapali=1312)
+  seed=45 tamam (6.6s, sentetik kapali=2626)
+  seed=46 tamam (8.4s, sentetik kapali=1312)
+  seed=47 tamam (29.1s, sentetik kapali=2626)
+  seed=48 tamam (38.7s, sentetik kapali=2628)
+  seed=49 tamam (23.7s, sentetik kapali=2626)
+  seed=50 tamam (16.3s, sentetik kapali=2626)
+  seed=51 tamam (22.9s, sentetik kapali=1314)
+  H-Z1 toplam: 234.4s
+
+=== H-Z2 (Iskenderun, Hatay, Turkiye) ===
+graf: 4040 dugum, 11910 kenar (8.4s)
+  EMSR648 kapsami disi (bu bolge icin sadece sentetik).
+  seed=42 tamam (5.3s, sentetik kapali=1070)
+  seed=43 tamam (5.7s, sentetik kapali=1072)
+  seed=44 tamam (10.9s, sentetik kapali=2142)
+  seed=45 tamam (3.1s, sentetik kapali=1070)
+  seed=46 tamam (5.5s, sentetik kapali=1070)
+  seed=47 tamam (9.7s, sentetik kapali=2142)
+  seed=48 tamam (4.1s, sentetik kapali=1072)
+  seed=49 tamam (5.1s, sentetik kapali=1070)
+  seed=50 tamam (6.9s, sentetik kapali=1072)
+  seed=51 tamam (8.7s, sentetik kapali=1070)
+  H-Z2 toplam: 73.3s
+
+=== H-Z3 (Kirikhan, Hatay, Turkiye) ===
+graf: 2403 dugum, 7430 kenar (5.4s)
+    [emsr648] AOI11/strict: bbox-aday kenar=0/7430, kapali=0
+  EMSR648[strict]: 0 kenar
+    [emsr648] AOI11/medium: bbox-aday kenar=0/7430, kapali=0
+  EMSR648[medium]: 0 kenar
+    [emsr648] AOI11/loose: bbox-aday kenar=0/7430, kapali=0
+  EMSR648[loose]: 0 kenar
+  seed=42 tamam (1.7s, sentetik kapali=1336)
+  seed=43 tamam (7.9s, sentetik kapali=1336)
+  seed=44 tamam (13.7s, sentetik kapali=1336)
+  seed=45 tamam (1.5s, sentetik kapali=1336)
+  seed=46 tamam (3.0s, sentetik kapali=1336)
+  seed=47 tamam (6.2s, sentetik kapali=1336)
+  seed=48 tamam (4.9s, sentetik kapali=1336)
+  seed=49 tamam (5.1s, sentetik kapali=1336)
+  seed=50 tamam (7.1s, sentetik kapali=1336)
+  seed=51 tamam (4.9s, sentetik kapali=1336)
+  H-Z3 toplam: 64.7s
+
+=== H-Z4 (Samandag, Hatay, Turkiye) ===
+graf: 2784 dugum, 7526 kenar (8.3s)
+  EMSR648 kapsami disi (bu bolge icin sadece sentetik).
+  seed=42 tamam (2.3s, sentetik kapali=676)
+  seed=43 tamam (3.6s, sentetik kapali=676)
+  seed=44 tamam (2.6s, sentetik kapali=338)
+  seed=45 tamam (2.5s, sentetik kapali=676)
+  seed=46 tamam (2.9s, sentetik kapali=676)
+  seed=47 tamam (4.3s, sentetik kapali=676)
+  seed=48 tamam (2.6s, sentetik kapali=676)
+  seed=49 tamam (1.0s, sentetik kapali=676)
+  seed=50 tamam (4.1s, sentetik kapali=676)
+  seed=51 tamam (4.3s, sentetik kapali=676)
+  H-Z4 toplam: 38.6s
+
+=== H-Z5 (Belen, Hatay, Turkiye) ===
+graf: 1088 dugum, 2858 kenar (5.9s)
+  EMSR648 kapsami disi (bu bolge icin sadece sentetik).
+  seed=42 tamam (0.5s, sentetik kapali=128)
+  seed=43 tamam (0.8s, sentetik kapali=128)
+  seed=44 tamam (0.4s, sentetik kapali=256)
+  seed=45 tamam (0.7s, sentetik kapali=128)
+  seed=46 tamam (1.1s, sentetik kapali=128)
+  seed=47 tamam (1.7s, sentetik kapali=256)
+  seed=48 tamam (0.9s, sentetik kapali=128)
+  seed=49 tamam (0.8s, sentetik kapali=64)
+  seed=50 tamam (4.4s, sentetik kapali=256)
+  seed=51 tamam (1.8s, sentetik kapali=256)
+  H-Z5 toplam: 19.0s
+
+=== K-Z1 (Onikisubat, Kahramanmaras, Turkiye) ===
+graf: 8326 dugum, 24970 kenar (14.2s)
+  EMSR648[strict]: 0 kenar
+    [emsr648] AOI04/medium: bbox-aday kenar=21162/24970, kapali=406
+  EMSR648[medium]: 406 kenar
+    [emsr648] AOI04/loose: bbox-aday kenar=21162/24970, kapali=406
+  EMSR648[loose]: 406 kenar
+  seed=42 tamam (56.8s, sentetik kapali=4492)
+  seed=43 tamam (73.5s, sentetik kapali=4492)
+  seed=44 tamam (41.0s, sentetik kapali=4494)
+  seed=45 tamam (82.6s, sentetik kapali=4492)
+  seed=46 tamam (87.4s, sentetik kapali=4492)
+  seed=47 tamam (56.6s, sentetik kapali=4492)
+  seed=48 tamam (59.1s, sentetik kapali=4492)
+  seed=49 tamam (86.5s, sentetik kapali=4492)
+  seed=50 tamam (83.5s, sentetik kapali=4492)
+  seed=51 tamam (53.8s, sentetik kapali=4494)
+  K-Z1 toplam: 748.7s
+
+=== K-Z2 (Elbistan, Kahramanmaras, Turkiye) ===
+graf: 3344 dugum, 10026 kenar (6.6s)
+  EMSR648[strict]: 0 kenar
+    [emsr648] AOI04/medium: bbox-aday kenar=0/10026, kapali=0
+  EMSR648[medium]: 0 kenar
+    [emsr648] AOI04/loose: bbox-aday kenar=0/10026, kapali=0
+  EMSR648[loose]: 0 kenar
+  seed=42 tamam (7.9s, sentetik kapali=1802)
+  seed=43 tamam (5.3s, sentetik kapali=900)
+  seed=44 tamam (12.4s, sentetik kapali=1802)
+  seed=45 tamam (8.7s, sentetik kapali=1802)
+  seed=46 tamam (16.6s, sentetik kapali=1804)
+  seed=47 tamam (15.3s, sentetik kapali=1802)
+  seed=48 tamam (6.7s, sentetik kapali=1804)
+  seed=49 tamam (12.2s, sentetik kapali=1802)
+  seed=50 tamam (8.2s, sentetik kapali=1802)
+  seed=51 tamam (7.2s, sentetik kapali=1802)
+  K-Z2 toplam: 111.5s
+
+=== K-Z3 (Pazarcik, Kahramanmaras, Turkiye) ===
+graf: 937 dugum, 2728 kenar (2.5s)
+  EMSR648 kapsami disi (bu bolge icin sadece sentetik).
+  seed=42 tamam (1.1s, sentetik kapali=244)
+  seed=43 tamam (0.8s, sentetik kapali=244)
+  seed=44 tamam (2.1s, sentetik kapali=490)
+  seed=45 tamam (1.8s, sentetik kapali=244)
+  seed=46 tamam (1.7s, sentetik kapali=244)
+  seed=47 tamam (1.4s, sentetik kapali=244)
+  seed=48 tamam (2.4s, sentetik kapali=244)
+  seed=49 tamam (0.4s, sentetik kapali=244)
+  seed=50 tamam (1.3s, sentetik kapali=244)
+  seed=51 tamam (0.6s, sentetik kapali=244)
+  K-Z3 toplam: 16.2s
+
+TOPLAM SURE: 1306.8s
