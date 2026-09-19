@@ -25,3 +25,5 @@ uvicorn
 segmentation-models-pytorch
 ultralytics
 bcrypt
+pytest
+httpx

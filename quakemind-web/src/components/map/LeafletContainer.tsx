@@ -6,6 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
 import DrawControl from "./DrawControl";
+import HeatmapLayer from "./HeatmapLayer";
 
 // Fix Leaflet Default Icon issue in Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -72,6 +73,7 @@ interface LeafletContainerProps {
   markers?: MapMarkerItem[];
   polylines?: MapPolylineItem[];
   className?: string;
+  heatData?: [number, number, number][];
   satelliteTileUrl?: string;
   satelliteAttribution?: string;
   onMapClick?: (lat: number, lng: number) => void;
@@ -103,6 +105,7 @@ export default function LeafletContainer({
   markers = [],
   polylines = [],
   className = "w-full h-full min-h-[400px]",
+  heatData,
   satelliteTileUrl,
   satelliteAttribution,
   onMapClick,
@@ -122,6 +125,7 @@ export default function LeafletContainer({
         <ChangeView center={center} zoom={zoom} />
         <ClickHandler onClick={onMapClick} />
         {enableDraw && <DrawControl onBoundsSelected={onBoundsSelected} onCleared={onDrawCleared} />}
+        {heatData && heatData.length > 0 && <HeatmapLayer points={heatData} />}
 
         {satelliteTileUrl ? (
           <>

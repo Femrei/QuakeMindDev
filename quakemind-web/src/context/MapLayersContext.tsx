@@ -8,6 +8,7 @@ import type {
   RiskResponse,
   SOSAlert,
 } from "@/lib/api";
+import { generateDemoMapData } from "@/lib/demoMapData";
 
 export type LayerKey =
   | "sos"
@@ -15,7 +16,8 @@ export type LayerKey =
   | "risk"
   | "faultLines"
   | "roadDamage"
-  | "assemblyAreas";
+  | "assemblyAreas"
+  | "heatmap";
 
 export interface NlpIncident {
   id: string;
@@ -46,15 +48,18 @@ interface MapLayersContextType {
 
   nlpIncidents: NlpIncident[];
   addNlpIncident: (incident: Omit<NlpIncident, "id" | "createdAt">) => void;
+  setNlpIncidents: (incidents: NlpIncident[]) => void;
 
   riskLayer: RiskLayerState;
   setRiskResult: (result: RiskResponse) => void;
+  clearRiskResult: () => void;
   setAllFaultLines: (faultLines: RiskFaultLine[]) => void;
   riskUpdatedAt: string | null;
   faultLinesUpdatedAt: string | null;
 
   roadDamageAnalyses: RoadDamageAnalysisLayer[];
   addRoadDamageAnalysis: (analysis: Omit<RoadDamageAnalysisLayer, "createdAt">) => void;
+  setRoadDamageAnalyses: (analyses: RoadDamageAnalysisLayer[]) => void;
 
   assemblyAreas: AssemblyRecord[];
   setAssemblyAreas: (areas: AssemblyRecord[]) => void;
@@ -62,6 +67,13 @@ interface MapLayersContextType {
 
   layerVisibility: Record<LayerKey, boolean>;
   toggleLayer: (key: LayerKey) => void;
+
+  // Global "gerçek sistemmiş gibi çalışan" simülasyon modu: tek bir yerden
+  // (Navbar) tetiklenip her sayfayı (SOS, NLP, Risk, Yol Hasarı, Komuta
+  // Merkezi haritası) aynı sahte veri setiyle doldurur.
+  demoActive: boolean;
+  activateDemo: () => void;
+  deactivateDemo: () => void;
 }
 
 const DEFAULT_VISIBILITY: Record<LayerKey, boolean> = {
@@ -71,6 +83,7 @@ const DEFAULT_VISIBILITY: Record<LayerKey, boolean> = {
   faultLines: false,
   roadDamage: false,
   assemblyAreas: false,
+  heatmap: false,
 };
 
 const MapLayersContext = createContext<MapLayersContextType | undefined>(undefined);
@@ -79,18 +92,19 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
   const [sosAlerts, setSosAlertsState] = useState<SOSAlert[]>([]);
   const [sosUpdatedAt, setSosUpdatedAt] = useState<string | null>(null);
 
-  const [nlpIncidents, setNlpIncidents] = useState<NlpIncident[]>([]);
+  const [nlpIncidents, setNlpIncidentsState] = useState<NlpIncident[]>([]);
 
   const [riskLayer, setRiskLayerState] = useState<RiskLayerState>({ allFaultLines: [] });
   const [riskUpdatedAt, setRiskUpdatedAt] = useState<string | null>(null);
   const [faultLinesUpdatedAt, setFaultLinesUpdatedAt] = useState<string | null>(null);
 
-  const [roadDamageAnalyses, setRoadDamageAnalyses] = useState<RoadDamageAnalysisLayer[]>([]);
+  const [roadDamageAnalyses, setRoadDamageAnalysesState] = useState<RoadDamageAnalysisLayer[]>([]);
 
   const [assemblyAreas, setAssemblyAreasState] = useState<AssemblyRecord[]>([]);
   const [assemblyUpdatedAt, setAssemblyUpdatedAt] = useState<string | null>(null);
 
   const [layerVisibility, setLayerVisibility] = useState<Record<LayerKey, boolean>>(DEFAULT_VISIBILITY);
+  const [demoActive, setDemoActive] = useState(false);
 
   const setSosAlerts = useCallback((alerts: SOSAlert[]) => {
     setSosAlertsState(alerts);
@@ -98,7 +112,7 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addNlpIncident = useCallback((incident: Omit<NlpIncident, "id" | "createdAt">) => {
-    setNlpIncidents((prev) => [
+    setNlpIncidentsState((prev) => [
       ...prev,
       { ...incident, id: `nlp-${Date.now()}-${prev.length}`, createdAt: new Date().toISOString() },
     ]);
@@ -109,13 +123,18 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
     setRiskUpdatedAt(new Date().toISOString());
   }, []);
 
+  const clearRiskResult = useCallback(() => {
+    setRiskLayerState((prev) => ({ ...prev, cityResult: undefined }));
+    setRiskUpdatedAt(null);
+  }, []);
+
   const setAllFaultLines = useCallback((faultLines: RiskFaultLine[]) => {
     setRiskLayerState((prev) => ({ ...prev, allFaultLines: faultLines }));
     setFaultLinesUpdatedAt(new Date().toISOString());
   }, []);
 
   const addRoadDamageAnalysis = useCallback((analysis: Omit<RoadDamageAnalysisLayer, "createdAt">) => {
-    setRoadDamageAnalyses((prev) => [
+    setRoadDamageAnalysesState((prev) => [
       ...prev.filter((a) => a.analysisId !== analysis.analysisId),
       { ...analysis, createdAt: new Date().toISOString() },
     ]);
@@ -126,9 +145,48 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
     setAssemblyUpdatedAt(new Date().toISOString());
   }, []);
 
+  const setNlpIncidents = useCallback((incidents: NlpIncident[]) => {
+    setNlpIncidentsState(incidents);
+  }, []);
+
+  const setRoadDamageAnalyses = useCallback((analyses: RoadDamageAnalysisLayer[]) => {
+    setRoadDamageAnalysesState(analyses);
+  }, []);
+
   const toggleLayer = useCallback((key: LayerKey) => {
     setLayerVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
+
+  // Tek tuşla tüm katmanları (SOS, NLP, risk, yol hasarı, toplanma alanları)
+  // aynı senaryoya ait sahte veriyle doldurur; her ekran bu context'ten
+  // okuduğu için hepsi eş zamanlı güncellenir.
+  const activateDemo = useCallback(() => {
+    const demo = generateDemoMapData();
+    setSosAlerts(demo.sosAlerts);
+    setNlpIncidents(demo.nlpIncidents);
+    setRiskResult(demo.riskResult);
+    setRoadDamageAnalyses(demo.roadDamageAnalyses);
+    setAssemblyAreas(demo.assemblyAreas);
+    setLayerVisibility({
+      sos: true,
+      nlp: true,
+      risk: true,
+      faultLines: true,
+      roadDamage: true,
+      assemblyAreas: true,
+      heatmap: true,
+    });
+    setDemoActive(true);
+  }, [setSosAlerts, setNlpIncidents, setRiskResult, setRoadDamageAnalyses, setAssemblyAreas]);
+
+  const deactivateDemo = useCallback(() => {
+    setSosAlerts([]);
+    setNlpIncidents([]);
+    clearRiskResult();
+    setRoadDamageAnalyses([]);
+    setAssemblyAreas([]);
+    setDemoActive(false);
+  }, [setSosAlerts, setNlpIncidents, clearRiskResult, setRoadDamageAnalyses, setAssemblyAreas]);
 
   // Bundling every layer's state into one object literal means any single
   // layer updating (e.g. one new SOS alert) would otherwise hand every
@@ -141,18 +199,24 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
       sosUpdatedAt,
       nlpIncidents,
       addNlpIncident,
+      setNlpIncidents,
       riskLayer,
       setRiskResult,
+      clearRiskResult,
       setAllFaultLines,
       riskUpdatedAt,
       faultLinesUpdatedAt,
       roadDamageAnalyses,
       addRoadDamageAnalysis,
+      setRoadDamageAnalyses,
       assemblyAreas,
       setAssemblyAreas,
       assemblyUpdatedAt,
       layerVisibility,
       toggleLayer,
+      demoActive,
+      activateDemo,
+      deactivateDemo,
     }),
     [
       sosAlerts,
@@ -160,18 +224,24 @@ export function MapLayersProvider({ children }: { children: React.ReactNode }) {
       sosUpdatedAt,
       nlpIncidents,
       addNlpIncident,
+      setNlpIncidents,
       riskLayer,
       setRiskResult,
+      clearRiskResult,
       setAllFaultLines,
       riskUpdatedAt,
       faultLinesUpdatedAt,
       roadDamageAnalyses,
       addRoadDamageAnalysis,
+      setRoadDamageAnalyses,
       assemblyAreas,
       setAssemblyAreas,
       assemblyUpdatedAt,
       layerVisibility,
       toggleLayer,
+      demoActive,
+      activateDemo,
+      deactivateDemo,
     ]
   );
 

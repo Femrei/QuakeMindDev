@@ -10,6 +10,7 @@ import {
   analyzeRoadDamage,
   pollRoadDamageStatus,
   getRouteBetweenPoints,
+  getSafeRoute,
   EvacuationAssemblyRecord,
   EvacuationAssemblyResponse,
 } from "@/lib/api";
@@ -86,7 +87,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
 
   const [damageAnalysis, setDamageAnalysis] = useState<DamageAnalysisState | null>(null);
   const [damageAnalysisLoading, setDamageAnalysisLoading] = useState(false);
-  const [routeMode, setRouteMode] = useState<"idle" | "damage-aware" | "fallback">("idle");
+  const [routeMode, setRouteMode] = useState<"idle" | "damage-aware" | "safe-route" | "fallback">("idle");
   const [routeErrorMsg, setRouteErrorMsg] = useState<string | null>(null);
   const routeRequestIdRef = useRef(0);
 
@@ -276,6 +277,23 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
       if (requestId === routeRequestIdRef.current) setRoutingLoading(false);
     }
 
+    // PostGIS-tabanlı, session'sız risk-ağırlıklı rota önce denenir (analyze
+    // önceden çağrılmış olmasını gerektirmez) -- başarısız olursa satellite
+    // damage-analysis tabanlı rotaya (session gerektirir) düşülür.
+    try {
+      const safeRoute = await getSafeRoute(origin[0], origin[1], destLat, destLon);
+      if (requestId !== routeRequestIdRef.current) return;
+      if (safeRoute.routeCoords && safeRoute.routeCoords.length > 0) {
+        setCustomRouteCoords(safeRoute.routeCoords);
+        setCustomDistanceM(safeRoute.distanceMeters);
+        setCustomWalkMinutes(Math.max(1, Math.round(safeRoute.distanceMeters / 80)));
+        setRouteMode("safe-route");
+        return;
+      }
+    } catch (e) {
+      console.warn("PostGIS risk-ağırlıklı rota hesaplanamadı, hasar-analiz rotası deneniyor:", e);
+    }
+
     try {
       const damageRoute = await runDamageAwareRoute(origin[0], origin[1], destLat, destLon);
       if (requestId !== routeRequestIdRef.current) return;
@@ -357,6 +375,8 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
   const routeStatusMeta =
     role !== "survivor"
       ? { label: "EKİP TAKTİK MÜDAHALE KORİDORU", colorClass: "text-cyan-400", Icon: Shield }
+      : routeMode === "safe-route"
+      ? { label: "RİSK-AĞIRLIKLI GÜVENLİ ROTA (A*/Dijkstra + PostGIS)", colorClass: "text-emerald-400", Icon: Shield }
       : routeMode === "damage-aware"
       ? { label: "HASAR-FARKINDA GÜVENLİ ROTA (PostGIS + AI)", colorClass: "text-emerald-400", Icon: Shield }
       : { label: "CANLI AFAD SOKAK ROTASI (PostGIS & OSRM)", colorClass: "text-emerald-400", Icon: Shield };

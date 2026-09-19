@@ -453,7 +453,25 @@ def analyze_nlp(req: NLPRequest):
     try:
         with temporary_sys_path(NLP_ROOT), temporary_cwd(NLP_ROOT):
             result = pipeline.process_tweet(req.text)
-        return result if result else {"status": "ignored", "reason": "Not related to disaster"}
+        if not result:
+            return {"status": "ignored", "reason": "Not related to disaster"}
+
+        # Best-effort: a geocoded tweet is a location-tagged "bildirim" just
+        # like a camera detection or an SOS alert -- feeds the same
+        # damage_points table so /heatmap can count report density per
+        # source (Twitter/NLP, camera, SOS) instead of only satellite data.
+        konum = result.get("konum")
+        if konum and len(konum) == 2:
+            try:
+                postgis_engine.insert_damage_point(
+                    "twitter", konum[0], konum[1],
+                    severity=result.get("guven_skoru") or 0.5,
+                    label=result.get("kategori") or "Twitter/NLP Bildirimi",
+                )
+            except Exception as e:
+                print(f"damage_points insert (twitter) hatasi: {e}")
+
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -760,7 +778,9 @@ def road_damage_route(req: RoadDamageRouteRequest):
     safe_G = session["safe_G"]
 
     try:
-        dijkstra_coords, _astar_coords = calculate_route(safe_G, req.startLat, req.startLon, req.endLat, req.endLon)
+        dijkstra_coords, _astar_coords, _dijkstra_cost, _astar_cost = calculate_route(
+            safe_G, req.startLat, req.startLon, req.endLat, req.endLon,
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Rota hesaplanamadi: {e}")
 
@@ -774,6 +794,93 @@ def road_damage_route(req: RoadDamageRouteRequest):
     return {
         "routeCoords": [[float(lat), float(lon)] for lat, lon in dijkstra_coords],
         "distanceMeters": round(distance_m, 1),
+    }
+
+
+class SafeRouteRequest(BaseModel):
+    startLat: float
+    startLon: float
+    destLat: float
+    destLon: float
+    radiusKm: float = 3.0
+
+
+@app.post("/api/road_damage/safe_route")
+def road_damage_safe_route(req: SafeRouteRequest):
+    """PostGIS-tabanlı, session'sız risk-ağırlıklı rota (rapor 2.4.4): kapalı
+    yol maskeleri + damage_points + road_blockages tek bir ceza-katsayılı
+    grafta birleştirilir. /api/road_damage/analyze'nin önceden çağrılmış
+    olmasını gerektirmez -- mevcut /route (session'a bağlı) ve
+    /calculate_custom_route (OSRM/düz-çizgi) endpoint'lerinin üçüncü,
+    risk-farkında alternatifidir.
+    """
+    import json as _json
+
+    import osmnx as ox
+
+    from apps.road_damage.utils.assembly import bbox_from_center
+    from apps.road_damage.utils.network import apply_risk_penalties, calculate_route
+
+    center_lat = (req.startLat + req.destLat) / 2.0
+    center_lon = (req.startLon + req.destLon) / 2.0
+    bbox = bbox_from_center(center_lat, center_lon, req.radiusKm)
+    west, south, east, north = bbox
+
+    try:
+        G = ox.graph_from_bbox(bbox=bbox, network_type="walk", simplify=True)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Yol agi indirilemedi: {e}")
+
+    damage_points = []
+    blockages = []
+    if postgis_engine.check_connection():
+        damage_points = postgis_engine.query_damage_points_in_bbox(bbox)
+        for row in postgis_engine.query_blockages_in_bbox(bbox):
+            try:
+                geometry = _json.loads(row["geojson"])
+                coords = geometry.get("coordinates") or []
+                if geometry.get("type") == "LineString" and coords:
+                    blockages.append([[lat, lon] for lon, lat in coords])
+            except Exception:
+                continue
+    else:
+        # PostGIS offline: fall back to the in-memory blockage registry
+        # (same offline-fallback pattern as /assembly and /heatmap).
+        for blk in LIVE_ROAD_BLOCKAGES:
+            coords = blk.get("coords") or []
+            if any(west <= lon <= east and south <= lat <= north for lat, lon in coords):
+                blockages.append(coords)
+
+    apply_risk_penalties(G, damage_points, blockages, blockage_hard_radius_m=25.0)
+
+    try:
+        dijkstra_coords, astar_coords, dijkstra_cost, astar_cost = calculate_route(
+            G, req.startLat, req.startLon, req.destLat, req.destLon, weight="risk_cost",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Rota hesaplanamadi: {e}")
+
+    candidates = []
+    if dijkstra_coords and dijkstra_cost is not None:
+        candidates.append(("dijkstra", dijkstra_coords, dijkstra_cost))
+    if astar_coords and astar_cost is not None:
+        candidates.append(("astar", astar_coords, astar_cost))
+    if not candidates:
+        raise HTTPException(status_code=422, detail="Bu iki nokta arasinda guvenli bir baglanti bulunamadi. Yol tamamen kapali olabilir.")
+
+    algorithm, route_coords, risk_score = min(candidates, key=lambda c: c[2])
+
+    distance_m = 0.0
+    for (lat1, lon1), (lat2, lon2) in zip(route_coords[:-1], route_coords[1:]):
+        distance_m += _haversine_m(lat1, lon1, lat2, lon2)
+
+    return {
+        "routeCoords": [[float(lat), float(lon)] for lat, lon in route_coords],
+        "distanceMeters": round(distance_m, 1),
+        "algorithm": algorithm,
+        "riskScore": round(risk_score, 1),
+        "damagePointsConsidered": len(damage_points),
+        "blockagesConsidered": len(blockages),
     }
 
 
@@ -799,6 +906,48 @@ def postgis_status():
         "hybridFallbackActive": True,
         "message": "PostgreSQL/PostGIS eklentisi aktif. GIST R-Tree mekânsal indeksleme kullanılıyor." if is_connected else "PostgreSQL/PostGIS çevrimdışı. Sistem otomatik çevrimdışı AFAD veri seti fallback modunda çalışıyor."
     }
+
+@app.get("/api/road_damage/heatmap")
+def road_damage_heatmap(latitude: float, longitude: float, radiusKm: float = 10.0):
+    """Rapor 2.4.3'teki Gaussian kernel yoğunluk ısı haritası: bir konumdan
+    kaç "bildirim" geldiğini gösterir -- Twitter/NLP (geocoded tweet), kamera
+    (çatlak/yıkım tespiti), SOS alarmı ve uydu/Segformer'ın tespit ettiği
+    tekil hasar noktaları (damage_points, hepsi). Bilinçli olarak
+    road_blockages (kapalı yol çizgileri) KULLANILMAZ -- o veri rota
+    motorunun (safe_route) ceza katsayısı için ayrı bir katman, buradaki ısı
+    haritası salt "bir yerden ne kadar bildirim geldi" sorusuna cevap verir.
+    leaflet.heat uyumlu [lat, lon, intensity] listesi döner.
+    """
+    from apps.road_damage.utils.assembly import bbox_from_center
+    from apps.road_damage.utils.heatmap import build_gaussian_heatmap
+
+    bbox = bbox_from_center(latitude, longitude, radiusKm)
+    west, south, east, north = bbox
+
+    points: list[tuple[float, float, float]] = []
+    by_source: dict[str, int] = {}
+    is_postgis = postgis_engine.check_connection()
+
+    if is_postgis:
+        damage_rows = postgis_engine.query_damage_points_in_bbox(bbox)
+        for row in damage_rows:
+            weight = row.get("severity") or 0.5
+            points.append((row["lat"], row["lon"], max(0.1, float(weight))))
+            source_type = row.get("source_type") or "unknown"
+            by_source[source_type] = by_source.get(source_type, 0) + 1
+
+    heat_points = build_gaussian_heatmap(points, bbox, grid_size=100, bandwidth_km=0.5)
+
+    return {
+        "points": heat_points,
+        "bounds": {"west": west, "south": south, "east": east, "north": north},
+        "generatedFrom": {
+            "totalReports": len(points),
+            "bySource": by_source,
+            "source": "postgis" if is_postgis else "offline_fallback",
+        },
+    }
+
 
 @app.get("/api/road_damage/assembly")
 def road_damage_assembly(
@@ -1003,30 +1152,82 @@ def report_road_blockage(req: RoadBlockageRequest):
         "totalBlockages": len(LIVE_ROAD_BLOCKAGES)
     }
 
+_DAMAGE_SOURCE_LABELS = {
+    "crack": "YOLO Çatlak Tespiti",
+    "destruction": "YOLO Bina Yıkıntı Tespiti",
+    "road_damage": "Segformer AI Uydu Analizi",
+    "sos": "Saha İhbarı / SOS",
+}
+
+
+def _damage_point_severity_label(source_type: str, severity: Optional[float]) -> str:
+    if source_type == "sos":
+        return "🆘 SOS Alarmı"
+    pct = round((severity or 0.0) * 100)
+    if (severity or 0.0) >= 0.6:
+        return f"🔴 Ağır Hasar (%{pct} Risk)"
+    if (severity or 0.0) >= 0.3:
+        return f"⚠️ Orta Hasar (%{pct} Risk)"
+    return f"🟡 Hafif Hasar (%{pct} Risk)"
+
+
 @app.get("/api/road_damage/nearest_debris")
 def get_nearest_debris_for_teams(latitude: float, longitude: float, limit: int = 5):
-    """Arama Kurtarma Ekipleri için GPS Konumuna En Yakın Enkaz & Ağır Hasarlı Noktaları Listeler."""
-    DEBRIS_SITES = [
-        {"id": "deb-101", "name": "Atatürk Cad. 4 Katlı Çökmüş Bina", "lat": 36.2065, "lon": 36.1660, "severity": "🔴 Ağır Enkaz (%94 Risk)", "source": "Segformer AI Uydu Analizi"},
-        {"id": "deb-102", "name": "Fatih Sok. Enkaz Yapısı", "lat": 36.2085, "lon": 36.1695, "severity": "🔴 Ağır Enkaz (%89 Risk)", "source": "YOLOv8 Termal Kamera"},
-        {"id": "deb-103", "name": "İnönü Bulvarı Çatlak Yol Kapanması", "lat": 36.2035, "lon": 36.1625, "severity": "⚠️ Orta Hasarlı Yol", "source": "İHA OAM Görüntüsü"},
-        {"id": "deb-104", "name": "Gündüz Cad. Yıkık Tesis", "lat": 36.2110, "lon": 36.1720, "severity": "🔴 Ağır Enkaz (%91 Risk)", "source": "Saha İhbarı / SOS"},
-        {"id": "deb-105", "name": "Kurtuluş Cad. Yol Kapanması", "lat": 36.2015, "lon": 36.1590, "severity": "🔴 Tamamen Kapalı Yol", "source": "PostGIS Mekânsal Analiz"}
-    ]
+    """Arama Kurtarma Ekipleri için GPS Konumuna En Yakın Enkaz & Ağır Hasarlı
+    Noktaları Listeler -- damage_points (kamera/YOLO/Segformer/SOS tespitleri)
+    ve road_blockages'tan gerçek PostGIS mekânsal sorgusuyla üretilir."""
+    import json as _json
 
+    radius_m = 5000.0
     results = []
-    for site in DEBRIS_SITES:
-        dist_m = _haversine_m(latitude, longitude, site["lat"], site["lon"])
-        item = dict(site)
-        item["dist_m"] = round(dist_m, 1)
-        item["est_dispatch_minutes"] = max(1, round(dist_m / 80.0))
-        results.append(item)
+    is_postgis = postgis_engine.check_connection()
 
+    if is_postgis:
+        for row in postgis_engine.query_damage_points_nearby(latitude, longitude, radius_m):
+            source_type = row.get("source_type") or ""
+            results.append({
+                "id": f"dmg-{row['id']}",
+                "name": row.get("label") or _DAMAGE_SOURCE_LABELS.get(source_type, "Hasar Noktası"),
+                "lat": row["lat"],
+                "lon": row["lon"],
+                "severity": _damage_point_severity_label(source_type, row.get("severity")),
+                "source": _DAMAGE_SOURCE_LABELS.get(source_type, "PostGIS Mekânsal Analiz"),
+                "dist_m": round(row.get("dist_m", 0.0), 1),
+            })
+
+        from apps.road_damage.utils.assembly import bbox_from_center
+        bbox = bbox_from_center(latitude, longitude, radius_m / 1000.0)
+        for blk in postgis_engine.query_blockages_in_bbox(bbox):
+            try:
+                geometry = _json.loads(blk["geojson"])
+                coords = geometry.get("coordinates") or []
+                if not coords:
+                    continue
+                mid_lon, mid_lat = coords[len(coords) // 2][:2]
+                dist_m = _haversine_m(latitude, longitude, mid_lat, mid_lon)
+                if dist_m <= radius_m:
+                    results.append({
+                        "id": f"blk-{blk['id']}",
+                        "name": blk.get("title") or "Yol Kapanması",
+                        "lat": mid_lat,
+                        "lon": mid_lon,
+                        "severity": blk.get("severity") or "🔴 Tamamen Kapalı Yol",
+                        "source": "PostGIS Mekânsal Analiz",
+                        "dist_m": round(dist_m, 1),
+                    })
+            except Exception:
+                continue
+
+    for r in results:
+        r["est_dispatch_minutes"] = max(1, round(r["dist_m"] / 80.0))
     results.sort(key=lambda r: r["dist_m"])
+    top = results[:limit]
+
     return {
         "teamLocation": [latitude, longitude],
-        "nearestDebrisCount": len(results[:limit]),
-        "debrisSites": results[:limit]
+        "nearestDebrisCount": len(top),
+        "debrisSites": top,
+        "source": "postgis" if is_postgis else "offline_fallback",
     }
 
 
@@ -1049,6 +1250,14 @@ def create_sos_alert(req: SOSAlertRequest):
         sos_alerts.append(alert)
         total = len(sos_alerts)
 
+    try:
+        postgis_engine.insert_damage_point(
+            "sos", req.latitude, req.longitude,
+            severity=1.0, label=req.message or "SOS Alarmi",
+        )
+    except Exception as e:
+        print(f"damage_points insert (sos) hatasi: {e}")
+
     return {**alert, "totalAlerts": total}
 
 
@@ -1062,6 +1271,8 @@ def list_sos_alerts():
 class CameraAnalysisRequest(BaseModel):
     modelType: str = "hybrid"  # "catlak", "bina", "hybrid"
     imageBase64: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 @app.post("/api/camera/analyze")
 def analyze_camera_frame(req: CameraAnalysisRequest):
@@ -1155,6 +1366,27 @@ def analyze_camera_frame(req: CameraAnalysisRequest):
     else:
         status = "NO_DETECTION"
         advice = "🟢 GÖRÜNTÜDE HERHANGİ BİR ÇATLAK VEYA BİNA HASARI SAPTANMADI. Modeller kamera karesinde riskli bir alan tespit etmedi."
+
+    # Best-effort: persist detections as damage_points if the caller sent a
+    # location, so the heatmap/route engine can eventually see them too.
+    if req.latitude is not None and req.longitude is not None and detections:
+        try:
+            catlak_dets = [d for d in detections if d["model"] == "catlak.pt"]
+            bina_dets = [d for d in detections if d["model"] == "bina.pt"]
+            if catlak_dets:
+                top = max(catlak_dets, key=lambda d: d["confidence"])
+                postgis_engine.insert_damage_point(
+                    "crack", req.latitude, req.longitude,
+                    severity=top["confidence"] / 100.0, label=top["label"],
+                )
+            if bina_dets:
+                top = max(bina_dets, key=lambda d: d["confidence"])
+                postgis_engine.insert_damage_point(
+                    "destruction", req.latitude, req.longitude,
+                    severity=top["confidence"] / 100.0, label=top["label"],
+                )
+        except Exception as e:
+            print(f"damage_points insert (camera) hatasi: {e}")
 
     return {
         "status": status,
