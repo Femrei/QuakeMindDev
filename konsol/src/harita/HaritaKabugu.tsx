@@ -1,10 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import maplibregl, { type Map as MlMap } from 'maplibre-gl'
 import { MapboxOverlay } from '@deck.gl/mapbox'
-import type { Layer } from '@deck.gl/core'
+import type { Layer, PickingInfo } from '@deck.gl/core'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import '@/stil/harita.css'
 import { ANTAKYA, haritaStili } from './haritaStili'
+import type { Kutu } from '@/durum/secimDurumu'
+import { haritaIpucu } from './katmanlar'
 
 /* ---------------------------------------------------------------------------
    TEK harita örneği (MIMARI §7, CLAUDE.md kural 6).
@@ -14,7 +16,13 @@ import { ANTAKYA, haritaStili } from './haritaStili'
 
 type HaritaApi = {
   hazir: boolean
+  /** Görünen alan ve yakınlaştırma; harita durunca (moveend) güncellenir, yoklama yok. */
+  gorunum: { kutu: Kutu; zoom: number } | null
   katmanlariYaz: (katmanlar: Layer[]) => void
+  /** Haritadaki bir nesneye tıklanınca çağrılır (seç ve yakınlaş). */
+  tiklamaYaz: (fn: (bilgi: PickingInfo) => void) => void
+  /** Kutuya sığdırarak uçar (tüm bölge görünümü). */
+  kutuyaUc: (kutu: Kutu) => void
   ucus: (lon: number, lat: number, zoom?: number) => void
   haritaAl: () => MlMap | null
 }
@@ -32,6 +40,7 @@ export function HaritaKabugu({ children }: { children: React.ReactNode }) {
   const harita = useRef<MlMap | null>(null)
   const ortu = useRef<MapboxOverlay | null>(null)
   const [hazir, setHazir] = useState(false)
+  const [gorunum, setGorunum] = useState<HaritaApi['gorunum']>(null)
 
   useEffect(() => {
     if (!kutu.current || harita.current) return
@@ -50,12 +59,21 @@ export function HaritaKabugu({ children }: { children: React.ReactNode }) {
     m.touchZoomRotate.disableRotation()
     m.addControl(new maplibregl.ScaleControl({ unit: 'metric', maxWidth: 96 }), 'bottom-right')
 
-    const o = new MapboxOverlay({ interleaved: false, layers: [] })
+    // Üstüne gelince bilgi (J-41): ne, ne zaman, ne kadar acil.
+    const o = new MapboxOverlay({ interleaved: false, layers: [], getTooltip: haritaIpucu })
     m.addControl(o)
 
     harita.current = m
     ortu.current = o
-    m.on('load', () => setHazir(true))
+    const gorunumuYaz = () => {
+      const b = m.getBounds()
+      setGorunum({ kutu: [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], zoom: m.getZoom() })
+    }
+    m.on('load', () => {
+      setHazir(true)
+      gorunumuYaz()
+    })
+    m.on('moveend', gorunumuYaz)
 
     return () => {
       setHazir(false)
@@ -68,7 +86,35 @@ export function HaritaKabugu({ children }: { children: React.ReactNode }) {
   const api = useMemo<HaritaApi>(
     () => ({
       hazir,
+      gorunum,
       katmanlariYaz: (katmanlar) => ortu.current?.setProps({ layers: katmanlar }),
+      tiklamaYaz: (fn) => ortu.current?.setProps({ onClick: fn }),
+      kutuyaUc: (k) => {
+        const azalt = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        // Geniş düzende paneller ve zaman şeridi haritanın üstünde durur; kutu
+        // onların arasındaki açık alana sığdırılır (ölçüler token dosyasından).
+        const kok = getComputedStyle(document.documentElement)
+        const px = (ad: string) => parseFloat(kok.getPropertyValue(ad)) || 0
+        const genis = window.matchMedia(`(min-width: ${px('--breakpoint-genis')}px)`).matches
+        const pay = px('--spacing-gutter') * 3
+        harita.current?.fitBounds(
+          [
+            [k[0], k[1]],
+            [k[2], k[3]],
+          ],
+          {
+            padding: genis
+              ? {
+                  top: pay * 2,
+                  bottom: px('--spacing-timeline') + pay * 2,
+                  left: px('--spacing-panel-l') + pay,
+                  right: px('--spacing-panel-r') + pay,
+                }
+              : pay,
+            duration: azalt ? 0 : 1000,
+          },
+        )
+      },
       ucus: (lon, lat, zoom = 15) => {
         const azalt = window.matchMedia('(prefers-reduced-motion: reduce)').matches
         harita.current?.flyTo({
@@ -79,7 +125,7 @@ export function HaritaKabugu({ children }: { children: React.ReactNode }) {
       },
       haritaAl: () => harita.current,
     }),
-    [hazir],
+    [hazir, gorunum],
   )
 
   return (

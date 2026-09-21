@@ -11,7 +11,8 @@ ayni kaldigini kanitlar, model kosturulmaz.
     python araclar_uc_duman_testi.py kaydet once.json   [--adres http://127.0.0.1:8001]
     python araclar_uc_duman_testi.py karsilastir once.json sonra.json
 
-Depodaki referans imza: testler/uc_imzalari.json (21 Eylul, Faz 5 sonrasi).
+Depodaki referans imza: testler/uc_imzalari.json (21 Eylul, J-43 sonrasi:
+/api/sos dort alan kazandi, afetzede uclari eklendi).
 Bir ucun davranisini BILEREK degistirdiginde bu dosyayi yeniden kaydet ve
 degisikligi commit mesajinda yaz.
 """
@@ -140,6 +141,14 @@ def senaryolar(jeton):
         ("GET", "/api/road_damage/nearest_debris?latitude=36.2&longitude=36.16&limit=3", None, None),
         ("GET", "/api/road_damage/heatmap?latitude=36.202&longitude=36.161&radiusKm=5", None, None),
         ("GET", "/api/road_damage/assembly?latitude=36.202&longitude=36.161&radiusKm=2&allowOnlineFallback=false", None, None),
+        # --- afetzede ekrani (J-42, J-43); sona eklendi, onceki siralar kaymasin ---
+        ("GET", "/api/live", None, None),  # cerezsiz akis 401 donmeli
+        ("GET", "/api/bildirimler/aktif", None, J),
+        ("GET", "/api/bildirimler/aktif", None, None),
+        ("GET", "/api/altlik/yerler", None, J),
+        ("GET", "/api/altlik/yerler", None, None),
+        # Gecersiz ihtiyac: 422, kayit acilmaz.
+        ("POST", "/api/sos", {"lon": 36.16, "lat": 36.2, "ihtiyaclar": ["uydurma"]}, J),
     ]
 
 

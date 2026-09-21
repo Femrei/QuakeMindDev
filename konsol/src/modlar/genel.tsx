@@ -1,6 +1,9 @@
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Amac, Bolum, HazirSecenekler, InceAyar, SuAn, Teknik, VeriYok } from '@/kabuk/Panel'
-import { Kaydirici, Micro } from '@/kabuk/parcalar'
+import { Kaydirici, Micro, Rozet } from '@/kabuk/parcalar'
+import { useHarita } from '@/harita/HaritaKabugu'
+import { sn } from '@/lib/sinif'
 import {
   KANALLAR,
   KANAL_BILGI,
@@ -8,9 +11,32 @@ import {
   useKonsol,
   type KanalId,
 } from '@/durum/konsolDurumu'
-import { agirlik, sayi } from '@/lib/bicim'
+import { agirlik, sayi, tarihSaat } from '@/lib/bicim'
 import { useAralik } from '@/durum/zamanDurumu'
-import { useOzet, useSosCagrilari } from '@/veri/sorgular'
+import {
+  KAYNAK_ADI,
+  ONCELIK_ADI,
+  ONCELIK_TON,
+  useHasarNoktalari,
+  useOzet,
+  useSosCagrilari,
+  type SosCagrisi,
+  sosEkBilgi,
+} from '@/veri/sorgular'
+
+/** "Son ihbarlar" satırı: SOS çağrısı ya da öteki kaynakların hasar bildirimi. */
+type Ihbar = {
+  anahtar: string
+  sos?: SosCagrisi
+  lon: number
+  lat: number
+  zaman: number
+  baslik: string
+  alt: string
+  rozet: { ton: 'crit' | 'high' | 'mid' | 'ok' | 'nötr'; ad: string } | null
+}
+
+const SOS_DURUM_ADI = { bekliyor: 'Bekliyor', atandi: 'Ekip atandı', kapandi: 'Kapandı' } as const
 
 /** Sunucudaki kaynak tipi → ısı kanalı. Sayım tek yerden gelir (özet ucu),
     yoksa aynı çağrı hem nokta hem çağrı olarak iki kez sayılıyor. */
@@ -138,6 +164,45 @@ export function GenelSag() {
   const aralik = useAralik()
   const ozet = useOzet(aralik)
   const sos = useSosCagrilari(aralik)
+  const hasar = useHasarNoktalari(aralik)
+  const secili = useKonsol((d) => d.seciliKayit)
+  const kayitSec = useKonsol((d) => d.kayitSec)
+  const { ucus } = useHarita()
+  const git = useNavigate()
+
+  // Son ihbarlar, en yeni önce: tıklayınca haritada oraya gidilir (J-41).
+  const ihbarlar = useMemo<Ihbar[]>(() => {
+    const cagrilar: Ihbar[] = (sos.data ?? []).map((c) => ({
+      anahtar: `sos-${c.id}`,
+      sos: c,
+      lon: c.lon,
+      lat: c.lat,
+      zaman: c.zaman,
+      baslik: c.id,
+      alt: c.mahalle ?? c.metin ?? '',
+      rozet:
+        c.durum === 'bekliyor'
+          ? { ton: ONCELIK_TON[c.oncelik], ad: ONCELIK_ADI[c.oncelik] }
+          : { ton: c.durum === 'atandi' ? 'ok' : 'nötr', ad: SOS_DURUM_ADI[c.durum] },
+    }))
+    // SOS çağrısı sözleşmede hasar noktası olarak da gelir; iki kez listelenmez.
+    const bildirimler: Ihbar[] = (hasar.data ?? [])
+      .filter((h) => h.kaynak !== 'sos')
+      .map((h) => ({
+        anahtar: `hasar-${h.id}`,
+        lon: h.lon,
+        lat: h.lat,
+        zaman: h.zaman,
+        baslik: KAYNAK_ADI[h.kaynak],
+        alt: `Hasar skoru %${Math.round(h.skor * 100)} · güven %${Math.round(h.guven * 100)}`,
+        rozet: null,
+      }))
+    return [...cagrilar, ...bildirimler].sort((a, b) => b.zaman - a.zaman).slice(0, 12)
+  }, [sos.data, hasar.data])
+
+  const seciliCagri =
+    secili?.tip === 'sos' ? (sos.data ?? []).find((c) => c.id === secili.id) : undefined
+  const seciliEk = seciliCagri ? sosEkBilgi(seciliCagri) : null
 
   const kartlar: Array<[string, string, string]> = [
     [
@@ -173,6 +238,90 @@ export function GenelSag() {
           </div>
         ))}
       </div>
+      {seciliCagri && (
+        <Bolum baslik="Seçili çağrı" ek={<Micro>{seciliCagri.id}</Micro>}>
+          <dl className="kilav-kv gap-x-2.5 gap-y-1.5 text-small">
+            <dt className="text-ink-3">Aciliyet</dt>
+            <dd className="text-ink">{ONCELIK_ADI[seciliCagri.oncelik]}</dd>
+            <dt className="text-ink-3">Durum</dt>
+            <dd className="text-ink">
+              {SOS_DURUM_ADI[seciliCagri.durum]}
+              {seciliCagri.ekipId ? ` (${seciliCagri.ekipId})` : ''}
+            </dd>
+            {seciliCagri.mahalle && (
+              <>
+                <dt className="text-ink-3">Mahalle</dt>
+                <dd className="text-ink">{seciliCagri.mahalle}</dd>
+              </>
+            )}
+            {seciliCagri.metin && (
+              <>
+                <dt className="text-ink-3">Metin</dt>
+                <dd className="text-ink">{seciliCagri.metin}</dd>
+              </>
+            )}
+            {seciliEk?.kisiIhtiyac && (
+              <>
+                <dt className="text-ink-3">Kişi, ihtiyaç</dt>
+                <dd className="text-ink">{seciliEk.kisiIhtiyac}</dd>
+              </>
+            )}
+            {seciliEk?.konum && (
+              <>
+                <dt className="text-ink-3">Konum</dt>
+                <dd className="text-ink">{seciliEk.konum}</dd>
+              </>
+            )}
+            <dt className="text-ink-3">Zaman</dt>
+            <dd className="font-mono text-ink">{tarihSaat(seciliCagri.zaman)}</dd>
+          </dl>
+          <button
+            type="button"
+            onClick={() => git('/konsol/sos')}
+            className="mt-3 w-full rounded-control border border-line-2 px-3 py-2 text-body text-ink-2 hover:bg-hover hover:text-ink"
+          >
+            SOS kuyruğunda aç ve ekip gönder
+          </button>
+        </Bolum>
+      )}
+
+      <Bolum baslik="Son ihbarlar" ek={<Micro>{sayi(ihbarlar.length)}</Micro>} dolgusuz>
+        {ihbarlar.length ? (
+          <div>
+            {ihbarlar.map((i) => (
+              <button
+                key={i.anahtar}
+                type="button"
+                onClick={() => {
+                  if (i.sos) kayitSec({ tip: 'sos', id: i.sos.id })
+                  ucus(i.lon, i.lat, 15.5)
+                }}
+                className={sn(
+                  'block w-full border-b border-line px-3 py-2.5 text-left',
+                  i.sos && seciliCagri?.id === i.sos.id ? 'bg-raised' : 'hover:bg-raised',
+                )}
+              >
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className={sn('text-small', i.sos ? 'font-mono text-ink-2' : 'text-ink')}>
+                    {i.baslik}
+                  </span>
+                  {i.rozet ? (
+                    <Rozet ton={i.rozet.ton}>{i.rozet.ad}</Rozet>
+                  ) : (
+                    <span className="font-mono text-small text-ink-3">{tarihSaat(i.zaman)}</span>
+                  )}
+                </span>
+                {i.alt && <span className="mt-0.5 block text-small text-ink-3">{i.alt}</span>}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="px-3 py-2">
+            <VeriYok ne="İhbar" neden="seçili zaman aralığında kayıt yok" />
+          </div>
+        )}
+      </Bolum>
+
       <Bolum baslik="Bölge durumu">
         <Amac>Seçili zaman aralığında bölgenin özeti: ne kadar hasar, kaç bekleyen çağrı?</Amac>
         {ozet.isError && (

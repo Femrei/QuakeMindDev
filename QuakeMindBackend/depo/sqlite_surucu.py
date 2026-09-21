@@ -285,7 +285,10 @@ class SqliteDepo:
         kullanici_id: str | None = None,
         kanal: str | None = None,
         zaman: float | None = None,
+        ek: dict | None = None,
     ) -> dict:
+        """`ek`: yapilandirilmis ek bilgi (kisi sayisi, ihtiyaclar, konumun
+        kaynagi) -- tablodaki `ek` sutununa JSON olarak yazilir."""
         kayit = {
             "id": f"sos-{uuid.uuid4().hex[:8]}",
             "lon": float(lon),
@@ -300,7 +303,7 @@ class SqliteDepo:
             "atama_zamani": None,
             "kapanma_zamani": None,
             "kanal": kanal,
-            "ek": None,
+            "ek": json.dumps(ek, ensure_ascii=False) if ek else None,
         }
         self._yaz(
             """INSERT INTO sos_cagrilari

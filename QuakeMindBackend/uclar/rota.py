@@ -271,7 +271,11 @@ def road_damage_assembly(
     route_length_m = None
     route_error = None
 
-    if nearest:
+    # Rota disaridaki OSRM demo sunucusundan gelir: kullanicinin tam konumu
+    # ucuncu tarafa gider (J-43). `allowOnlineFallback=false` eskiden yok
+    # sayiliyordu; artik adinin soyledigini yapar ve bu istek atlanir. Afetzede
+    # ekrani boyle cagirir. Varsayilan (true) degismedi, eski web ayni davranir.
+    if nearest and allowOnlineFallback:
         try:
             route_coords, route_length_m, route_error = ck._fetch_osrm_street_route(
                 latitude, longitude, nearest["lat"], nearest["lon"]

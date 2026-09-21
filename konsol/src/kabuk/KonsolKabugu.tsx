@@ -2,14 +2,18 @@ import { useEffect, useMemo } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { HaritaKabugu, useHarita } from '@/harita/HaritaKabugu'
 import { AlanSecici } from '@/harita/AlanSecici'
-import { katmanlariKur } from '@/harita/katmanlar'
+import { katmanlariKur, type EtiketSeviyesi } from '@/harita/katmanlar'
 import { useKonsol } from '@/durum/konsolDurumu'
-import { useSecim } from '@/durum/secimDurumu'
+import { useSecim, type Kutu } from '@/durum/secimDurumu'
 import { useAralik } from '@/durum/zamanDurumu'
 import { useEkipler, useHasarNoktalari, useIsiIzgarasi, useSosCagrilari } from '@/veri/sorgular'
 import { isiDokusuKur } from '@/harita/isiDokusu'
 import { KANALLAR } from '@/durum/konsolDurumu'
 import { useAnalizSegmentleri } from '@/veri/analiz'
+import { kutularKesisir, useAltlikKatalogu, useAltlikPaketleri } from '@/veri/altlik'
+import { gunMetni } from '@/lib/bicim'
+import { Chip } from './parcalar'
+import type { Etiket } from '@/veri/altlik'
 import { sonIsSec, useIsler } from '@/durum/islerDurumu'
 import { MODLAR, VARSAYILAN_MOD, modBul } from '@/modlar/modlar'
 import { UstCubuk } from './UstCubuk'
@@ -47,7 +51,11 @@ export function KonsolKabugu() {
               <div className="genis:pointer-events-auto genis:w-panel-l genis:shrink-0 flex min-h-0">
                 <SolPanel mod={tanim.id} />
               </div>
-              <div className="hidden flex-1 genis:block" aria-hidden />
+              <div className="hidden flex-1 genis:flex genis:items-start genis:justify-center">
+                <div className="genis:pointer-events-auto">
+                  <SehirDugmeleri />
+                </div>
+              </div>
               <div className="genis:pointer-events-auto genis:w-panel-r genis:shrink-0 flex min-h-0">
                 <SagPanel mod={tanim.id} />
               </div>
@@ -72,14 +80,111 @@ export function KonsolKabugu() {
 const ISI_MERKEZI = { lon: 36.161, lat: 36.202 }
 const ISI_YARICAP_KM = 10
 
-/** Kaynak künyesi her zaman ekranda durur (ARAYUZ §11). Altlık verisi henüz
-    bağlı olmadığı için harita boş; bu da haritanın üstünde açıkça yazar. */
+/** Altlık bölge ölçeğinde çizilir; bundan uzakta paket indirilmez. */
+const ALTLIK_EN_AZ_ZOOM = 9
+/** Yapılar bu yakınlaştırmadan itibaren seçilir; altında katman kurulmaz. */
+const YAPI_EN_AZ_ZOOM = 13
+
+/** Yakınlaştırmaya göre yazılan adlar (J-41): uzakta bölge adı, sonra şehir ve
+    ilçe, köy, mahalle, en yakında sokak. */
+function etiketSeviyesi(zoom: number | undefined): EtiketSeviyesi {
+  if (zoom === undefined || zoom < ALTLIK_EN_AZ_ZOOM) return -1
+  if (zoom < 12) return 0
+  if (zoom < 13) return 1
+  if (zoom < 15) return 2
+  return 3
+}
+
+/** "Antakya (Hatay)" → "Antakya": düğme ve uzak ad kısa yazılır. */
+const kisaAd = (ad: string) => ad.replace(/\s*\(.*\)\s*$/, '')
+
+const kutuMerkezi = (k: Kutu): [number, number] => [(k[0] + k[2]) / 2, (k[1] + k[3]) / 2]
+
+/** Şehre git (J-41): prototipteki görünüm düğmeleri gibi; tek tıkla şehir
+    merkezine, "Tüm bölge" ile bütün şehirleri kapsayan görünüme uçar. */
+function SehirDugmeleri() {
+  const { ucus, kutuyaUc, gorunum } = useHarita()
+  const katalog = useAltlikKatalogu()
+  const bolgeler = katalog.data ?? []
+  if (bolgeler.length === 0) return null
+
+  const merkez = gorunum ? kutuMerkezi(gorunum.kutu) : null
+  const aktif =
+    gorunum && merkez && gorunum.zoom >= 11
+      ? bolgeler.find(
+          (b) =>
+            merkez[0] >= b.kutu[0] &&
+            merkez[0] <= b.kutu[2] &&
+            merkez[1] >= b.kutu[1] &&
+            merkez[1] <= b.kutu[3],
+        )?.id
+      : undefined
+  const tumu: Kutu = [
+    Math.min(...bolgeler.map((b) => b.kutu[0])),
+    Math.min(...bolgeler.map((b) => b.kutu[1])),
+    Math.max(...bolgeler.map((b) => b.kutu[2])),
+    Math.max(...bolgeler.map((b) => b.kutu[3])),
+  ]
+
+  return (
+    <nav
+      aria-label="Şehre git"
+      className="flex flex-wrap justify-center gap-1.5 rounded-control border border-line bg-panel p-1.5"
+    >
+      {bolgeler.map((b) => (
+        <Chip
+          key={b.id}
+          secili={aktif === b.id}
+          onClick={() => ucus(...kutuMerkezi(b.kutu), 13)}
+        >
+          {kisaAd(b.ad)}
+        </Chip>
+      ))}
+      <Chip secili={!!gorunum && gorunum.zoom < ALTLIK_EN_AZ_ZOOM} onClick={() => kutuyaUc(tumu)}>
+        Tüm bölge
+      </Chip>
+    </nav>
+  )
+}
+
+/** Görünen alanla kesişen altlık bölgeleri (katalogdan). */
+function useGorunenAltlik() {
+  const { gorunum } = useHarita()
+  const katalog = useAltlikKatalogu()
+  const gorunen = useMemo(
+    () =>
+      gorunum && gorunum.zoom >= ALTLIK_EN_AZ_ZOOM
+        ? (katalog.data ?? []).filter((b) => kutularKesisir(b.kutu, gorunum.kutu))
+        : [],
+    [katalog.data, gorunum],
+  )
+  return { katalog, gorunum, gorunen }
+}
+
+/** Kaynak künyesi her zaman ekranda durur (ARAYUZ §11): altlık nereden, hangi
+    tarihli; görünen alanda altlık yoksa bu da yazar. */
 function HaritaKunyesi() {
+  const { katalog, gorunum, gorunen } = useGorunenAltlik()
+  const tumu = katalog.data ?? []
+  let metin: string
+  if (katalog.isLoading) {
+    metin = 'altlık kataloğu alınıyor…'
+  } else if (katalog.isError || tumu.length === 0) {
+    metin = 'üretilmedi — sunucuda `python araclar_altlik_uret.py` çalıştırılmalı.'
+  } else if (gorunum && gorunum.zoom < ALTLIK_EN_AZ_ZOOM) {
+    metin = `bölge ölçeğinde çizilir; yakınlaş (üretilen bölgeler: ${tumu.map((b) => b.ad).join(', ')}).`
+  } else if (gorunen.length === 0) {
+    metin = `bu alan için üretilmedi (üretilen bölgeler: ${tumu.map((b) => b.ad).join(', ')}).`
+  } else {
+    const k = gorunen[0].kaynak
+    metin = `${k.atif} (${k.lisans}) · yerel kopya ${gunMetni(k.dosyaTarihi)} · ${gorunen
+      .map((b) => b.ad)
+      .join(', ')}`
+  }
   return (
     <div className="genis:pointer-events-auto flex shrink-0 justify-center">
       <p className="rounded-control border border-line bg-panel px-2.5 py-1.5 text-small text-ink-3">
-        <span className="text-ink-2">Harita altlığı:</span> kendi verimizden çizilecek (OSM +
-        Copernicus) — karo ucu henüz bağlı değil, bu yüzden zemin boş.
+        <span className="text-ink-2">Harita altlığı:</span> {metin}
       </p>
     </div>
   )
@@ -89,10 +194,11 @@ function HaritaKunyesi() {
 function KatmanKopru() {
   const { mod } = useParams()
   const tanim = modBul(mod) ?? MODLAR[0]
-  const { hazir, katmanlariYaz, ucus } = useHarita()
+  const { hazir, katmanlariYaz, ucus, tiklamaYaz, haritaAl } = useHarita()
   const katmanlar = useKonsol((d) => d.katmanlar)
   const seciliKayit = useKonsol((d) => d.seciliKayit)
   const katmanlariAyarla = useKonsol((d) => d.katmanlariAyarla)
+  const kayitSec = useKonsol((d) => d.kayitSec)
   const aralik = useAralik()
   const secimKutusu = useSecim((d) => d.kutu)
   const secimCokgeni = useSecim((d) => d.cokgen)
@@ -101,6 +207,42 @@ function KatmanKopru() {
   const hasar = useHasarNoktalari(aralik)
   const sos = useSosCagrilari(aralik)
   const ekipler = useEkipler()
+
+  // Altlık: yalnız görünen bölgelerin paketleri iner (harita durunca), bir kez.
+  const { gorunen, gorunum, katalog } = useGorunenAltlik()
+  const altlik = useAltlikPaketleri(gorunen)
+  const altlikYapiGorunur = (gorunum?.zoom ?? 0) >= YAPI_EN_AZ_ZOOM
+  const adSeviyesi = etiketSeviyesi(gorunum?.zoom)
+  // Isı yakınlaştıkça saydamlaşır: sokak ölçeğinde zemini, yapıları ve adları
+  // örtmesin (z13'e kadar 0,72, z16 ve üstü 0,30). 0,05 adımlı: her kaydırmada
+  // katmanlar yeniden kurulmasın.
+  const isiOrtuculugu = useMemo(() => {
+    const z = gorunum?.zoom ?? 0
+    const o = z <= 13 ? 0.72 : z >= 16 ? 0.3 : 0.72 - ((z - 13) / 3) * 0.42
+    return Math.round(o * 20) / 20
+  }, [gorunum?.zoom])
+  const bolgeAdlari = useMemo<Etiket[]>(
+    () =>
+      (katalog.data ?? []).map((b) => {
+        const [lon, lat] = kutuMerkezi(b.kutu)
+        return { ad: kisaAd(b.ad), lon, lat, aci: 0, oncelik: 100 }
+      }),
+    [katalog.data],
+  )
+
+  // Haritada bir ihbara ya da ekibe tıklayınca oraya yakınlaşılır; SOS seçilir.
+  useEffect(() => {
+    if (!hazir) return
+    tiklamaYaz((bilgi) => {
+      const nesne = bilgi.object as { id?: string; lon?: number; lat?: number } | undefined
+      const katman = bilgi.layer?.id
+      if (!nesne || nesne.lon == null || nesne.lat == null) return
+      if (katman === 'sos' && nesne.id) kayitSec({ tip: 'sos', id: nesne.id })
+      if (katman === 'sos' || katman === 'hasar-noktalari' || katman === 'ekipler') {
+        ucus(nesne.lon, nesne.lat, Math.max(15.5, haritaAl()?.getZoom() ?? 0))
+      }
+    })
+  }, [hazir, tiklamaYaz, kayitSec, ucus, haritaAl])
 
   // Isı: her kanalın ızgarası ayrı gelir, karışım istemcide (MIMARI §5).
   const agirliklar = useKonsol((d) => d.agirliklar)
@@ -138,6 +280,11 @@ function KatmanKopru() {
     () =>
       katmanlariKur({
         katmanlar,
+        altlik,
+        altlikYapiGorunur,
+        bolgeAdlari,
+        etiketSeviyesi: adSeviyesi,
+        isiOrtuculugu,
         hasar: hasar.data ?? [],
         sos: sos.data ?? [],
         ekipler: ekipler.data ?? [],
@@ -148,6 +295,11 @@ function KatmanKopru() {
       }),
     [
       katmanlar,
+      altlik,
+      altlikYapiGorunur,
+      bolgeAdlari,
+      adSeviyesi,
+      isiOrtuculugu,
       hasar.data,
       sos.data,
       ekipler.data,

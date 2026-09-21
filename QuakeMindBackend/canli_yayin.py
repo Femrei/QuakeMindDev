@@ -32,7 +32,7 @@ _dongu: Optional[asyncio.AbstractEventLoop] = None
 # mesaj dusurulur ve baglanti canli kalir.
 KUYRUK_SINIRI = 256
 
-MESAJ_TIPLERI = ("yeni-sos", "is-durumu", "yeni-analiz", "isi-surumu", "ekip-konumu")
+MESAJ_TIPLERI = ("yeni-sos", "is-durumu", "yeni-analiz", "isi-surumu", "ekip-konumu", "bildirim")
 
 
 def dongu_ayarla(dongu: asyncio.AbstractEventLoop) -> None:

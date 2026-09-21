@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import cekirdek as ck
 from uclar import (
+    altlik,
     bildirim,
     canli,
     ekip,
@@ -49,6 +50,7 @@ for modul in (
     ekip,
     eski_kimlik,
     bildirim,
+    altlik,
 ):
     app.include_router(modul.yonlendirici)
 

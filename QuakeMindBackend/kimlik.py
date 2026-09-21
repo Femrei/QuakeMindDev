@@ -196,6 +196,23 @@ def oturum_baslat(kullanici_kaydi: dict, yanit: Response) -> str:
     return erisim_jetonu_uret(kullanici_kaydi)
 
 
+def cerezden_kullanici(cerez: Optional[str]) -> Optional[dict]:
+    """Yenileme cerezinden oturum sahibini bulur, jetonu DONDURMEDEN.
+
+    Canli akis (EventSource) baslik gonderemez; kimligi ayni kokenden giden
+    httpOnly cerezle kanitlar (J-42). Gecersiz ya da suresi dolmussa None."""
+    if not cerez:
+        return None
+    depo = aktif_depo()
+    oturum = depo.oturum_bul(_ozet(cerez))
+    if not oturum:
+        return None
+    kayit = depo.kullanici_id(oturum["kullanici_id"])
+    if not kayit:
+        return None
+    return {"id": kayit["id"], "rol": kayit["rol"]}
+
+
 def oturum_yenile(yanit: Response, cerez: Optional[str] = Cookie(default=None, alias=YENILEME_CEREZI)) -> dict:
     if not cerez:
         raise HTTPException(status_code=401, detail="Yenileme jetonu yok.")

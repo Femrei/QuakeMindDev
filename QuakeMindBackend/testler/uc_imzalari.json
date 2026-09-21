@@ -120,6 +120,10 @@
    "durum",
    "ekipId",
    "id",
+   "ihtiyaclar",
+   "kisiSayisi",
+   "konumDogrulukM",
+   "konumKaynagi",
    "lat",
    "lon",
    "mahalle",
@@ -506,6 +510,47 @@
    "routeCoords",
    "routeError",
    "routeLengthM"
+  ]
+ },
+ {
+  "istek": "GET /api/live",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/bildirimler/aktif +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": null
+ },
+ {
+  "istek": "GET /api/bildirimler/aktif",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/altlik/yerler +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "yerler"
+  ]
+ },
+ {
+  "istek": "GET /api/altlik/yerler",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/sos +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
   ]
  }
 ]

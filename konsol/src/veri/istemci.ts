@@ -41,12 +41,23 @@ function basliklar(ek?: Record<string, string>): Record<string, string> {
 }
 
 export async function apiPost<T>(yol: string, govde: unknown): Promise<T> {
-  const y = await fetch(yol, {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: basliklar({ 'content-type': 'application/json' }),
-    body: JSON.stringify(govde),
-  })
+  const gonder = () =>
+    fetch(yol, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: basliklar({ 'content-type': 'application/json' }),
+      body: JSON.stringify(govde),
+    })
+  let y = await gonder()
+
+  // GET'teki gibi: erişim jetonu 15 dakikalık. Sayfayı açık bırakıp sonra
+  // yardım çağıran afetzedenin isteği 401 ile düşmesin. Yeniden göndermek
+  // güvenli: 401'de sunucu isteği kimlik adımında reddetmiştir, kayıt açmamıştır.
+  if (y.status === 401 && jetonYenile) {
+    await jetonYenile()
+    y = await gonder()
+  }
+
   if (!y.ok) {
     let ayrinti = `${yol} → HTTP ${y.status}`
     try {

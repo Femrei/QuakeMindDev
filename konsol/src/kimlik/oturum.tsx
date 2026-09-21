@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { Oturum } from './roller'
 import * as uc from './oturumUcu'
 import { kimlikBagla } from '@/veri/istemci'
@@ -22,6 +23,7 @@ type OturumDurumu = {
 const Baglam = createContext<OturumDurumu | null>(null)
 
 export function OturumSaglayici({ children }: { children: ReactNode }) {
+  const qc = useQueryClient()
   const [oturum, setOturum] = useState<Oturum | null>(null)
   const [yukleniyor, setYukleniyor] = useState(true)
 
@@ -49,22 +51,34 @@ export function OturumSaglayici({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const girisYap = useCallback(async (eposta: string, sifre: string) => {
-    const yeni = await uc.girisYap(eposta, sifre)
-    setOturum(yeni)
-    return yeni
-  }, [])
+  // Önbellek kullanıcıya aittir: sorgular zamanla bayatlamadığı için (staleTime
+  // sonsuz) önceki kullanıcının verisi yeni girişte olduğu gibi görünürdü --
+  // koordinatörden sonra aynı sekmede giren afetzede herkesin çağrısını görürdü.
+  const girisYap = useCallback(
+    async (eposta: string, sifre: string) => {
+      const yeni = await uc.girisYap(eposta, sifre)
+      qc.clear()
+      setOturum(yeni)
+      return yeni
+    },
+    [qc],
+  )
 
-  const kayitOl = useCallback(async (eposta: string, adSoyad: string, sifre: string) => {
-    const yeni = await uc.kayitOl(eposta, adSoyad, sifre)
-    setOturum(yeni)
-    return yeni
-  }, [])
+  const kayitOl = useCallback(
+    async (eposta: string, adSoyad: string, sifre: string) => {
+      const yeni = await uc.kayitOl(eposta, adSoyad, sifre)
+      qc.clear()
+      setOturum(yeni)
+      return yeni
+    },
+    [qc],
+  )
 
   const cikisYap = useCallback(async () => {
     await uc.cikisYap()
+    qc.clear()
     setOturum(null)
-  }, [])
+  }, [qc])
 
   const deger = useMemo(
     () => ({ oturum, yukleniyor, girisYap, kayitOl, cikisYap }),

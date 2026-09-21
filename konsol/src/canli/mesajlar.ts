@@ -2,7 +2,17 @@
    Sunucu yalnızca DEĞİŞİKLİK olduğunda mesaj gönderir; istemci yoklama yapmaz. */
 
 export type CanliMesaj =
-  | { tip: 'yeni-sos'; id: string; lon: number; lat: number; oncelik: string; zaman: number }
+  | {
+      tip: 'yeni-sos'
+      id: string
+      zaman: number
+      /* Konsol rollerine tam kayıt gider. Afetzedeye yalnız KENDİ çağrısının
+         kimliği ve durumu gider; konum ve öncelik hiç gitmez (J-42). */
+      lon?: number
+      lat?: number
+      oncelik?: string
+      durum?: 'bekliyor' | 'atandi' | 'kapandi'
+    }
   | {
       tip: 'is-durumu'
       isId: string
@@ -15,6 +25,8 @@ export type CanliMesaj =
   | { tip: 'yeni-analiz'; kaynak: string; isId?: string; bolge?: string; sayi?: number }
   | { tip: 'isi-surumu'; surum: string; bolge?: string }
   | { tip: 'ekip-konumu'; ekipId: string; lon: number; lat: number }
+  /** Koordinasyonun yayınladığı acil durum bildirimi (herkese gider). */
+  | { tip: 'bildirim'; id: string; baslik: string; onem: string; zaman: number }
 
 export const MESAJ_TIPLERI: CanliMesaj['tip'][] = [
   'yeni-sos',
@@ -22,6 +34,7 @@ export const MESAJ_TIPLERI: CanliMesaj['tip'][] = [
   'yeni-analiz',
   'isi-surumu',
   'ekip-konumu',
+  'bildirim',
 ]
 
 /** Mesaj tipi → tazelenecek sorgu anahtarları. */
@@ -31,4 +44,5 @@ export const TAZELENECEK: Record<CanliMesaj['tip'], string[][]> = {
   'yeni-analiz': [['hasar'], ['ozet']],
   'isi-surumu': [['isi']],
   'ekip-konumu': [['ekipler']],
+  bildirim: [['bildirimler']],
 }

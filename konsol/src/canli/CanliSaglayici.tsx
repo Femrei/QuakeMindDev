@@ -5,47 +5,52 @@ import { canliAkisBaslat } from './canliAkis'
 import { useZaman } from '@/durum/zamanDurumu'
 import { useIsler } from '@/durum/islerDurumu'
 import { analizSonucuAl } from '@/veri/analiz'
+import { useOturum } from '@/kimlik/oturum'
 
 /**
  * Akış ve saat, uygulamada BİR kez kurulur.
  * Saat yerel bir sayaçtır: dakika değişmedikçe durum güncellenmez, yani
  * saniyede bir yeniden çizim olmaz ve sunucuya hiçbir istek gitmez.
+ *
+ * Akış kimlik ister (J-42): oturum yokken açılmaz, kullanıcı değişince
+ * kapanıp yeniden kurulur. Eskiden giriş ekranında da açılıyordu ve çıkış
+ * yapılınca sekmede önceki kullanıcının akışı sürüyordu.
  */
 export function CanliSaglayici({ children }: { children: ReactNode }) {
   const qc = useQueryClient()
+  const kullaniciId = useOturum().oturum?.kullaniciId ?? null
 
-  useEffect(
-    () =>
-      canliAkisBaslat(qc, {
-        dinleyici: (m) => {
-          if (m.tip !== 'is-durumu') return
-          const { isGuncelle, isler } = useIsler.getState()
-          if (!isler[m.isId]) {
-            // Başka bir sekmede ya da başka bir kullanıcı tarafından başlatılmış iş.
-            useIsler.getState().isBasladi(m.isId, m.isTipi, m.mesaj ?? '')
-          }
-          isGuncelle(m.isId, {
-            durum: m.durum,
-            ilerleme: m.ilerleme ?? (m.durum === 'bitti' ? 100 : 0),
-            mesaj: m.mesaj ?? '',
-            hata: m.hata,
-            bitis: m.durum === 'bitti' || m.durum === 'hata' ? Date.now() : undefined,
-          })
-          // Bitti mesajı gelince sonuç TEK istekle indirilir; yoklama yok.
-          if (m.durum === 'bitti' && m.isTipi === 'hasar-analizi') {
-            analizSonucuAl(m.isId)
-              .then((sonuc) => isGuncelle(m.isId, { sonuc }))
-              .catch((e: unknown) =>
-                isGuncelle(m.isId, {
-                  durum: 'hata',
-                  hata: e instanceof Error ? e.message : 'Sonuç indirilemedi.',
-                }),
-              )
-          }
-        },
-      }),
-    [qc],
-  )
+  useEffect(() => {
+    if (!kullaniciId) return
+    return canliAkisBaslat(qc, {
+      dinleyici: (m) => {
+        if (m.tip !== 'is-durumu') return
+        const { isGuncelle, isler } = useIsler.getState()
+        if (!isler[m.isId]) {
+          // Başka bir sekmede ya da başka bir kullanıcı tarafından başlatılmış iş.
+          useIsler.getState().isBasladi(m.isId, m.isTipi, m.mesaj ?? '')
+        }
+        isGuncelle(m.isId, {
+          durum: m.durum,
+          ilerleme: m.ilerleme ?? (m.durum === 'bitti' ? 100 : 0),
+          mesaj: m.mesaj ?? '',
+          hata: m.hata,
+          bitis: m.durum === 'bitti' || m.durum === 'hata' ? Date.now() : undefined,
+        })
+        // Bitti mesajı gelince sonuç TEK istekle indirilir; yoklama yok.
+        if (m.durum === 'bitti' && m.isTipi === 'hasar-analizi') {
+          analizSonucuAl(m.isId)
+            .then((sonuc) => isGuncelle(m.isId, { sonuc }))
+            .catch((e: unknown) =>
+              isGuncelle(m.isId, {
+                durum: 'hata',
+                hata: e instanceof Error ? e.message : 'Sonuç indirilemedi.',
+              }),
+            )
+        }
+      },
+    })
+  }, [qc, kullaniciId])
 
   useEffect(() => {
     const ilerlet = useZaman.getState().saatIlerlet

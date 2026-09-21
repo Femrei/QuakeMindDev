@@ -33,3 +33,6 @@ veri/analiz_gorselleri/
 # Yumusak maliyet deneyi (J-34): il graflari PBF'ten yeniden uretilir, onizlemeler agir
 benchmark/data/emsr_graf_*.pkl
 benchmark/data/model_masks_emsr/*/preview.jpg
+
+# Harita altligi paketleri (J-40): yerel OSM kopyasindan uretilir, araclar_altlik_uret.py
+veri/altlik/

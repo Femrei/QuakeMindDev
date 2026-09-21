@@ -40,6 +40,10 @@ const gunUzunBicim = new Intl.DateTimeFormat('tr-TR', {
 /** "2023-02-23" → "23 Şubat 2023" */
 export const gunMetni = (isoGun: string) => gunUzunBicim.format(new Date(`${isoGun}T00:00:00Z`))
 
+/** Konum doğruluğu: "±12 m" · "±1,2 km" */
+export const dogruluk = (m: number) =>
+  m < 1000 ? `±${Math.round(m)} m` : `±${(m / 1000).toFixed(1).replace('.', ',')} km`
+
 /** "6 saat", "45 dakika", "3 gün" */
 export function sure(ms: number): string {
   const dk = Math.round(ms / 60000)

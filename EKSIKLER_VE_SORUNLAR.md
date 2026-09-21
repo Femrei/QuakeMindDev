@@ -1072,6 +1072,314 @@ toplandığı ve R0'ın öğrenmeyen ajan olduğu açıkça yazılmalı.
 
 ---
 
+## J-46 🟠 Konsol canlı modda dakikada bir bütün pencere sorgularını yeniden istiyor
+**Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 (J-43'ün ağ kaydında) · **İlgili:** kural 4, ARAYUZ §10, J-11
+
+**Sorun.** Canlı modda zaman penceresi saatle birlikte kayıyor (varsayılan: son 6 saat) ve
+pencere, sorgu anahtarının parçası. Dakika değişince anahtarlar değişiyor ve pencereye bağlı
+her sorgu yeniden gidiyor. Hiçbir şey değişmese bile bu böyle.
+
+**Ölçüldü.** Genel mod, boşta, tek sekme: **dakikada 7 istek.** Bunlar `hasar-noktalari`,
+`sos`, `ozet` ve dört `heatmap` (uydu, sos, kamera, metin). Eski webin ~65 isteğinden az,
+ama kural 4 "yalnızca değişiklik olduğunda" diyor.
+
+**Öneri.**
+- Sorguyu kaba bir çapaya bağla: pencere başlangıcı 15 dakikaya yuvarlanır ya da canlıya
+  geçerken sabitlenir.
+- Tam pencereyi istemci süzsün. Yeni veri zaten canlı akışla geliyor.
+- Isı ızgarası sunucuda üretiliyor; onu da aynı çapaya bağla.
+
+---
+
+## J-45 🔴 Eski demo hesaplarının jetonu kodda sabit; herkes acil bildirim yayınlayabiliyor
+**Durum:** KARAR BEKLİYOR · **Bulundu:** 21 Eylül 2026 (J-43 sınanırken) · **İlgili:** J-43, CLAUDE.md kural 5
+
+**Sorun.**
+- `cekirdek.py::_demo_user` sekiz demo hesap tanımlıyor. Jetonları kodda sabit:
+  `token-<kimlik>`, ör. `token-responder-101`. Şifreleri `password123`. Eski webin giriş
+  sayfası bu şifreyi ekranda gösteriyor. Depo açık (upstream).
+- `POST /api/notifications/send_emergency` bu jetonu kabul ediyor. Jetonu bilen herkes bütün
+  afetzedelerin ekranına acil bildirim düşürebilir, ör. "Baraj yıkıldı, tahliye edin".
+  Afetzede ekranı bildirimi en üstte gösterdiği için etkisi arttı.
+- Aynı jetonlar `_require_role` kullanan öteki eski uçları da açıyor: ekip sohbeti, görev
+  kilidi vb.
+- Yeni kimlikle bildirim gönderen bir uç yok. Konsoldan henüz bildirim yayınlanamıyor.
+- J-43 sınanırken test bildirimi bu yoldan gönderildi. Açığın gerçek olduğu böyle
+  doğrulandı.
+
+**Öneri.** Karar gerekiyor, çünkü eski webin demo girişini etkiliyor.
+1. `POST /api/bildirimler` ucu: yeni kimlik,
+   `Depends(rol_gerektir('koordinator', 'yonetici'))`. Konsola bir gönderme paneli.
+2. Eski demo hesapları bir ortam bayrağının arkasına alınsın, ör. `QUAKEMIND_ESKI_DEMO=1`.
+   Geliştirmede açık, dağıtımda kapalı olur. Varsayılanı değiştirmek eski webin demo girişini
+   kapatır.
+
+---
+
+## J-44 🟠 Afetzedeye hasar bilgili yol tarifi verilemiyor
+**Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-43, J-34, J-17, ARAYUZ §8 ("rota ve toplanma alanı")
+
+**Sorun.**
+- Kapanma bilgisi yalnız analiz oturumunda duruyor: bellekte ve 30 dakika
+  (`ROAD_DAMAGE_SESSION_TTL_SEC`). Rota ucu `/api/road_damage/route` bu oturumu istiyor.
+  Afetzedenin isteği geldiğinde çoğu zaman oturum yok.
+- Oturumsuz `safe_route` her istekte yol ağını Overpass'tan indiriyor. Bu kural 3'ü çiğniyor,
+  dakikalar sürüyor ve bölgeyi üçüncü tarafa gönderiyor.
+- Kapanmalar `yol_kapanmalari` tablosuna yalnız segmentin orta noktası olarak yazılıyor.
+  Yönlendirilebilir yol ağı hiçbir yerde saklanmıyor.
+- Bu yüzden yeni ekran toplanma alanını kuş uçuşu uzaklık ve yönle veriyor, yol tarifi yok.
+  Ekranda da bu açıkça yazıyor.
+
+**Öneri.**
+1. Bölge yol ağını yerel OSM kopyasından bir kez üret (altlık gibi) ve dosyaya yaz. API ya da
+   rota işçisi onu belleğe bir kez yüklesin.
+2. `yol_kapanmalari` noktalarını en yakın kenara oturt. Kaynağı ve zamanı kenarda dursun.
+3. `GET /api/afetzede/rota?hedef=…` ucu: yumuşak maliyetli A* (J-34 bayrağı), birkaç on ms.
+   Yanıtta sokak adlarıyla adım listesi, uzunluk, geçilen riskli kenar ve kullanılan kapanma
+   verisinin tarihi olsun.
+4. Ekranda harita motoru olmadan adım listesi. İstenirse küçük bir SVG çizimi.
+
+---
+
+## J-43 🟠 Afetzede ekranı: eski webdeki portal yeni konsolda yeniden yazıldı
+**Durum:** KAPALI (21 Eylül 2026, ilk sürüm; açık kalanlar J-44, J-45) · **Bulundu:** 21 Eylül 2026 (kullanıcı isteği) · **İlgili:** J-42, ARAYUZ §8, MIMARI §7
+
+**Eski webde bulunanlar** (`quakemind-web/src/app/survivor`). Bunlar ya taşınmadı ya
+düzeltilerek taşındı:
+- Gönderim başarısız olunca da "SOS sinyaliniz alındı" yazıyordu
+  (`catch { setSosSent(true) }`). Yardım talebi de hatada "kayıtlara eklendi" diyordu.
+- Konum alınamazsa çağrı sessizce Antakya merkezine düşüyordu (`ANTAKYA_COORDS`).
+- Kişi sayısı ve aciliyet mesajın içine metin olarak gömülüyordu ("[KİŞİ SAYISI: 3]").
+  Ekipler bunlara göre süzemiyordu.
+- Bütün toplanma alanları "🟢 Güvenli" etiketliydi. Oysa liste depremden önceki resmi
+  listedir, alanın bugünkü durumu bilinmiyor.
+- Rota dış OSRM demo sunucusundan isteniyordu. Kullanıcının tam konumu üçüncü tarafa
+  gidiyordu, rota da yıkık ya da kapalı yolu bilmiyordu. `allowOnlineFallback=false`
+  adının söylediğini yapmıyordu.
+- Bildirim bandı 10 saniyede bir yokluyordu (kural 4).
+- Gönderen yazmasa da bildirimlere 6,8 büyüklük ve "Hatay" varsayılan olarak ekleniyordu.
+- Kamera sayfası analiz başarısız olunca sahte sonuç gösteriyordu. Yapıya "güvenli" hükmü de
+  veriyordu.
+
+**Yeni ekran** (`konsol/src/afetzede/`): telefonda tek sütun, harita motoru yok.
+- **Bildirim bandı.** `GET /api/bildirimler/aktif` ile gelir, canlı akıştaki `bildirim`
+  mesajıyla tazelenir.
+- **Yardım çağrısı.**
+  - Durum seçilir: Mahsur kaldım / Yaralı var / Yardım gerekli. Ayrıca kişi sayısı,
+    ihtiyaçlar (su, gıda, barınma, ısınma, ilaç, tuvalet) ve en çok 500 karakterlik not.
+  - Konum cihazdan alınır. Kısa bir izlemeyle en iyi doğruluk tutulur ve "±m" yazılır.
+  - Cihaz konum veremezse mahalle seçilir: altlığın yer adları, 5 bölgede 496 ad. Böyle
+    gelen konum "yaklaşık" diye işaretlenir. Hiç konum yoksa çağrı gönderilemez ve ekran bunu
+    söyler.
+  - Başarı mesajı ancak sunucu 201 dönünce çıkar. Hatada sebep yazılır, bilgiler silinmez.
+  - Açık çağrısı olan afetzedeye ikinci çağrıdan önce hatırlatılır.
+- **Çağrılarım.** Son 7 gün; her çağrıda durum rozeti ve açıklaması. Canlı akışla tazelenir.
+  Bağlantı koparsa ekran bunu yazar ve elle yenileme düğmesi çıkar.
+- **En yakın toplanma alanları.** AFAD veri setinden; kuş uçuşu uzaklık ve sekiz yönlü yön.
+  "Haritada aç" bağlantısı yalnız alanın konumunu götürür. Kaynak ve sınırlar Teknik notunda
+  yazılı.
+- **Sözleşme.** `POST /api/sos` artık `kisiSayisi`, `ihtiyaclar`, `konumKaynagi`
+  (`gps` | `mahalle`) ve `konumDogrulukM` alıyor (`ek` JSON sütunu). `GET /api/sos` bunları
+  geri veriyor.
+- **Ekip ekranları.** SOS kuyruğu, seçili çağrı ve harita ipucu kişi ve ihtiyaç satırını
+  gösteriyor. Mahalle merkezinden gelen çağrıda "Dikkat: yaklaşık konum" uyarısı çıkıyor.
+- **`apiPost`.** 401 alınca jetonu bir kez yeniliyor. Erişim jetonu 15 dakikalık; sayfayı açık
+  bırakan afetzedenin çağrısı bu yüzden düşmesin.
+- **Bildirim.** `send_emergency` canlı akışa `bildirim` yayınlıyor. Büyüklük ve konum
+  varsayılanları kaldırıldı.
+- **Toplanma ucu.** `allowOnlineFallback=false` iken OSRM'e gitmiyor. Varsayılan (`true`)
+  değişmedi; eski web aynı çalışıyor.
+- Koordinatör ve yönetici ekranı "önizleme" notuyla açabiliyor.
+
+**Ölçüldü.**
+- **Rota başına indirilen JS** (üretim derlemesi, gzip):
+
+  | Rota | Önce | Sonra |
+  |---|---|---|
+  | afetzede | 637,6 KB | 107,8 KB |
+  | giriş ekranı | 626,6 KB | 96,9 KB |
+  | konsol | 658,4 KB | 664,6 KB (harita burada, tembel yüklenir) |
+
+  Sebep `vite.config.ts`'teki `manualChunks` nesne biçimiydi: Vite'ın ön-yükleyicisini ve
+  CommonJS yardımcısını harita parçasına çekiyordu. Giriş dosyası da bu yüzden 2 MB'lık
+  parçayı statik olarak içe aktarıyordu. Parça ayarı işlev biçimine çevrildi, yardımcılar ayrı
+  bir parçaya alındı. Önizleme sunucusunda doğrulandı: /afetzede yalnız 5 dosya indiriyor,
+  konsol haritayla açılıyor.
+- **İstek sayısı.** Afetzede ekranı açılışta 5 istek atıyor: oturum yenileme, akış,
+  bildirimler, çağrılarım, toplanma. Sonrasında yalnız canlı akış mesajı gelince tazeleniyor.
+- **Toplanma ucu.** 5 istekte 172–198 ms, yanıt 20 KB. Sürenin ~122 ms'si 15,7 MB'lık AFAD
+  JSON'unu her istekte yeniden ayrıştırmaktan geliyor. Veri bellekte tutulursa süre düşer; bu
+  yapılmadı.
+
+**Denetlendi** (tarayıcı, 375 × 812).
+- **GPS yolu.** Tarayıcı konumu test için Ankara'ya sabitlendi. Ekran ±15 m doğruluk ve en
+  yakın 5 AFAD alanını gösterdi (Cumhuriyet 20 m, Kızılay 60 m…).
+- **Gönderim.** Ekran "Çağrın alındı · 19:03 · Bekliyor" dedi. Koordinatör çağrıyı kapatınca
+  başarı kutusu ve liste yoklama olmadan "Kapandı" oldu.
+- **Mahalle yolu.** "akev" yazınca Akevler (Antakya) çıktı. Toplanma listesi mahalle merkezine
+  göre hesaplandı ve "yaklaşık" yazdı.
+- **Duman testi.** 63 ucun 61'i aynı. İki fark bilerek yapıldı: `/api/sos` dört alan kazandı
+  ve yeni uçlar eklendi. Referans imza güncellendi.
+
+**Taşınmayan: kamera / fotoğraf.** Güvenli yeniden tasarım önerisi:
+- Fotoğraf saklanır ve ihbar olarak kuyruğa girer.
+- Yapıya "güvenli" hükmü verilmez.
+- Model sonucu ekip ekranında "modelin tahmini" diye görünür.
+
+**Test kayıtları.** Geliştirme veritabanında duruyorlar, "TEST J-43" etiketli ve kapatıldılar:
+- SOS: `sos-af570c07`, `sos-9212d9f0`, `sos-4166b7a2`
+- Test afetzedeleri: `kul-a1b1670f81`, `kul-28d8597e7f`
+- Test bildirimi bellekte duruyor; arka uç yeniden başlayınca silinir.
+
+---
+
+## J-42 🔴 Canlı akış (SSE) kimliksizdi: herkes her SOS konumunu ve ekip konumlarını alıyordu
+**Durum:** KAPALI (21 Eylül 2026) · **Bulundu:** 21 Eylül 2026 (afetzede ekranı incelenirken) · **İlgili:** J-43, CLAUDE.md kural 5, MIMARI §9
+
+**Sorun.**
+- `/api/live` kimlik istemiyordu. Giriş yapmamış biri akışı açıp her yeni SOS çağrısının
+  konumunu, önceliğini ve mahallesini alabiliyordu; ekip konumlarını da.
+- Afetzede de aynı akışı alıyordu, başkalarının çağrı konumları dahil. MIMARI §9 "afetzede yalnız
+  kendi çağrısını görür" diyor. Liste ucu bunu uyguluyordu, akış uygulamıyordu.
+- Konsolda akış giriş ekranında da açılıyordu. Çıkış yapılınca sekmede önceki kullanıcının
+  kimliğiyle sürüyordu.
+- Sorgu önbelleği çıkışta temizlenmiyordu (`staleTime` sonsuz). Koordinatörden sonra aynı
+  sekmede giren afetzede önceki oturumun bütün çağrı listesini görebilirdi.
+
+**Yapıldı.**
+- Akış kimliği httpOnly yenileme çerezinden okuyor (`kimlik.cerezden_kullanici`).
+  EventSource başlık gönderemediği için bu yol seçildi; jeton URL'ye yazılmıyor (kural 5).
+  Çerez okunurken yenilenmiyor. Çerez yoksa ya da oturum iptal edilmişse 401.
+- Afetzedeye yalnız iki tip mesaj gidiyor (`uclar/canli.py::_afetzede_icin`):
+  - kendi çağrısının durum değişikliği: yalnız `{id, durum}`, konum ve öncelik gitmez;
+  - acil bildirim.
+
+  Başkasının çağrısı, ekip konumu ve analiz olayları gitmiyor.
+- Konsolda akış yalnız oturum varken açılıyor ve kullanıcı değişince yeniden kuruluyor. Giriş
+  ve çıkışta sorgu önbelleği temizleniyor.
+
+**Denetlendi.**
+- **Duman testi.** Çerezsiz `/api/live` 401 dönüyor. Bu istek `testler/uc_imzalari.json`'a
+  eklendi.
+- **Uçtan uca.** İki test afetzedesi (A, B) ve koordinatör akışı aynı anda dinledi:
+  - A yalnız kendi çağrısının "bekliyor" ve "kapandi" olaylarını ve bildirimi aldı. B'nin
+    çağrısını almadı.
+  - Afetzede olaylarında `lon`, `lat` ve `ekipId` yok.
+  - Koordinatör iki çağrıyı da konumlarıyla aldı.
+
+---
+
+## J-41 🟠 Haritada ad yoktu, şehre gitme yoktu, noktalar ne olduğunu söylemiyordu
+**Durum:** KAPALI (21 Eylül 2026) · **Bulundu:** 21 Eylül 2026 (kullanıcı) · **İlgili:** J-40, ARAYUZ §7, §11
+
+**Sorun.** Prototipte olup konsola taşınmayanlar:
+- Haritada şehir, mahalle ve sokak adı yoktu.
+- Şehre gitme düğmeleri yoktu (prototipte "Antakya / Bölge" vardı).
+- Haritadaki SOS noktasına tıklayınca seçme ve yakınlaşma yoktu.
+- Noktaların üstüne gelince ne oldukları görünmüyordu (prototipte `getTooltip` vardı).
+- Genel durum ekranında tıklanıp konuma gidilecek bir ihbar listesi yoktu.
+
+**Yapıldı.**
+- **Adlar.**
+  - `araclar_altlik_uret.py` paketlere OSM yer adlarını (şehir, ilçe, köy, mahalle) ve sokak
+    adı yerleşimlerini ekliyor: adlı yolun ortası, yol yönünde açı; 80 m'den kısa yola ad
+    yazılmıyor, aynı ad 250 m'den sık tekrarlanmıyor.
+  - Yer adı / sokak adı: Antakya 91 / 1 492, Kahramanmaraş 111 / 657, Gaziantep 141 / 1 036,
+    Malatya 101 / 509, Adıyaman 52 / 1 459. Beş bölgenin yeniden üretimi ~13 dk.
+  - Konsolda deck.gl `TextLayer` ile yakınlaştırmaya göre yazılıyor: z<9 bölge adı, z9 şehir
+    ve ilçe, z12 köy, z13 mahalle, z15 sokak.
+  - Çakışan ad yazılmıyor (`CollisionFilterExtension`, öncelik şehir > mahalle > sokak).
+    Adlar zemin renginde haleyle çiziliyor; renk ve boy token dosyasından.
+- **Şehir düğmeleri.** Haritanın üst ortasında: Antakya, Kahramanmaraş, Gaziantep, Malatya,
+  Adıyaman, "Tüm bölge". Görünümdeki şehir seçili görünüyor.
+- **Tıklama.** Haritadaki SOS, hasar noktası ya da ekibe tıklayınca oraya yakınlaşılıyor;
+  SOS seçiliyor.
+- **Üstüne gelince bilgi.**
+  - SOS: kimlik, aciliyet, durum, mahalle, metin, zaman.
+  - Hasar noktası: kaynak, skor, güven, zaman.
+  - Ekip: ad, durum, görev.
+  - Kapalı yol: "modelin tahmini, sahada doğrulanmadı".
+  - Metin HTML'e kaçırılıyor.
+- **Genel durum sağ paneli.**
+  - "Son ihbarlar" listesi (SOS ve öteki kaynaklar, en yeni önce). Tıklayınca haritada
+    oraya gidiyor.
+  - "Seçili çağrı" künyesi ve "SOS kuyruğunda aç" düğmesi.
+- **Önbellek.** Paket adresi üretim zamanını taşıyor (`?v=`). Paket günlük önbellekte
+  kalsa da yeniden üretilen paket eski hâliyle gelmiyor.
+
+**Tarayıcıda denetlendi (21 Eylül).**
+- Antakya z12'de şehir, ilçe ve köy adları; Kahramanmaraş düğmesiyle z13'te mahalle adları
+  (Osman Gazi, Dulkadir, Hacı Bayram…); sokak ölçeğinde yol yönünde sokak adları.
+- "Tüm bölge" beş şehri panellerin arasındaki açık alana sığdırıyor. İlk hâlinde Antakya zaman
+  şeridinin altında kalıyordu; kutuya sığdırma artık panel ve şerit ölçülerini token
+  dosyasından alıyor.
+- Ekip noktasında "AKUT 1 · Müsait · konum saati" bilgisi çıkıyor. SOS noktasında "kimlik ·
+  kritik aciliyet · Bekliyor · metin · saat · Tıkla: seç ve yakınlaş" çıkıyor.
+- "Son ihbarlar"da bir SOS'a tıklayınca harita oraya yakınlaşıyor, çağrı seçiliyor ve
+  künyesi görünüyor.
+
+**Denerken düzeltilenler.**
+- Isı haritası sokak ölçeğinde zemini mora boyuyordu. Örtücülüğü artık yakınlaştırmaya bağlı:
+  z13'e kadar 0,72, z16'da 0,30.
+- Adlar veri noktalarının üstünde çiziliyordu, bir sokak adı SOS noktasını örtüyordu. Adlar
+  artık noktaların altında.
+- Ekip durumu ham yazılıyordu ("musait"); artık "Müsait".
+- Bölge paketi adresine sürüm eklendi (üretim zamanı), yeniden üretilen paket önbellekten
+  eski hâliyle gelmiyor.
+
+**Ölçüldü.** Sayfa açıldıktan sonra harita `load` olayı 437 ms'de geliyor, Antakya paketinin
+isteği 469–504 ms'de bitiyor. Bir kez görülen 8 sn'lik gecikme, yeni eklenen
+`@deck.gl/extensions` için Vite'ın bağımlılıkları yeniden paketlemesinden geliyordu; geliştirme
+ortamına özgü ve tek seferlik.
+
+---
+
+## J-40 🟠 Konsolun haritasında altlık yoktu: zemin boştu
+**Durum:** KAPALI (21 Eylül 2026) · **Bulundu:** 21 Eylül 2026 (kullanıcı: "hani bir harita yok, hiçbir şey belli değil") · **İlgili:** ARAYUZ §11, MIMARI §8
+
+**Sorun.** Konsolu kurarken altlığı bağlamamıştım. `haritaStili.ts` yalnız siyah zemindi ve
+"karo ucu henüz bağlı değil" notu düşülmüştü. "Yol ağı" katmanının çizim kodu yoktu,
+"Hasarlı yollar" boş dizi çiziyordu, "Yapılar" bayrağı hasar noktalarını açıyordu. Prototip
+Antakya'yı EMSR648 verisiyle çiziyordu; konsola taşınmamıştı.
+
+**Yapıldı.**
+- `araclar_altlik_uret.py`: yerel OSM kopyasından (Türkiye PBF, 12 Ağustos 2026) GDAL'ın OSM
+  sürücüsüyle bölge başına yollar (5 sınıf), yapılar, su alanları ve nehirler. Sadeleştirme,
+  1e-5 derece tamsayı-delta kodlama, gzip. Çıktı `veri/altlik/<bölge>.json.gz` (git dışı,
+  yeniden üretilebilir). Bölge başına ~2 dk.
+- `GET /api/altlik` (katalog) ve `GET /api/altlik/{bölge}` (hazır dosya; istek yolunda iş yok).
+  Giriş gerekli.
+- Konsol: harita durunca (`moveend`) görünen alanla kesişen bölgelerin paketleri bir kez
+  iner. deck.gl ikili verisiyle en alta çizilir: su, yapılar, nehirler, yollar.
+  - Renkler token dosyasından okunuyor (`--color-map-*`), yol genişlikleri prototipteki gibi.
+  - "Yol ağı" bayrağı yolları, "Yapılar" bayrağı yapıları açıyor.
+  - Hasar noktaları artık ısı bayrağıyla açılıyor; tek görünür fark metin modunda noktaların
+    da görünmesi.
+  - Künye notu altlığın kaynağını ve tarihini yazıyor: "© OpenStreetMap katkıcıları
+    (ODbL 1.0) · yerel kopya 12 Ağustos 2026 · Antakya (Hatay)". Görünen alanda altlık yoksa
+    bunu da yazıyor.
+- **Ölçüldü (±8 km):**
+
+  | Bölge | Yol | Yapı | Su alanı | Nehir | Paket (gzip) |
+  |---|---|---|---|---|---|
+  | Antakya | 10 216 | 59 225 | 14 | 9 | 0,96 MB |
+  | Kahramanmaraş | 11 483 | 66 659 | 23 | 38 | 1,03 MB |
+  | Gaziantep | 19 521 | 171 980 | 46 | 1 | 2,41 MB |
+  | Malatya | 9 689 | 52 370 | 31 | 54 | 0,90 MB |
+  | Adıyaman | 5 254 | 29 961 | 9 | 2 | 0,50 MB |
+- Tarayıcıda denetlendi (Antakya): z12'de şehrin yol ağı ve Asi nehri, z15'te yol
+  hiyerarşisi, kavşaklar, köprüler ve yapılar okunuyor. Tip ve token denetimleri temiz.
+- Paketler z9'dan itibaren iner. O yakınlıkta ekran birkaç bölgeyi birden kapsayabilir.
+  Bu yüzden yapı katmanı yalnız z13 ve üstünde kurulur; yoksa 300 bini aşan çokgen aynı anda
+  üçgenlenirdi. Gaziantep'te (172 bin yapı) z13'e geçişin ana iş parçacığında ne kadar
+  sürdüğü **ölçülmedi**.
+
+**Sınır.** Yalnız konsolun beş bölgesi (şehir merkezi ±8 km) üretildi; dışında zemin boş ve
+künye bunu söylüyor. Adlar J-41'de eklendi. Bölge sayısı büyüyünce aynı veri
+vektör karoya (MVT / PMTiles) taşınmalı (MIMARI §8).
+
+---
+
 ## J-39 🟡 Büyük alan çizilince görüntü sessizce 8 × 8 karoya kırpılıyor
 **Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 (kod okuması; gerçek koşuyla ölçülmedi) · **İlgili:** J-20, J-35
 
@@ -1225,7 +1533,7 @@ Maxar alanında canlı koşu.
 ---
 
 ## J-35 🟠 Konsolun Wayback "deprem sonrası" varsayılanı Antakya'da deprem öncesi görüntü
-**Durum:** DEVAM EDİYOR — kod tamam ve ölçüldü; konsolun tarayıcıda görsel denetimi bekliyor · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-21, D-01, kural 1
+**Durum:** KAPALI (21 Eylül 2026) · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-21, D-01, kural 1
 
 **Sorun.** Bu oturumda yazılan konsol (`konsol/src/modlar/hasar.tsx`) "Deprem sonrası"
 düğmesiyle 6 Şubat'tan sonraki ilk Wayback sürümünü (57965, 2023-02-23) seçiyor,
@@ -1283,7 +1591,10 @@ sessizce z17'ye iniyordu.
   bu deprem öncesi görüntüde piksellerin %0,16'sını hasar işaretledi; hepsi yanlış alarm.
 - Tip denetimi ve token denetimi temiz. Duman testi 57 istekte 0 fark.
 
-**Kalan.** Konsolun tarayıcıda görsel denetimi: önizlemede oturum kapandı, giriş kullanıcıda.
+**Tarayıcıda denetlendi (21 Eylül).** Varsayılan kaynak OAM; öneri "Maxar, 8 Şubat 2023 (depremden 2 gün
+sonra), alanın ~%100'ü", listede her görüntünün kapsama oranı. Wayback'e geçince varsayılan "8 Şubat 2024
+sürümü · çekim 4 Nisan 2023" ve "depremden 57 gün sonra"; "Deprem öncesi" düğmesi "15 Mart 2023 sürümü ·
+çekim 27 Eylül 2021" ve kalın uyarı: "görüntüde depremin hasarı yok, bulunan her hasar yanlış alarmdır".
 
 ---
 

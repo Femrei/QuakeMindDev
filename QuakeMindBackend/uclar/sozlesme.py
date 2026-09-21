@@ -15,11 +15,12 @@ Yetki: her uc `Depends` ile korunur. Afetzede yalniz kendi cagrisini gorur
 
 from __future__ import annotations
 
+import json
 import time
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import canli_yayin
 import kimlik
@@ -57,7 +58,15 @@ def _hasar_cikti(k: dict) -> dict:
     }
 
 
+def _sos_ek(k: dict) -> dict:
+    try:
+        return json.loads(k["ek"]) if k.get("ek") else {}
+    except (TypeError, ValueError):
+        return {}
+
+
 def _sos_cikti(k: dict) -> dict:
+    ek = _sos_ek(k)
     return {
         "id": k["id"],
         "lon": k["lon"],
@@ -69,6 +78,12 @@ def _sos_cikti(k: dict) -> dict:
         "metin": k.get("metin"),
         "ekipId": k.get("ekip_id"),
         "atamaZamani": _ms(k["atama_zamani"]) if k.get("atama_zamani") else None,
+        # Afetzede ekranindan gelen yapilandirilmis bilgi (yoksa None).
+        "kisiSayisi": ek.get("kisiSayisi"),
+        "ihtiyaclar": ek.get("ihtiyaclar"),
+        # "gps" ya da "mahalle" (mahalle merkezi, yaklasik konum).
+        "konumKaynagi": ek.get("konumKaynagi"),
+        "konumDogrulukM": ek.get("konumDogrulukM"),
     }
 
 
@@ -102,13 +117,22 @@ def hasar_noktalari(
 
 # --- SOS -------------------------------------------------------------------
 
+IHTIYACLAR = ("su", "gida", "barinma", "isinma", "ilac", "tuvalet")
+
+
 class SosIstegi(BaseModel):
     lon: float
     lat: float
     oncelik: str = "kritik"
-    metin: Optional[str] = None
-    mahalle: Optional[str] = None
+    metin: Optional[str] = Field(None, max_length=500)
+    mahalle: Optional[str] = Field(None, max_length=120)
     kanal: Optional[str] = None
+    # Afetzede ekrani (J-43): eskiden mesajin icine "[KISI SAYISI: 3]" diye
+    # yaziliyordu; artik ekiplerin suzup siralayabilecegi alanlar.
+    kisiSayisi: Optional[int] = Field(None, ge=1, le=500)
+    ihtiyaclar: Optional[list[str]] = None
+    konumKaynagi: Optional[str] = None
+    konumDogrulukM: Optional[float] = Field(None, ge=0, le=100000)
 
 
 class AtamaIstegi(BaseModel):
@@ -136,6 +160,16 @@ def sos_ac(istek: SosIstegi, kul: dict = Depends(kimlik.kullanici)):
         raise HTTPException(status_code=422, detail="Gecersiz koordinat.")
     if istek.oncelik not in ("kritik", "yuksek", "orta"):
         raise HTTPException(status_code=422, detail="Oncelik: kritik | yuksek | orta")
+    if istek.ihtiyaclar and any(i not in IHTIYACLAR for i in istek.ihtiyaclar):
+        raise HTTPException(status_code=422, detail=f"Ihtiyac: {' | '.join(IHTIYACLAR)}")
+    if istek.konumKaynagi not in (None, "gps", "mahalle"):
+        raise HTTPException(status_code=422, detail="konumKaynagi: gps | mahalle")
+    ek = {k: v for k, v in {
+        "kisiSayisi": istek.kisiSayisi,
+        "ihtiyaclar": sorted(set(istek.ihtiyaclar)) if istek.ihtiyaclar else None,
+        "konumKaynagi": istek.konumKaynagi,
+        "konumDogrulukM": round(istek.konumDogrulukM) if istek.konumDogrulukM is not None else None,
+    }.items() if v is not None}
 
     depo = aktif_depo()
     kayit = depo.sos_ekle(
@@ -146,6 +180,7 @@ def sos_ac(istek: SosIstegi, kul: dict = Depends(kimlik.kullanici)):
         mahalle=istek.mahalle,
         kullanici_id=kul["id"],
         kanal=istek.kanal,
+        ek=ek or None,
     )
     # Cagri ayni zamanda ortak sozlesmeye bir nokta olarak duser: birlesik isi
     # haritasinin "SOS" kanali bu noktalardan beslenir.

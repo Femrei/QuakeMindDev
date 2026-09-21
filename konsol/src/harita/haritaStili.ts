@@ -4,10 +4,11 @@ import type { StyleSpecification } from 'maplibre-gl'
    Harita stili bizim (ARAYUZ §11, MIMARI §8).
    Altlık kendi verimizden çizilir; dış karo servisine bağımlılık yok.
 
-   Şu an kendi karo uçlarımız hazır olmadığı için stil yalnız zeminden ibaret:
-   harita boş ve sönük açılır, veri katmanları deck.gl ile üstüne biner.
-   Karo ucu geldiğinde buraya tek bir vektör kaynak + yol hiyerarşisi eklenir;
-   renkler token dosyasındaki --color-map-* değerleridir.
+   Stil yalnız zeminden ibaret. Altlık (yollar, yapılar, su) yerel OSM
+   kopyasından bölge bölge üretilmiş paketlerden deck.gl ile en alta çizilir
+   (J-40, harita/katmanlar.ts → altlikKatmanlari); renkler token dosyasındaki
+   --color-map-* değerleridir. Bölge sayısı büyüyünce aynı veri vektör karoya
+   (MVT / PMTiles) taşınır ve buraya tek bir kaynak olarak eklenir (MIMARI §8).
 --------------------------------------------------------------------------- */
 
 export const ANTAKYA = { lon: 36.1614, lat: 36.2024, zoom: 12.4 }

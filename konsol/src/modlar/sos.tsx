@@ -2,7 +2,16 @@ import { useMemo, useState } from 'react'
 import { Amac, Bolum, HazirSecenekler, InceAyar, SuAn, Teknik, VeriYok } from '@/kabuk/Panel'
 import { Anahtar, Micro, Rozet } from '@/kabuk/parcalar'
 import { useAralik } from '@/durum/zamanDurumu'
-import { useEnYakinEkip, useEkipler, useSosAta, useSosCagrilari, type SosCagrisi } from '@/veri/sorgular'
+import {
+  ONCELIK_ADI,
+  ONCELIK_TON,
+  useEnYakinEkip,
+  useEkipler,
+  useSosAta,
+  useSosCagrilari,
+  type SosCagrisi,
+  sosEkBilgi,
+} from '@/veri/sorgular'
 import { useKonsol } from '@/durum/konsolDurumu'
 import { useHarita } from '@/harita/HaritaKabugu'
 import { sayi, tarihSaat } from '@/lib/bicim'
@@ -16,8 +25,6 @@ const SUZGECLER = [
 ] as const
 type SuzgecId = (typeof SUZGECLER)[number]['id']
 
-const ONCELIK_TON = { kritik: 'crit', yuksek: 'high', orta: 'mid' } as const
-const ONCELIK_ADI = { kritik: 'Kritik', yuksek: 'Yüksek', orta: 'Orta' } as const
 
 /** Süzgeç ve sıralama tek yerde: panel ile liste aynı kuralı kullanır. */
 function suz(cagrilar: SosCagrisi[], suzgec: SuzgecId): SosCagrisi[] {
@@ -189,36 +196,45 @@ export function SosSag() {
       <Bolum baslik="Çağrılar" dolgusuz>
         {sirali.length ? (
           <div>
-            {sirali.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => {
-                  kayitSec({ tip: 'sos', id: c.id })
-                  ucus(c.lon, c.lat, 15)
-                }}
-                className={sn(
-                  'block w-full border-b border-line px-3 py-2.5 text-left',
-                  seciliId === c.id ? 'bg-raised' : 'hover:bg-raised',
-                )}
-              >
-                <span className="flex items-baseline justify-between gap-2">
-                  <span className="font-mono text-small text-ink-2">{c.id}</span>
-                  <Rozet
-                    ton={
-                      c.durum === 'kapandi' ? 'nötr' : c.durum === 'atandi' ? 'ok' : ONCELIK_TON[c.oncelik]
-                    }
-                  >
-                    {c.durum === 'atandi' ? 'Atandı' : c.durum === 'kapandi' ? 'Kapandı' : ONCELIK_ADI[c.oncelik]}
-                  </Rozet>
-                </span>
-                <span className="mt-0.5 block text-small text-ink">
-                  {c.mahalle ? `${c.mahalle} · ` : ''}
-                  {tarihSaat(c.zaman)}
-                </span>
-                {c.metin && <span className="mt-1 block text-small text-ink-3">{c.metin}</span>}
-              </button>
-            ))}
+            {sirali.map((c) => {
+              const ek = sosEkBilgi(c)
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    kayitSec({ tip: 'sos', id: c.id })
+                    ucus(c.lon, c.lat, 15)
+                  }}
+                  className={sn(
+                    'block w-full border-b border-line px-3 py-2.5 text-left',
+                    seciliId === c.id ? 'bg-raised' : 'hover:bg-raised',
+                  )}
+                >
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="font-mono text-small text-ink-2">{c.id}</span>
+                    <Rozet
+                      ton={
+                        c.durum === 'kapandi' ? 'nötr' : c.durum === 'atandi' ? 'ok' : ONCELIK_TON[c.oncelik]
+                      }
+                    >
+                      {c.durum === 'atandi' ? 'Atandı' : c.durum === 'kapandi' ? 'Kapandı' : ONCELIK_ADI[c.oncelik]}
+                    </Rozet>
+                  </span>
+                  <span className="mt-0.5 block text-small text-ink">
+                    {c.mahalle ? `${c.mahalle} · ` : ''}
+                    {tarihSaat(c.zaman)}
+                  </span>
+                  {ek.kisiIhtiyac && (
+                    <span className="mt-0.5 block text-small text-ink-2">{ek.kisiIhtiyac}</span>
+                  )}
+                  {c.metin && <span className="mt-1 block text-small text-ink-3">{c.metin}</span>}
+                  {ek.yaklasik && (
+                    <span className="mt-1 block text-small text-ink">Dikkat: {ek.konum}</span>
+                  )}
+                </button>
+              )
+            })}
           </div>
         ) : (
           <div className="px-3 pb-3">

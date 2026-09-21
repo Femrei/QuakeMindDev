@@ -16,3 +16,22 @@
 .maplibregl-canvas:focus {
   outline: none;
 }
+
+/* Üstüne gelince bilgi kutusu (J-41): paneller gibi opak, kenarlıklı; gölge ve
+   cam efekti yok (ARAYUZ §2). */
+.qm-ipucu {
+  max-width: 280px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-line-2);
+  border-radius: var(--radius-control);
+  padding: 8px 10px;
+  color: var(--color-ink-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  line-height: 1.45;
+}
+.qm-ipucu-baslik {
+  color: var(--color-ink);
+  font-weight: 600;
+  margin-bottom: 2px;
+}

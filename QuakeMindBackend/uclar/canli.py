@@ -33,21 +33,49 @@ from utils.postgis_manager import postgis_engine
 from apps.road_damage.utils.serialization import compact_segment_coords as _compact_segment_coords, serialize_segments as _serialize_segments, haversine_m as _haversine_m
 from apps.road_damage.utils.imaging import image_array_to_b64 as _image_array_to_b64, build_damage_overlay as _build_damage_overlay, build_segmentation_overlay as _build_segmentation_overlay
 from apps.road_damage.utils.tiling import zoom_for_radius as _zoom_for_radius
-from fastapi import APIRouter
+from fastapi import APIRouter, Cookie
+import kimlik
+from depo import aktif_depo
 
 yonlendirici = APIRouter()
 
 
+def _afetzede_icin(mesaj: dict, kullanici_id: str):
+    """Afetzedeye giden akis (J-42): yalniz KENDI cagrisinin durum degisikligi
+    ve acil bildirimler. Baskasinin cagri konumu, ekip konumlari ve analiz
+    olaylari hic gitmez."""
+    if mesaj["tip"] == "bildirim":
+        return mesaj
+    if mesaj["tip"] == "yeni-sos":
+        kayit = aktif_depo().sos_bul(mesaj.get("id", ""))
+        if kayit and kayit.get("kullanici_id") == kullanici_id:
+            return {"tip": "yeni-sos", "zaman": mesaj["zaman"], "id": kayit["id"], "durum": kayit["durum"]}
+    return None
+
+
 @yonlendirici.get("/api/live")
-async def canli_akis(request: Request):
+async def canli_akis(
+    request: Request,
+    cerez: Optional[str] = Cookie(default=None, alias=kimlik.YENILEME_CEREZI),
+):
     """TEK canli akis (SSE) -- MIMARI 6.
 
     Sunucu YALNIZCA degisiklik oldugunda mesaj gonderir; istemci hicbir ucu
     yoklamaz. Mesaj tipleri: yeni-sos, is-durumu, yeni-analiz, isi-surumu,
-    ekip-konumu. Sessiz gecen surelerde 20 saniyede bir yorum satiri (": ping")
-    gider; bu veri degil, baglantinin vekil sunucularca kapatilmasini onleyen
-    bir canlilik isaretidir.
+    ekip-konumu, bildirim. Sessiz gecen surelerde 20 saniyede bir yorum satiri
+    (": ping") gider; bu veri degil, baglantinin vekil sunucularca
+    kapatilmasini onleyen bir canlilik isaretidir.
+
+    Kimlik (J-42): akis eskiden herkese acikti -- giris yapmamis biri de her
+    SOS cagrisinin konumunu ve ekiplerin konumunu aliyordu. EventSource baslik
+    gonderemedigi icin kimlik, ayni kokenden giden httpOnly yenileme cereziyle
+    kanitlanir (jeton dondurulmez). Afetzede yalniz kendi cagrilarini ve acil
+    bildirimleri alir.
     """
+    kul = kimlik.cerezden_kullanici(cerez)
+    if kul is None:
+        raise HTTPException(status_code=401, detail="Oturum acilmamis.")
+    afetzede = kul["rol"] == "afetzede"
     kuyruk = canli_yayin.abone_ol()
 
     async def uret():
@@ -63,6 +91,10 @@ async def canli_akis(request: Request):
                 except asyncio.TimeoutError:
                     yield ": ping\n\n"
                     continue
+                if afetzede:
+                    mesaj = _afetzede_icin(mesaj, kul["id"])
+                    if mesaj is None:
+                        continue
                 yield canli_yayin.sse_bicimle(mesaj)
         finally:
             canli_yayin.abonelik_bitir(kuyruk)

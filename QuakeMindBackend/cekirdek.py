@@ -1301,8 +1301,10 @@ class EmergencyNotificationRequest(BaseModel):
     title: str
     body: str
     severity: str = "critical"  # "critical" | "warning" | "info"
-    location: Optional[str] = "Hatay"
-    magnitude: Optional[float] = 6.8
+    # Varsayilan yok (kural 1): gonderen yazmadiysa bos kalir. Eskiden 6,8 ve
+    # "Hatay" uyduruluyordu; her bildirim o deprem buyuklugunu tasiyordu.
+    location: Optional[str] = None
+    magnitude: Optional[float] = None
     token: Optional[str] = None
 
 active_emergency_alerts = []

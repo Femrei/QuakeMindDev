@@ -33,7 +33,8 @@ from utils.postgis_manager import postgis_engine
 from apps.road_damage.utils.serialization import compact_segment_coords as _compact_segment_coords, serialize_segments as _serialize_segments, haversine_m as _haversine_m
 from apps.road_damage.utils.imaging import image_array_to_b64 as _image_array_to_b64, build_damage_overlay as _build_damage_overlay, build_segmentation_overlay as _build_segmentation_overlay
 from apps.road_damage.utils.tiling import zoom_for_radius as _zoom_for_radius
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+import kimlik
 
 yonlendirici = APIRouter()
 
@@ -48,14 +49,39 @@ def send_emergency_notification(req: ck.EmergencyNotificationRequest):
         "severity": req.severity,
         "location": req.location,
         "magnitude": req.magnitude,
-        "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S")
+        "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S"),
+        # Saat tek basina tarih tasimiyordu; sozlesme ucu epoch ms verir.
+        "zamanMs": int(time.time() * 1000),
     }
     ck.active_emergency_alerts.insert(0, alert)
+    # Afetzede ekrani bildirimi canli akistan alir; yoklama yok (kural 4).
+    canli_yayin.yayinla("bildirim", id=alert["id"], baslik=req.title, onem=req.severity)
     return {
         "status": "broadcasted",
         "message": "Acil durum push bildirimi tum cihazlara ve frontend'e yayinlandi.",
         "activeAlert": alert
     }
+
+
+@yonlendirici.get("/api/bildirimler/aktif")
+def aktif_bildirimler(_kul: dict = Depends(kimlik.kullanici)):
+    """Acil durum bildirimleri, en yeni once (J-43, afetzede ekraninin bandi).
+
+    Kaynak eski /api/notifications/active ile ayni; bu uc giris ister ve
+    alanlari sozlesme adlariyla verir. Buyukluk ve konum gonderende yoksa
+    bos gelir (eskiden 6,8 ve "Hatay" varsayilan olarak uyduruluyordu)."""
+    return [
+        {
+            "id": a["id"],
+            "baslik": a["title"],
+            "metin": a["body"],
+            "onem": a["severity"],
+            "konum": a.get("location"),
+            "buyukluk": a.get("magnitude"),
+            "zaman": a.get("zamanMs"),
+        }
+        for a in ck.active_emergency_alerts[:5]
+    ]
 
 
 @yonlendirici.get("/api/notifications/active")
