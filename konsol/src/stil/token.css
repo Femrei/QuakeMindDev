@@ -1,0 +1,41 @@
+/* Konsola özel taban stiller. Token'lar ortak dosyadan gelir. */
+@import '../../../tasarim/token.css';
+
+@layer base {
+  html,
+  body,
+  #kok {
+    height: 100%;
+  }
+
+  /* Konsol tam ekran çalışır: sayfa kaydırılmaz, paneller kendi içinde kayar. */
+  body {
+    overflow: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #242c3a;
+    border: 3px solid var(--color-panel);
+    border-radius: var(--radius-control);
+  }
+}
+
+@layer utilities {
+  /* Tekrar eden ızgara düzenleri — bileşenlerde keyfi değer kullanılmasın diye. */
+  .kilav-kanal {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+  }
+  .kilav-kv {
+    display: grid;
+    grid-template-columns: auto 1fr;
+  }
+  .kilav-kaydirici {
+    display: grid;
+    grid-template-columns: 1fr 48px;
+  }
+}

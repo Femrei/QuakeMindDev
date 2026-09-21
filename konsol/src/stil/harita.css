@@ -1,0 +1,18 @@
+/* MapLibre denetimleri token'larla boyanır; kütüphane görünümü bırakılmaz. */
+.maplibregl-ctrl-scale {
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-badge) var(--radius-badge);
+  color: var(--color-ink-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  padding: 2px 6px;
+}
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-logo {
+  display: none;
+}
+.maplibregl-canvas:focus {
+  outline: none;
+}

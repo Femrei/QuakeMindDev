@@ -1,0 +1,194 @@
+/* ---------------------------------------------------------------------------
+   QuakeMind tasarım token'ları — TEK KAYNAK.
+   Hem komuta konsolu (konsol/) hem tanıtım sitesi (tanitim/) buradan beslenir.
+   Değerler ARAYUZ_KARARLARI.md §3-§5'ten birebir alınmıştır.
+
+   Kural: bileşenlerde keyfi değer yasak (text-[13px], bg-[#0b0f17], p-[7px]).
+   Tailwind'in hazır renk ve yazı ölçekleri aşağıda `initial` ile kapatıldı;
+   yalnız burada tanımlı token'lar kullanılabilir.
+--------------------------------------------------------------------------- */
+@import 'tailwindcss';
+
+/* Yazı tipleri yerel paketten gelir; CDN'e bağımlılık yok (ARAYUZ §4). */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans-condensed/500.css';
+@import '@fontsource/ibm-plex-sans-condensed/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+@theme {
+  /* --- hazır Tailwind ölçeklerini kapat --- */
+  --color-*: initial;
+  --font-*: initial;
+  --text-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+
+  /* --- zemin ve yüzeyler (ARAYUZ §3) --- */
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-ground: #080a0e;
+  --color-panel: #0f131a;
+  --color-raised: #151a23;
+  --color-hover: #1c222d;
+  --color-sunken: #0b0e14;
+  --color-line: #1e2430;
+  --color-line-2: #2a3241;
+
+  /* --- metin --- */
+  --color-ink: #e8ecf4;
+  --color-ink-2: #a6b0c4;
+  --color-ink-3: #7e8aa0;
+
+  /* --- vurgu (camgöbeği) --- */
+  --color-accent: #45c8e0;
+  --color-accent-deep: #1b6c7e;
+  --color-accent-soft: rgba(69, 200, 224, 0.12);
+  --color-accent-ink: #04222a;
+
+  /* --- durum renkleri: YALNIZ hasar ve aciliyet için --- */
+  --color-crit: #ff5c5c;
+  --color-high: #ff9152;
+  --color-mid: #f2c14e;
+  --color-ok: #4ed08b;
+
+  /* --- kanal renkleri (renk tek başına ayırt edici değildir) --- */
+  --color-ch-sat: #45c8e0;
+  --color-ch-sos: #ff5c5c;
+  --color-ch-cam: #f2c14e;
+  --color-ch-nlp: #b08cff;
+
+  /* --- harita altlığı --- */
+  --color-map-motorway: #5c687e;
+  --color-map-primary: #465165;
+  --color-map-secondary: #343e4e;
+  --color-map-local: #28303d;
+  --color-map-track: #222934;
+  --color-map-water: #123641;
+  --color-map-building: #1a202a;
+
+  /* --- yazı tipi aileleri --- */
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-cond: 'IBM Plex Sans Condensed', 'IBM Plex Sans', ui-sans-serif, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* --- yazı ölçeği: YALNIZ bu altı değer (ARAYUZ §4) --- */
+  --text-micro: 11px;
+  --text-micro--line-height: 1.35;
+  --text-micro--font-weight: 600;
+  --text-micro--letter-spacing: 0.07em;
+  --text-small: 12px;
+  --text-small--line-height: 1.5;
+  --text-small--font-weight: 400;
+  --text-body: 13px;
+  --text-body--line-height: 1.5;
+  --text-body--font-weight: 400;
+  --text-subtitle: 15px;
+  --text-subtitle--line-height: 1.4;
+  --text-subtitle--font-weight: 500;
+  --text-title: 20px;
+  --text-title--line-height: 1.3;
+  --text-title--font-weight: 500;
+  --text-metric: 30px;
+  --text-metric--line-height: 1.05;
+  --text-metric--font-weight: 600;
+
+  /* Yalnız tanıtım sitesi (tanitim/) için üç ek boy. Konsol bunları kullanmaz;
+     konsolda ARAYUZ §4'teki altı değer geçerlidir. */
+  --text-display: 40px;
+  --text-display--line-height: 1.15;
+  --text-display--font-weight: 500;
+  --text-section: 24px;
+  --text-section--line-height: 1.25;
+  --text-section--font-weight: 500;
+  --text-lead: 17px;
+  --text-lead--line-height: 1.6;
+  --text-lead--font-weight: 400;
+
+  /* --- köşe yarıçapı: üç değer (ARAYUZ §5) --- */
+  --radius-panel: 10px;
+  --radius-control: 6px;
+  --radius-badge: 4px;
+  --radius-full: 999px;
+
+  /* --- gölge: yalnız üstte duran katman --- */
+  --shadow-float: 0 18px 40px rgba(0, 0, 0, 0.5);
+
+  /* --- düzen ölçüleri (4 px ızgara) --- */
+  --spacing-panel-l: 292px;
+  --spacing-panel-r: 336px;
+  --spacing-topbar: 52px;
+  --spacing-timeline: 144px;
+  --spacing-gutter: 14px;
+  --spacing-form: 420px;
+  --spacing-palette: 560px;
+  --spacing-palette-top: 14vh;
+  --spacing-kap: 1120px;      /* tanıtım sitesi bölüm genişliği */
+  --spacing-olcum: 640px;     /* dar metin bloğu */
+
+  /* --- kırılma noktası: dar ekranda (<= 980 px) paneller alta iner (ARAYUZ §8) --- */
+  --breakpoint-genis: 981px;
+
+  /* --- harf aralığı --- */
+  --tracking-marka: 0.13em;
+  --tracking-micro: 0.07em;
+
+  /* --- hareket: 120-240 ms, çıkışta yumuşama (ARAYUZ §7) --- */
+  --ease-out-qm: cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+/* Isı skalası — algısal, koyu zemine göre; kırmızı-yeşil kullanılmaz (ARAYUZ §3). */
+:root {
+  --heat-0: #10131a;
+  --heat-1: #2b0b4d;
+  --heat-2: #7b2382;
+  --heat-3: #c43f66;
+  --heat-4: #f0733f;
+  --heat-5: #fcd968;
+  color-scheme: dark;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    /* Sayılar her yerde eşit genişlikte (ARAYUZ §4). */
+    font-variant-numeric: tabular-nums;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  /* Klavye odağı her zaman görünür (ARAYUZ §12). */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-badge);
+  }
+}
+
+@layer utilities {
+  .ls-micro {
+    letter-spacing: var(--tracking-micro);
+  }
+}
+
+/* Hareketi azalt: her animasyonda gözetilir (ARAYUZ §7). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
