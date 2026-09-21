@@ -136,9 +136,41 @@ def geometry_is_near_point(geometry, center_lat, center_lon, radius_km):
     return False
 
 
-def get_filtered_fault_geojson(path: Path, center_lat, center_lon, radius_km=180.0):
+# Fay GeoJSON'u her istekte yeniden ayristiriliyordu (olculen: 0,36 sn x 2 istek
+# basina). Dosya degismedikce ayristirma sonucu ve suzulmus katman saklanir.
+_geojson_onbellek = {}
+_suzme_onbellek = {}
+
+
+def _geojson_oku(path: Path):
+    """Onbellek DOSYA BASINA tutulur: tek gozlu onbellek iki fay dosyasi
+    arasinda surekli birbirini eziyordu (olculen: her istekte yeniden
+    ayristirma, 0,45 sn)."""
+    anahtar = str(path)
+    try:
+        imza = (path.stat().st_mtime_ns, path.stat().st_size)
+    except OSError:
+        imza = (0, 0)
+
+    onbellekli = _geojson_onbellek.get(anahtar)
+    if onbellekli and onbellekli[0] == imza:
+        return onbellekli[1]
+
     with path.open("r", encoding="utf-8") as handle:
-        geojson_data = json.load(handle)
+        veri = json.load(handle)
+    _geojson_onbellek[anahtar] = (imza, veri)
+    # Bu dosyaya ait suzme sonuclari gecersizlesir.
+    for k in [k for k in _suzme_onbellek if k[0] == anahtar]:
+        _suzme_onbellek.pop(k, None)
+    return veri
+
+
+def get_filtered_fault_geojson(path: Path, center_lat, center_lon, radius_km=180.0):
+    anahtar = (str(path), round(center_lat, 3), round(center_lon, 3), round(radius_km, 1))
+    if anahtar in _suzme_onbellek:
+        return _suzme_onbellek[anahtar]
+
+    geojson_data = _geojson_oku(path)
 
     filtered_features = []
     for feature in geojson_data.get("features", []):
@@ -150,7 +182,9 @@ def get_filtered_fault_geojson(path: Path, center_lat, center_lon, radius_km=180
         ):
             filtered_features.append(feature)
 
-    return {"type": "FeatureCollection", "features": filtered_features}
+    sonuc = {"type": "FeatureCollection", "features": filtered_features}
+    _suzme_onbellek[anahtar] = sonuc
+    return sonuc
 
 
 def parse_summary(summary: str) -> dict[str, object]:
@@ -396,7 +430,25 @@ def run_refresh_data() -> str:
         return str(fetch_and_update_data())
 
 
-def build_payload(city: str, manual_coords=None, refresh_data=False) -> dict[str, object]:
+# Motor bir kez kurulur ve saklanir: her istekte yeniden kurmak CSV okumayi ve
+# oznitelik uretimini (olculen: 8,2 sn) her seferinde tekrarliyordu.
+_motor_onbellek = {}
+
+
+def _motor_al(risk_engine, csv_yolu):
+    motor = _motor_onbellek.get(csv_yolu)
+    if motor is None:
+        motor = risk_engine.EarthquakeRiskEngine(csv_path=csv_yolu)
+        _motor_onbellek[csv_yolu] = motor
+    return motor
+
+
+def build_payload(
+    city: str, manual_coords=None, refresh_data=False, motor=None, harita_html=False
+) -> dict[str, object]:
+    """`harita_html=True` verilmedikce sunucu tarafinda Folium haritasi
+    URETILMEZ: olculen maliyeti istek basina ~0,7 sn ve web istemcisi bu alani
+    kullanmiyor (yeni konsol haritayi kendisi ciziyor)."""
     add_site_packages(RISK_ROOT)
     with temporary_sys_path(RISK_ROOT):
         import risk_engine
@@ -406,9 +458,8 @@ def build_payload(city: str, manual_coords=None, refresh_data=False) -> dict[str
         else:
             refresh_message = ""
 
-        engine = risk_engine.EarthquakeRiskEngine(
-            csv_path=str(RISK_ROOT / "data" / "query.csv"),
-        )
+        # Cagiran kendi motorunu verirse o kullanilir (API tek motor tutuyor).
+        engine = motor or _motor_al(risk_engine, str(RISK_ROOT / "data" / "query.csv"))
         summary = engine.predict_city_risk(city, manual_coords=manual_coords)
         lat = float(engine.last_lat)
         lon = float(engine.last_lon)
@@ -450,14 +501,21 @@ def build_payload(city: str, manual_coords=None, refresh_data=False) -> dict[str
         )
         fault_distance = float(risk_engine.nearest_fault_distance(lat, lon))
         fault_score = float(risk_engine.fault_hazard_score(fault_distance))
-        map_payload = build_map_html(
-            city,
-            lat,
-            lon,
-            risk_engine,
-            city_quakes,
-            filtered_fault_layers,
-        )
+        if harita_html:
+            map_payload = build_map_html(
+                city, lat, lon, risk_engine, city_quakes, filtered_fault_layers
+            )
+        else:
+            # Harita uretilmedi; sayilar yine de dogru olsun diye kaynaklarindan
+            # hesaplanir, uydurma deger konmaz.
+            map_payload = {
+                "html": None,
+                "technicalLayers": [],
+                "totalFaultFeatures": sum(
+                    len(katman.get("features", [])) for _, katman in filtered_fault_layers
+                ),
+                "heatSampleCount": int(len(city_quakes)),
+            }
         recent_events, last_update = build_recent_events(city_quakes)
 
         return {
@@ -516,7 +574,8 @@ def main() -> int:
         manual_coords = (args.manual_lat, args.manual_lon)
 
     try:
-        payload = build_payload(
+        payload = build_payload(  # Streamlit gorunumu haritayi kullaniyor
+            harita_html=True,
             city=args.city,
             manual_coords=manual_coords,
             refresh_data=args.refresh_data,

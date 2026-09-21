@@ -1,4 +1,8 @@
+import hashlib
+import json
 import math
+import os
+import time
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -40,6 +44,23 @@ FAULT_LINES = [
 
 # Risk hesaplaması için tüm noktaları tek bir listede topla
 FAULT_POINTS = [point for line in FAULT_LINES for point in line]
+
+# --- Egitilmis model dosyasi -----------------------------------------------
+# CLAUDE.md kural 3 / MIMARI.md 4: egitim AYRI bir komuttur, model dosyaya
+# yazilir, API yalnizca yukler. Istek yolunda egitim YASAKTIR; model yoksa uc
+# acik bir hata dondurur ve egitim komutunu soyler.
+MODEL_DIZINI = Path(__file__).resolve().parent / "models"
+MODEL_DOSYASI = MODEL_DIZINI / "risk_catboost.cbm"
+MODEL_KUNYESI = MODEL_DIZINI / "risk_catboost.json"
+
+EGITIM_AYARLARI = {
+    "iterations": 800,
+    "depth": 8,
+    "learning_rate": 0.03,
+    "loss_function": "Logloss",
+    "random_seed": 42,
+    "verbose": False,
+}
 
 RISK_FEATURE_COLUMNS = [
     "latitude",
@@ -191,6 +212,7 @@ class EarthquakeRiskEngine:
         self.df_full = None
         self.df_main = None
         self.model = None
+        self.model_kunyesi = {}
         self.geolocator = None
 
     def _check_dependencies(self):
@@ -205,9 +227,25 @@ class EarthquakeRiskEngine:
                 "pip install catboost geopy komutunu çalıştır."
             )
 
+    def _cerceve_onbellek_yolu(self):
+        return MODEL_DIZINI / f"risk_cerceve_{self._veri_parmak_izi()}.pkl"
+
     def _prepare_frames(self):
         if self.df_full is not None and self.df_main is not None:
             return
+
+        # Oznitelik uretimi 20 bin kayitta ~8 sn suruyor ve veri degismedikce
+        # ayni sonucu veriyor: sonuc diske onbelleklenir, sunucu acilisinda
+        # yeniden hesaplanmaz. Onbellek anahtari veri parmak izidir.
+        onbellek = self._cerceve_onbellek_yolu()
+        if onbellek.exists():
+            try:
+                paket = pd.read_pickle(onbellek)
+                self.df_full = paket["df_full"]
+                self.df_main = paket["df_main"]
+                return
+            except Exception as e:
+                print(f"risk cerceve onbellegi okunamadi ({e}); yeniden uretilecek", flush=True)
         if not self.csv_path.exists():
             raise FileNotFoundError(
                 f"Veri dosyası bulunamadı: {self.csv_path}. "
@@ -264,9 +302,53 @@ class EarthquakeRiskEngine:
         self.df_full = df
         self.df_main = df_main
 
-    def _train_short_model(self):
+        try:
+            MODEL_DIZINI.mkdir(parents=True, exist_ok=True)
+            pd.to_pickle({"df_full": df, "df_main": df_main}, self._cerceve_onbellek_yolu())
+        except Exception as e:
+            print(f"risk cerceve onbellegi yazilamadi: {e}", flush=True)
+
+    def _veri_parmak_izi(self):
+        """Egitilmis modelin hangi veriden ciktigini kaydetmek icin."""
+        try:
+            durum = self.csv_path.stat()
+            ham = f"{self.csv_path.name}:{durum.st_size}:{int(durum.st_mtime)}"
+        except OSError:
+            ham = str(self.csv_path)
+        ham += "|" + ",".join(RISK_FEATURE_COLUMNS)
+        ham += "|" + json.dumps(EGITIM_AYARLARI, sort_keys=True)
+        return hashlib.sha256(ham.encode("utf-8")).hexdigest()[:16]
+
+    def modeli_yukle(self):
+        """Diskteki modeli yukler. Istek yolunda yalnizca bu cagrilir."""
         if self.model is not None:
-            return
+            return self.model
+        if CatBoostClassifier is None:
+            raise RuntimeError("catboost paketi yuklu olmali.")
+        if not MODEL_DOSYASI.exists():
+            raise RuntimeError(
+                "Risk modeli egitilmemis. Istek yolunda egitim yapilmaz; "
+                "once su komutu calistir: python araclar_risk_egit.py"
+            )
+        model = CatBoostClassifier()
+        model.load_model(str(MODEL_DOSYASI))
+        self.model = model
+
+        # Kunye: model hangi veriden ciktu, veri o gunden beri degisti mi?
+        try:
+            self.model_kunyesi = json.loads(MODEL_KUNYESI.read_text(encoding="utf-8"))
+        except Exception:
+            self.model_kunyesi = {}
+        if self.model_kunyesi.get("veriParmakIzi") not in (None, self._veri_parmak_izi()):
+            print(
+                "UYARI: risk modeli baska bir veri surumuyle egitilmis; "
+                "araclar_risk_egit.py ile yeniden egitilmeli.",
+                flush=True,
+            )
+        return self.model
+
+    def modeli_egit(self, kaydet=True):
+        """AYRI KOMUTTAN cagrilir (araclar_risk_egit.py). Istek yolunda degil."""
         self._prepare_frames()
         if len(self.df_main) < 20:
             raise RuntimeError("Model eğitimine yetecek kadar kayıt yok.")
@@ -277,22 +359,38 @@ class EarthquakeRiskEngine:
         y = self.df_main["label_30d"].astype(int)
 
         tscv = TimeSeriesSplit(n_splits=5)
-        model = CatBoostClassifier(
-            iterations=800,
-            depth=8,
-            learning_rate=0.03,
-            loss_function="Logloss",
-            random_seed=42,
-            verbose=False,
-        )
+        model = CatBoostClassifier(**EGITIM_AYARLARI)
 
         # Son katmanda eğit
         for train_idx, test_idx in tscv.split(x):
             x_train_final, _ = x.iloc[train_idx], x.iloc[test_idx]
             y_train_final, _ = y.iloc[train_idx], y.iloc[test_idx]
 
+        baslangic = time.time()
         model.fit(x_train_final, y_train_final)
+        sure = time.time() - baslangic
         self.model = model
+
+        if kaydet:
+            MODEL_DIZINI.mkdir(parents=True, exist_ok=True)
+            model.save_model(str(MODEL_DOSYASI))
+            MODEL_KUNYESI.write_text(
+                json.dumps(
+                    {
+                        "egitimZamani": time.time(),
+                        "kayitSayisi": int(len(self.df_main)),
+                        "ozellikler": RISK_FEATURE_COLUMNS,
+                        "ayarlar": EGITIM_AYARLARI,
+                        "veriParmakIzi": self._veri_parmak_izi(),
+                        "veriDosyasi": str(self.csv_path),
+                        "egitimSuresiSn": round(sure, 2),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+        return {"sureSn": round(sure, 2), "kayitSayisi": int(len(self.df_main))}
 
     def _compute_long_term_hazard(
         self, city_lat, city_lon, radius_km=200.0, mag_threshold=6.0, years_window=None
@@ -405,7 +503,7 @@ class EarthquakeRiskEngine:
     def predict_city_risk(self, city_name, country_hint="Turkey", manual_coords=None):
         self._check_dependencies()
         self._prepare_frames()
-        self._train_short_model()
+        self.modeli_yukle()
 
         if manual_coords:
             city_lat, city_lon = manual_coords

@@ -425,6 +425,12 @@ def run_analysis_job(req: dict) -> dict:
     return {
         "city": city,
         "analysisId": analysis_id,
+        # Hangi goruntuden cikti: sonucun kunyesi sonucun icinde tasinir,
+        # istemcinin ne gonderdigine degil kosumun kendisine dayanir.
+        "imagerySource": prov_code,
+        "imageryLabel": source_label,
+        "imageryNote": source_note,
+        "waybackId": wayback_id,
         "damageRate": round(damage_rate, 4),
         "openRoads": safe_count,
         "blockedRoads": blocked_count,

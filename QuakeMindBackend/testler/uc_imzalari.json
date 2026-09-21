@@ -1,0 +1,511 @@
+[
+ {
+  "istek": "GET /",
+  "durum": 200,
+  "anahtarlar": [
+   "message",
+   "status"
+  ]
+ },
+ {
+  "istek": "GET /api/status",
+  "durum": 200,
+  "anahtarlar": [
+   "modules",
+   "status",
+   "yuklu"
+  ]
+ },
+ {
+  "istek": "GET /api/postgis/status",
+  "durum": 200,
+  "anahtarlar": [
+   "dbUrl",
+   "hybridFallbackActive",
+   "message",
+   "postgisConnected"
+  ]
+ },
+ {
+  "istek": "POST /api/auth/register",
+  "durum": 200,
+  "anahtarlar": [
+   "message",
+   "savedToPostgres",
+   "status",
+   "token",
+   "user"
+  ]
+ },
+ {
+  "istek": "POST /api/auth/login",
+  "durum": 200,
+  "anahtarlar": [
+   "message",
+   "status",
+   "token",
+   "user"
+  ]
+ },
+ {
+  "istek": "GET /api/auth/me?token=gecersiz",
+  "durum": 200,
+  "anahtarlar": [
+   "status",
+   "user"
+  ]
+ },
+ {
+  "istek": "GET /api/oturum/ben +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "kullanici"
+  ]
+ },
+ {
+  "istek": "GET /api/oturum/ben",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/oturum/giris",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/oturum/rol +jeton",
+  "durum": 403,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/oturum/yenile",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/ozet +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "atananSos",
+   "bekleyenSos",
+   "hasarliYapi",
+   "hasarliYol",
+   "kapananSos",
+   "kaynakSayilari",
+   "olusturuldu",
+   "yikikYapi"
+  ]
+ },
+ {
+  "istek": "GET /api/ozet",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/sos +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": [
+   "atamaZamani",
+   "durum",
+   "ekipId",
+   "id",
+   "lat",
+   "lon",
+   "mahalle",
+   "metin",
+   "oncelik",
+   "zaman"
+  ]
+ },
+ {
+  "istek": "GET /api/ekipler +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": [
+   "ad",
+   "durum",
+   "gorev",
+   "guncellendi",
+   "id",
+   "lat",
+   "lon"
+  ]
+ },
+ {
+  "istek": "GET /api/hasar-noktalari +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": [
+   "etiket",
+   "guven",
+   "id",
+   "kaynak",
+   "lat",
+   "lon",
+   "skor",
+   "zaman"
+  ]
+ },
+ {
+  "istek": "GET /api/sos/yok/en-yakin-ekip +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/sos/yok/ata +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/sos/yok/kapat +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/ekipler/yok/konum +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/sos/alerts",
+  "durum": 200,
+  "anahtarlar": [
+   "alerts",
+   "totalAlerts"
+  ]
+ },
+ {
+  "istek": "POST /api/sos/alert",
+  "durum": 200,
+  "anahtarlar": [
+   "accuracy",
+   "batteryPercent",
+   "channel",
+   "commsStatus",
+   "gpsPollingSec",
+   "id",
+   "latitude",
+   "longitude",
+   "message",
+   "payloadBytes",
+   "powerMode",
+   "receivedAt",
+   "sirenActive",
+   "totalAlerts",
+   "userId"
+  ]
+ },
+ {
+  "istek": "POST /api/sos/alert/yok/status",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/team/claims",
+  "durum": 200,
+  "anahtarlar": [
+   "claims",
+   "totalClaims"
+  ]
+ },
+ {
+  "istek": "POST /api/team/claim",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/team/claim/yok/release",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/team/claim/yok/route",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/notifications/active",
+  "durum": 200,
+  "anahtarlar": [
+   "activeAlert",
+   "totalAlerts"
+  ]
+ },
+ {
+  "istek": "POST /api/notifications/send_emergency",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/chat/messages?token=gecersiz",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/chat/send",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/camera/reports",
+  "durum": 200,
+  "anahtarlar": [
+   "reports",
+   "totalReports"
+  ]
+ },
+ {
+  "istek": "POST /api/camera/analyze",
+  "durum": 200,
+  "anahtarlar": [
+   "activeModels",
+   "advice",
+   "annotatedImage",
+   "detections",
+   "modelType",
+   "status",
+   "timestamp"
+  ]
+ },
+ {
+  "istek": "GET /api/nlp/locations",
+  "durum": 200,
+  "anahtarlar": [
+   "locations",
+   "totalLocations"
+  ]
+ },
+ {
+  "istek": "POST /api/nlp/analyze",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/risk/fault_lines",
+  "durum": 200,
+  "anahtarlar": [
+   "count",
+   "faultLines"
+  ]
+ },
+ {
+  "istek": "GET /api/risk/all_quakes?limit=5",
+  "durum": 200,
+  "anahtarlar": [
+   "datasetEnd",
+   "datasetStart",
+   "datasetTotal",
+   "quakes",
+   "returned",
+   "totalMatched"
+  ]
+ },
+ {
+  "istek": "POST /api/risk/predict",
+  "durum": 200,
+  "anahtarlar": [
+   "city",
+   "coordinates",
+   "factors",
+   "faultLines",
+   "heatmapEvents",
+   "lastUpdate",
+   "mapEvents",
+   "mapHtml",
+   "metrics",
+   "nearbyFaults",
+   "recentEvents",
+   "refreshMessage",
+   "riskLevel",
+   "riskScore",
+   "source",
+   "summary",
+   "technicalLayers",
+   "technicalQuakes",
+   "usedManualCoordinates"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/analyze",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/status/yok",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/segments/yok",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/gorsel/yok/imageOriginal",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/gorsel/yok/..%2Fgizli",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/route",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/route",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/simulate_closures",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/closures_from_mask",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/closures_from_emsr",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/naive_compare",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/reference_compare",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/safe_route",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/calculate_custom_route",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/report_blockage",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/recent?minutes=5",
+  "durum": 200,
+  "anahtarlar": [
+   "analyses"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/nearest_debris?latitude=36.2&longitude=36.16&limit=3",
+  "durum": 200,
+  "anahtarlar": [
+   "debrisSites",
+   "nearestDebrisCount",
+   "source",
+   "teamLocation"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/heatmap?latitude=36.202&longitude=36.161&radiusKm=5",
+  "durum": 200,
+  "anahtarlar": [
+   "bounds",
+   "generatedFrom",
+   "izgara",
+   "kaynak",
+   "olcek",
+   "points"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/assembly?latitude=36.202&longitude=36.161&radiusKm=2&allowOnlineFallback=false",
+  "durum": 200,
+  "anahtarlar": [
+   "activeDataSource",
+   "nearest",
+   "nearestAirM",
+   "osmError",
+   "records",
+   "routeCoords",
+   "routeError",
+   "routeLengthM"
+  ]
+ }
+]
