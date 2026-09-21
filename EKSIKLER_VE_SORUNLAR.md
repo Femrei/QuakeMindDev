@@ -1072,6 +1072,25 @@ toplandığı ve R0'ın öğrenmeyen ajan olduğu açıkça yazılmalı.
 
 ---
 
+## J-39 🟡 Büyük alan çizilince görüntü sessizce 8 × 8 karoya kırpılıyor
+**Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 (kod okuması; gerçek koşuyla ölçülmedi) · **İlgili:** J-20, J-35
+
+**Sorun.**
+- `apps/road_damage/utils/fetcher.py` (`_try_fetch`): istenen kutu 64 karoyu aşarsa kutunun
+  ortasındaki 8 × 8 karoya kırpıyor.
+- İşçi yakınlaştırmayı kutudan değil `radiusKm`'den seçiyor (`zoom_for_radius`), kutu
+  gönderilse bile.
+- Örnek: konsolda "Alan çiz" ile 10 km'lik kutu ve varsayılan 2,5 km yarıçap → z15, ~10 × 10
+  karo → ortadaki ~7,9 km analiz ediliyor, kenarlar hiç girmiyor. Sonuç bunu söylemiyor.
+- Konsolda OAM görüntüsü seçilince alan görüntünün tüm kutusuna (40 × 30 km'lik Maxar
+  şeritleri) oturuyordu; bu J-35'te kaldırıldı ama kırpmanın kendisi duruyor.
+
+**Yapılacak.** İşçi istenen kutuyu ve fiilen analiz edilen sınırları sonuca yazsın; konsol
+fark varsa söylesin. Yakınlaştırma çizilen kutunun boyundan seçilsin; bütçeyi aşan alanda
+kırpmak yerine süre ya da çözünürlük uyarısı verilsin (J-20 kararıyla birlikte).
+
+---
+
 ## J-38 🟠 Yol ağı zaman aşımına uğrayınca sonuç "0 kapalı yol, bölge erişilebilir" diyor
 **Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-21, kural 1
 
@@ -1083,6 +1102,10 @@ Konsol (`konsol/src/modlar/hasar.tsx`, Sonuç bölümü) bunu "Kapalı yol 0 seg
 durumda."** oldu (öneri, graftan değil yol rasterından hesaplanan `blockedRoadPct =
 0,0019`'a bakıyor). Yani yol ağı **hiç çözümlenmemişken** sonuç "kapanma yok, bölge
 erişilebilir" diye okunuyor.
+
+**Sıklık.** 21 Eylül'deki dört uçtan uca koşunun üçünde yol ağı zaman aşımına uğradı
+(49,0–49,1 sn); yalnız OAM r = 0,35 km koşusunda graf 4,9 sn'de geldi. Yani bu
+koşulların çoğunda canlı analiz kapanma hiç çıkarmıyor.
 
 **Yapılacak.** İşçi sonuca `roadNetwork: "ok" | "timeout" | "error"` yazsın; konsol
 zaman aşımında sayıları göstermesin, "yol ağı alınamadı, kapanma çıkarılamadı" desin;
@@ -1107,7 +1130,7 @@ yanıt metnini değiştirdiği için duman imzası yeniden kaydedilmeli.
 ---
 
 ## J-36 🟠 Eğitilen modeller ürüne takılmaya hazır değil
-**Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-20, kural 1, kural 8
+**Durum:** DEVAM EDİYOR — 1, 2 ve 4 yapıldı ve ölçüldü; 3 uyarıyla sınırlı; 5 ve 6 açık · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-20, kural 1, kural 8
 
 **Soru (kullanıcı):** eğitimden sonra modelleri verdiğimizde proje onlarla doğru çalışacak mı?
 Kod okundu; bugünkü hâliyle **hayır**. Sebepler:
@@ -1150,10 +1173,59 @@ ve izini yazar; kıyas hattı aynı kaydı okur. Defter `model_en_iyi.pth`'nin y
 kısmında defterdeki IoU'nun yeniden üretilmesi (aynı ön işlemenin kanıtı), (3) bilinen bir
 Maxar alanında canlı koşu.
 
+**Yapıldı (21 Eylül).**
+- **Künye ve yükleyici (madde 1).**
+  - `modeller/uydu/<ad>.json` ve `apps/road_damage/utils/model_kunyesi.py`. Etkin modeli
+    `QM_UYDU_MODELI` seçer; varsayılan bugünkü model. Mimari künyeden kurulur, SHA-256
+    tutmazsa ağırlık yüklenmez, anahtarlar katı (strict) eşleşir.
+  - Bugünkü modelin künyesi (`segformer_mitb4_dice30`) bilinmeyenleri açıkça yazıyor:
+    eğitim kaydı yok, sınama ölçümü yok (A-01).
+  - *Ölçüldü:*
+    - Künyeden yükleme eski yükleyiciyle birebir aynı çıktıyı veriyor (en büyük fark 0).
+    - Defterin 11 mimarisinin 11'i yükleniyor, 1×1×512×512 çıktı veriyor.
+    - Yanlış parmak izi reddediliyor.
+    - Eski yükleyici U-Net ResNet-18'i yükleyemiyor.
+    - CPU'da 512² ileri geçiş: MiT-B4 1,19 sn, U-Net R18 0,29 sn.
+- **Karar ayarı künyeden (madde 2).**
+  - `RoadDamageRequest` eşik, güçlendirme, normalizasyon ve son işleme alanları artık
+    isteğe bağlı; gönderilmezse künyeden gelir.
+  - Bugünkü künye eski sabitleri taşıyor, davranış değişmedi: duman testi 57 istekte
+    0 fark.
+  - Defterden gelen modellerin künyesi defterin ölçtüğü ayarı taşır: eşik, güçlendirme 1,
+    son işleme yok.
+  - Konsol hazırları artık yalnız alanı seçiyor. Hassas tarama eşiği modelinkinin %70'ine
+    indiriyor.
+  - **Değişen davranış:** "Hızlı tarama" eskiden eşiği 0,45, son işlemeyi 1 yapıyordu; artık
+    modelin ayarıyla (0,40 / 2) koşuyor.
+  - *Ölçüldü (QQB dış sınama, 74 karo, ürünün kendi `run_inference`'ı, bugünkü model):*
+
+    | Ayar | IoU | Kesinlik | Duyarlılık |
+    |---|---|---|---|
+    | Ürün ayarı 0,40 / ×3,5 / son işleme 2 | 0,208 | 0,319 | 0,372 |
+    | Ham ayar 0,5 / ×1 / son işleme yok | 0,222 | 0,402 | 0,332 |
+- **Çözünürlük (madde 3), yalnız uyarı.** Yakınlaştırma otomatik değiştirilmedi.
+  - Sebep: 2,5 km'de z18 CPU'da saatler sürer (J-20). Ayrıca indirici 64 karoyu aşan alanı
+    sessizce kırpar (J-39).
+  - Bunun yerine sonuç `model.kullanilanGsdM` ve `model.gsdUyarisi` alanlarını taşıyor
+    (eğitim üst sınırının 1,5 katından kaba ise uyarı). Konsol uyarıyı gösteriyor.
+  - Karar kullanıcıda (J-20 seçenekleri).
+- **Sonuç künyesi (madde 4).**
+  - Her sonuç `model` alanını (ad, mimari, ağırlık izi, karar ayarı, eğitim çözünürlüğü,
+    ölçüm) ve `postProcessLevel`'ı taşıyor.
+  - Yeni uç `GET /api/road_damage/model`: konsol varsayılanları buradan alıyor.
+- **Araçlar.**
+  - `araclar_model_kunye.py` defter koşusundan (`sonuc.json` + `model_en_iyi.pth`) künye
+    üretiyor. Yerelde gerçek koşu klasörü olmadığı için yalnız defter şemasına uyan test
+    klasörüyle mekanik olarak sınandı; ölçüm değil.
+  - `araclar_model_teslim.py` teslim testini koşuyor.
+  - Rehber: `modeller/README.md`.
+- **Açık.** Madde 5 (`make_model_masks.py` eski modele sabit) ve madde 6 (metin
+  sınıflandırıcı) yapılmadı.
+
 ---
 
 ## J-35 🟠 Konsolun Wayback "deprem sonrası" varsayılanı Antakya'da deprem öncesi görüntü
-**Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-21, D-01, kural 1
+**Durum:** DEVAM EDİYOR — kod tamam ve ölçüldü; konsolun tarayıcıda görsel denetimi bekliyor · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-21, D-01, kural 1
 
 **Sorun.** Bu oturumda yazılan konsol (`konsol/src/modlar/hasar.tsx`) "Deprem sonrası"
 düğmesiyle 6 Şubat'tan sonraki ilk Wayback sürümünü (57965, 2023-02-23) seçiyor,
@@ -1172,6 +1244,46 @@ varsayılanı Antakya merkezinde **deprem öncesi** görüntüyü çözümletiyo
 yazsın; (b) konsol "arşiv sürüm tarihi ≠ çekim tarihi" desin, çözülen karo deprem
 öncesiyse uyarsın ve OAM'ı önersin; (c) deprem bölgesinde varsayılan kaynak OAM Maxar
 olsun (D-01, J-21 zaten bunu söylüyor).
+
+**Ölçüm: üç şehirde Wayback'in gerçekte gösterdiği görüntü (21 Eylül).** Esri'nin
+`tilemap` ucu karonun hangi sürümden geldiğini (`select`), her sürümün metadata katmanı
+(katman = 23 − z) çekim tarihini (`SRC_DATE`) veriyor. z15 / z17 / z18'de sonuç aynı:
+
+| Şehir | Şubat–Mart 2023 sürümlerinin gösterdiği çekim | Deprem sonrası ilk çekim | O çekimi getiren ilk sürüm |
+|---|---|---|---|
+| Antakya | 27 Eylül 2021 | 4 Nisan 2023 (57 gün sonra) | 8 Şubat 2024 |
+| Kahramanmaraş | 27 Haziran 2021 (23 Şubat sürümü), 15 Temmuz 2022 (15 Mart sürümü) | 22 Şubat 2023 (16 gün sonra) | 8 Şubat 2024 |
+| Adıyaman | 30 Temmuz 2021 | 21 Nisan 2024 (440 gün sonra) | 24 Nisan 2025 |
+
+Deprem sonrası ilk bir yılın hiçbir Wayback sürümü bu üç merkezde depremi göstermiyor.
+Ayrıca 23 Şubat 2023 sürümünde Antakya'nın z18 karosu hiç yok (404); indirici bu durumda
+sessizce z17'ye iniyordu.
+
+**Yapıldı (21 Eylül).**
+- `apps/road_damage/utils/wayback.py`: konumun görüntü geçmişi (sürüm → gerçek sürüm →
+  çekim tarihi, uydu, çözünürlük); yeni uç `GET /api/road_damage/wayback_goruntuler`
+  (saha ve üstü; soğuk 1,4–5,7 sn, önbellekten 26 ms).
+- İşçi sonuca `imageryZoom`, `imageryRequestedZoom`, `imageryCaptures` ve
+  `imageryEventTiming` ("pre" / "post" / "mixed" / "unknown") yazıyor. Yakınlaştırmanın
+  düşürülmesi de artık günlükte ve sonuçta görünüyor.
+- Konsol:
+  - Varsayılan kaynak OAM. Öneri, analiz alanını en çok kapsayan en erken Maxar çekimi;
+    Antakya'da 8 Şubat 2023, z16'da gözle bakıldı: bulutsuz, deprem sonrası.
+  - OAM görüntüsü seçmek analiz alanını değiştirmiyor. Eskiden alan görüntünün tüm
+    kutusuna (40 × 30 km'lik şeritler) oturuyordu; bkz. J-39.
+  - OAM'da görüntü seçilmeden analiz başlamıyor. Sunucu seçimsiz istekte görüntüyü kendi
+    seçiyor ya da Google'a düşüyordu.
+  - Wayback düğmeleri çekim tarihine göre çalışıyor ("Deprem sonrası ilk çekim"). Listede
+    her sürümün çekim tarihi yazıyor. Açıklama deprem öncesi ve sonrası durumu ve depremden
+    kaç gün geçtiğini söylüyor; bu konumda deprem sonrası görüntü yoksa uyarı çıkıyor.
+  - Sonuçta çekim tarihleri ve çözünürlük görünüyor. Görüntü deprem öncesiyse uyarı
+    sayılardan önce çıkıyor ve "bölge erişilebilir" önerisi gizleniyor.
+- **Uçtan uca:** Wayback 57965 ile Antakya, r = 0,35 km. Sonuç z18 istendiğini, karo
+  olmadığı için z17 kullanıldığını ve çekimin 27 Eylül 2021 (`pre`) olduğunu yazıyor. Model
+  bu deprem öncesi görüntüde piksellerin %0,16'sını hasar işaretledi; hepsi yanlış alarm.
+- Tip denetimi ve token denetimi temiz. Duman testi 57 istekte 0 fark.
+
+**Kalan.** Konsolun tarayıcıda görsel denetimi: önizlemede oturum kapandı, giriş kullanıcıda.
 
 ---
 

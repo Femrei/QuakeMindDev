@@ -116,6 +116,9 @@ road_runtime = None
 road_runtime_error = None
 road_runtime_load_attempted = False
 road_runtime_lock = Lock()
+# Etkin uydu modelinin kunyesi (lifespan'de okunur, J-36).
+uydu_kunyesi = None
+uydu_kunyesi_hatasi = None
 
 def _get_nlp_pipeline():
     global nlp_pipeline
@@ -189,7 +192,7 @@ if _IS_APP_PROCESS:
 def _load_road_runtime():
     # DIKKAT: SegFormer'i BU surece yuklemeyin. Gercek cikarim
     # apps/road_damage/worker.py icinde, AYRI bir surecte, o surecin KENDI
-    # model kopyasiyla kosuyor (_init_worker -> load_simple_model). Burada bir
+    # model kopyasiyla kosuyor (_init_worker -> model_kunyesi.model_yukle). Burada bir
     # zamanlar `load_simple_model` cagriliyor ve sonuc `model`/`device`
     # anahtarlarina konuyordu, ama bu anahtarlar bu dosyada HIC okunmuyordu --
     # olculdu: +618 MB RSS ve +5,3sn acilis, okunmayan bir sozluk girdisi
@@ -688,7 +691,20 @@ async def lifespan(app: FastAPI):
     # onbellege girer (postgis_manager.check_connection).
     Thread(target=lambda: postgis_engine.check_connection(zorla=True), daemon=True).start()
 
-    model_path = str(ROAD_ROOT / "models" / "optimized_mitb4_focal_dice30.pth")
+    # Etkin uydu modeli kunyeden okunur (J-36): mimari, agirlik izi ve karar
+    # ayarlari tek dosyada. Okunamazsa isci kurulamaz; hata /api/road_damage/model
+    # ucunda ve acilis gunlugunde yazar.
+    global uydu_kunyesi, uydu_kunyesi_hatasi
+    from apps.road_damage.utils import model_kunyesi
+
+    try:
+        uydu_kunyesi = model_kunyesi.kunye_oku()
+        uydu_kunyesi_hatasi = None
+        print(f"Uydu modeli: {uydu_kunyesi['ad']} ({uydu_kunyesi['agirlik']['sha256'][:12]})", flush=True)
+    except Exception as e:
+        uydu_kunyesi = None
+        uydu_kunyesi_hatasi = str(e)
+        print(f"Uydu modeli kunyesi okunamadi: {e}", flush=True)
     pool_size = int(os.environ.get("QUAKEMIND_ROAD_POOL_SIZE", "1"))
     road_damage_progress_queue = multiprocessing.Queue()
     road_damage_progress_thread = Thread(
@@ -709,7 +725,7 @@ async def lifespan(app: FastAPI):
     road_damage_pool = ProcessPoolExecutor(
         max_workers=pool_size,
         initializer=road_damage_worker._init_worker,
-        initargs=(model_path, road_damage_progress_queue),
+        initargs=(uydu_kunyesi, road_damage_progress_queue),
     )
     # Pay the one-time "cold worker spawn" cost (Windows process creation +
     # module import, measured ~10-15s on this machine) now, during startup,
@@ -800,10 +816,12 @@ class RoadDamageRequest(BaseModel):
     latitude: float
     longitude: float
     source: str = "google"
-    damageBooster: float = 3.5
-    threshold: float = 0.40
-    useImagenetNorm: bool = True
-    postProcessLevel: int = 2
+    # Karar ayarlari: gonderilmezse etkin modelin kunyesinden gelir (J-36).
+    # Bugunku modelin kunyesi eski sabitleri (3,5 / 0,40 / True / 2) tasir.
+    damageBooster: Optional[float] = None
+    threshold: Optional[float] = None
+    useImagenetNorm: Optional[bool] = None
+    postProcessLevel: Optional[int] = None
     bboxWest: Optional[float] = None
     bboxSouth: Optional[float] = None
     bboxEast: Optional[float] = None

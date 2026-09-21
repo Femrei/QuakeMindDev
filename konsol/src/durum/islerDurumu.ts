@@ -12,7 +12,10 @@ export type IsDurumu = 'kuyrukta' | 'calisiyor' | 'bitti' | 'hata'
 export type IsKunyesi = {
   bolge: string
   kaynak: string
+  /** Görüntünün ÇEKİM tarihi (biliniyorsa). Wayback'te sürüm tarihi değildir (J-35). */
   goruntuTarihi?: string
+  /** Wayback'te istenen arşiv sürümünün yayın tarihi. */
+  surumTarihi?: string
   esik: number
   sonIsleme: number
   yaricapKm: number

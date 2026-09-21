@@ -46,20 +46,100 @@ export function useWaybackSurumleri() {
   })
 }
 
-/** 6 Şubat 2023 depremlerinden SONRAKİ ilk görüntü — çalışma alanımızın tarihi. */
+/** Çalışma alanımızın olayı: 6 Şubat 2023 depremleri. */
 export const DEPREM_TARIHI = '2023-02-06'
 
-export function depremSonrasiSurum(surumler: WaybackSurumu[]): WaybackSurumu | undefined {
-  // Liste yeniden eskiye sıralı gelir; deprem tarihinden sonraki EN ESKİ kayıt aranır.
-  return [...surumler]
-    .filter((s) => s.date >= DEPREM_TARIHI)
-    .sort((a, b) => a.date.localeCompare(b.date))[0]
+/* Wayback'te sürüm tarihi görüntünün ÇEKİM tarihi değildir (J-35): sürüm bir
+   karoyu güncellemediyse karo eski sürümden gelir, görüntü de sürümden aylar
+   önce çekilmiş olabilir. Ölçüldü: Antakya merkezinde 23 Şubat 2023 sürümü
+   27 Eylül 2021 çekimini gösteriyor; deprem sonrası ilk çekim ancak 8 Şubat
+   2024 sürümünde geliyor. Sunucu, analizin kullanacağı yakınlaştırmada konumun
+   görüntü geçmişini Esri'nin metadata katmanından çıkarır. */
+
+export type WaybackGoruntu = {
+  /** Bu görüntüyü getiren (karoyu güncelleyen) sürüm. */
+  surumId: string
+  surumTarihi: string
+  cekimTarihi: string | null
+  /** Uydu: WV02, WV03, LG02… */
+  kaynak: string | null
+  cozunurlukM: number | null
+  olaySonrasi: boolean | null
 }
 
-export function depremOncesiSurum(surumler: WaybackSurumu[]): WaybackSurumu | undefined {
-  return [...surumler]
-    .filter((s) => s.date < DEPREM_TARIHI)
-    .sort((a, b) => b.date.localeCompare(a.date))[0]
+export type WaybackGoruntuGecmisi = {
+  zoom: number
+  olayTarihi: string
+  /** Yeniden eskiye. */
+  surumler: WaybackGoruntu[]
+  /** "taban": olaydan önce yayımlanmış ilk sürüme inildi; "karo-yok": daha
+      eski sürümlerde bu yakınlaştırmada karo yok. */
+  bitis: 'taban' | 'karo-yok' | 'sinir' | 'arsiv-basi' | 'bilinmeyen-surum'
+}
+
+/** Soğuk ilk istek Esri'ye birkaç çağrı yapar (1–6 sn); sonuç değişmez, önbellekte kalır. */
+export function useWaybackGoruntuGecmisi(g: {
+  lat: number
+  lon: number
+  radiusKm: number
+  aktif: boolean
+}) {
+  return useQuery({
+    queryKey: ['wayback-goruntuler', g.lat, g.lon, g.radiusKm],
+    enabled: g.aktif,
+    queryFn: () =>
+      apiGet<WaybackGoruntuGecmisi>('/api/road_damage/wayback_goruntuler', {
+        latitude: g.lat,
+        longitude: g.lon,
+        radiusKm: g.radiusKm,
+      }),
+  })
+}
+
+/** Seçili sürümün bu konumda gösterdiği görüntü: sürüm tarihinden önce ya da
+    o gün gelen en yeni görüntü. Bilinen geçmişten eskiyse tanımsız. */
+export function surumunGoruntusu(
+  surumTarihi: string,
+  gecmis: WaybackGoruntuGecmisi | undefined,
+): WaybackGoruntu | undefined {
+  return gecmis?.surumler.find((g) => g.surumTarihi <= surumTarihi)
+}
+
+/** Depremden sonra çekilmiş en erken görüntü — hasar aramaya en uygun olanı. */
+export function ilkOlaySonrasi(gecmis: WaybackGoruntuGecmisi | undefined) {
+  return [...(gecmis?.surumler ?? [])]
+    .filter((g) => g.olaySonrasi && g.cekimTarihi)
+    .sort(
+      (a, b) =>
+        a.cekimTarihi!.localeCompare(b.cekimTarihi!) || a.surumTarihi.localeCompare(b.surumTarihi),
+    )[0]
+}
+
+/** Depremden önce çekilmiş en yeni görüntü. */
+export function sonOlayOncesi(gecmis: WaybackGoruntuGecmisi | undefined) {
+  return gecmis?.surumler.find((g) => g.olaySonrasi === false)
+}
+
+/** Çekimin depremden kaç gün sonra (eksi: önce) yapıldığı. */
+export function olaydanGun(cekimTarihi: string): number {
+  return Math.round((Date.parse(cekimTarihi) - Date.parse(DEPREM_TARIHI)) / 86_400_000)
+}
+
+/** Merkez + yarıçaptan analiz kutusu — sunucudaki bbox_from_center ile aynı formül. */
+export function merkezKutusu(lon: number, lat: number, yaricapKm: number): Kutu {
+  const r = Math.max(0.5, yaricapKm)
+  const dLat = r / 111
+  const dLon = r / (111 * Math.max(Math.cos((lat * Math.PI) / 180), 0.2))
+  return [lon - dLon, lat - dLat, lon + dLon, lat + dLat]
+}
+
+/** Görüntünün sınır kutusu analiz alanının ne kadarını kapsıyor (0–1). Sınır
+    kutusu görüntünün gerçek izinden büyük olabilir; bu bir üst sınırdır. */
+export function kapsamaOrani(goruntu: Kutu, alan: Kutu): number {
+  const g = Math.max(0, Math.min(goruntu[2], alan[2]) - Math.max(goruntu[0], alan[0]))
+  const y = Math.max(0, Math.min(goruntu[3], alan[3]) - Math.max(goruntu[1], alan[1]))
+  const alanBoyu = (alan[2] - alan[0]) * (alan[3] - alan[1])
+  return alanBoyu > 0 ? (g * y) / alanBoyu : 0
 }
 
 /* ---- OpenAerialMap: tarih aralığıyla görüntü arama ---------------------- */
@@ -73,6 +153,22 @@ export type OamGoruntu = {
   tms_url: string
   /** [batı, güney, doğu, kuzey] */
   bbox: [number, number, number, number]
+}
+
+/** Deprem bölgesinde varsayılan görüntü (J-35): Maxar uydu görüntüsü, analiz
+    alanını en çok kapsayan; neredeyse tam kapsayanlar arasında en erken çekilen
+    (enkaz kaldırılmadan önce). Drone ve hava fotoğrafları santimetre
+    çözünürlükte; model 0,3–0,5 m uydu görüntüsüyle eğitildi (J-26), önerilmez. */
+export function oamOnerisi(goruntuler: OamGoruntu[], alan: Kutu) {
+  return goruntuler
+    .filter((g) => g.provider.toLowerCase().includes('maxar'))
+    .map((g) => ({ goruntu: g, oran: kapsamaOrani(g.bbox, alan) }))
+    .filter((x) => x.oran > 0)
+    .sort(
+      (a, b) =>
+        (b.oran >= 0.95 ? 1 : b.oran) - (a.oran >= 0.95 ? 1 : a.oran) ||
+        a.goruntu.date.localeCompare(b.goruntu.date),
+    )[0]
 }
 
 export type OamAramaGirdisi = {
@@ -111,14 +207,42 @@ export function useOamArama(g: OamAramaGirdisi) {
   })
 }
 
+/* ---- Etkin uydu modeli: künye (J-36) ------------------------------------ */
+
+/** Sunucuda koşan modelin künye özeti. Karar ayarlarının varsayılanı buradan
+    gelir: model hangi eşikle ölçüldüyse üründe de o eşikle koşar. */
+export type UyduModeli = {
+  ad: string
+  etiket: string
+  mimari: string
+  kodlayici: string
+  esik: number
+  guclendirme: number
+  sonIsleme: number
+  kararKaynagi?: string | null
+  /** Eğitim görüntülerinin çözünürlüğü, [en küçük, en büyük] m/piksel. */
+  egitimGsdM: [number, number]
+  sha256Kisa: string
+  olcum: { sinamaIoU?: number | null; dogrulamaIoU?: number | null; not?: string }
+}
+
+/** Model yeniden başlatmadan değişmez; bir kez çekilir. */
+export function useUyduModeli() {
+  return useQuery({
+    queryKey: ['uydu-modeli'],
+    queryFn: () => apiGet<UyduModeli>('/api/road_damage/model'),
+  })
+}
+
 export type AnalizIstegi = {
   city: string
   latitude: number
   longitude: number
   source: KaynakId
-  threshold: number
-  damageBooster: number
-  postProcessLevel: number
+  /** Gönderilmezse sunucu modelin künyesindeki değeri kullanır. */
+  threshold?: number
+  damageBooster?: number
+  postProcessLevel?: number
   radiusKm: number
   /** source === 'esri' ise hangi tarihli Wayback sürümü kullanılacak. */
   waybackId?: string
@@ -140,6 +264,12 @@ export type AnalizSonucu = {
   imageryLabel?: string
   waybackId?: string | null
   oamTitle?: string | null
+  /** Fiilen kullanılan yakınlaştırma; istenende karo yoksa sunucu aşağı iner. */
+  imageryZoom?: number
+  imageryRequestedZoom?: number
+  /** Wayback'te alanın çekimleri (sürümün metadata katmanından); öbür kaynaklarda boş. */
+  imageryCaptures?: { cekimTarihi: string | null; kaynak: string | null; cozunurlukM: number | null }[]
+  imageryEventTiming?: 'pre' | 'post' | 'mixed' | 'unknown'
   damageRate?: number
   openRoads?: number
   blockedRoads?: number
@@ -149,6 +279,9 @@ export type AnalizSonucu = {
   blockageRadiusM?: number
   threshold?: number
   damageBooster?: number
+  postProcessLevel?: number
+  /** Sonucu üreten model ve bu analizin görüntü çözünürlüğü (J-36). */
+  model?: UyduModeli & { kullanilanGsdM: number; gsdUyarisi: boolean }
   recommendedAction?: string
   bounds?: { west: number; south: number; east: number; north: number }
   error?: string

@@ -34,7 +34,8 @@ from utils.postgis_manager import postgis_engine
 from apps.road_damage.utils.serialization import compact_segment_coords as _compact_segment_coords, serialize_segments as _serialize_segments, haversine_m as _haversine_m
 from apps.road_damage.utils.imaging import image_array_to_b64 as _image_array_to_b64, build_damage_overlay as _build_damage_overlay, build_segmentation_overlay as _build_segmentation_overlay
 from apps.road_damage.utils.tiling import zoom_for_radius as _zoom_for_radius
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Query
+import kimlik
 
 yonlendirici = APIRouter()
 
@@ -52,6 +53,39 @@ def road_damage_wayback_versions():
     versions = get_wayback_versions()
     versions.sort(key=lambda v: v.get("date", ""), reverse=True)
     return {"versions": versions}
+
+
+@yonlendirici.get("/api/road_damage/wayback_goruntuler")
+def road_damage_wayback_goruntuler(
+    latitude: float = Query(..., ge=-85.0, le=85.0),
+    longitude: float = Query(..., ge=-180.0, le=180.0),
+    radiusKm: float = Query(2.5, gt=0.0, le=20.0),
+    _kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici")),
+):
+    """Bu konumda Wayback surumlerinin GERCEKTE gosterdigi goruntuler (J-35).
+
+    Surum tarihi cekim tarihi degildir: guncellenmeyen karo eski surumden gelir
+    ve goruntu surumden aylar once cekilmis olabilir. Yakinlastirma analizle
+    ayni kuraldan (`zoom_for_radius`) secilir; cunku ayni surum farkli
+    yakinlastirmada farkli goruntu gosterebilir. Soguk ilk cagri Esri'ye birkac
+    istek atar (olculdu 1,4-5,7 sn), sonra onbellekten doner."""
+    from apps.road_damage.utils import wayback
+
+    try:
+        return wayback.yerel_surumler(latitude, longitude, _zoom_for_radius(radiusKm))
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Wayback arsivi okunamadi: {e}")
+
+
+@yonlendirici.get("/api/road_damage/model")
+def road_damage_model(_kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici"))):
+    """Etkin uydu modelinin kunye ozeti (J-36): konsol karar ayarlarinin
+    varsayilanini buradan alir ve sonucun yaninda hangi modelin kostugunu yazar."""
+    from apps.road_damage.utils import model_kunyesi
+
+    if ck.uydu_kunyesi is None:
+        raise HTTPException(status_code=503, detail=f"Uydu modeli kunyesi okunamadi: {ck.uydu_kunyesi_hatasi}")
+    return model_kunyesi.ozet(ck.uydu_kunyesi)
 
 
 @yonlendirici.get("/api/road_damage/oam_search")

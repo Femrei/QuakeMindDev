@@ -10,6 +10,7 @@ The model itself is loaded once per worker process via `_init_worker`
 (the pool's `initializer`), not on every submitted job -- `run_analysis_job`
 reuses the worker-local `_worker_model`/`_worker_device` set up there.
 """
+import math
 import os
 import time
 import uuid
@@ -30,29 +31,38 @@ from apps.road_damage.utils.imaging import (
     build_segmentation_overlay,
     image_array_to_b64,
 )
-from apps.road_damage.utils.inference import load_simple_model, run_inference
+from apps.road_damage.utils.inference import run_inference
+from apps.road_damage.utils import model_kunyesi
 from apps.road_damage.utils.network import analyze_road_network_graph, edge_closure_probability
 from apps.road_damage.utils.serialization import serialize_segments
+from apps.road_damage.utils import wayback
 from apps.road_damage.utils.tiling import zoom_for_radius
 
 _worker_model = None
 _worker_device = None
+# Etkin modelin kunyesi (J-36): mimari, agirlik izi, karar ayarlari.
+_worker_kunye = None
 _progress_queue = None
 
 
-def _init_worker(model_path: str, progress_queue=None) -> None:
+def _init_worker(kunye: dict, progress_queue=None) -> None:
     """Pool initializer -- runs once per worker process, not per task.
+
+    `kunye` is the active satellite model's card (modeller/uydu/<ad>.json,
+    see utils/model_kunyesi.py): the architecture is built from it and the
+    weights are loaded only if their SHA-256 matches (J-36).
 
     `progress_queue` is a plain multiprocessing.Queue handed down through the
     pool's initargs (the only path multiprocessing allows a Queue to cross a
     process boundary). The worker only ever puts on it; a drain thread in the
     main process turns those messages into job-store progress updates.
     """
-    global _worker_model, _worker_device, _progress_queue
+    global _worker_model, _worker_device, _progress_queue, _worker_kunye
     _progress_queue = progress_queue
-    _worker_model, _worker_device = load_simple_model(model_path)
-    if _worker_model is None:
-        raise RuntimeError("Segformer modeli worker process'inde yuklenemedi.")
+    if kunye is None:
+        raise RuntimeError("Uydu modeli kunyesi yok (modeller/uydu/, QM_UYDU_MODELI).")
+    _worker_kunye = kunye
+    _worker_model, _worker_device = model_kunyesi.model_yukle(kunye)
 
 
 def _warm_up():
@@ -109,10 +119,23 @@ def run_analysis_job(req: dict) -> dict:
     latitude = req["latitude"]
     longitude = req["longitude"]
     radius_km = req.get("radiusKm", 2.5)
-    damage_booster = req.get("damageBooster", 3.5)
-    threshold = req.get("threshold", 0.40)
-    use_imagenet_norm = req.get("useImagenetNorm", True)
-    post_process_level = req.get("postProcessLevel", 2)
+    # Karar ayarlari istekte yoksa modelin kunyesinden gelir (J-36): model
+    # hangi esikle olculduyse urunde de o esikle kosar. Bugunku modelin
+    # kunyesi eski varsayilanlari (3,5 / 0,40 / 2) tasir, davranis degismez.
+    kunye = _worker_kunye
+    karar = kunye["karar"]
+    damage_booster = req.get("damageBooster")
+    if damage_booster is None:
+        damage_booster = karar["guclendirme"]
+    threshold = req.get("threshold")
+    if threshold is None:
+        threshold = karar["esik"]
+    use_imagenet_norm = req.get("useImagenetNorm")
+    if use_imagenet_norm is None:
+        use_imagenet_norm = kunye["girdi"]["normalizasyon"] == "imagenet"
+    post_process_level = req.get("postProcessLevel")
+    if post_process_level is None:
+        post_process_level = karar["sonIsleme"]
     network_type = req.get("networkType") or "drive"
     # r_h -- sert kapatma yaricapi (bkz. network.analyze_road_network_graph).
     # Varsayilan 0 = uygulamanin her zamanki kurali (hasar yol maskesinin
@@ -280,6 +303,48 @@ def run_analysis_job(req: dict) -> dict:
 
     _report(analysis_id, 20, "OSM yol agi cikariliyor...")
     w, h = img.size
+
+    # Kunye: goruntu gercekte hangi yakinlastirmada ve ne zaman cekildi (J-35).
+    # fetch_satellite_area istenen yakinlastirmada karo bulamazsa bir-iki alt
+    # yakinlastirmaya iner; kullanilan yakinlastirma goruntu genisliginden geri
+    # hesaplanir. Wayback surum tarihi cekim tarihi degildir: cekimler istenen
+    # surumun metadata katmanindan okunur.
+    requested_zoom = zoom_for_radius(radius_km)
+    used_zoom = int(round(math.log2(360.0 * (w / 256.0) / (bounds[2] - bounds[0]))))
+    imagery_notes = []
+    if used_zoom != requested_zoom:
+        imagery_notes.append(f"Istenen z{requested_zoom}'de karo yok, z{used_zoom} kullanildi")
+    imagery_captures = []
+    if prov_code == "esri" and wayback_id:
+        try:
+            imagery_captures = wayback.alan_cekimleri(str(wayback_id), bounds, used_zoom)
+        except Exception as e:
+            imagery_notes.append(f"Goruntu cekim tarihi okunamadi: {e}")
+    imagery_event_timing = (
+        wayback.olay_iliskisi([c["cekimTarihi"] for c in imagery_captures])
+        if imagery_captures else "unknown"
+    )
+    # Modelin egitim cozunurluguyle kiyas (J-20): kaba goruntude tespit guvenilmez.
+    used_gsd_m = 156543.03392 * math.cos(math.radians((bounds[1] + bounds[3]) / 2.0)) / 2 ** used_zoom
+    model_summary = {
+        **model_kunyesi.ozet(kunye),
+        "kullanilanGsdM": round(used_gsd_m, 3),
+        "gsdUyarisi": model_kunyesi.gsd_uyarisi(kunye, used_gsd_m),
+    }
+    imagery_notes.append(
+        f"Model: {kunye['ad']} ({kunye['agirlik']['sha256'][:12]}), esik {threshold}, "
+        f"guclendirme {damage_booster}, son isleme {post_process_level}"
+    )
+    if model_summary["gsdUyarisi"]:
+        gsd = kunye["girdi"]["egitimGsdM"]
+        imagery_notes.append(
+            f"Uyari: goruntu {used_gsd_m:.2f} m/piksel, model {gsd[0]}-{gsd[1]} m/piksel ile egitildi (J-20)"
+        )
+    if imagery_captures:
+        tarihler = ", ".join(sorted({c["cekimTarihi"] or "?" for c in imagery_captures}))
+        iliski = {"pre": "deprem oncesi", "post": "deprem sonrasi", "mixed": "karisik",
+                  "unknown": "bilinmiyor"}[imagery_event_timing]
+        imagery_notes.append(f"Goruntu cekim tarihi: {tarihler} ({iliski})")
     line_width = 6
     road_mask = get_osm_roads_overpass(bounds, w, h, thickness=line_width)
     road_mask_binary = (road_mask > 0).astype(np.uint8)
@@ -351,6 +416,7 @@ def run_analysis_job(req: dict) -> dict:
     log_lines = [
         "1/4 Uydu goruntusu indirildi",
         source_note,
+        *imagery_notes,
         f"2/4 OSM yol agi cikarildi ({road_pixels} piksel)",
         "3/4 Segformer modeli ile inference tamamlandi",
         f"4/4 Analiz tamamlandi - hasar orani: %{damage_rate * 100:.1f}",
@@ -453,6 +519,12 @@ def run_analysis_job(req: dict) -> dict:
         "imageryLabel": source_label,
         "imageryNote": source_note,
         "waybackId": wayback_id,
+        # Cekim tarihi ve fiilen kullanilan yakinlastirma (J-35). Wayback disi
+        # kaynaklarda cekim listesi bos ve iliski "unknown".
+        "imageryZoom": used_zoom,
+        "imageryRequestedZoom": requested_zoom,
+        "imageryCaptures": imagery_captures,
+        "imageryEventTiming": imagery_event_timing,
         "damageRate": round(damage_rate, 4),
         "openRoads": safe_count,
         "blockedRoads": blocked_count,
@@ -474,6 +546,9 @@ def run_analysis_job(req: dict) -> dict:
         "imageHeight": h,
         "damageBooster": damage_booster,
         "threshold": threshold,
+        "postProcessLevel": post_process_level,
+        # Sonucu hangi agirlik, hangi ayarla uretti (J-36, kural 1).
+        "model": model_summary,
         "safeRoadSegments": safe_segments,
         "blockedRoadSegments": blocked_segments,
         "satelliteSource": source_label,
