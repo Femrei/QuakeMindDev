@@ -174,7 +174,12 @@ def load_dataset(csv_path=None):
     df_main["cos_hour"] = np.cos(2 * np.pi * df_main["hour"] / 24)
 
     df_main = add_fault_distance(df_main)
-    df_main = df_main.dropna().reset_index(drop=True)
+    # Yalnizca model oznitelikleri + hedef sutununda NaN olan satirlar elenir.
+    # Onceki halde subset verilmeden dropna() cagriliyordu; bu, modelin hic
+    # kullanmadigi USGS ag-kalite kolonlarinda (nst, gap, dmin, rms, magError,
+    # depthError, magNst, horizontalError) NaN olan HER satiri da eliyor ve
+    # declustering sonrasi 13.615 ana soktan 454'e (%97 kayip) dusuruyordu.
+    df_main = df_main.dropna(subset=RISK_FEATURE_COLUMNS + [TARGET_COLUMN]).reset_index(drop=True)
 
     X = df_main[RISK_FEATURE_COLUMNS].copy()
     y = df_main[TARGET_COLUMN].astype(int).copy()

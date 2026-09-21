@@ -1,5 +1,5 @@
 {
-  "n_total": 454,
+  "n_total": 13609,
   "n_features": 18,
   "feature_names": [
     "latitude",
@@ -21,8 +21,8 @@
     "cos_hour",
     "distance_to_fault"
   ],
-  "positive_rate": 0.6872246696035242,
-  "time_min": "2022-04-29 17:35:34+00:00",
-  "time_max": "2024-10-04 05:57:19+00:00",
+  "positive_rate": 0.2980380630465133,
+  "time_min": "1934-06-19 18:43:20+00:00",
+  "time_max": "2026-08-02 18:12:03+00:00",
   "n_splits": 5
 }

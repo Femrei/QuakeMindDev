@@ -259,7 +259,12 @@ class EarthquakeRiskEngine:
         df_main["cos_hour"] = np.cos(2 * np.pi * df_main["hour"] / 24)
 
         df_main = add_fault_distance(df_main, lat_col="latitude", lon_col="longitude")
-        df_main = df_main.dropna().reset_index(drop=True)
+        # Yalnizca model oznitelikleri + hedef sutununda NaN olan satirlar elenir.
+        # Onceki halde subset verilmeden dropna() cagriliyordu; bu, modelin hic
+        # kullanmadigi USGS ag-kalite kolonlarinda (nst, gap, dmin, rms, magError,
+        # depthError, magNst, horizontalError) NaN olan HER satiri da eliyor ve
+        # declustering sonrasi kalan ana sok sayisini ~%97 azaltiyordu.
+        df_main = df_main.dropna(subset=RISK_FEATURE_COLUMNS + ["label_30d"]).reset_index(drop=True)
 
         self.df_full = df
         self.df_main = df_main

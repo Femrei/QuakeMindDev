@@ -27,36 +27,38 @@ RESULTS.mkdir(parents=True, exist_ok=True)
 N_SPLITS = 5
 
 
-def build_catboost():
+def build_catboost(pos_weight=1.0):
     from catboost import CatBoostClassifier
     params = dict(iterations=800, depth=8, learning_rate=0.03,
-                  loss_function="Logloss", random_seed=42, verbose=False)
+                  loss_function="Logloss", random_seed=42, verbose=False,
+                  auto_class_weights="Balanced")
     return CatBoostClassifier(**params), params
 
 
-def build_xgboost():
+def build_xgboost(pos_weight=1.0):
     from xgboost import XGBClassifier
     params = dict(n_estimators=800, max_depth=6, learning_rate=0.03,
                   subsample=0.9, colsample_bytree=0.9, eval_metric="logloss",
-                  random_state=42, n_jobs=-1)
+                  random_state=42, n_jobs=-1, scale_pos_weight=pos_weight)
     return XGBClassifier(**params), params
 
 
-def build_lightgbm():
+def build_lightgbm(pos_weight=1.0):
     from lightgbm import LGBMClassifier
     params = dict(n_estimators=800, num_leaves=31, learning_rate=0.03,
-                  subsample=0.9, colsample_bytree=0.9, random_state=42, n_jobs=-1, verbose=-1)
+                  subsample=0.9, colsample_bytree=0.9, random_state=42, n_jobs=-1,
+                  verbose=-1, class_weight="balanced")
     return LGBMClassifier(**params), params
 
 
-def build_random_forest():
+def build_random_forest(pos_weight=1.0):
     from sklearn.ensemble import RandomForestClassifier
     params = dict(n_estimators=500, max_depth=None, min_samples_leaf=2,
                   class_weight="balanced", random_state=42, n_jobs=-1)
     return RandomForestClassifier(**params), params
 
 
-def build_logreg():
+def build_logreg(pos_weight=1.0):
     from sklearn.linear_model import LogisticRegression
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
@@ -64,7 +66,7 @@ def build_logreg():
     return make_pipeline(StandardScaler(), LogisticRegression(**params)), params
 
 
-def build_mlp():
+def build_mlp(pos_weight=1.0):
     from sklearn.neural_network import MLPClassifier
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
@@ -73,7 +75,7 @@ def build_mlp():
     return make_pipeline(StandardScaler(), MLPClassifier(**params)), params
 
 
-def build_stacking():
+def build_stacking(pos_weight=1.0):
     from sklearn.ensemble import StackingClassifier, RandomForestClassifier
     from sklearn.linear_model import LogisticRegression
     from catboost import CatBoostClassifier
@@ -82,12 +84,14 @@ def build_stacking():
     model = StackingClassifier(
         estimators=[
             ("cat", CatBoostClassifier(iterations=600, depth=7, learning_rate=0.03,
-                                        verbose=False, random_seed=42)),
-            ("lgbm", LGBMClassifier(n_estimators=600, learning_rate=0.03, random_state=42, verbose=-1)),
+                                        verbose=False, random_seed=42,
+                                        auto_class_weights="Balanced")),
+            ("lgbm", LGBMClassifier(n_estimators=600, learning_rate=0.03, random_state=42,
+                                     verbose=-1, class_weight="balanced")),
             ("rf", RandomForestClassifier(n_estimators=400, class_weight="balanced",
                                            random_state=42, n_jobs=-1)),
         ],
-        final_estimator=LogisticRegression(max_iter=1000), cv=3, n_jobs=-1)
+        final_estimator=LogisticRegression(max_iter=1000, class_weight="balanced"), cv=3, n_jobs=-1)
     return model, params
 
 
@@ -124,8 +128,11 @@ def run_model(name, title, builder, X, y, splits):
 
     t0 = time.time()
     for i, (tr, te) in enumerate(splits, 1):
-        model, params = builder()
-        model.fit(X.iloc[tr], y.iloc[tr])
+        ytr = y.iloc[tr]
+        n_pos = int(ytr.sum())
+        pos_weight = float(len(ytr) - n_pos) / n_pos if n_pos > 0 else 1.0
+        model, params = builder(pos_weight)
+        model.fit(X.iloc[tr], ytr)
         prob = model.predict_proba(X.iloc[te])[:, 1]
 
         m = cp.evaluate_predictions(y.iloc[te], prob)
@@ -155,7 +162,7 @@ def run_model(name, title, builder, X, y, splits):
         "model": name, "title": title,
         **agg,
         "fold_metrics": fold_metrics,
-        "params": builder()[1],
+        "params": builder(1.0)[1],
         "train_seconds": round(train_s, 2),
         "feature_importance": avg_importance,
     }
