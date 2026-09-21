@@ -1,0 +1,91 @@
+{
+  "maskId": "KE-18",
+  "zoneId": "KE-18",
+  "zoneLabel": "kahramanmaras EMSR hucresi 0,3",
+  "city": "kahramanmaras",
+  "center": {
+    "lat": 37.592206,
+    "lon": 36.871601
+  },
+  "radiusKm": 0.5,
+  "zoneBbox": {
+    "west": 36.86591616901584,
+    "south": 37.587701495495494,
+    "east": 36.87728583098416,
+    "north": 37.5967105045045
+  },
+  "bounds": {
+    "west": 36.8646240234375,
+    "south": 37.58703054044867,
+    "east": 36.87835693359375,
+    "north": 37.59682400108366
+  },
+  "width": 2560,
+  "height": 2304,
+  "zoom": 18,
+  "metresPerPixel": 0.4732,
+  "sceneNativeGsdM": null,
+  "projectionNote": "Web Mercator karolari; yerel boru hatti enlemi dogrusal izdusumler (canli /analyze ile ayni). 6 km'lik bolgede en kotu sapma ~0,5 m (~1 piksel).",
+  "eventDate": "2023-02-06",
+  "postEventWindowEnd": "2023-06-30",
+  "scenes": [
+    {
+      "id": "63ecc493ca43600005f4d973",
+      "title": "Maxar 10300500D9F8D200",
+      "provider": "Maxar",
+      "date": "2023-02-08",
+      "tilesUsed": 90
+    },
+    {
+      "id": "63fbe33c4a608b000517b89b",
+      "title": "Maxar 10300100E19A4400 Kahramanmaraş After Earthquake",
+      "provider": "Maxar",
+      "date": "2023-02-12",
+      "tilesUsed": 84
+    },
+    {
+      "id": "643711958cae390005a1451e",
+      "title": "Maxar 10300100E3154100 Kahramanmaras",
+      "provider": "Maxar",
+      "date": "2023-02-28",
+      "tilesUsed": 0
+    },
+    {
+      "id": "643718f88cae390005a1451f",
+      "title": "Maxar 10300100E2C66F00 Kahramanmaras",
+      "provider": "Maxar",
+      "date": "2023-02-28",
+      "tilesUsed": 4
+    }
+  ],
+  "validPixelFraction": 1.0,
+  "damagePixelFraction": 0.005801,
+  "damagePixelFractionOfObserved": 0.005801,
+  "model": {
+    "repo": "Utbird/dispath_optimized_mitb4_focal_dice30",
+    "file": "optimized_mitb4_focal_dice30.pth",
+    "sha256": "7d7fb8d822aaf241f1be2f002f3bff9e72b66331e941408c4ef77d4e1d2900ce",
+    "architecture": "smp.Segformer(mit_b4, classes=1)"
+  },
+  "damageBooster": 3.5,
+  "threshold": 0.4,
+  "useImagenetNorm": true,
+  "postProcessLevel": 2,
+  "invalidPixelsZeroed": true,
+  "inferenceDevice": "cpu",
+  "libraries": {
+    "python": "3.10.11",
+    "torch": "2.11.0",
+    "segmentation-models-pytorch": "0.5.0",
+    "timm": "1.0.26",
+    "numpy": "2.2.6",
+    "opencv-python": "4.13.0.92",
+    "opencv-python-headless": "4.13.0.92",
+    "Pillow": "12.2.0"
+  },
+  "timingsSec": {
+    "fetch": 12.9,
+    "inference": 55.1
+  },
+  "createdAt": "2026-09-21T06:48:05.966982+00:00"
+}

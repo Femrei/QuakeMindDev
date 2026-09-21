@@ -9,7 +9,7 @@ degeri gorur (`from cekirdek import x` degeri import aninda dondururdu).
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import bcrypt
 import math
 import re
@@ -22,7 +22,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from contextlib import contextmanager, asynccontextmanager
-from typing import Optional
+from typing import Literal, Optional
 from threading import Event, Lock, Thread
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, TimeoutError as FutureTimeoutError
 import asyncio
@@ -330,11 +330,13 @@ def _estimate_session_bytes(data) -> int:
 
     `simulate_closures` oturumlari hem `G` (gercek graf) hem `safe_G`
     (nx.restricted_view -- AYNI depolamayi paylasan salt-okunur gorunum)
-    tutar; `/analyze` oturumlari yalnizca `safe_G` tutar ve o GERCEK bir
-    kopyadir. Ikisini de toplamak gorunumu iki kez saymak olurdu, bu yuzden
-    en buyuk tek graf esas alinir."""
+    tutar; `/analyze` oturumlari da (J-34'ten beri) tam grafi `roadGraph`
+    ve onun gorunumu `safe_G`'yi tutar. Ikisini de toplamak gorunumu iki kez
+    saymak olurdu, bu yuzden en buyuk tek graf esas alinir. `closureProb`
+    yalniz p > 0 kenarlari tasir (olculdu: kenarlarin ~%1,6'si), ihmal
+    edilir."""
     biggest = 0
-    for key in ("G", "safe_G"):
+    for key in ("G", "safe_G", "roadGraph"):
         graph = data.get(key)
         if graph is None:
             continue
@@ -506,9 +508,21 @@ def _on_road_damage_job_done(analysis_id, future):
             )
         else:
             result = future.result()
-            safe_graph = result.pop("safeGraph", None)
-            if safe_graph is not None:
-                _store_road_damage_session(analysis_id, {"safe_G": safe_graph, "bounds": result.get("bounds")})
+            road_graph = result.pop("roadGraph", None)
+            closed_edge_keys = result.pop("closedEdgeKeys", None)
+            closure_prob = result.pop("closureProb", None)
+            if road_graph is not None:
+                import networkx as nx
+
+                # Anahtarlar bilerek "G"/"closedEdgeKeys" DEGIL: o ikisi
+                # /naive_compare ve /reference_compare'in "yer gercegi olan
+                # oturum" isaretidir; burada kapanmalar modelin tahminidir.
+                _store_road_damage_session(analysis_id, {
+                    "safe_G": nx.restricted_view(road_graph, [], closed_edge_keys or set()),
+                    "roadGraph": road_graph,
+                    "closureProb": closure_prob,
+                    "bounds": result.get("bounds"),
+                })
             job["status"] = "done"
             job["gorseller"] = _gorselleri_diske_al(analysis_id, result)
             job["result"] = result
@@ -835,6 +849,17 @@ class RoadDamageRouteRequest(BaseModel):
     startLon: float
     endLat: float
     endLon: float
+    # Planlama maliyeti (J-34 bayragi). "hard" varsayilandir ve bugunku
+    # kuraldir: model kapali dedigi kenar silinir. "soft": kenar silinmez,
+    # maliyeti uzunluk x (1 + softLambda x p) olur; p, kenar boyunca
+    # orneklerin hasarli piksele dusen orani. Kazanc iddia edilemez (bolgeler
+    # arasi sinama %13,6 [-0,4; 22,2] ve %14,1 [0,8; 27,9]: biri sifiri
+    # iceriyor, obururun alt siniri sifira cok yakin), bu yuzden varsayilan
+    # degismez.
+    costModel: Literal["hard", "soft"] = "hard"
+    # 8: Kahramanmaras'ta secilip Hatay'da sinanan deger. Hatay'da secilen 16
+    # lambda izgarasinin kenarina dayandigi icin daha az guvenilir.
+    softLambda: float = Field(8.0, ge=0.0, le=64.0)
 
 
 

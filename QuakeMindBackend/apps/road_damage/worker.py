@@ -31,7 +31,7 @@ from apps.road_damage.utils.imaging import (
     image_array_to_b64,
 )
 from apps.road_damage.utils.inference import load_simple_model, run_inference
-from apps.road_damage.utils.network import analyze_road_network_graph
+from apps.road_damage.utils.network import analyze_road_network_graph, edge_closure_probability
 from apps.road_damage.utils.serialization import serialize_segments
 from apps.road_damage.utils.tiling import zoom_for_radius
 
@@ -89,10 +89,14 @@ def run_analysis_job(req: dict) -> dict:
     the one embedded in this result.
 
     Returns the same JSON-able shape the old synchronous endpoint returned,
-    plus one extra `safeGraph` key (a networkx graph, or None) that the
-    caller must pop before this reaches any HTTP client -- it's only there
-    so the main process can repopulate its `road_damage_sessions` store for
-    `/api/road_damage/route`.
+    plus three extra keys the caller must pop before this reaches any HTTP
+    client -- they're only there so the main process can repopulate its
+    `road_damage_sessions` store for `/api/road_damage/route`:
+      roadGraph       the full networkx graph (closed edges included), or None
+      closedEdgeKeys  edges the closure rule removed; /route hides them with
+                      a view, which gives the same A* routes as the old
+                      edge-removed copy (J-34: 1650/1650 identical)
+      closureProb     {edge: p} for edges with p > 0, for the soft-cost flag
     """
     if _worker_model is None:
         raise RuntimeError("Road Damage worker henuz hazir degil (model yuklenmedi).")
@@ -357,7 +361,9 @@ def run_analysis_job(req: dict) -> dict:
     blocked_count = 0
     safe_segments = []
     blocked_segments = []
-    safe_graph = None
+    road_graph = None
+    closed_edge_keys = None
+    closure_prob = None
     try:
         # analyze_road_network_graph makes its own osmnx/Overpass fetch,
         # separate from (and slower than) the raster road mask above --
@@ -386,7 +392,23 @@ def run_analysis_job(req: dict) -> dict:
             safe_segments = serialize_segments(safe_edges)
             blocked_segments = serialize_segments(blocked_edges)
             log_lines.append(f"Lojistik: {safe_count} acik, {blocked_count} kapali sokak")
-            safe_graph = safe_G
+            road_graph = G
+            closed_edge_keys = set(G.edges(keys=True)) - set(safe_G.edges(keys=True))
+            # Yumusak maliyet bayragi (J-34) icin kenar basina kapanma
+            # olasiligi. Deneydeki tanimla ayni: GENISLETILMEMIS model maskesi
+            # (pred_mask_binary), yaricap kuralindan bagimsiz. Sert kurali ve
+            # bu sonucun hicbir alanini degistirmez; hesaplanamazsa yalniz
+            # yumusak rota bu analizde kullanilamaz.
+            try:
+                t_p = time.perf_counter()
+                probs, _unobserved = edge_closure_probability(G, bounds, pred_mask_binary)
+                closure_prob = {e: p for e, p in probs.items() if p > 0}
+                log_lines.append(
+                    f"Kapanma olasiligi: {len(closure_prob)} kenarda p > 0 "
+                    f"({time.perf_counter() - t_p:.1f} sn)"
+                )
+            except Exception:
+                log_lines.append("Kapanma olasiligi hesaplanamadi -- yumusak maliyetli rota bu analizde yok")
     except FutureTimeoutError:
         log_lines.append("Lojistik analiz opsiyonel - OSMnx zaman asimina ugradi")
     except Exception:
@@ -467,5 +489,7 @@ def run_analysis_job(req: dict) -> dict:
         },
         # Popped by the main process's done-callback before this reaches any
         # HTTP client -- repopulates `road_damage_sessions` for /route.
-        "safeGraph": safe_graph,
+        "roadGraph": road_graph,
+        "closedEdgeKeys": closed_edge_keys,
+        "closureProb": closure_prob,
     }

@@ -53,6 +53,9 @@ def road_damage_route(req: ck.RoadDamageRouteRequest):
             detail=f"Road Damage runtime yuklenemedi: {ck.road_runtime_error or 'bilinmeyen hata'}",
         )
 
+    if req.costModel == "soft":
+        return _yumusak_rota(session, req)
+
     calculate_route = runtime["calculate_route"]
     safe_G = session["safe_G"]
 
@@ -79,6 +82,47 @@ def road_damage_route(req: ck.RoadDamageRouteRequest):
     return {
         "routeCoords": [[float(lat), float(lon)] for lat, lon in astar_coords],
         "distanceMeters": round(distance_m, 1),
+    }
+
+
+def _yumusak_rota(session, req):
+    """costModel="soft" (J-34): model kapali dedigi kenari silmez, cezalandirir.
+    Planlayici deneydeki M-y ajaniyla ayni fonksiyondur; yanit sert yanitin
+    alanlarina ek olarak rotanin ne kadar riskli kenardan gectigini yazar."""
+    from apps.road_damage.utils.network import soft_cost_route
+
+    road_graph = session.get("roadGraph")
+    closure_prob = session.get("closureProb")
+    if road_graph is None or closure_prob is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Bu oturumda kapanma olasiligi yok; yumusak maliyetli rota yalniz /analyze "
+                   "oturumlarinda kullanilabilir.",
+        )
+    try:
+        coords, exposure_m, risky_edges = soft_cost_route(
+            road_graph, closure_prob, req.softLambda,
+            req.startLat, req.startLon, req.endLat, req.endLon,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Rota hesaplanamadi: {e}")
+    if not coords:
+        raise HTTPException(status_code=422, detail="Bu iki nokta arasinda yol baglantisi yok.")
+
+    distance_m = 0.0
+    for (lat1, lon1), (lat2, lon2) in zip(coords[:-1], coords[1:]):
+        distance_m += _haversine_m(lat1, lon1, lat2, lon2)
+
+    return {
+        "routeCoords": [[float(lat), float(lon)] for lat, lon in coords],
+        "distanceMeters": round(distance_m, 1),
+        "costModel": "soft",
+        "softLambda": req.softLambda,
+        # Rotadaki kenarlarda uzunluk x p toplami: "beklenen kapali metre".
+        # Yumusak rota riskli kenardan gecebilir; bu iki alan ne kadar
+        # gectigini gosterir, istemci bunu gizlememeli.
+        "closureExposureMeters": round(exposure_m, 1),
+        "riskyEdgeCount": risky_edges,
     }
 
 

@@ -1,0 +1,91 @@
+{
+  "maskId": "HE-04",
+  "zoneId": "HE-04",
+  "zoneLabel": "hatay EMSR hucresi 3,6",
+  "city": "hatay",
+  "center": {
+    "lat": 36.197678,
+    "lon": 36.16828
+  },
+  "radiusKm": 0.5,
+  "zoneBbox": {
+    "west": 36.16269810106829,
+    "south": 36.1931734954955,
+    "east": 36.17386189893172,
+    "north": 36.202182504504506
+  },
+  "bounds": {
+    "west": 36.1614990234375,
+    "south": 36.19220033141525,
+    "east": 36.17523193359375,
+    "north": 36.20328256455561
+  },
+  "width": 2560,
+  "height": 2560,
+  "zoom": 18,
+  "metresPerPixel": 0.4819,
+  "sceneNativeGsdM": null,
+  "projectionNote": "Web Mercator karolari; yerel boru hatti enlemi dogrusal izdusumler (canli /analyze ile ayni). 6 km'lik bolgede en kotu sapma ~0,5 m (~1 piksel).",
+  "eventDate": "2023-02-06",
+  "postEventWindowEnd": "2023-06-30",
+  "scenes": [
+    {
+      "id": "63ecac68ca43600005f4d96c",
+      "title": "Maxar 10300500D9F8D500",
+      "provider": "Maxar",
+      "date": "2023-02-08",
+      "tilesUsed": 100
+    },
+    {
+      "id": "63ee3632525f0700077ed477",
+      "title": "Maxar 10300100E18CB600",
+      "provider": "Maxar",
+      "date": "2023-02-11",
+      "tilesUsed": 66
+    },
+    {
+      "id": "6436f47c8cae390005a14513",
+      "title": "Maxar 10300100E3D52E00 Hatay",
+      "provider": "Maxar",
+      "date": "2023-02-22",
+      "tilesUsed": 0
+    },
+    {
+      "id": "6436ef1d8cae390005a1450c",
+      "title": "Maxar 10300100E32F7A00 Hatay",
+      "provider": "Maxar",
+      "date": "2023-03-05",
+      "tilesUsed": 0
+    }
+  ],
+  "validPixelFraction": 1.0,
+  "damagePixelFraction": 0.001887,
+  "damagePixelFractionOfObserved": 0.001887,
+  "model": {
+    "repo": "Utbird/dispath_optimized_mitb4_focal_dice30",
+    "file": "optimized_mitb4_focal_dice30.pth",
+    "sha256": "7d7fb8d822aaf241f1be2f002f3bff9e72b66331e941408c4ef77d4e1d2900ce",
+    "architecture": "smp.Segformer(mit_b4, classes=1)"
+  },
+  "damageBooster": 3.5,
+  "threshold": 0.4,
+  "useImagenetNorm": true,
+  "postProcessLevel": 2,
+  "invalidPixelsZeroed": true,
+  "inferenceDevice": "cpu",
+  "libraries": {
+    "python": "3.10.11",
+    "torch": "2.11.0",
+    "segmentation-models-pytorch": "0.5.0",
+    "timm": "1.0.26",
+    "numpy": "2.2.6",
+    "opencv-python": "4.13.0.92",
+    "opencv-python-headless": "4.13.0.92",
+    "Pillow": "12.2.0"
+  },
+  "timingsSec": {
+    "fetch": 10.1,
+    "inference": 97.5
+  },
+  "createdAt": "2026-09-21T06:11:04.662243+00:00"
+}

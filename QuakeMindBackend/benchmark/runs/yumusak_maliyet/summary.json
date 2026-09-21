@@ -1,0 +1,1406 @@
+{
+ "ana": {
+  "iller": {
+   "hatay": {
+    "ajanlar": {
+     "R0": {
+      "sure": {
+       "n": 385,
+       "ort": 14.474579740259726,
+       "ss": 35.41575337097685
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5532467532467532,
+      "yakalananPay": 0.0
+     },
+     "R3": {
+      "sure": {
+       "n": 385,
+       "ort": 2.99303792207792,
+       "ss": 1.9662881705120623
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.0,
+      "yakalananPay": 1.0
+     },
+     "M-sert": {
+      "sure": {
+       "n": 385,
+       "ort": 13.96986077922076,
+       "ss": 34.41666771681612
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 39,
+      "kesifOrt": 0.5194805194805194,
+      "yakalananPay": 0.04395916236961391
+     },
+     "M-simetrik": {
+      "sure": {
+       "n": 385,
+       "ort": 14.87630961038959,
+       "ss": 39.14765325517258
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 5,
+      "kesifOrt": 0.5636363636363636,
+      "yakalananPay": -0.03498919191268353
+     },
+     "M-y0.5": {
+      "sure": {
+       "n": 385,
+       "ort": 14.155736103896091,
+       "ss": 34.41768416509907
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5376623376623376,
+      "yakalananPay": 0.027770106263840296
+     },
+     "M-y1": {
+      "sure": {
+       "n": 385,
+       "ort": 14.050424935064921,
+       "ss": 34.39013770229352
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5324675324675324,
+      "yakalananPay": 0.0369423211543877
+     },
+     "M-y2": {
+      "sure": {
+       "n": 385,
+       "ort": 14.052997402597388,
+       "ss": 34.390598130558836
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5324675324675324,
+      "yakalananPay": 0.03671826870801738
+     },
+     "M-y4": {
+      "sure": {
+       "n": 385,
+       "ort": 13.264856103896086,
+       "ss": 31.86033029157908
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.4935064935064935,
+      "yakalananPay": 0.10536247269926408
+     },
+     "M-y8": {
+      "sure": {
+       "n": 385,
+       "ort": 12.917949090909078,
+       "ss": 32.001286265976645
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.4753246753246753,
+      "yakalananPay": 0.13557679569529738
+     },
+     "M-y16": {
+      "sure": {
+       "n": 385,
+       "ort": 11.912028051948049,
+       "ss": 28.801548464384588
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.42337662337662335,
+      "yakalananPay": 0.22318881286951384
+     }
+    },
+    "algilama": {
+     "M-sert": {
+      "tp": 24,
+      "fp": 127,
+      "fn": 312,
+      "kesim": 7428,
+      "modelKapali": 151,
+      "dunyaKapali": 336,
+      "kesinlik": 0.15894039735099338,
+      "duyarlilik": 0.07142857142857142,
+      "iou": 0.05183585313174946
+     },
+     "M-simetrik": {
+      "tp": 7,
+      "fp": 30,
+      "fn": 329,
+      "kesim": 7428,
+      "modelKapali": 37,
+      "dunyaKapali": 336,
+      "kesinlik": 0.1891891891891892,
+      "duyarlilik": 0.020833333333333332,
+      "iou": 0.01912568306010929
+     }
+    },
+    "hucre": 13,
+    "gorev": 385
+   },
+   "kahramanmaras": {
+    "ajanlar": {
+     "R0": {
+      "sure": {
+       "n": 591,
+       "ort": 14.700913705583774,
+       "ss": 20.53394108153946
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.55668358714044,
+      "yakalananPay": 0.0
+     },
+     "R3": {
+      "sure": {
+       "n": 591,
+       "ort": 3.227608798646362,
+       "ss": 1.4622506666989206
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.0,
+      "yakalananPay": 1.0
+     },
+     "M-sert": {
+      "sure": {
+       "n": 591,
+       "ort": 12.8803532994924,
+       "ss": 19.12305420973845
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 26,
+      "kesifOrt": 0.4653130287648054,
+      "yakalananPay": 0.15867794160953222
+     },
+     "M-simetrik": {
+      "sure": {
+       "n": 591,
+       "ort": 14.901266328257218,
+       "ss": 22.636650024875106
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 19,
+      "kesifOrt": 0.5634517766497462,
+      "yakalananPay": -0.01746250311471278
+     },
+     "M-y0.5": {
+      "sure": {
+       "n": 591,
+       "ort": 14.530332318104925,
+       "ss": 20.303435552765688
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5482233502538071,
+      "yakalananPay": 0.014867676651363645
+     },
+     "M-y1": {
+      "sure": {
+       "n": 591,
+       "ort": 14.494898138747907,
+       "ss": 20.530700898950073
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5465313028764806,
+      "yakalananPay": 0.017956078785224223
+     },
+     "M-y2": {
+      "sure": {
+       "n": 591,
+       "ort": 14.147029441624374,
+       "ss": 19.379444792960477
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5296108291032149,
+      "yakalananPay": 0.04827591251623499
+     },
+     "M-y4": {
+      "sure": {
+       "n": 591,
+       "ort": 13.501508629441634,
+       "ss": 19.008580591174155
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.49746192893401014,
+      "yakalananPay": 0.10453876070328365
+     },
+     "M-y8": {
+      "sure": {
+       "n": 591,
+       "ort": 12.786887986463633,
+       "ss": 18.34712005742225
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.4619289340101523,
+      "yakalananPay": 0.1668242703079226
+     },
+     "M-y16": {
+      "sure": {
+       "n": 591,
+       "ort": 13.079367174280891,
+       "ss": 19.139659777956812
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.4754653130287648,
+      "yakalananPay": 0.14133212221374886
+     }
+    },
+    "algilama": {
+     "M-sert": {
+      "tp": 39,
+      "fp": 177,
+      "fn": 418,
+      "kesim": 15254,
+      "modelKapali": 216,
+      "dunyaKapali": 457,
+      "kesinlik": 0.18055555555555555,
+      "duyarlilik": 0.08533916849015317,
+      "iou": 0.061514195583596214
+     },
+     "M-simetrik": {
+      "tp": 13,
+      "fp": 55,
+      "fn": 444,
+      "kesim": 15254,
+      "modelKapali": 68,
+      "dunyaKapali": 457,
+      "kesinlik": 0.19117647058823528,
+      "duyarlilik": 0.028446389496717725,
+      "iou": 0.025390625
+     }
+    },
+    "hucre": 20,
+    "gorev": 591
+   }
+  },
+  "capraz": [
+   {
+    "ayar": "hatay",
+    "sinama": "kahramanmaras",
+    "secilenLambda": "M-y16",
+    "sinamaPayi": 0.14133212221374886,
+    "sinamaSure": {
+     "n": 591,
+     "ort": 13.079367174280891,
+     "ss": 19.139659777956812
+    }
+   },
+   {
+    "ayar": "kahramanmaras",
+    "sinama": "hatay",
+    "secilenLambda": "M-y8",
+    "sinamaPayi": 0.13557679569529738,
+    "sinamaSure": {
+     "n": 385,
+     "ort": 12.917949090909078,
+     "ss": 32.001286265976645
+    }
+   }
+  ],
+  "tU": 20.0
+ },
+ "duyarlilik": {
+  "iller": {
+   "hatay": {
+    "ajanlar": {
+     "R0": {
+      "sure": {
+       "n": 385,
+       "ort": 6.175878441558443,
+       "ss": 10.148594837452547
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5532467532467532,
+      "yakalananPay": 0.0
+     },
+     "R3": {
+      "sure": {
+       "n": 385,
+       "ort": 2.99303792207792,
+       "ss": 1.9662881705120623
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.0,
+      "yakalananPay": 1.0
+     },
+     "M-sert": {
+      "sure": {
+       "n": 385,
+       "ort": 6.177652987012992,
+       "ss": 9.898413662220586
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 39,
+      "kesifOrt": 0.5194805194805194,
+      "yakalananPay": -0.0005575351462595036
+     },
+     "M-simetrik": {
+      "sure": {
+       "n": 385,
+       "ort": 6.421764155844159,
+       "ss": 11.45139003773411
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 5,
+      "kesifOrt": 0.5636363636363636,
+      "yakalananPay": -0.07725354530985036
+     },
+     "M-y0.5": {
+      "sure": {
+       "n": 385,
+       "ort": 6.090801038961041,
+       "ss": 9.896252369815672
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5376623376623376,
+      "yakalananPay": 0.026730023724621722
+     },
+     "M-y1": {
+      "sure": {
+       "n": 385,
+       "ort": 6.063411948051951,
+       "ss": 9.89069635305292
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5324675324675324,
+      "yakalananPay": 0.03533525880990353
+     },
+     "M-y2": {
+      "sure": {
+       "n": 385,
+       "ort": 6.065984415584418,
+       "ss": 9.891266292467636
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5324675324675324,
+      "yakalananPay": 0.034527028703267015
+     },
+     "M-y4": {
+      "sure": {
+       "n": 385,
+       "ort": 5.862258701298701,
+       "ss": 9.244394327554186
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.4935064935064935,
+      "yakalananPay": 0.09853454432926753
+     },
+     "M-y8": {
+      "sure": {
+       "n": 385,
+       "ort": 5.78807896103896,
+       "ss": 9.361917943433507
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.4753246753246753,
+      "yakalananPay": 0.12184068857549184
+     },
+     "M-y16": {
+      "sure": {
+       "n": 385,
+       "ort": 5.5613787012986995,
+       "ss": 8.672938934293418
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.42337662337662335,
+      "yakalananPay": 0.19306645636145073
+     }
+    },
+    "algilama": {
+     "M-sert": {
+      "tp": 24,
+      "fp": 127,
+      "fn": 312,
+      "kesim": 7428,
+      "modelKapali": 151,
+      "dunyaKapali": 336,
+      "kesinlik": 0.15894039735099338,
+      "duyarlilik": 0.07142857142857142,
+      "iou": 0.05183585313174946
+     },
+     "M-simetrik": {
+      "tp": 7,
+      "fp": 30,
+      "fn": 329,
+      "kesim": 7428,
+      "modelKapali": 37,
+      "dunyaKapali": 336,
+      "kesinlik": 0.1891891891891892,
+      "duyarlilik": 0.020833333333333332,
+      "iou": 0.01912568306010929
+     }
+    },
+    "hucre": 13,
+    "gorev": 385
+   },
+   "kahramanmaras": {
+    "ajanlar": {
+     "R0": {
+      "sure": {
+       "n": 591,
+       "ort": 6.350659898477155,
+       "ss": 6.130783976289778
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.55668358714044,
+      "yakalananPay": 0.0
+     },
+     "R3": {
+      "sure": {
+       "n": 591,
+       "ort": 3.227608798646362,
+       "ss": 1.4622506666989206
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.0,
+      "yakalananPay": 1.0
+     },
+     "M-sert": {
+      "sure": {
+       "n": 591,
+       "ort": 5.900657868020304,
+       "ss": 5.798871372957259
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 26,
+      "kesifOrt": 0.4653130287648054,
+      "yakalananPay": 0.14409051151331848
+     },
+     "M-simetrik": {
+      "sure": {
+       "n": 591,
+       "ort": 6.4494896785109965,
+       "ss": 6.827014835088641
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 19,
+      "kesifOrt": 0.5634517766497462,
+      "yakalananPay": -0.03164526511884354
+     },
+     "M-y0.5": {
+      "sure": {
+       "n": 591,
+       "ort": 6.306982064297799,
+       "ss": 6.078653130981928
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5482233502538071,
+      "yakalananPay": 0.013985629047735693
+     },
+     "M-y1": {
+      "sure": {
+       "n": 591,
+       "ort": 6.2969285956006775,
+       "ss": 6.144023880932519
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5465313028764806,
+      "yakalananPay": 0.017204746627228998
+     },
+     "M-y2": {
+      "sure": {
+       "n": 591,
+       "ort": 6.202867005076143,
+       "ss": 5.827780823453688
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.5296108291032149,
+      "yakalananPay": 0.04732323893420097
+     },
+     "M-y4": {
+      "sure": {
+       "n": 591,
+       "ort": 6.0395796954314696,
+       "ss": 5.733238769721512
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.49746192893401014,
+      "yakalananPay": 0.09960778517602223
+     },
+     "M-y8": {
+      "sure": {
+       "n": 591,
+       "ort": 5.857953976311337,
+       "ss": 5.576676662737917
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.4619289340101523,
+      "yakalananPay": 0.15776428448209287
+     },
+     "M-y16": {
+      "sure": {
+       "n": 591,
+       "ort": 5.947387478849408,
+       "ss": 5.782672971223096
+      },
+      "ulasilamayan": 0,
+      "geriDonus": 0,
+      "kesifOrt": 0.4754653130287648,
+      "yakalananPay": 0.1291277045225409
+     }
+    },
+    "algilama": {
+     "M-sert": {
+      "tp": 39,
+      "fp": 177,
+      "fn": 418,
+      "kesim": 15254,
+      "modelKapali": 216,
+      "dunyaKapali": 457,
+      "kesinlik": 0.18055555555555555,
+      "duyarlilik": 0.08533916849015317,
+      "iou": 0.061514195583596214
+     },
+     "M-simetrik": {
+      "tp": 13,
+      "fp": 55,
+      "fn": 444,
+      "kesim": 15254,
+      "modelKapali": 68,
+      "dunyaKapali": 457,
+      "kesinlik": 0.19117647058823528,
+      "duyarlilik": 0.028446389496717725,
+      "iou": 0.025390625
+     }
+    },
+    "hucre": 20,
+    "gorev": 591
+   }
+  },
+  "capraz": [
+   {
+    "ayar": "hatay",
+    "sinama": "kahramanmaras",
+    "secilenLambda": "M-y16",
+    "sinamaPayi": 0.1291277045225409,
+    "sinamaSure": {
+     "n": 591,
+     "ort": 5.947387478849408,
+     "ss": 5.782672971223096
+    }
+   },
+   {
+    "ayar": "kahramanmaras",
+    "sinama": "hatay",
+    "secilenLambda": "M-y8",
+    "sinamaPayi": 0.12184068857549184,
+    "sinamaSure": {
+     "n": 385,
+     "ort": 5.78807896103896,
+     "ss": 9.361917943433507
+    }
+   }
+  ],
+  "tU": 5.0
+ },
+ "hucreler": [
+  {
+   "id": "HE-01",
+   "il": "hatay",
+   "kesim": 911,
+   "dunyaKapali": 17,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-11"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "HE-02",
+   "il": "hatay",
+   "kesim": 593,
+   "dunyaKapali": 7,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-11"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": null,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "HE-03",
+   "il": "hatay",
+   "kesim": 614,
+   "dunyaKapali": 16,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-11",
+    "Maxar 2023-02-22",
+    "Maxar 2023-03-05"
+   ],
+   "M-sert": {
+    "kesinlik": 0.14285714285714285,
+    "duyarlilik": 0.0625,
+    "iou": 0.045454545454545456
+   },
+   "M-simetrik": {
+    "kesinlik": null,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "HE-04",
+   "il": "hatay",
+   "kesim": 1607,
+   "dunyaKapali": 11,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-11",
+    "Maxar 2023-02-22",
+    "Maxar 2023-03-05"
+   ],
+   "M-sert": {
+    "kesinlik": 0.6,
+    "duyarlilik": 0.2727272727272727,
+    "iou": 0.23076923076923078
+   },
+   "M-simetrik": {
+    "kesinlik": 0.75,
+    "duyarlilik": 0.2727272727272727,
+    "iou": 0.25
+   }
+  },
+  {
+   "id": "HE-05",
+   "il": "hatay",
+   "kesim": 761,
+   "dunyaKapali": 3,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-11"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "HE-06",
+   "il": "hatay",
+   "kesim": 667,
+   "dunyaKapali": 139,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-11",
+    "Maxar 2023-02-22",
+    "Maxar 2023-03-05"
+   ],
+   "M-sert": {
+    "kesinlik": 0.375,
+    "duyarlilik": 0.1079136690647482,
+    "iou": 0.09146341463414634
+   },
+   "M-simetrik": {
+    "kesinlik": 0.25,
+    "duyarlilik": 0.02158273381294964,
+    "iou": 0.02027027027027027
+   }
+  },
+  {
+   "id": "HE-07",
+   "il": "hatay",
+   "kesim": 605,
+   "dunyaKapali": 1,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-11",
+    "Maxar 2023-02-22",
+    "Maxar 2023-03-05"
+   ],
+   "M-sert": {
+    "kesinlik": 0.04,
+    "duyarlilik": 1.0,
+    "iou": 0.04
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "HE-08",
+   "il": "hatay",
+   "kesim": 450,
+   "dunyaKapali": 1,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-11",
+    "Maxar 2023-02-22",
+    "Maxar 2023-03-05"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "HE-09",
+   "il": "hatay",
+   "kesim": 347,
+   "dunyaKapali": 28,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-09",
+    "Maxar 2023-02-11",
+    "Maxar 2023-02-22",
+    "Maxar 2023-02-28",
+    "Maxar 2023-03-05"
+   ],
+   "M-sert": {
+    "kesinlik": 0.3,
+    "duyarlilik": 0.10714285714285714,
+    "iou": 0.08571428571428572
+   },
+   "M-simetrik": {
+    "kesinlik": 0.3333333333333333,
+    "duyarlilik": 0.03571428571428571,
+    "iou": 0.03333333333333333
+   }
+  },
+  {
+   "id": "HE-10",
+   "il": "hatay",
+   "kesim": 358,
+   "dunyaKapali": 32,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-09",
+    "Maxar 2023-02-11",
+    "Maxar 2023-02-22",
+    "Maxar 2023-02-28",
+    "Maxar 2023-03-05"
+   ],
+   "M-sert": {
+    "kesinlik": 0.07142857142857142,
+    "duyarlilik": 0.03125,
+    "iou": 0.022222222222222223
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "HE-11",
+   "il": "hatay",
+   "kesim": 125,
+   "dunyaKapali": 24,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-09",
+    "Maxar 2023-02-11",
+    "Maxar 2023-02-28",
+    "Maxar 2023-03-05"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": null,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "HE-12",
+   "il": "hatay",
+   "kesim": 179,
+   "dunyaKapali": 5,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-09",
+    "Maxar 2023-02-11",
+    "Maxar 2023-02-28",
+    "Maxar 2023-03-05"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": null,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "HE-13",
+   "il": "hatay",
+   "kesim": 211,
+   "dunyaKapali": 52,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-09",
+    "Maxar 2023-02-11",
+    "Maxar 2023-02-28",
+    "Maxar 2023-03-05"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": null,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-01",
+   "il": "kahramanmaras",
+   "kesim": 313,
+   "dunyaKapali": 1,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-02",
+   "il": "kahramanmaras",
+   "kesim": 519,
+   "dunyaKapali": 0,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": null,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": null,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-03",
+   "il": "kahramanmaras",
+   "kesim": 435,
+   "dunyaKapali": 7,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.75,
+    "duyarlilik": 0.42857142857142855,
+    "iou": 0.375
+   },
+   "M-simetrik": {
+    "kesinlik": 1.0,
+    "duyarlilik": 0.14285714285714285,
+    "iou": 0.14285714285714285
+   }
+  },
+  {
+   "id": "KE-04",
+   "il": "kahramanmaras",
+   "kesim": 545,
+   "dunyaKapali": 1,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": null,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-05",
+   "il": "kahramanmaras",
+   "kesim": 1323,
+   "dunyaKapali": 18,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.14285714285714285,
+    "duyarlilik": 0.05555555555555555,
+    "iou": 0.041666666666666664
+   },
+   "M-simetrik": {
+    "kesinlik": null,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-06",
+   "il": "kahramanmaras",
+   "kesim": 744,
+   "dunyaKapali": 106,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28",
+    "Help.NGO 2023-02-09"
+   ],
+   "M-sert": {
+    "kesinlik": 0.2916666666666667,
+    "duyarlilik": 0.0660377358490566,
+    "iou": 0.056910569105691054
+   },
+   "M-simetrik": {
+    "kesinlik": 0.4,
+    "duyarlilik": 0.03773584905660377,
+    "iou": 0.03571428571428571
+   }
+  },
+  {
+   "id": "KE-07",
+   "il": "kahramanmaras",
+   "kesim": 550,
+   "dunyaKapali": 156,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28",
+    "Help.NGO 2023-02-09"
+   ],
+   "M-sert": {
+    "kesinlik": 0.2608695652173913,
+    "duyarlilik": 0.038461538461538464,
+    "iou": 0.03468208092485549
+   },
+   "M-simetrik": {
+    "kesinlik": 0.2857142857142857,
+    "duyarlilik": 0.01282051282051282,
+    "iou": 0.012422360248447204
+   }
+  },
+  {
+   "id": "KE-08",
+   "il": "kahramanmaras",
+   "kesim": 792,
+   "dunyaKapali": 15,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-09",
+   "il": "kahramanmaras",
+   "kesim": 742,
+   "dunyaKapali": 5,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.17391304347826086,
+    "duyarlilik": 0.8,
+    "iou": 0.16666666666666666
+   },
+   "M-simetrik": {
+    "kesinlik": 0.08333333333333333,
+    "duyarlilik": 0.2,
+    "iou": 0.0625
+   }
+  },
+  {
+   "id": "KE-10",
+   "il": "kahramanmaras",
+   "kesim": 713,
+   "dunyaKapali": 5,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.18181818181818182,
+    "duyarlilik": 0.4,
+    "iou": 0.14285714285714285
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-11",
+   "il": "kahramanmaras",
+   "kesim": 737,
+   "dunyaKapali": 15,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.4444444444444444,
+    "duyarlilik": 0.26666666666666666,
+    "iou": 0.2
+   },
+   "M-simetrik": {
+    "kesinlik": 1.0,
+    "duyarlilik": 0.2,
+    "iou": 0.2
+   }
+  },
+  {
+   "id": "KE-12",
+   "il": "kahramanmaras",
+   "kesim": 731,
+   "dunyaKapali": 3,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-13",
+   "il": "kahramanmaras",
+   "kesim": 1381,
+   "dunyaKapali": 13,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.375,
+    "duyarlilik": 0.23076923076923078,
+    "iou": 0.16666666666666666
+   },
+   "M-simetrik": {
+    "kesinlik": 0.6666666666666666,
+    "duyarlilik": 0.15384615384615385,
+    "iou": 0.14285714285714285
+   }
+  },
+  {
+   "id": "KE-14",
+   "il": "kahramanmaras",
+   "kesim": 1574,
+   "dunyaKapali": 80,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.17647058823529413,
+    "duyarlilik": 0.0375,
+    "iou": 0.031914893617021274
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-15",
+   "il": "kahramanmaras",
+   "kesim": 697,
+   "dunyaKapali": 5,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.2857142857142857,
+    "duyarlilik": 0.4,
+    "iou": 0.2
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-16",
+   "il": "kahramanmaras",
+   "kesim": 561,
+   "dunyaKapali": 3,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.16666666666666666,
+    "duyarlilik": 0.3333333333333333,
+    "iou": 0.125
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-17",
+   "il": "kahramanmaras",
+   "kesim": 250,
+   "dunyaKapali": 5,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": null,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": null,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-18",
+   "il": "kahramanmaras",
+   "kesim": 824,
+   "dunyaKapali": 2,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-19",
+   "il": "kahramanmaras",
+   "kesim": 888,
+   "dunyaKapali": 9,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.3333333333333333,
+    "duyarlilik": 0.3333333333333333,
+    "iou": 0.2
+   },
+   "M-simetrik": {
+    "kesinlik": null,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  },
+  {
+   "id": "KE-20",
+   "il": "kahramanmaras",
+   "kesim": 935,
+   "dunyaKapali": 8,
+   "gorulmeyenKenar": 0,
+   "sahneler": [
+    "Maxar 2023-02-08",
+    "Maxar 2023-02-12",
+    "Maxar 2023-02-28",
+    "Maxar 2023-02-28"
+   ],
+   "M-sert": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   },
+   "M-simetrik": {
+    "kesinlik": 0.0,
+    "duyarlilik": 0.0,
+    "iou": 0.0
+   }
+  }
+ ],
+ "sureSn": 40.0,
+ "protokol": {
+  "lambdalar": [
+   0.5,
+   1.0,
+   2.0,
+   4.0,
+   8.0,
+   16.0
+  ],
+  "simetrikEsik": 0.5,
+  "tU": 20.0,
+  "tohumlar": [
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51
+  ],
+  "gorevSayisi": 3
+ }
+}

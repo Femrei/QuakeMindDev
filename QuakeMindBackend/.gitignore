@@ -29,3 +29,7 @@ veri/*.sqlite3*
 
 # Analiz tani gorselleri (her iste ~16 MB, uretilir)
 veri/analiz_gorselleri/
+
+# Yumusak maliyet deneyi (J-34): il graflari PBF'ten yeniden uretilir, onizlemeler agir
+benchmark/data/emsr_graf_*.pkl
+benchmark/data/model_masks_emsr/*/preview.jpg

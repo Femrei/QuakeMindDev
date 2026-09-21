@@ -591,7 +591,7 @@ def simulate_naive_agent(G, real_closed_edges: set, start_lat, start_lon, end_la
 
 
 def _shortest_path_avoiding(G, source, target, hidden: set, penalized: set | None = None,
-                            factor: float = 1.0):
+                            factor: float = 1.0, multiplier: dict | None = None):
     """nx.shortest_path(nx.restricted_view(G, [], hidden), ..., weight="length")
     ve ardindan ayni gorunumde en kisa paralel kenar secimi -- gorunum KURMADAN.
 
@@ -602,14 +602,20 @@ def _shortest_path_avoiding(G, source, target, hidden: set, penalized: set | Non
     kontrolu ile dogrulanir (simulate_naive_agent gorunum kullanir).
 
     `penalized` verilirse bu kenarlar gizlenmez, uzunluklari `factor` ile
-    carpilir (yumusak kapanma -- makale Denklem 8)."""
+    carpilir (yumusak kapanma -- makale Denklem 8).
+
+    `multiplier` verilirse her kenarin uzunlugu kendi carpaniyla carpilir
+    (surekli yumusak maliyet: 1 + lambda * p(kenar)); verilmeyen kenar 1."""
     penalized = penalized or set()
+    multiplier = multiplier or {}
 
     def cost(u, v, k, attr, default):
         w = attr.get("length", default)
+        if multiplier:
+            return w * multiplier.get((u, v, k), 1.0)
         return w * factor if (u, v, k) in penalized else w
 
-    if hidden or penalized:
+    if hidden or penalized or multiplier:
         def weight(u, v, keydict):
             best = None
             for k, attr in keydict.items():
@@ -637,7 +643,8 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
                              simultaneous_known: bool = True,
                              prior_closed: set | None = None,
                              prior_fallback: bool = True,
-                             prior_penalty_factor: float | None = None) -> list:
+                             prior_penalty_factor: float | None = None,
+                             prior_multiplier: dict | None = None) -> list:
     """Karsilastirma referanslari R0 / R1 / R2 (makale Bolum 3.8) -- tek bir
     zaman sirali simulasyon.
 
@@ -667,6 +674,11 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
           birakir, kendi kesifleriyle R0 gibi devam eder (sonucta fallback=True).
       prior_penalty_factor -> prior kenarlari GIZLENMEZ, planlamada uzunluklari bu
           carpanla pahalilasir (yumusak kullanim; ag hicbir zaman kopmaz).
+      prior_multiplier -> {kenar: carpan}. Surekli yumusak kullanim: her kenarin
+          planlama maliyeti uzunluk x carpan (ornegin 1 + lambda * p, p = modelin
+          o kenar icin kapanma olasiligi). Hicbir kenar gizlenmez; ekip yine
+          yalniz dunyadaki gercek kapanmaya varinca kesfeder. prior_closed ve
+          prior_penalty_factor ile birlikte kullanilmaz.
 
     Zaman yalniz paylasimda sonucu etkiler (kim once ogrendi): ajan saati
     L / v + ceza, olaylar saat sirasiyla islenir (en erken saatli ajan bir kenar
@@ -700,7 +712,10 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
         })
 
     soft = prior_penalty_factor is not None
-    if soft and pathfinder != "weight":
+    continuous = bool(prior_multiplier)
+    if continuous and (prior_closed or soft):
+        raise ValueError("prior_multiplier, prior_closed/prior_penalty_factor ile birlikte kullanilmaz")
+    if (soft or continuous) and pathfinder != "weight":
         raise ValueError("yumusak prior yalniz pathfinder='weight' ile desteklenir")
 
     def known(agent):
@@ -726,6 +741,9 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
                 path = nx.shortest_path(G_view, agent["node"], agent["goal"], weight="length")
                 keys = [min(G_view[u][v], key=lambda k, u=u, v=v: G_view[u][v][k].get("length", float("inf")))
                         for u, v in zip(path, path[1:])]
+            elif continuous:
+                path, keys = _shortest_path_avoiding(G, agent["node"], agent["goal"], hidden,
+                                                     multiplier=prior_multiplier)
             elif soft:
                 path, keys = _shortest_path_avoiding(G, agent["node"], agent["goal"], hidden,
                                                      agent["prior"], prior_penalty_factor)
@@ -1001,6 +1019,109 @@ def closures_from_damage_mask(G, mask_bounds, damage_mask, valid_mask=None, bloc
     safe_edges, blocked_edges, edges_to_remove, coverage = _classify_edges(
         G, mask_bounds, w, h, mask, valid_mask)
     return safe_edges, blocked_edges, set(edges_to_remove), coverage
+
+
+def edge_closure_probability(G, mask_bounds, damage_mask, valid_mask=None):
+    """Her kenar icin modelin kapanma olasiligi: kenar boyunca orneklenen
+    noktalarin hasarli piksele dusen ORANI (0..1).
+
+    Ornekleme `_classify_edges` ile ayni (~5 m adim, en az 3 nokta, ayni
+    piksel izdusumu) -- boylece bugunku ikili kural bu olasiligin
+    "p > 0" esiklemesine esittir ve iki yol ayrisamaz.
+
+    `valid_mask` verilirse oran yalniz GORULEN orneklerden hesaplanir; hic
+    gorulen ornegi olmayan kenar icin olasilik 0 (bugunku kuralla ayni:
+    gorulmeyen kenar acik sayilir) ve `unobserved` kumesinde raporlanir.
+
+    Ornekleme vektorlestirilmistir: noktalar kenar kenar dongudeki ayni GEOS
+    cagrisiyla (line_interpolate_point), ayni oranlarla uretilir; piksel
+    izdusumu ayni islem sirasiyla yapilir ve sifira dogru kirpilir (Python
+    int() gibi). Dongulu ilk surumle BIREBIR ayni sonucu verdigi 33 EMSR
+    hucresinde ve 31 596 kenarli bir grafta dogrulandi (J-34). Hiz farki
+    canli analize eklenebilmesi icin gerekliydi: dongu o grafta 5,8 sn
+    suruyordu.
+
+    Donus: ({(u, v, k): p}, unobserved_keys)
+    """
+    import shapely
+
+    h, w = damage_mask.shape[:2]
+    west, south, east, north = mask_bounds
+    probs, unobserved = {}, set()
+    edges = list(G.edges(keys=True, data=True))
+    for start in range(0, len(edges), 4096):
+        part = edges[start:start + 4096]
+        lines = np.empty(len(part), dtype=object)
+        lines[:] = [_edge_geometry(G, u, v, data) for u, v, _k, data in part]
+        n = np.maximum((shapely.length(lines) / 0.00005).astype(np.int64), 3)
+        edge_idx = np.repeat(np.arange(len(part)), n)
+        i = np.arange(edge_idx.size) - np.repeat(np.cumsum(n) - n, n)
+        frac = i / np.repeat(n - 1, n)
+        xy = shapely.get_coordinates(
+            shapely.line_interpolate_point(lines[edge_idx], frac, normalized=True))
+        px = ((xy[:, 0] - west) / (east - west) * w).astype(np.int64)
+        py = ((north - xy[:, 1]) / (north - south) * h).astype(np.int64)
+        ok = (px >= 0) & (px < w) & (py >= 0) & (py < h)
+        if valid_mask is not None:
+            ok[ok] = valid_mask[py[ok], px[ok]] != 0
+        damaged = np.zeros_like(ok)
+        damaged[ok] = damage_mask[py[ok], px[ok]] > 0
+        seen = np.bincount(edge_idx[ok], minlength=len(part))
+        hit = np.bincount(edge_idx[damaged], minlength=len(part))
+        for j, (u, v, key, _data) in enumerate(part):
+            if seen[j] == 0:
+                unobserved.add((u, v, key))
+                probs[(u, v, key)] = 0.0
+            else:
+                probs[(u, v, key)] = int(hit[j]) / int(seen[j])
+    return probs, unobserved
+
+
+def soft_cost_route(G, closure_prob: dict, lam: float, start_lat, start_lon, end_lat, end_lon):
+    """Yumusak maliyetli rota (J-34): model kapali dedigi kenari SILMEZ,
+    planlama maliyetini uzunluk x (1 + lam * p) yapar. `closure_prob`,
+    `edge_closure_probability` ciktisidir; yalniz p > 0 kenarlari tasimak
+    yeter, eksik kenar p = 0 sayilir.
+
+    Planlayici J-34 deneyindeki M-y ajaninin kullandigiyla ayni
+    (`_shortest_path_avoiding`, `multiplier`) -- canli rota olculen kuraldan
+    cikar. Hicbir kenar gizlenmedigi icin ag kopmaz: rota ancak iki nokta
+    arasinda hic yol yoksa bulunamaz.
+
+    Donus: (route_coords [(lat, lon)] ya da None, exposure_m, risky_edges)
+      exposure_m   rotadaki kenarlarda toplam uzunluk x p -- rotanin
+                   "beklenen kapali metresi"
+      risky_edges  rotada p > 0 olan kenar sayisi
+    """
+    start_node = nearest_node(G, start_lat, start_lon)
+    end_node = nearest_node(G, end_lat, end_lon)
+    multiplier = {e: 1.0 + lam * p for e, p in closure_prob.items() if p > 0}
+    try:
+        path, keys = _shortest_path_avoiding(G, start_node, end_node, set(), multiplier=multiplier)
+    except (nx.NetworkXNoPath, nx.NodeNotFound):
+        return None, 0.0, 0
+
+    route_coords = [(G.nodes[start_node]['y'], G.nodes[start_node]['x'])]
+    exposure_m = 0.0
+    risky_edges = 0
+    for u, v, k in zip(path, path[1:], keys):
+        data = G[u][v][k]
+        p = closure_prob.get((u, v, k), 0.0)
+        if p > 0:
+            exposure_m += data.get('length', 0.0) * p
+            risky_edges += 1
+        if 'geometry' in data:
+            # calculate_route/get_route_line'daki ters-geometri duzeltmesi.
+            coords = [(lat, lon) for lon, lat in data['geometry'].coords]
+            u_node, v_node = G.nodes[u], G.nodes[v]
+            start_to_u = haversine(coords[0][0], coords[0][1], u_node['y'], u_node['x'])
+            start_to_v = haversine(coords[0][0], coords[0][1], v_node['y'], v_node['x'])
+            if start_to_v < start_to_u:
+                coords = coords[::-1]
+            route_coords.extend(coords[1:])
+        else:
+            route_coords.append((G.nodes[v]['y'], G.nodes[v]['x']))
+    return route_coords, exposure_m, risky_edges
 
 
 def _edge_geometry(G, u, v, data):

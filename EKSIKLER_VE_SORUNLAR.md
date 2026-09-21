@@ -1072,6 +1072,223 @@ toplandığı ve R0'ın öğrenmeyen ajan olduğu açıkça yazılmalı.
 
 ---
 
+## J-38 🟠 Yol ağı zaman aşımına uğrayınca sonuç "0 kapalı yol, bölge erişilebilir" diyor
+**Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-21, kural 1
+
+**Ölçüm.** Antakya, Wayback 57965, r = 0,75 km: OSM grafı 45 sn sınırını aştı
+(`lojistik=49,1 sn`), işçi "Lojistik analiz opsiyonel - OSMnx zaman asimina ugradi"
+satırını yazıp `openRoads = 0`, `blockedRoads = 0` döndü; `/route` oturumu hiç açılmadı.
+Konsol (`konsol/src/modlar/hasar.tsx`, Sonuç bölümü) bunu "Kapalı yol 0 segment · Açık yol
+0 segment" diye gösteriyor; o koşunun öneri metni de **"Bolge genel olarak erisilebilir
+durumda."** oldu (öneri, graftan değil yol rasterından hesaplanan `blockedRoadPct =
+0,0019`'a bakıyor). Yani yol ağı **hiç çözümlenmemişken** sonuç "kapanma yok, bölge
+erişilebilir" diye okunuyor.
+
+**Yapılacak.** İşçi sonuca `roadNetwork: "ok" | "timeout" | "error"` yazsın; konsol
+zaman aşımında sayıları göstermesin, "yol ağı alınamadı, kapanma çıkarılamadı" desin;
+öneri metni bu durumda erişilebilirlik iddia etmesin. Grafı yerel PBF önbelleğinden
+okuma yolu var (`load_local_graph_from_cache`) ama yalnız önceden ısıtılmış kutular için.
+
+---
+
+## J-37 🟡 Sert rotanın 422 mesajı ağ kopukluğunu kapanma sanıyor
+**Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-34
+
+**Ölçüm.** J-34 uçtan uca koşusunda 20 rastgele çiftin 4'ünde iki modda da yol yok. Tam
+grafta (hiç kenar gizlenmeden) de yok; dört çiftin dördünde ters yönde rota bulunuyor.
+Sebep: araç ağı yönlü (tek yön sokaklar) ve analiz kutusunun kenarında kesiliyor. Sert
+mod buna "Bu iki nokta arasinda guvenli bir baglanti bulunamadi. Yol tamamen kapali
+olabilir." diyor (`uclar/rota.py`) — kapanmayı suçluyor.
+
+**Yapılacak.** 422'den önce tam grafta yol olup olmadığına bak: yoksa "ağda bu yönde yol
+yok (tek yön / kutu sınırı)", varsa "kapanmalar yüzünden yol yok" de. Mesaj değişikliği
+yanıt metnini değiştirdiği için duman imzası yeniden kaydedilmeli.
+
+---
+
+## J-36 🟠 Eğitilen modeller ürüne takılmaya hazır değil
+**Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-20, kural 1, kural 8
+
+**Soru (kullanıcı):** eğitimden sonra modelleri verdiğimizde proje onlarla doğru çalışacak mı?
+Kod okundu; bugünkü hâliyle **hayır**. Sebepler:
+
+1. **Yükleyici tek mimariye sabit.** `apps/road_damage/utils/inference.py:39`
+   `smp.Segformer(encoder_name="mit_b4", classes=1)`; dosya yolu `cekirdek.py:691`'de sabit.
+   Eğitim defterinde 11 aday var (`QuakeMind_veri/araclar/defter_dokuz_model.py:397-407`);
+   yalnız `segformer_mitb4` yüklenir. Öbürleri `load_state_dict`'te düşer, işçi havuzu
+   kurulamaz, **bütün analizler hata verir**. İyi haber: defter düz `state_dict` kaydediyor
+   (satır 584-585) ve Colab'daki sürümler (smp 0.5.0, torch 2.11) yereldekiyle aynı; bir
+   SegFormer-B4 yüklenmeli (gerçek dosyayla henüz denenmedi). Ağırlık yalnız
+   `AGIRLIK_SAKLA` açıksa Drive'a yazılıyor.
+2. **Eşik uyuşmuyor.** Makaledeki IoU, sigmoid çıktısında 0,5 eşiğiyle ölçülüyor
+   (`ESIK = 0.5`, defter satır 111). Ürün olasılığı 3,5 ile çarpıp 0,40'ta kesiyor
+   (etkin eşik 0,40 / 3,5 = **0,114**) ve üstüne 2. düzey morfoloji uyguluyor. Üründeki
+   çıktı ölçülen modelin çıktısı değil. Değerler dört yere dağılmış: `RoadDamageRequest`
+   varsayılanları, konsol hazırları (`hasar.tsx` HAZIRLAR: 0,45 / 0,40 / 0,28; güçlendirme
+   3,5 / 4,5), `make_model_masks.py` INFERENCE_PARAMS, işçi varsayılanları.
+3. **Çözünürlük (J-20).** Eğitim 0,375–0,5 m/px. Ürün yakınlaştırmayı yarıçaptan seçiyor:
+   konsol hazırları 1,5 / 2,5 / 4 km → z16 / z15 / z14 → 36° enlemde 1,9 / 3,9 / 7,7 m/px.
+   z18 (0,48 m/px) yalnız r ≤ 0,46 km'de. Defterin kendi tanısı: MEDBFS 0,75 m'de IoU 0,086.
+4. **Sonuç hangi modelden çıktığını yazmıyor.** Künyede görüntü var, model adı / sha256 /
+   eşik yok (kural 1).
+5. **Kıyas hattı eski modele sabit.** `make_model_masks.py` model ağırlığını SHA-256 ile
+   doğruluyor (`7d7fb8d8…`); yeni model yeni iz ister.
+6. **Metin sınıflandırıcı** (`apps/disaster_nlp/src/classification.py`): yeni modelin
+   etiketleri `CATEGORY_MAPPING`'deki 13 adla eşleşmezse sonuç "Diğer"e düşer;
+   `DISASTER_MODEL_NAME` ortam değişkeni yerel varsayılan model varken hiç okunmuyor;
+   anahtar kelime kuralı `max(score, 0.50)` döndürüyor — modelin üretmediği bir güven
+   değeri (kural 1). YOLO eğitilmeyecek (21 Eylül kararı); risk CatBoost'u
+   `araclar_risk_egit.py` ile eğitildiği sürece takılır.
+
+**Önerilen çözüm (model kaydı).** Her model için `kunye.json`: mimari, kodlayıcı, sınıf
+sayısı, karo boyu, eğitim GSD'si, normalizasyon, doğrulamada seçilen eşik, son işlem,
+sha256, eğitim deneyi / tohum, sınama ölçütleri. Yükleyici `smp.create_model` ile mimariyi
+künyeden kurar, sha256'yı açılışta doğrular; eşik ve son işlem künyeden gelir, istek
+yalnız açıkça ezerse değişir; yakınlaştırma eğitim GSD'sinden seçilir; sonuç model adını
+ve izini yazar; kıyas hattı aynı kaydı okur. Defter `model_en_iyi.pth`'nin yanına
+`kunye.json` yazar. **Teslim testi:** (1) yükleme, (2) defterin sınama karolarının bir
+kısmında defterdeki IoU'nun yeniden üretilmesi (aynı ön işlemenin kanıtı), (3) bilinen bir
+Maxar alanında canlı koşu.
+
+---
+
+## J-35 🟠 Konsolun Wayback "deprem sonrası" varsayılanı Antakya'da deprem öncesi görüntü
+**Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-21, D-01, kural 1
+
+**Sorun.** Bu oturumda yazılan konsol (`konsol/src/modlar/hasar.tsx`) "Deprem sonrası"
+düğmesiyle 6 Şubat'tan sonraki ilk Wayback sürümünü (57965, 2023-02-23) seçiyor,
+"hasarı bu görüntüde ararız" diyor ve sonuç künyesinde "23 Şubat 2023 tarihli Esri
+Wayback arşiv görüntüsü" yazıyor. Sürüm tarihi çekim tarihi gibi sunuluyor.
+
+**Yeniden ölçüldü (21 Eylül).** J-21'deki karo (z17, x 78701, y 51378): 11475
+(2023-01-11) ve 57965 (2023-02-23) isteklerinin **ikisi de 301 ile 48232 sürümüne
+yönleniyor**, dönen karo aynı (sha1 `fa0263438072c2f8`, J-21'deki değer). Wayback bir
+karoyu güncellemeyen sürümde onu son güncellendiği sürüme yönlendiriyor. Yani konsolun
+varsayılanı Antakya merkezinde **deprem öncesi** görüntüyü çözümletiyor; bulunan her
+"hasar" yanlış alarm.
+
+**Yapılacak.** (a) Arka uç karonun gerçekte hangi sürümden geldiğini 301'i izleyerek
+çözsün (ya da Esri World Imagery metadata katmanından çekim tarihini okusun) ve sonuca
+yazsın; (b) konsol "arşiv sürüm tarihi ≠ çekim tarihi" desin, çözülen karo deprem
+öncesiyse uyarsın ve OAM'ı önersin; (c) deprem bölgesinde varsayılan kaynak OAM Maxar
+olsun (D-01, J-21 zaten bunu söylüyor).
+
+---
+
+## J-34 🟠 Sürekli yumuşak maliyet ve simetrik kural — bölgeler arası görev tabanlı sınama
+**Durum:** KOŞULDU (21 Eylül 2026); canlı sistemde bayrak arkasında, varsayılan değişmedi · **Açıldı:** 21 Eylül 2026 · **İlgili:** J-30, B-01, B-06, M-20
+
+**Soru.** J-30'da modelin ikili kapanmaları sert (kenar silinir) ve kaba yumuşak (×3,
+×10) kullanıldı; hiçbir ayarda tutarlı kazanç çıkmadı. İki yöntemsel fark hiç
+denenmedi: (1) ikili kapanma yerine **sürekli olasılık** p(e) = kenar boyunca
+örneklerin hasarlı piksele düşen oranı; (2) **simetrik kural**: yer gerçeği bir
+kenarı örneklerinin %50'si hasarlı çizgiye yakınsa kapalı sayıyor, bugünkü model
+kuralı ise TEK hasarlı pikselle tüm kenarı kapatıyor. J-30'daki düşük kesinliğin
+(~0,10-0,18) bir kısmı bu asimetriden gelebilir.
+
+**Ön kayıt (sonuç görülmeden, 21 Eylül 2026 — `benchmark/yumusak_maliyet_deneyi.py`):**
+- Veri: EMSR648'in hasarlı yol işaretlediği 1 km'lik hücreler (Hatay AOI11 13 hücre,
+  K.Maraş AOI04 20 hücre; hücre ızgarası hasar kümesine göre değil sabit ızgaraya
+  göre). Maskeler z18, OpenAerialMap Maxar deprem sonrası (en erken tarihli sahne
+  önce), canlı sistemle aynı SegFormer ve eşikler (`make_model_masks.py`).
+- Dünya: EMSR gevşek kural, tampon 8 m, en az örtüşme 0,5 (J-30 ile aynı).
+- Ajanlar: R0, R3, M-sert (p > 0; bugünkü sistem), M-simetrik (p ≥ 0,5),
+  M-y(λ) maliyet = uzunluk × (1 + λp), λ ∈ {0,5; 1; 2; 4; 8; 16}.
+- λ seçimi: bir ilde (ayar) ortalama görev süresini en aza indiren λ; öbür ilde
+  (sınama) YALNIZ o λ raporlanır; iki yön. Tüm eğri şeffaflık için yazılır, iddia
+  yalnız sınama değerine dayanır.
+- Görevler: hücre × tohum (42-51) × 3; ekip hücre sınırına 150 m içinden, afetzede
+  EMSR hasarlı yol çizgisine 60 m içinden; kusursuz bilgiyle ulaşılabilir olmalı.
+- t_u 20 dk (5 dk duyarlılık). Ölçütler: ortalama görev süresi, R0→R3 kazancının
+  yakalanan payı, keşif, "rota bulunamadı", kesim düzeyi kesinlik/duyarlılık/IoU.
+
+**Bilinen sınırlar (şimdiden):** hücreler hasarlı yol içeren yerlerden seçildiği için
+kesinlik şehir geneline göre iyimser olabilir; ağ "walk" (J-30 ile karşılaştırılabilir
+olsun diye); EMSR hasar derecesi = geçilemezlik bir varsayım (J-28, M-26).
+
+**Sonuç (21 Eylül 2026).** 33 hücre (Hatay 13, K.Maraş 20), 976 görev, 10 tohum.
+Kod: `benchmark/yumusak_maliyet_deneyi.py`; maskeler `benchmark/data/model_masks_emsr/`
+(33/33 hücrede görüntü kapsaması %100, hücre başına ~75 sn CPU); graf yerel PBF'ten.
+
+*Algılama (kesim düzeyi):*
+
+| Kural | Hatay kesinlik / duyarlılık / IoU | K.Maraş kesinlik / duyarlılık / IoU |
+|---|---|---|
+| M-sert (bugünkü, p > 0) | 0,159 / 0,071 / 0,052 | 0,181 / 0,085 / 0,062 |
+| M-simetrik (p ≥ 0,5) | 0,189 / 0,021 / 0,019 | 0,191 / 0,028 / 0,025 |
+
+*Görev (t_u = 20 dk, R0→R3 kazancının yakalanan payı):*
+
+| Ajan | Hatay | K.Maraş |
+|---|---|---|
+| R0 / R3 süresi | 14,47 / 2,99 dk | 14,70 / 3,23 dk |
+| M-sert | %4,4 (39 "rota bulunamadı") | %15,9 (26) |
+| M-simetrik | %−3,5 | %−1,7 |
+| M-y λ = 0,5 · 1 · 2 · 4 · 8 · 16 | %2,8 · 3,7 · 3,7 · 10,5 · 13,6 · 22,3 | %1,5 · 1,8 · 4,8 · 10,5 · 16,7 · 14,1 |
+
+*Ön kayıtlı çapraz sınama:* λ Hatay'da seçildi (16) → K.Maraş'ta **%14,1**, hücre
+düzeyi bootstrap %95 GA **[%0,8; %27,9]**. λ K.Maraş'ta seçildi (8) → Hatay'da
+**%13,6**, GA **[%−0,4; %22,2]**. t_u = 5 dk: %12,9 [−0,6; 26,3] ve %12,2 [−2,2; 20,1].
+Görev bazında (R0'a göre) sınama ajanı K.Maraş'ta 53 görevde iyi, 54'ünde kötü,
+484'ünde eşit; Hatay'da 19 iyi, 25 kötü, 341 eşit — ortalama kazanç, pahalı geri
+dönüşlerin önlendiği az sayıda görevden geliyor.
+
+*Değerlendirme.*
+1. **Simetrik kural hipotezi desteklenmedi.** Kesinliği yalnız 0,16 → 0,19'a çıkardı,
+   duyarlılığı 0,07 → 0,02'ye düşürdü; görevde R0'dan kötü. Düşük kesinliğin kaynağı
+   kenar kuralı değil maskenin kendisi.
+2. **Sürekli yumuşak maliyet, iki yönde de pozitif sınama değeri veren ilk
+   varyant** (~%13-14) ve ağı hiç koparmıyor (sert kurallarda 26-39 "rota
+   bulunamadı"). Ancak güven aralıkları geniş: bir yönde alt sınır sıfırın hemen
+   üstünde (%0,8), öbür yönde sıfırı içeriyor. **Anlamlı kazanç iddia edilemez;
+   yönü tutarlı bir işaret olarak raporlanmalı.**
+3. Hatay'da en iyi λ ızgaranın sınırında (16): daha büyük λ denenmedi; denenirse ayrı
+   ve yeniden ön kayıtlı bir koşu olmalı (sonuca bakıp ızgara genişletmek çatallı yol).
+4. Darboğaz J-30'daki gibi algılama kalitesi (IoU 0,05-0,06).
+
+**Ürün için karar (kullanıcıda):** canlı sistemde kapanmaları sert silmek yerine
+yumuşak maliyet kullanmak kazanç açısından belirsiz ama **sağlamlık açısından**
+avantajlı (yanlış alarmlar hedefi ağdan koparamaz). Varsayılan sessizce
+değiştirilmez; bayrak arkasında eklenmesi önerilir.
+
+**Güven aralıklarının kaynağı.** `benchmark/yumusak_maliyet_ga.py` (hücre düzeyi
+bootstrap, 2 000 örnek, tohum 7; girdi `runs/yumusak_maliyet/satirlar.json`). Yukarıdaki
+dört aralık ve görev sayıları bu betikle yeniden üretildi, birebir aynı. Aynı betiğe göre
+bugünkü kural (M-sert) K.Maraş'ta %15,9 [0,8; 30,9], Hatay'da %4,4 [−10,6; 24,2]:
+yumuşak maliyetin sert kurala üstünlüğü de gösterilmiş değil.
+
+**Canlı sistemde bayrak (21 Eylül 2026, kullanıcı: "bayrak arkasında ekle").**
+
+- `POST /api/road_damage/route` iki isteğe bağlı alan aldı: `costModel`
+  (`"hard"` varsayılan = bugünkü kural, `"soft"`) ve `softLambda` (varsayılan 8,
+  0–64). λ = 8, K.Maraş'ta seçilip Hatay'da sınanan değer; Hatay'da seçilen 16 ızgaranın
+  kenarına dayandığı için daha az güvenilir sayıldı. Yumuşak yanıt ek olarak
+  `closureExposureMeters` (rotadaki Σ uzunluk × p) ve `riskyEdgeCount` döner. Sert
+  yanıt birebir eski biçimde.
+- p, işçide **genişletilmemiş** model maskesinden hesaplanır (deneydeki tanım, r_h'den
+  bağımsız); oturumda yalnız p > 0 kenarlar tutulur. Konsol bu ucu henüz çağırmıyor.
+- `/analyze` oturumu artık tam grafı ve kapalı kenar kümesini tutuyor; sert rota grafın
+  kopyası yerine `restricted_view` üzerinde koşuyor (bellek aynı: bir graf). Anahtarlar
+  bilerek `G`/`closedEdgeKeys` değil — o ikisi `/naive_compare` ve `/reference_compare`'in
+  "yer gerçeği olan oturum" işareti.
+- **Eşdeğerlik ölçüldü:** 33 EMSR hücresinde, modelin gerçek maskesinden çıkan
+  kapanmalarla (734 kapalı kenar), hücre başına 50 rastgele çift: kopya ile görünümde
+  A* rotaları **1 650 / 1 650 birebir aynı**.
+- `edge_closure_probability` vektörleştirildi: döngülü sürümle 33 hücre × (geçerli maske
+  var / yok) **66 / 66** ve 31 596 kenarlı 5 × 5 km grafta **2 / 2** karşılaştırmada
+  birebir aynı; o grafta 5,9 sn → 0,78 sn. J-34 sonuçları bu değişiklikten etkilenmez.
+- **Varsayılan değişmedi:** uç duman testi 57 istekte `testler/uc_imzalari.json` ile
+  **0 fark**.
+- *Uçtan uca (Antakya, OAM Maxar `10300100E18CB600` 2023-02-11, r = 0,35 km, z18):*
+  analiz 154 sn (çıkarım 92,9 sn), `damageRate` 0,0126 (J-19'daki ölçümle aynı),
+  396 açık / 11 kapalı parça, p > 0 olan 13 kenar, olasılık hesabı 0,0 sn. 20 rastgele
+  çift: 14'ünde üç ayar da (sert, λ = 8, λ = 0) aynı mesafe; 1'inde yumuşak rota kısa (465,7 → 346,0 m, 1 riskli
+  kenar, 5,5 m beklenen kapalı metre); 1'inde λ = 8 sert kuralın dolambacını korudu
+  (846,5 m), λ = 0 riskli kenardan geçti (658,1 m, 26,6 m); 4'ünde iki modda da yol yok —
+  sebebi kapanma değil ağ (bkz. J-37). Yanıtta graf nesnesi sızmadı.
+
+---
+
 ## J-33 🟡 Sağlık kontrolü model yüklüyordu ve kamera durumunu uyduruyordu
 **Durum:** KAPALI (21 Eylül 2026) · **Bulundu:** 21 Eylül 2026
 
