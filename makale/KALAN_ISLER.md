@@ -22,7 +22,7 @@ tek yerde topluyor. Her madde nereye ait olduğunu gösteren bir referansla aşa
 bölüme bağlanıyor; ayrıntı için oraya bakın.
 
 ### 🔴 Güvenlik — dış eylem gerektiren (ben yapamam)
-- [ ] **Roboflow API anahtarını (`VjVedHy8GcB2HOWgjUAs`) Roboflow hesabından iptal edip
+- [ ] **Roboflow API anahtarını (`VjVe…UAs [redakte — iptal edilecek]`) Roboflow hesabından iptal edip
   yenisini üretmek.** Kod tarafı temizlendi ama anahtar `origin/makale`'ye push edilmiş 2
   commit'in git geçmişinde hâlâ açık duruyor; geçmişi temizlemek anahtarı geçersiz kılmaz.
   (bkz. madde 5)
@@ -60,9 +60,9 @@ bölüme bağlanıyor; ayrıntı için oraya bakın.
   (bkz. madde 24)
 
 ### ⚫ Kullanıcı kararı bekleyen (bilinçli olarak açık bırakıldı)
-- [ ] **Veri Erişilebilirliği — NLP kümesi erişim politikası** (açık / istek üzerine / kapalı).
-  Soruldu, "kendim karar veririm" denildi — henüz karar verilmedi, docx'teki
-  `[ERİŞİM POLİTİKASI KARARLAŞTIRILACAK]` placeholder'ı duruyor. (bkz. madde 28)
+- [x] **Veri Erişilebilirliği — NLP kümesi erişim politikası** — ✅ KARAR (2026-09-20): **istek üzerine**.
+  Docx'teki `[ERİŞİM POLİTİKASI KARARLAŞTIRILACAK]` placeholder'ı "araştırma amaçlı olarak, sorumlu yazara
+  yapılacak makul bir başvuru üzerine (istek üzerine) erişime açıktır" ile dolduruldu. (bkz. madde 28)
 - [ ] **Tablo 5 kararının (c) — gelecek çalışmaya bırakma — pratik sonucu:** yol hasarı için
   piksel-etiketli bir eğitim kümesi oluşturulmadan Tablo 5, Tablo 14 ve Tablo 24'ün ilgili
   satırı kalıcı olarak boş kalacak. Bu bir hata değil, bilinçli bir kapsam sınırı — ama
@@ -141,7 +141,7 @@ bölüme bağlanıyor; ayrıntı için oraya bakın.
    ek değişiklik gerekmedi.
 5. **Güvenlik — Roboflow API anahtarı** — KISMEN DÜZELTİLDİ.
    `model_benchmarks/03_yer_seviyesi/local_colab_run/00_catlak_bina_yolo.ipynb` içindeki açık
-   yazılı anahtar (`VjVedHy8GcB2HOWgjUAs`) koddan kaldırıldı; hücre artık anahtarı Colab
+   yazılı anahtar (`VjVe…UAs [redakte — iptal edilecek]`) koddan kaldırıldı; hücre artık anahtarı Colab
    `userdata` sırrından veya `ROBOFLOW_API_KEY` ortam değişkeninden/`getpass` ile okuyor.
    **HÂLÂ YAPILMASI GEREKENLER (elle, benim yapamayacağım işler):**
    - Anahtar `origin/makale` dalına push edilmiş 2 commit'in (`9d4cc22`, `55a50d1`) geçmişinde hâlâ
@@ -256,7 +256,7 @@ taraması) ve bulunan somut hatalar düzeltildi.
 **Kodda düzeltilen 3 madde:**
 
 21. **Roboflow anahtarı GERİ GELİYORDU.** Önceki turda `00_catlak_bina_yolo.ipynb`'den
-    temizlenen anahtar (`VjVedHy8GcB2HOWgjUAs`), onu üreten kaynak script'te
+    temizlenen anahtar (`VjVe…UAs [redakte — iptal edilecek]`), onu üreten kaynak script'te
     (`model_benchmarks/03_yer_seviyesi/local_colab_run/build_notebook.py`) hâlâ hardcoded
     duruyordu — script tekrar çalıştırılırsa anahtar yeniden gömülürdü. `DATASETS` sözlüğünden
     `api_key` alanı kaldırıldı, üretilen defter artık Colab `userdata`/env var/`getpass` ile
