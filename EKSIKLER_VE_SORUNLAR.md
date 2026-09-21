@@ -204,6 +204,213 @@ kadar Tablo 13 "Kural" sütunu, Tablo 19, Bölüm 4.8 ve EMSR satırları yazıl
 
 ---
 
+## A-15 🔴 Tablo 13'teki SegFormer ile beş mimari aynı koşullarda karşılaştırılmamış
+**Durum:** KARAR BEKLİYOR — hangi mimarilerle yeniden koşulacağı kullanıcıya soruldu · **Bulundu:** 19 Eylül 2026 · **Birleşik liste:** M-96, M-90 (ayrıntı) · **İlgili:** KALAN_ISLER.md madde 6
+
+Kaynaklar (yalnız `makale` dalında var; `main` ve diğer dallarda `model_benchmarks/` yok):
+beş mimari `model_benchmarks/01_yol_hasari/local_colab_run/build_notebook.py`, SegFormer depo kökündeki
+`optimized_training_colab.ipynb` (çıktılarıyla birlikte). Eğitim tarifi ortak: aynı 842 görüntü (KATE-CD `train`
+404 + MEDBFS Türkiye 438), focal + dice (0,5/0,5), AdamW 2e-4, kosinüs yeniden başlatmalı çizelge, aynı
+artırımlar, parti 8, en çok 50 dönem, sabır 8, gradyan kırpma 1,0, ImageNet ağırlıkları.
+
+Farklar (sonucu karşılaştırılamaz kılıyor):
+1. **Bölme:** beş mimari %70/15/15 (sınama kümesi var); SegFormer %85/15, **sınama kümesi yok**. 0,4276 doğrulama
+   kümesinden, en iyi dönem de aynı kümeyle seçilmiş (iyimser).
+2. **Ölçüt:** SegFormer'ın 0,4276'sı yalnız hasar sınıfının IoU'su, **parti başına ortalanmış**; beş mimarininki
+   tüm sınama pikselleri üzerinden. `results/00_comparison_table.csv` bu değeri `mean_iou` (hasar + arka plan
+   ortalaması, 0,66–0,68) sütununa yazmış — elma ile armut.
+3. **Kapasite:** SegFormer MiT-B4 61,4 M parametre; ResNet-18'li dört mimari 11,3–14,3 M. Yakın olan yalnız
+   DeepLabV3+ ResNet-101 (45,7 M).
+4. **Makalenin kendi sözü tutulmamış:** Tablo 6 tüm mimariler için "kodlayıcı (hedeflenen): MiT-B4", Tablo 24
+   "kodlayıcı sabitlemesi, mekânsal blok bölmesi ve çoklu tohum" diyor; hiçbiri yapılmadı. Ayrıca
+   **smp 0.5.0'da LinkNet ve UNet++ MiT kodlayıcısını desteklemiyor** (yerel deneme) → Tablo 6'daki LinkNet +
+   MiT-B4 hedefi uygulanamaz; PSPNet + MiT-B4 yalnız ilk üç kademeyi kullanıyor (26,5 GFLOPs).
+5. KATE-CD'nin resmî `validation` (44) ve `test` (38) bölmeleri hiç kullanılmamış.
+6. `01_yol_hasari/0*.ipynb` ve `02_bina_hasari/0*.ipynb` (Mask2Former dahil) defterleri hiç koşulmamış
+   (çıktısız şablonlar).
+
+Yerel ölçüm (19 Eylül, smp 0.5.0, 1×3×512×512, `FlopCounterMode`; SegFormer değerleri Tablo 13 ile birebir):
+MiT-B4 kodlayıcıyla Segformer 61,4 M / 116,6 GFLOPs · U-Net 64,1 / 129,1 · FPN 62,7 / 123,5 · DeepLabV3+ 62,0 /
+134,5 · UPerNet 69,2 / 212,4 · PAN 61,1 / 131,0 · MAnet 71,6 / 132,1 · DeepLabV3 65,6 / 1 249,1 (pratik değil).
+Başka kodlayıcıyla: DeepLabV3+ ResNet-101 45,7 / 111,9 · UPerNet ConvNeXt-S 58,7 / 197,0 · U-Net ConvNeXt-S
+53,6 / 115,6 · UPerNet ResNet-101 56,3 / 191,6 · U-Net HRNet-W48 72,2 / 202,5. Ölçek: SegFormer B0 3,7 / 15,5 ·
+B2 24,7 / 50,1 · B5 82,0 / 148,5.
+
+**Yapılacak.** Seçilen mimarilerin tamamı aynı bölme (veri seti incelemesinden sonra karar), aynı ölçüt
+(hasar IoU'su tüm sınama pikselleri üzerinden + kesinlik/duyarlılık/F₁) ve aynı tohumlarla Colab'da yeniden
+eğitilmeli; Tablo 6, 13, 24 ve Şekil 7 buna göre güncellenmeli.
+
+**İlk sonuç — SegFormer MiT-B4 (19 Eylül 2026, Colab T4, tohum 42; ayrıntı `QuakeMind_veri/cikti/sonuclar/`):**
+Koşu A (ortak mekânsal bölme): en iyi dönem 15/23 (erken durdurma), doğrulama IoU_hasar 0,421; **sınama (103 sonrası karo)
+IoU_hasar 0,401**, kesinlik 0,534, duyarlılık 0,618, F1 0,573; KATE-PD 0,410 · MEDBFS 0,086 (n = 12) · Hatay 0,398 ·
+Kahramanmaraş 0,407; 53 öncesi karoda yanlış alarm 0 (eşik 0,2'de bile 0 → büyük olasılıkla görünüm kestirmesi, gerçek
+hasarsız sonrası alanı temsil etmez). Maliyet 61,37 M / 116,6 GFLOPs / T4'te 70 ms. Koşu B (KATE-PD resmî bölmesi):
+doğrulama 0,469, sınama (79) 0,481 (F1 0,650); yayımlanmış U-Net ResNet-152 doğrulama 0,36 (IoU hesap yöntemi doğrulanmalı).
+Tanı: çözünürlük etkisi belirgin — Maxar 0,375 m 0,486 (n = 16) · Pléiades 0,5 m 0,395 (n = 75) · MEDBFS 0,75 m 0,086;
+3 piksel sınır toleransı IoU'yu yalnız 0,401 → 0,466 yapıyor (hataların çoğu kenar kayması değil); bina/bileşen düzeyi:
+>200 m² hasar kümelerinin %74'ü (KATE-PD'de %78) bulunuyor, 50–200 m²'nin %32'si; tahmin edilen 189 bileşenin 63'ü yanlış
+alarm (bileşen kesinliği 0,67); eşik 0,2–0,8 arasında sınama IoU'su değişmiyor (0,397–0,402); parlaklık etkisi zayıf
+(Spearman r = 0,18, p = 0,08). Protokol notu: erken durdurma sabrı (8) kosinüs döngüsünden (10–20 dönem) kısa; ikinci
+döngü tamamlanmadan duruyor.
+
+**Deneme 2 (19 Eylül 2026, kullanıcı isteği; mevcut model korunarak ayrı klasöre):** MEDBFS eğitimden ve ölçümden çıkarıldı
+(sonrası + öncesi), SABIR = 20 (en çok 50 dönem), diğer her şey aynı. En iyi dönem 30/50 (doğrulama 0,465; 23. dönemde
+durulsaydı en iyi 0,444 kalacaktı). **Aynı 91 KATE-PD sınama karosunda: yeni 0,434 (P 0,591 · R 0,620 · F1 0,605), eski model
+0,410 (P 0,543 · R 0,627 · F1 0,582)** → kazanç büyük ölçüde kesinlikte (daha az yanlış alarm). Tek tohum; fark tohum
+değişkenliği içinde olabilir. İki değişiklik aynı anda yapıldığı için katkıları ayrılamıyor. Süre 73 dk (T4).
+
+**Ek veri — QuickQuakeBuildings (19 Eylül 2026, kullanıcı onayıyla):** TeraBox hesap istediği için veri kaynaklarından
+yeniden kuruldu: Maxar ARD katalog 1040010082698700 (2023-02-07, 0,305 m, CC BY-NC 4.0; 4 karo, 314 MB) + OSM bina
+poligonları 2023-03-01 tarihli attic sorgusuyla (4 029 kimlik; 169 yıkık; 1 kayıt Teksas'ta çıktı → çıkarıldı).
+`araclar/qqb_osm.py`, `araclar/qqb_karola.py`: 0,375 m'ye örneklenmiş 425 karo (512²); 63'ü yıkık bina içeriyor, 362'si
+yalnız sağlam bina (deprem sonrası gerçek negatif). Mevcut bölmeyle uyum: doğrulama/sınama bloklarındaki ya da o karolarla
+örtüşen 86 karo dışarıda → **339 karo eğitime girebilir**, sınama kümesi değişmedi. Önizleme: `cikti/qqb_onizleme.jpg`.
+Uyarılar: etiket yalnız tamamen yıkık binalar (kısmi hasar "sağlam" sayılmış olabilir; önizlemede birkaç örnek); OSM
+çizimleri deprem öncesi görüntüden, 1–2 m kayma var. TE23D (YTÜ) için yazarlarla iletişim sonraya bırakıldı.
+
+**Karar (19 Eylül 2026, kullanıcı):** üç grup, 9 model — MiT-B4 kodlayıcıyla SegFormer, U-Net, FPN, DeepLabV3+,
+UPerNet; aynı kapasitede DeepLabV3+ ResNet-101 ve UPerNet ConvNeXt-S; ölçek için SegFormer B0 ve B2. Eğitime
+geçilmeden önce parametreler ve veri hazırlığı sabitlenecek (tohum sayısı sonra).
+
+**Devir (19 Eylül 2026 akşam, kullanıcı kararı):** 9 modelin eğitimi **Utku'ya devredildi**. Paket:
+`Desktop\2209-A Afet\QuakeMind_Devir_Utku_Egitim_2026-09-19\` (+ aynı adlı `.zip`, 6,3 MB; `BENIOKU.md` devir notu),
+web sürümü https://claude.ai/artifact/DUDdsRkgACUA4xPs1hgtWC (özel; kullanıcı paylaşacak). Yeni defter
+`QuakeMind_veri/defterler/02_dokuz_model_protokol.ipynb` (`araclar/defter_dokuz_model.py` üretir): P1/P2 protokol
+seçimi (P2 = MEDBFS yalnız dış sınama + SABIR 20, önerilen), tohum döngüsü ve tamamlananı atlama, QQB eğitime ekleme
+(A3) ve **74 karoluk QQB dış sınaması** (deprem sonrası sağlam binalarda bina düzeyinde yanlış alarm; `araclar/qqb_bolme.py`
+→ `qqb/qqb_bolme.csv`, `qqb_paket.json`: 339 eğitim / 74 dış sınama / 12 dışarıda), bölge kısıtlı eğitim (Tablo 15),
+kayıp ağırlığı (Tablo 21), morfoloji 0/1/2, Koşu B, özet hücresi (Tablo 13 ort. ± ss, Tablo 15, iki şekil). Yerelde CPU
+duman testiyle bütün kombinasyonlar denendi; QQB karoları Colab kodu ile yerel `qqb_karola.py` çıktısı 55 yıkık binalı
+karoda birebir aynı. Önerilen sıra: P2 SegFormer → P2+QQB kıyası → 9 model tek tohum → en iyi 3 model × 3 tohum →
+Tablo 15 (3 koşu) → Tablo 21 (4 koşu).
+
+---
+
+## A-16 🔴 Bölütleme eğitim verisinde sızıntı ve hiç negatif örnek yok
+**Durum:** AÇIK — veri hazırlığı önerisi kullanıcıya sunuldu · **Bulundu:** 19 Eylül 2026 · **İlgili:** A-15, M-96, M-24
+
+Ölçülenler (Hugging Face kart/API, KATE-CD GitHub, Zenodo kaydı ve MEDBFS arşivinin uzaktan okunması):
+- **KATE-CD** (Nayir vd., SAMCD makalesi, JARS): 7 il (Adıyaman, Gaziantep, Hatay, Kahramanmaraş, Kilis, Osmaniye,
+  Malatya), Maxar Open Data + Airbus Pléiades, 0,3–0,5 m, EPSG:32637, 512×512, 486 öncesi/sonrası çifti; resmî bölme
+  404/44/38; etiket = hasarlı bina poligonları (ikili). **Lisans CC0 1.0** (`CITATION.cff`) — "lisans veri
+  kartında yok" notu böylece kapanıyor. Hugging Face sürümünde karoların konumu/adı yok.
+- **MEDBFS** = Zenodo 11647956 "AIR-DERSL-Earthquake Feature Set", **CC BY-NC 4.0**; `Turkey.zip` 3,33 GB, 438 karo
+  (512×512, ~0,75 m), öncesi + sonrası + etiket (0/1). Karolar 6 büyük sahneden (`part0`…`part5`: 26/28/66/146/137/35).
+  GeoTIFF'lerde yalnız **sahnenin** başlangıç noktası var (karonun değil), CRS etiketi yok. **Düzeltme (19 Eylül,
+  aynı gün):** ilk hesap 512 piksel adım varsaydığı için yanlıştı; karolar **256 piksel adımla, yarı örtüşmeli**
+  kesilmiş. EPSG:32637 + 256 adım, KATE-PD'nin Maxar karolarıyla şablon eşleştirmesiyle doğrulandı (16 güçlü eşleşme,
+  konum farkı ≤ 4,5 piksel ≈ 3 m; görsel: `QuakeMind_veri/cikti/dogrulama_medbfs_katepd_duzeltilmis.png`).
+  Gerçek konumlar (geoBoundaries il/ilçe sınırlarıyla): Kahramanmaraş/Türkoğlu 283, Gaziantep/İslahiye 94,
+  Gaziantep/Nurdağı 35, Hatay/Hassa 26. `PreCloud.txt`'teki 386 bulutlu öncesi görüntünün hepsi Fas'a ait.
+- **Envanter (19 Eylül, `QuakeMind_veri/araclar/envanter.py`):** KATE-CD'nin 486 sonrası görüntüsünün **tamamı KATE-PD'de
+  piksel piksel aynı** ve aynı resmî bölmede (404/44/38 ↔ train/val/test) → KATE-CD yeni sonrası görüntü getirmiyor,
+  katkısı öncesi görüntüleri. KATE-PD'de aynı ızgara hücresinden 32 neredeyse aynı çift var (hepsi aynı bölmede).
+  KATE-PD'de hasarsız karo yok (ort. hasar oranı %3,0); MEDBFS'te 1 (ort. %0,66). MEDBFS'in kendi içinde **1 953 örtüşen
+  karo çifti** var (rastgele bölmede büyük sızıntı); KATE-PD'nin 27 karosu MEDBFS'in 45 karosuyla aynı yerde
+  (İslahiye) → ikisi aynı bölmeye düşmeli. İl dağılımı: KATE-PD Hatay 340, Kahramanmaraş 199, Gaziantep 180,
+  Malatya 63, Adıyaman 24, Osmaniye 23, Kilis 3; Tablo 15 için Hatay 366, Kahramanmaraş 482 karo.
+
+Sorunlar:
+1. **Sızıntı:** her iki eğitimde de bölme karo düzeyinde rastgele; aynı sahnenin komşu karoları eğitim ve sınamaya
+   dağılıyor → sonuçlar iyimser.
+2. **Negatif örnek yok:** 842/842 karo hasarlı (SegFormer defteri çıktısı). Model hasarsız bir sahneyi hiç görmedi;
+   yanlış alarm davranışı ne öğretildi ne ölçüldü (J-30'daki yanlış alarm sorunuyla doğrudan ilgili).
+3. KATE-CD'nin resmî doğrulama/sınama bölmeleri kullanılmadı (A-15/5).
+4. Çözünürlük karışık: KATE-CD 0,3–0,5 m, MEDBFS 0,75 m; simülasyon için düşünülen Help.NGO drone 3–8 cm.
+
+**Yapılacak (öneri):** KATE-CD resmî bölmesi + MEDBFS sahne bazlı bölme (ör. eğitim part3+4, doğrulama part0+1,
+sınama part2+5); olay öncesi görüntüler (bulutlu olanlar hariç) aynı bölmede tüm-sıfır etiketli negatif örnek
+olarak eklenir; sonuçlar iki küme için ayrı raporlanır.
+
+**Durum (19 Eylül 2026, DEVAM EDİYOR):** Ortak bölme listesi kuruldu (`QuakeMind_veri/araclar/bolme.py` →
+`cikti/bolme_listesi.csv`, 2 194 satır): 2 km UTM blokları, il bazında %80/%10/%10 (kare sapması en küçük atama),
+tampon kuralı (örtüşen karolardan düşük öncelikli olan kullanılmaz; 28 MEDBFS karosu), doğrulama/sınamada
+küme içi örtüşmesiz alt küme ölçüte girer (62 karo dışarıda). Sonuç: KATE-PD 636/105/91, MEDBFS 359/17/34 (+28 tampon),
+öncesi (negatif) 736/85/75; bölmeler arası örtüşen çift **0**. Örtüşen blokları birleştirme denendi, MEDBFS sahneleri tek
+parça olup Maraş doğrulamasını %27'ye çıkardığı için bırakıldı. SegFormer defteri (`araclar/defter_segformer.py`,
+liste gömülü) yerelde duman testinden geçti ve Colab'da (T4) koşuluyor; çıktılar Drive `QuakeMind_egitim/`.
+
+**Karar (19 Eylül 2026, kullanıcı):** veri setleri kesin — **KATE-CD, KATE-PD, MEDBFS**.
+**KATE-PD** (Musaoğlu vd., IGARSS 2025; HF `CSCRS/kate-pd`, CodeOcean DOI 10.24433/CO.8064763.v1): yalnız deprem
+sonrası görüntü (bizim modelin girdisiyle aynı), aynı 7 il, Maxar + Pléiades 0,3–0,5 m, 832 karo, resmî bölme
+675/78/79 (karo kimlikleri bölmeler arasında iç içe → karo düzeyinde rastgele, mekânsal değil). **Veri lisansı CC0 1.0**
+(CodeOcean `data/LICENSE`, 19 Eylül'de görüldü). Yayımlanmış taban: SMP U-Net ResNet-152, Jaccard kaybı, doğrulama
+IoU 0,36. CodeOcean'da karoların konumunu veren `data/preprocessing/grid_maxar.geojson` (1 013 KB),
+`grid_pleidas.geojson` (725 KB), `katepd_polygons.geojson` (1,78 MB) var — Hatay/Maraş ayrımı ve mekânsal blok
+bölmesi için gerekli; indirmek için kullanıcı izni bekleniyor.
+**Yeni risk:** KATE-CD de aynı ekibin, aynı görüntü ve ızgaradan (834 etiketli sonrası görüntünün 486'sı çiftlenmiş;
+KATE-PD 832 karo). KATE-CD sonrası görüntüleri büyük olasılıkla KATE-PD'nin alt kümesi → iki küme birlikte
+kullanılırsa aynı görüntü bir kümede eğitimde, ötekinde sınamada olabilir. Görüntü özetleriyle (hash) denetlenmeli.
+
+---
+
+## A-17 🟠 Makaledeki yer tutucuların doldurma haritası
+**Durum:** AÇIK · **Bulundu:** 19 Eylül 2026 · **İlgili:** A-15, A-16, KALAN_ISLER.md 6–10
+
+v3'te (kullanıcının 19 Eylül dosyası) 88 `[ÖLÇÜLECEK]`, 6 `[TARANACAK]`, 1 `[KARŞILAŞTIRILAMAZ]`, 1 `[GELECEK ÇALIŞMA]`:
+Tablo 5 (6), Tablo 13 (5 + 1), Tablo 14 (36 + 6 τ), Tablo 15 (28), Tablo 21 (7), Tablo 24 (4), 5.3(q) ve Bölüm 4
+girişindeki "iskelet" cümlesi. Doldurma yolu:
+- **Tablo 5** → v3'ün yeni çerçevesinde "yol hasarı kümesi" değil, üç eğitim kümesinin künyesi olmalı; veriden ve
+  küme makalelerinden ölçülür (eğitim gerekmez).
+- **Tablo 13** → 9 model aynı protokolle (A-15 kararı), Colab.
+- **Tablo 15** → karoların il bilgisi gerekir (KATE-PD ızgara dosyaları; MEDBFS hesaplandı); SegFormer Hatay / Maraş /
+  birleşik eğitim, Colab.
+- **Tablo 14** → eğitilen modeller EMSR648 AOI04/AOI11 üzerindeki deprem sonrası uydu görüntüsünde koşulur, kapanma
+  kesim düzeyinde EMSR648 ile karşılaştırılır; τ taraması yerelde.
+- **Tablo 21** → harmanlama ve morfoloji yalnız çıkarım (ucuz); kayıp ağırlıkları ek eğitim; r_h ve λ(d) yeni
+  simülasyonda; V₀ modülü yok (gelecek çalışma olarak kalmalı); risk ağırlıkları yerelde.
+- **Tablo 24** → satırlar yukarıdakilerden dolar; "çok mimarili kıyaslama — yol" satırı yeni çerçevede Tablo 13 ile
+  birleşmeli; YOLO mAP ayrı iş.
+- **Bölüm 3.10** 2 km × 2 km mekânsal blok (%80/10/10), ikincil rastgele bölme ve **model başına 10 tohum** vaat
+  ediyor → koşulacak protokolle metin eğitimden önce hizalanmalı.
+
+---
+
+## A-18 🟠 Yeniden kurulan QuickQuakeBuildings verisinde etiket ve bölme sorunları
+**Durum:** AÇIK · **Bulundu:** 19 Eylül 2026 (QQB makalesinin incelemesi, `Furkan--Utku--Model_ve_veriseti_aktarımı/AKTARIM_BELGESI.md` Ç-02) · **İlgili:** A-15, A-16
+
+1. **"Sağlam" listesinde hasar etiketli binalar:** 1 Mart 2023 OSM verisinde 3 859 sağlam binanın 95'inde
+   `earthquake:damage` (49 "yes", 18 "possible") ya da `damaged:building=yes` (27) etiketi var. 49'u eğitim, 43'ü dış sınama,
+   3'ü dışlanan karolarda (dış sınamadaki 1 109 sağlam poligonun %3,9'u). **Yapılacak:** maskede 255 = yok say; dış
+   sınamada yanlış alarm sayımından çıkar.
+2. **Dış sınamanın 23/74 karosu doğrulama bloklarında** → model seçimi o bölgeyi görmüş olabilir. **Yapılacak:** sınama
+   bloklarındaki 51 karo ayrıca raporlanmalı.
+3. **Dışlanan dağlık kesim:** QQB batıdaki dağlık kesimi (SAR belirsizliği yüzünden) veri setine almamış; bizim karo zarfımız
+   (dışbükey zarf − 30 m) orayı içeriyorsa listede olmayan binalar maskede 0 sayılıyor olabilir. **Yapılacak:** zarf ile QQB
+   kapsamını karşılaştır.
+4. **Lisans çelişkisi:** makale uydu verisine CC BY 4.0 diyor; Maxar Open Data kaydımız CC BY-NC 4.0. BY-NC varsayımıyla,
+   atıf vererek kullanılıyor (ticari olmayan proje).
+
+Ek bilgi: QQB'nin 5 katı rastgele (1. katta en yakın komşunun %81,4'ü başka katta); yayımlanmış bina düzeyi sonuçları
+(optik F1 0,605) bizim piksel IoU'muzla kıyaslanamaz.
+
+---
+
+## A-19 🟡 Focal kaybın α = 0,25 ayarı hasar piksellerine arka plandan daha az ağırlık veriyor
+**Durum:** AÇIK (deney önerisi) · **Bulundu:** 19 Eylül 2026 (DA-SegFormer incelemesi, `AKTARIM_BELGESI.md` Ç-11) · **İlgili:** A-15, Tablo 21
+
+smp 0.5.0 `losses/_functional.py` satır 83–84: `loss *= alpha * target + (1 - alpha) * (1 - target)`. Bütün
+eğitimlerimizde kullanılan `FocalLoss(mode="binary", alpha=0.25, gamma=2.0)` hasar piksellerini 0,25, arka planı 0,75 ile
+çarpıyor (RetinaNet varsayılanı; γ = 2 kolay negatifleri ayrıca bastırıyor, Dice terimi de hasar sınıfına odaklı). Hata
+değil ama "azınlığa odaklan" mantığının tersi ve hiç sınanmadı. **Yapılacak:** SegFormer-B4 / P2 ile α ∈ {0,25 · 0,5 · 0,75}
+taraması (Tablo 21'deki kayıp ağırlığı taramasına kol olarak). Seçim doğrulama kümesinde; varsayılan değişmeden önce çoklu
+tohumla doğrulanmalı.
+
+---
+
+## A-20 🟠 Tablo 15 (bölgeler arası genelleme) tasarımı il ile veri kümesini karıştırıyor ve gerçek aktarım testi içermiyor
+**Durum:** AÇIK (tasarım önerisi) · **Bulundu:** 20 Eylül 2026 (Valentijn vd. 2020 incelemesi, `AKTARIM_BELGESI.md` Ç-16) · **İlgili:** A-15, A-16, Tablo 15
+
+1. **Kaynak küme karışıklığı:** Hatay'ın karoları ağırlıkla KATE-PD (340 KATE-PD + 26 MEDBFS), Kahramanmaraş'ınkiler ağırlıkla
+   MEDBFS (199 KATE-PD + 283 MEDBFS; 0,75 m, farklı etiket protokolü). Hatay ↔ Maraş farkı il değil veri kümesi farkı olabilir.
+   **Yapılacak:** yalnız KATE-PD karolarıyla kontrol koşusu ya da sonuçların kaynak kümeye göre ayrı raporlanması.
+2. **"Birleşik" satırı hedef ili de içerdiği için aktarım testi değil.** **Yapılacak:** "hedef il hariç diğer iller → hedef"
+   (il-dışarıda-bırakma) satırı ve IoU(kaynak→hedef)/IoU(hedef→hedef) oran sütunu.
+3. İsteğe bağlı: tek il eğitimlerini eşit eğitim miktarına alt-örnekleyen kontrol; az etiketle ince ayar eğrisi (1/2/5/10
+   blok); eşik kayması (kaynak eşiği / kâhin eşik / AP) ayrı raporlanmalı.
+
+---
+
 # B. MAKALE — HENÜZ ÖLÇÜLMEMİŞ
 
 ## B-01 🔴 Görev tabanlı değerlendirme (Bölüm 4.7) — makalenin merkezî katkısı
@@ -424,6 +631,34 @@ baskınlığı nedeniyle yanıltıcı olduğunu savunup IoU_hasar'ı esas ölç�
 **Yapılacak.** Erken durdurmayı `iou_fg`'ye taşıyıp yeniden koştur (A-01 ile aynı
 koşumda kapanır) ya da Bölüm 4.2'ye açık bir kayıt cümlesi ekle.
 
+## D-08 🔴 Roboflow API anahtarı makale dalında açık metin olarak duruyor
+**Durum:** AÇIK · **Bulundu:** 16 Eylül 2026 (M-62 incelemesi)
+
+`model_benchmarks/03_yer_seviyesi/local_colab_run/build_notebook.py` ve aynı klasördeki
+`00_catlak_bina_yolo.ipynb`, Roboflow hesabının API anahtarını kodun içinde açıkça taşıyor (değer bu
+dosyaya bilerek yazılmadı). Depo şu an özel, ancak makale "kaynak kod erişime açılacaktır" diyor; depo
+açıldığında anahtar herkese görünür olur ve git geçmişinde kalır.
+
+**Yapılacak.** (1) Roboflow panelinden anahtarı **iptal edip yenisini üret** (asıl koruma budur; dosyadan
+silmek geçmişteki kopyayı kaldırmaz). (2) Kodda anahtarı ortam değişkeninden ya da Colab "Secrets"ten oku.
+(3) Depo açılmadan önce geçmişte başka gizli bilgi olup olmadığını tara.
+
+## D-09 🟡 Risk yeniden koşumu `leaderboard.csv`'den iki naif taban satırını sildi
+**Durum:** AÇIK · **Bulundu:** 17 Eylül 2026 (`UtBird/QuakeMind` makale dalı, commit `7024d64` incelemesi)
+
+`model_benchmarks/05_risk_skoru/local_run/run_all_risk.py` yeniden koşulunca `results/leaderboard.csv` yalnız yedi
+modelle baştan yazıldı; 13 Eylül'de (M-09) eklenen **"Naif — Yalnızca fay mesafesi (r0a)"** ve **"Naif — Yalnızca
+sismisite yoğunluğu (r0b)"** satırları düştü. Makaledeki Tablo 23 bu iki satırı içeriyor, yani tablonun kaynak
+dosyası artık tabloyla uyuşmuyor. Satırların JSON'ları (`naive_fault_distance.json`, `naive_seismicity.json`)
+değişmedi; `naive_baselines.py` leaderboard'a yazmıyor.
+Ayrıca yeniden koşumda **eğitim süreleri** değişti (CatBoost 14,61 → 14,97 sn, RO 6,32 → 5,21, XGBoost 10,31 → 11,00,
+LR 0,32 → 0,14, topluluk 33,88 → 36,46, LightGBM 1,45 → 1,23, ÇKA 0,40 → 0,33). Tablo 23 eski süreleri taşıyor.
+Başarım değerleri ise birebir aynı (katlama kayıtları dahil; fark < 10⁻¹²).
+
+**Yapılacak.** (1) İki naif satırı `leaderboard.csv`'ye geri ekle ya da `run_all_risk.py`'nin naif JSON'ları da
+okumasını sağla. (2) Tablo 23'teki eğitim sürelerini yeni koşuma göre güncelle ya da "süreler ilk koşumdan; makineye
+bağlıdır" notu düş.
+
 ---
 
 # E. SENARYO VE ÖLÇÜM
@@ -580,6 +815,10 @@ kaynak. Düzeltme gerekmiyor; isteğe bağlı olarak Tablo 22'de beş hane yazı
 
 `build_notebook.py`: `tile_size, tile_stride = 512, 256`. %50 örtüşme gerçektir,
 makalenin sızdırma uyarısı geçerlidir.
+
+> **16 Eylül 2026 eki (makale listesi M-89):** Kodda örtüşme var, girdide yok. KATE-CD ve MEDBFS görüntüleri zaten
+> 512 × 512 (MEDBFS `Turkey.zip` dizini Zenodo'dan HTTP Range ile okundu; SegFormer defteri 842 görüntüden 842 karo
+> üretmiş, **842'sinin tamamı hasarlı**). Bu koşumda örtüşen karo ve %95 elemeyle çıkarılan karo **yok**. Makale düzeltildi.
 
 ---
 
@@ -830,6 +1069,56 @@ toplamların ortalama ± standart sapmasıdır. Çıktılar: `runs/multi_seed/`
 değiştirilmeli; sınırlılık (b) ve (g) maddeleri güncellenmeli ("tek koşumdan güven aralığı
 türetilememektedir" artık geçersiz); görev düzeyi p değeri kullanılmamalı; kazancın K-Z1'de
 toplandığı ve R0'ın öğrenmeyen ajan olduğu açıkça yazılmalı.
+
+---
+
+## J-33 🟡 Sağlık kontrolü model yüklüyordu ve kamera durumunu uyduruyordu
+**Durum:** KAPALI (21 Eylül 2026) · **Bulundu:** 21 Eylül 2026
+
+**Sorun.** `GET /api/status` içinde `"nlp": _get_nlp_pipeline() is not None`
+satırı tembel yükleyiciyi çağırıyordu: sunucu açıldıktan sonraki ilk sağlık
+kontrolü BERTurk'ü (sınıflandırma + NER) belleğe alıyordu (log: "NLP Pipeline
+loaded lazily" sağlık kontrolüyle tetiklendi). `"camera": True` ise hiçbir
+kontrol yapmadan sabit dönüyordu — model dosyası olmasa da "var" diyordu
+(CLAUDE.md kural 1).
+
+**Düzeltme.** Alanlar yükleme tetiklemeden hesaplanıyor: model bellekteyse ya da
+dosyası diskteyse kullanılabilir. Bellekteki modeller ayrı `yuklu` alanında.
+Ölçüm: ilk sağlık kontrolü 13 ms, NLP yükleme sayısı 0.
+
+---
+
+## J-32 🟠 Analiz sonucu ucu 17,6 MB dönüyor; 16 MB'ı tanı görseli
+**Durum:** KISMEN KAPALI · **Bulundu:** 20 Eylül 2026
+
+**Ölçüm.** `GET /api/road_damage/status/{id}` biten bir analiz için (Antakya, 1 km
+yarıçap) **17,59 MB** JSON döndürüyor. Dağılım: `imageOriginalB64` 5,5 MB ·
+`imageSegmentationOverlayB64` 5,5 MB · `imageDamageOverlayB64` 5,3 MB ·
+`imageRoadMaskB64` 117 KB · `safeRoadSegments` 1,69 MB · `blockedRoadSegments`
+12 KB · geri kalan bütün sayılar ve künye toplam ~1 KB.
+
+**Neden sorun.** Eski web bu ucu yoklamayla çağırıyor ve her çağrıda tam gövde
+iniyor; sonucu yalnız sayı olarak gösteren bir istemci de 17 MB indirmek zorunda
+kalıyor. Büyük veriyi JSON ile taşımak MIMARI §8'de zaten kırılma noktası olarak
+yazılı: asıl maliyet ayrıştırma.
+
+**Yapılan (20 Eyl).** Uca `?gorseller=0&segmentler=0` seçeneği eklendi; varsayılan
+davranış değişmedi (eski web etkilenmiyor). Yeni konsol özeti bu seçenekle ~1 KB
+olarak çekiyor, yol geometrisini ise zaten var olan ve ETag ile önbelleklenen
+`GET /api/road_damage/segments/{id}` ucundan alıyor.
+
+**Yapılan (21 Eyl).** Görseller artık JSON'da değil diskte: iş bitince
+`veri/analiz_gorselleri/{isId}/{ad}.png` olarak yazılıyor, `GET
+/api/road_damage/gorsel/{isId}/{ad}` ile tek tek ve önbelleklenebilir şekilde
+alınıyor. Bellekteki iş deposu görsel tutmuyor (20 iş × ~16 MB tavanı kalktı).
+Eski web base64 beklediği için `gorseller=1` (varsayılan) çağrısında dosyadan
+okunup kodlanıyor — davranışı değişmedi.
+
+**Kalan.** (1) Görseller PNG; WebP'ye çevrilirse dosya boyutu düşer (tek görsel
+bugün ~10 MB).
+(2) `safeRoadSegments` 1,69 MB JSON: MIMARI §8'deki eşiğe göre ikili ya da vektör
+karo olmalı. (3) Eski web yoklamayı bırakıp SSE'ye geçtiğinde bu uç tamamen
+sayı-özeti hâline gelebilir.
 
 ---
 
@@ -1943,3 +2232,29 @@ tavana varmadan tetikleniyor.
 | 16 Eylül 2026 | Makale oturumu simülasyon sonuçlarını okudu (devir belgesi 12–15, J-28/29/30, E-01/02/06, `multi_seed_tablo.md`, `tablo18.md`). `MAKALE_DUZELTME_LISTESI.md` (makale dalı) güncellendi: M-20/M-22/M-23/M-25/M-26/M-27/M-31/M-43 durum notları, M-04 kısmen yeniden açıldı, yeni Bölüm 8 (M-76…M-82). Makalede eski senaryo rakamlarının geçtiği **71 yer** tarandı. **A-14 eklendi:** geçilebilirlik kuralı tanımları makale ile kodda ters. |
 | 16 Eylül 2026 | **Makaleye işlendi** (makale oturumu): J-28, J-29, J-30, J-31 ve E-01/E-02/E-06 sonuçları. Bölüm 3.2 (kural tanımları, Tablo 4), 3.8 (R1/R2 uygulama kararları), 3.8.1 (8 bölge, 10 tohum), 4.3, 4.5 (Tablo 15: n = 380 gecikme), 4.6 (Tablo 16 beş sütun + R1/R2/R1+R2, Tablo 17), 4.7 (Tablo 18, olumsuz sonuç), 4.8 (Tablo 19), 5.1, 5.3, 5.4, Sonuç, Öz, Abstract, Giriş. **A-14 kapandı** (makale koda uyduruldu). Belge Word'de iki geçişle güncellendi; 12 ek uyumu hatası düzeltildi. Yeni tablo eklendiği için belgede eski Tablo 10 ve sonrası bir kaydı (J maddelerindeki "Tablo 16/17/18/19" = belgede 17/18/19/20). |
 | 16 Eylül 2026 | **M-05 ve M-22 makaleye işlendi.** Bölüm 3.9'a atama kuralı + Algoritma 3 (kod yeniden okundu, değişmemiş); Tablo 12 makineden ölçülen donanım ve `venv` sürümleriyle dolduruldu; `v_ort` = 15,0 km/sa Bölüm 3.8'e yazıldı. **B-09 kapandı.** Düzeltme: senaryo makinesinin işlemcisi **i7-12700H (12. nesil)**, kullanıcının bildirdiği 14. nesil değil. **Yan etki:** sürüm denetimi sırasında sistem Python'uyla (3.10) `ultralytics` içe aktarıldı ve kullanıcı klasöründeki `Ultralytics/settings.json` varsayılanlara sıfırlandı (uyarı mesajıyla); dosya şu an geçerli, ancak önceden özel bir ayar (ör. `sync`) varsa kaybolmuş olabilir. |
+| 16 Eylül 2026 | **M-46 ve M-83 tamamlandı, M-45 kısmen.** Başlık altına yazar bloğu; CRediT beyanı (Esra Uray: denetim, finansman temini; Furkan Emre İnce ve Utku Ceylan: diğer roller, ortaklaşa). Help.NGO İHA ortofotoları OpenAerialMap meta verisinden doğrulandı (CC BY 4.0) ve kaynak [64], Tablo 2, 4.7, Veri Erişilebilirliği, Teşekkür'e işlendi; Veri Erişilebilirliği'ndeki "model başarımı Maxar/Esri üzerinde ölçülmüştür" yanlışı düzeltildi. **Kullanıcıdan beklenen:** proje numarası, depo adresi (`UtBird/QuakeMind` özel — kamuya açık değil), kurum/ORCID/sorumlu yazar, özel metin kümesinin erişim politikası. Künye dosyasındaki CRediT tablosu kullanıcı talimatına birebir uyduruldu (ilk sürüm iki rolü fazladan danışmana yazmıştı). Yeni: M-86 (Tablo 2'de eğitim kümeleri yok). |
+| 16 Eylül 2026 | **Künye bilgileri işlendi (M-45):** TÜBİTAK 2209-A başvuru numarası 1919B012547445, depo https://github.com/UtBird/QuakeMind (şu an özel — yayından önce açılmalı), kurumlar (KTO Karatay Üniversitesi; Bilgisayar Müh. ve İnşaat Müh.). Açık: ORCID ve sorumlu yazar. **M-47 sonra konuşulacak** (kullanıcı kararı; belgedeki işaret bilerek bırakıldı). |
+| 16 Eylül 2026 | **Devir hazırlığı.** Makale listesinin başına devir notu, sonuna güncel "Kalan İşler" bölümü (A: yazım, B: bilgi/karar, C: koşum, D: son adım) eklendi; eskimiş 12 Eylül öncelik tablosu kaldırıldı. Düzenleme araçları `QuakeMind_makale/makale/araclar/` altına kopyalandı (`BENIOKU.md` ile). **M-87 (yeni, 🔴):** 4.3 ve 4.6'daki iki gömülü şekil eski veri ve eski kural adlarıyla üretilmişti (metin taraması resimleri göremez); 10 tohumlu verilerle yeniden üretildi, **belge kullanıcının Word penceresinde açık olduğu için henüz gömülmedi** (`araclar/sekil_gom.py` hazır). **M-88:** belge Word 2010 uyumluluk modunda. M-16 kapandı. |
+| 16 Eylül 2026 | **M-87 gömüldü, M-65 ve M-66 kapandı** (kullanıcı Word'ü kapattıktan sonra). Algoritma 1 koddaki `simulate_naive_agent` ile birebir hizalandı (15 satır; ters kenar da bilinen kapalılara ekleniyor, ajan kavşakta öğreniyor); "Yol bulma" paragrafına Dijkstra–A* denetiminin kanıtı yazıldı (90 görev, en fazla 0,00 m fark). Word iki geçiş, `ref_kontrol` 40/40, `ek_uyumu` 0. **Araç hatası bulundu ve giderildi:** liste işaretleme betiği (`isaretle.py`) "KALAN İŞLER" satırlarını silerken aynı kimlikli **KİMLİK EŞLEME** satırlarını da silmişti (M-65, M-66); satırlar git'teki sürümden geri kondu, betik silmeyi yalnız KALAN İŞLER bölümüyle sınırlayacak şekilde yeniden yazıldı. |
+| 16 Eylül 2026 | **M-86 kapandı; M-89 ve M-90 (yeni) bulunup kapandı** (kullanıcı yokken verdiği yetkiyle). Tablo 2'ye KATE-CD, MEDBFS (Türkiye alt kümesi) ve Türkçe metin kümesi satırları eklendi; bilgiler HF veri kartı, MDPI makalesi, GitHub README ve Zenodo API'den doğrulandı. **Lisans:** MEDBFS **CC BY-NC 4.0** (ticari olmayan kullanım); KATE-CD'nin veri kartında lisans **yok**. Eğitim defteri MEDBFS'in **2. sürümünü** (Zenodo 11647956) kullanıyor, makale 1. sürümü (11241134) veriyordu; [57]'ye doğru DOI eklendi. **M-89:** kaynak görüntüler zaten 512 × 512 olduğundan örtüşmeli karolama tek karo üretmiş; 842 karonun tamamı hasarlı olduğu için %95 eleme hiçbir karoyu çıkarmamış. Makale "eleme yapıldı" diyordu, düzeltildi (H-02'ye ek düşüldü). MEDBFS etiketleri 0 = hasarsız/bina dışı, 1 = ağır hasar, 2 = yıkılma; kodun `mask>0` birleştirmesi doğru. **M-90:** Şekil 7'nin başlığı "01 Yol Hasari" idi ve SegFormer'in grup başına ortalanmış doğrulama IoU'su (0,4276) diğer beşinin ortalama IoU'suyla aynı eksende çizilmişti. Şekil 7 (beş mimari, IoU_hasar) ve Şekil 8 (Türkçe etiketli eğitim eğrileri) `araclar/sekil7_8.py` ile yeniden çizildi. **Depoda düzeltilmesi gereken (kod değiştirilmedi):** `model_benchmarks/01_yol_hasari/local_colab_run/results/00_comparison_table.csv` 0,4276'yı `mean_iou` sütununa yazıyor; `build_notebook.py` grafiği de aynı hatayla çiziyor. Word iki geçiş (66 sayfa), `ref_kontrol` 40/40, `ek_uyumu` 0. |
+| 16 Eylül 2026 | **M-74 kapandı** — kaynakçada DOI/URL'siz kayıt kalmadı; belgedeki tüm bağlantılar bugün açılarak denetlendi ve erişim tarihi 16.09.2026 yazıldı. [1] AFAD raporunun PDF adresi bulundu; [2]'deki "06 Şubat 2023 Depremleri Basın Bülteni" **bulunamadı**, yerine Kandilli'nin aynı gün yayımladığı iki gerçek bülten yazıldı (Kandilli dış merkezleri Sofalaca–Şehitkamil / Ekinözü diye adlandırıyor, AFAD Pazarcık / Elbistan; Giriş'e not düşüldü); [6] EMS-98 DOI'si (DataCite); [46] Maxar adresi Vantor'a yönleniyor (Maxar Intelligence → Vantor, 1 Ekim 2025), lisans **CC BY-NC 4.0** Tablo 2'ye ve Veri Erişilebilirliği'ne yazıldı; [60] depo `qubvel-org`'a taşınmış. Word iki geçiş, `ref_kontrol` 40/40, `ek_uyumu` 0. **Not:** FEMA PDF'i tarayıcı bölmesinde denetlenirken site dosyayı indirme olarak sundu ve bölmede bir kaydetme penceresi açıldı; kabul edilmedi. AFAD PDF'inin ilk 400 KB'ı doğrulama için geçici klasöre alındı, kullanılmadan silindi. |
+| 16 Eylül 2026 | **M-28 kapandı; M-91 ve M-92 bulunup kapandı.** Tablo 13'e GFLOPs ve CPU çıkarım süresi yerel olarak ölçülüp yazıldı (`araclar/verimlilik_olcum.py`, backend venv, ağırlıksız; ~5 dk): U-Net 43,2 GFLOPs / 309 ms, LinkNet 20,9 / 204, FPN 35,5 / 241, PSPNet 11,5 / 88, DeepLabV3+ 111,9 / 657, SegFormer 116,6 / 1 076 (SegFormer parametre sayısı ~64 → ölçülen 61,4 M). GFLOPs = 2 × MAC (torch 2.13 `FlopCounterMode` bunu doğrudan veriyor; tek katmanla denetlendi). **Dizüstünde süreler güç sınırına göre oynuyor** (U-Net 170–312 ms); metinde gösterge niteliğinde dendi. **M-91:** eğitim defteri smp modellerini varsayılan ayarlarla kurmuş; Tablo 6 DeepLabV3+ atrous oranlarını (6, 12, 18) veriyordu, koşulan (12, 24, 36); PSPNet varsayılanı `encoder_depth=3` (tablo 5 diyordu); 3.4'teki "kademe sayısı altı mimaride beş ve eşit" cümlesi yanlıştı. **M-92:** `ek_uyumu.py` ilgi/belirtme/yönelme eklerini denetlemiyordu; iki "Tablo 13'nin" hatası `ek_uyumu_genis.py` ile bulundu ve düzeltildi. Word iki geçiş (67 sayfa), `ref_kontrol` 40/40, iki ek denetimi 0. **Yan etki yok:** ölçüm yalnız okuma ve CPU hesabı yaptı; ağ bağlantısı ve dosya indirme olmadı. |
+| 16 Eylül 2026 | **Şekil 12 üretildi (M-43); M-93 bulunup kapandı.** Şekil 12: kesim düzeyi duyarlılık × R0→R3 kazancının yakalanan payı (J-30 verisi, 15 sert ayar; hiçbir nokta R0 çizgisinin üzerine çıkmıyor). Şekil daha önce metinde hiç anılmıyordu; 4.7'ye atıf eklendi. **M-93:** M-39'un eklediği şekil atıf cümleleri, şekil başlıkları görselin altında olduğu için 12 şekilde görsel ile başlık arasına girmişti; cümleler görselin önüne taşındı. M-72'de kaldırıldığı yazılan eski Şekil 9 yer tutucusu hâlâ duruyordu (kaldırıldı); 4.2'deki bayat "(Şekil 9)" atfı silindi. `ek_uyumu_genis.py` ek-fiil (-DAdIr) biçimini tanıyacak şekilde genişletildi. Word iki geçiş, `ref_kontrol` 41/41, iki ek denetimi 0; belge 67 sayfa, 20 gömülü görsel. |
+| 16 Eylül 2026 | **M-44 büyük ölçüde; M-94 kapandı.** Şekil 13, 14, 15, 16, 18 kayıtlı sonuç dosyalarından Türkçe karakterli ve ≥300 dpi yeniden çizildi (`araclar/sekil13_18.py`, değerler Tablo 22/23 ile denetleniyor). Şekil 14 tek karşılaştırmalı grafiğe indirildi ve başlığı veriyle uyumlu hâle getirildi (eski başlık TF-IDF'in seyrek kategorilerde sıfırdan farklı olduğunu genelliyordu; en seyrek üç kategoride iki model de 0). Şekil 18'e "yedi modelin hepsinde en düşük kat 1. kat" bulgusu eklendi. **Kalan:** Şekil 17, 19, 20 katlama dışı tahmin/eğitilmiş model ister; `05_risk_skoru` sonuç JSON'larında yok → `run_all_risk.py` yeniden koşulmalı. M-44'teki "kaynak koda erişim yok" notu kısmen yanlıştı (betikler makale dalında). **M-94:** 4.9'daki "Şekil 16–21" (belgede 20 şekil) düzeltildi; Tablo 22'nin † dipnotu tablonun altına taşındı. Word iki geçiş, `ref_kontrol` temiz, iki ek denetimi 0, 67 sayfa. |
+| 16 Eylül 2026 | **M-62 için bilgi bulundu (makaleye henüz yazılmadı); D-08 ve M-95 eklendi.** Kullanıcı "M-62 makale dalında yok mu" diye sordu. Makale dalındaki YOLO kıyaslama defteri veri kümelerini (Roboflow `ofgg/maras-tpx5p` v4, `akash-roy-edivz/building-crack-detection-ys4zf` v3) ve protokolü veriyor ama hiç çalıştırılmamış. Üretimdeki `bina.pt` / `catlak.pt` dosyalarının içinden (kod çalıştırılmadan) eğitim ayarları ve **doğrulama** metrikleri okundu: bina mAP@50 0,592 / mAP@50-95 0,394 (40 devir planlı, 21'de erken durdu); çatlak 0,731 / 0,584 (150 devir). Veri yolları `maras-2` ve `crack-2` → defterdeki sürümlerle aynı değil; yazarların teyidi gerekiyor. **D-08 (🔴):** defterde Roboflow API anahtarı açık yazılı; anahtar yenilenmeli. **M-95:** Tablo 24'te ölçülmüş görev tabanlı eksen hâlâ `[ÖLÇÜLECEK]`. |
+| 16 Eylül 2026 | **M-95 kapandı** (kullanıcı isteğiyle). Tablo 24'ün görev tabanlı değerlendirme satırı Tablo 19'a REF alanıyla atıf yapılarak dolduruldu; referans veri hücresi deneyin gerçek düzenine göre (SegFormer ile planlama, EMSR648'de yürüyüş) düzeltildi. Word iki geçiş, `ref_kontrol` temiz, iki ek denetimi 0. Yedek: `YEDEK_m95_oncesi`, `YEDEK_m95_alan_oncesi`. |
+| 16 Eylül 2026 | **Devir paketi hazırlandı.** Makale düzeltme listesindeki 96 maddenin her birine etiket satırı eklendi (yapıldı / kısmen / yapılmadı, kalan, sonradan eklendi, sizin yapmanız gereken, soru/karar, kimlik/isim/numara, eğitim/koşum, simülasyondan, kontrol edin) ve listenin başına otomatik **Etiket dizini** kondu (`araclar/liste_etiketle.py`, gruplar `araclar/veri/etiketler.json`). Durum tutarsızlıkları düzeltildi: M-57 ve M-59 başlıkta ✅/☐ görünüyordu, notları "kısmen" diyordu → ⚠️. M-43/M-44'teki şekil sayıları düzeltildi (13/20 şekil üretilmiş, 7 yer tutucu; 19 görselin 14'ü yenilendi). "Sayılarla kalan iş" güncel sayımla yenilendi (86 `[ÖLÇÜLECEK]` hücresi). **M-96 (yeni):** Tablo 13'teki SegFormer satırının boş hücreleri hiçbir maddede açık iş olarak yoktu. Madde işaretleme aracı etiket satırını koruyacak şekilde `araclar/liste_isaretle.py` olarak yeniden yazıldı. Teslim klasörü: `Desktop9-A Afet\QuakeMind_Devir_2026-09-16\` (makale + liste; hassas bilgi taraması temiz). Durum: 78 ✅ · 12 ⚠️ · 6 ☐. |
+| 16 Eylül 2026 | **Düzeltme listesinin web sayfası sürümü hazırlandı** (kullanıcı isteğiyle): `araclar/liste_html.py` listeden süzülebilir tek dosyalık sayfa üretiyor (durum, etiket, bölüm, arama; her madde açılır-kapanır; kalan işler, sayılar ve devir notu bölümleri). Çıktı `makale/MAKALE_DUZELTME_LISTESI.html` ve devir klasöründe `QuakeMind_Makale_Duzeltme_Defteri_2026-09-16.html`; ayrıca özel Claude sayfası olarak yayımlandı. Yerel sunucuyla denendi: yatay taşma yok, 96 madde ve etiket sayıları doğru. Denemede `.claude/launch.json`'a eklenen geçici sunucu kaydı geri alındı. |
+| 17 Eylül 2026 | **Utku'nun `7024d64` commit'i incelendi** (`UtBird/QuakeMind`, makale dalı; yalnız fetch, yerel dosyalara dokunulmadı). M-44 kapanmış: Şekil 17, 19, 20 yeniden üretilip doğru yerlere gömülmüş; metin birebir aynı, çapraz başvuru ve ek denetimleri temiz; başarım değerleri aynı. Yerel makale listesi senkronize edildi (M-44 ✅). **Yeni bulgular:** M-97 (🟠 PR-AUC tabanı 0,687 değil 0,731; ÇKA aslında tabanın altında), M-98 (yeni şekillerde nokta ondalık, tabloyla uyumsuz model adları, İngilizce SHAP etiketleri), M-99 (Şekil 18: 1. katta yalnız 3 negatif; Şekil 20: yalnız son kat), D-09 (leaderboard.csv'den naif satırlar düştü; eğitim süreleri değişti). **Karar bekleyen:** depoda artık iki makale dosyası var (eski izlenen `makale/MAKALE_TASLAK_TR (1).docx` ve Utku'nun `makale/QuakeMind_Makale_Taslak_2026-09-16.docx`); yereldeki asıl dosya Utku'nunkinin 5 görsel eksik hâli. |
+| 19 Eylül 2026 | **A-15 eklendi** — model karşılaştırması denetlendi: SegFormer ile beş mimari farklı bölme (sınama kümesi yok), farklı IoU hesabı ve farklı kapasiteyle karşılaştırılmış; MiT-B4 kodlayıcıyla kurulabilen mimarilerin parametre/GFLOPs değerleri yerelde ölçüldü (LinkNet ve UNet++ MiT desteklemiyor). Karar kullanıcıda. |
+| 19 Eylül 2026 | **A-16 eklendi; A-15 kararı işlendi** (9 model, eğitim öncesi hazırlık). Veri setleri incelendi: KATE-CD lisansı CC0 1.0 (CITATION.cff), MEDBFS = AIR-DERSL (CC BY-NC 4.0), 438 karo 6 sahneden, konumlar hesaplandı (Hassa–İslahiye, Şekeroba–Türkoğlu); rastgele karo bölmesi sızıntısı ve negatif örnek yokluğu (842/842 hasarlı) kaydedildi. |
+| 19 Eylül 2026 | **Veri setleri kesinleşti (KATE-CD, KATE-PD, MEDBFS); A-17 eklendi.** KATE-PD bulundu ve incelendi (CC0 1.0, 832 karo, resmî bölme 675/78/79, konum ızgaraları CodeOcean'da). KATE-CD ile KATE-PD arasında olası görüntü tekrarı riski A-16'ya yazıldı. Makaledeki 96 yer tutucunun doldurma haritası A-17. |
+| 19 Eylül 2026 | **A-16 düzeltildi:** MEDBFS konumları 256 piksel adımla yeniden hesaplandı ve KATE-PD ile şablon eşleştirmesiyle doğrulandı (önceki "Hassa–İslahiye, Şekeroba–Türkoğlu" hesabı yanlıştı). Envanter sonuçları (KATE-CD ⊂ KATE-PD, MEDBFS'te 1 953 örtüşen çift, KATE-PD–MEDBFS çakışması) eklendi. |
+| 19 Eylül 2026 | **A-16 DEVAM EDİYOR:** ortak bölme listesi (2 194 satır, bölmeler arası örtüşme 0) ve SegFormer Colab defteri hazırlandı; defter yerelde duman testinden geçti, Colab T4'te Koşu A (ortak bölme) ve Koşu B (KATE-PD resmî bölmesi) başlatıldı. |
+| 19 Eylül 2026 | **A-15: SegFormer ilk sonuçları ve tanı işlendi** (Koşu A sınama IoU_hasar 0,401; Koşu B 0,481; çözünürlüğe göre 0,486 / 0,395 / 0,086; bina düzeyi büyük hasar kümelerinde %74 bulma, %33 yanlış alarm). |
+| 19 Eylül 2026 | **A-15: deneme 2 işlendi** (MEDBFS'siz + sabır 20): aynı KATE-PD sınamasında IoU 0,410 → 0,434, kazanç kesinlikte; mevcut model Drive'da korunuyor. |
+| 19 Eylül 2026 | **QuickQuakeBuildings eklendi (hazır, eğitime girmedi):** 425 karo, 339'u eğitime uygun (63 yıkık binalı, çoğu gerçek negatif); TE23D iletişimi bekliyor. |
+| 19 Eylül 2026 | **Eğitim Utku'ya devredildi (A-15):** devir paketi `QuakeMind_Devir_Utku_Egitim_2026-09-19` (+ zip, BENIOKU.md) ve web sürümü hazırlandı; 9 model defteri `02_dokuz_model_protokol.ipynb` (P1/P2, tohum döngüsü, QQB eğitim + 74 karoluk QQB dış sınama, bölge / kayıp / morfoloji deneyleri, özet tabloları) yerelde duman testinden geçti. |
+| 19 Eylül 2026 | **A-18 eklendi** — yeniden kurulan QuickQuakeBuildings verisinde: 95 hasar etiketli "sağlam" bina (43'ü dış sınamada), dış sınamanın 23/74 karosu doğrulama bloklarında, dışlanan dağlık kesimde etiketsiz bina riski, Maxar lisans çelişkisi. Kaynak: `Furkan--Utku--Model_ve_veriseti_aktarımı/AKTARIM_BELGESI.md` (Ç-02). |
+| 19 Eylül 2026 | **A-19 eklendi** — smp focal kaybında α = 0,25 hasar piksellerini arka plandan az ağırlıklandırıyor (doğrulandı: `_functional.py` 83–84); α taraması önerisi. Kaynak: `AKTARIM_BELGESI.md` Ç-11 (DA-SegFormer). |
+| 20 Eylül 2026 | **A-20 eklendi** — Tablo 15 tasarımı il ile veri kümesini karıştırıyor (Hatay ağırlıkla KATE-PD, Kahramanmaraş ağırlıkla MEDBFS) ve "Birleşik" satırı aktarım testi değil; il-dışarıda-bırakma satırı, oran sütunu ve yalnız KATE-PD kontrolü önerildi. Kaynak: `AKTARIM_BELGESI.md` Ç-16 (Valentijn vd. 2020). |
