@@ -1,13 +1,23 @@
-/* MapLibre denetimleri token'larla boyanır; kütüphane görünümü bırakılmaz. */
+/* MapLibre denetimleri token'larla boyanır; kütüphane görünümü bırakılmaz.
+   Ölçek, harita üstündeki düğmelerle aynı görünüşte (J-51, kullanıcı: "mahalleme
+   dön gibi belirgin olsun"): opak panel, belirgin kenar, okunur yazı, gölge.
+   Alt kenar cetvel çizgisidir; kutunun genişliği yazan uzunluktur. */
+.maplibregl-ctrl-bottom-right,
+.maplibregl-ctrl-bottom-left {
+  /* deck.gl tuvalinin üstünde kalsın (harita kabı `isolate`). */
+  z-index: 10;
+}
 .maplibregl-ctrl-scale {
   background: var(--color-panel);
-  border: 1px solid var(--color-line);
-  border-top: 0;
-  border-radius: 0 0 var(--radius-badge) var(--radius-badge);
-  color: var(--color-ink-3);
+  border: 1px solid var(--color-line-2);
+  border-bottom: 2px solid var(--color-ink-2);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-float);
+  color: var(--color-ink);
   font-family: var(--font-mono);
-  font-size: var(--text-micro);
-  padding: 2px 6px;
+  font-size: var(--text-small);
+  line-height: 1.4;
+  padding: 3px 8px;
 }
 .maplibregl-ctrl-attrib,
 .maplibregl-ctrl-logo {

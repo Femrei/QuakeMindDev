@@ -11,8 +11,11 @@ ayni kaldigini kanitlar, model kosturulmaz.
     python araclar_uc_duman_testi.py kaydet once.json   [--adres http://127.0.0.1:8001]
     python araclar_uc_duman_testi.py karsilastir once.json sonra.json
 
-Depodaki referans imza: testler/uc_imzalari.json (21 Eylul, J-43 sonrasi:
-/api/sos dort alan kazandi, afetzede uclari eklendi).
+Depodaki referans imza: testler/uc_imzalari.json (22 Eylul, J-51 sonrasi:
+J-50'de /api/sos `durumSecildi` alanini kazandi, yakin yerler ve rota uclari
+eklendi; J-51'de afetzede ihbar uclari eklendi; J-44'te yakin yerler `yurume`
+alanini kazandi ve yurume rotasi ucu eklendi; J-54'te sevk gorevi uclari eklendi,
+SOS ve ihbar `gorevler`, ekip kurum/tur/kisi sayisi, ozet ekip sayilarini kazandi).
 Bir ucun davranisini BILEREK degistirdiginde bu dosyayi yeniden kaydet ve
 degisikligi commit mesajinda yaz.
 """
@@ -99,6 +102,17 @@ def senaryolar(jeton):
         ("POST", "/api/sos/yok/ata", {"ekipId": "EKP-01"}, J),
         ("POST", "/api/sos/yok/kapat", None, J),
         ("POST", "/api/ekipler/yok/konum", {"lon": 36.1, "lat": 36.2}, J),
+        # --- sevk gorevleri ve ekip tanimi (J-54); kayit acmayan istekler ---
+        ("GET", "/api/gorevler", None, J),
+        ("GET", "/api/gorevler", None, None),
+        ("GET", "/api/gorevler/aday-ekipler?hedefTur=sos&hedefId=yok", None, J),
+        ("POST", "/api/gorevler", {"hedefTur": "sos", "hedefId": "yok", "ekipId": "yok"}, J),
+        ("POST", "/api/gorevler", {"hedefTur": "sos", "hedefId": "yok", "ekipId": "yok"}, None),
+        ("POST", "/api/gorevler/yok/durum", {"durum": "yolda"}, J),
+        ("GET", "/api/ekibim", None, J),
+        ("POST", "/api/ekipler", {"ad": ""}, J),
+        ("GET", "/api/ekipler/uye-adaylari", None, J),
+        ("PUT", "/api/ekipler/yok/uyeler", {"kullaniciIdleri": []}, J),
         # --- eski SOS / ekip / bildirim / sohbet ---
         ("GET", "/api/sos/alerts", None, None),
         ("POST", "/api/sos/alert", {"latitude": 36.2, "longitude": 36.16, "message": "duman testi"}, None),
@@ -149,6 +163,33 @@ def senaryolar(jeton):
         ("GET", "/api/altlik/yerler", None, None),
         # Gecersiz ihtiyac: 422, kayit acilmaz.
         ("POST", "/api/sos", {"lon": 36.16, "lat": 36.2, "ihtiyaclar": ["uydurma"]}, J),
+        # --- bildirim ucu (J-45); hicbiri kayit acmaz ---
+        ("POST", "/api/bildirimler", {"baslik": "duman", "metin": "duman testi"}, None),  # 401
+        ("POST", "/api/bildirimler", {"baslik": "duman", "metin": "duman testi", "onem": "critical"}, J),  # 422
+        ("GET", "/api/bildirimler", None, J),
+        ("POST", "/api/bildirimler/yok/kaldir", None, J),  # 404
+        # --- afetzede haritasi (J-50) ---
+        ("GET", "/api/yakin-yerler?lat=36.2086&lon=36.1547", None, J),
+        ("GET", "/api/yakin-yerler?lat=36.2086&lon=36.1547", None, None),  # 401
+        # Kimliksiz: 401, dis rota servisine istek gitmez.
+        ("POST", "/api/afetzede/sokak-rotasi", {"baslangicLat": 36.2, "baslangicLon": 36.16, "hedefLat": 36.21, "hedefLon": 36.17}, None),
+        # --- afetzede ihbarlari (J-51); hicbiri kayit acmaz, model kosmaz ---
+        ("POST", "/api/afetzede/fotograf-analiz", {"imageBase64": "x" * 200, "model": "catlak"}, None),  # 401
+        ("POST", "/api/afetzede/fotograf-analiz", {"imageBase64": "x" * 200, "model": "yanlis"}, J),  # 422
+        ("POST", "/api/afetzede/metin-analiz", {"metin": "duman testi"}, None),  # 401
+        ("POST", "/api/afetzede/metin-analiz", {"metin": "abc"}, J),  # 422 (en az 5 harf)
+        ("POST", "/api/ihbarlar", {"tur": "ihtiyac", "konumKaynagi": "gps"}, None),  # 401
+        ("POST", "/api/ihbarlar", {"tur": "ihtiyac", "ihtiyaclar": ["uydurma"], "lon": 36.16, "lat": 36.2, "konumKaynagi": "gps"}, J),  # 422
+        # Bos pencere (1970): liste her zaman bos, imza veriye bagli degil.
+        ("GET", "/api/ihbarlar?baslangic=0&bitis=1", None, J),
+        ("GET", "/api/ihbarlar", None, None),  # 401
+        ("GET", "/api/ihbarlar/yok/fotograf", None, J),  # 404
+        ("POST", "/api/ihbarlar/yok/durum", {"durum": "goruldu"}, J),  # 404
+        # --- afetzede yurume rotasi (J-44), kendi yol agimiz ---
+        ("POST", "/api/afetzede/rota", {"baslangicLat": 36.2, "baslangicLon": 36.16, "hedefLat": 36.21, "hedefLon": 36.17}, None),  # 401
+        # Ankara: yol agi uretilmedi -> 404 (dis servise gitmez)
+        ("POST", "/api/afetzede/rota", {"baslangicLat": 39.92, "baslangicLon": 32.85, "hedefLat": 39.93, "hedefLon": 32.86}, J),
+        ("POST", "/api/afetzede/rota", {"baslangicLat": 36.2086, "baslangicLon": 36.1547, "hedefLat": 36.214354, "hedefLon": 36.136576}, J),
     ]
 
 

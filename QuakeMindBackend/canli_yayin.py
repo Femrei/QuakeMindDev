@@ -2,7 +2,7 @@
 
 MIMARI.md 6: istemci yoklama yapmaz; sunucu YALNIZCA degisiklik oldugunda
 mesaj gonderir. Mesaj tipleri: yeni-sos, is-durumu, yeni-analiz, isi-surumu,
-ekip-konumu.
+ekip-konumu, bildirim, ihbar (afetzede ihbari, J-51), gorev (sevk gorevi, J-54).
 
 Yayinlayanlar farkli yerlerden gelir:
   - ilerleme tuketici is parcacigi (_drain_road_damage_progress)
@@ -32,7 +32,10 @@ _dongu: Optional[asyncio.AbstractEventLoop] = None
 # mesaj dusurulur ve baglanti canli kalir.
 KUYRUK_SINIRI = 256
 
-MESAJ_TIPLERI = ("yeni-sos", "is-durumu", "yeni-analiz", "isi-surumu", "ekip-konumu", "bildirim")
+MESAJ_TIPLERI = (
+    "yeni-sos", "is-durumu", "yeni-analiz", "isi-surumu", "ekip-konumu", "bildirim", "ihbar",
+    "gorev",
+)
 
 
 def dongu_ayarla(dongu: asyncio.AbstractEventLoop) -> None:

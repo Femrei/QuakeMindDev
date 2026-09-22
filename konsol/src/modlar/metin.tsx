@@ -5,6 +5,7 @@ import { Micro, Rozet } from '@/kabuk/parcalar'
 import { apiPost } from '@/veri/istemci'
 import { useHarita } from '@/harita/HaritaKabugu'
 import { useCozumleme, type MetinSonucu } from '@/durum/cozumlemeDurumu'
+import { GelenIhbarlar } from './ihbarParcalari'
 
 /* Metin modu: Türkçe ihbar metninden kategori, konum ve aciliyet çıkarımı.
    Model sunucuda koşar; ekran yalnız metni gönderir ve künyesiyle gösterir. */
@@ -103,14 +104,28 @@ export function MetinSol() {
   )
 }
 
+/** Afetzedelerin yazılı ihbarları metin modunun başında durur (J-51). */
 export function MetinSag() {
+  return (
+    <>
+      <GelenIhbarlar
+        tur="metin"
+        baslik="Afetzedelerden gelen yazılı ihbarlar"
+        amac="Afetzedenin yazıp modele incelettiği ihbarlar: kategori, aciliyet ve metindeki adres. Seçince metnin tamamı açılır."
+      />
+      <KendiCozumlemem />
+    </>
+  )
+}
+
+function KendiCozumlemem() {
   const kayit = useCozumleme((d) => d.metin)
   const sonuc = kayit?.sonuc
 
   if (!sonuc) {
     return (
-      <Bolum baslik="Çözümleme">
-        <Amac>Gönderdiğin metnin kategorisi, aciliyeti ve konumu burada görünür.</Amac>
+      <Bolum baslik="Kendi çözümlemen">
+        <Amac>Soldan gönderdiğin metnin kategorisi, aciliyeti ve konumu burada görünür.</Amac>
         <div className="mt-2">
           <VeriYok ne="Çözümleme" neden="henüz metin gönderilmedi" />
         </div>

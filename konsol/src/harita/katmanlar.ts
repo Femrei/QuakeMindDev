@@ -6,20 +6,25 @@ import {
   SolidPolygonLayer,
   TextLayer,
 } from '@deck.gl/layers'
-import { CollisionFilterExtension, type CollisionFilterExtensionProps } from '@deck.gl/extensions'
+import {
+  CollisionFilterExtension,
+  PathStyleExtension,
+  type CollisionFilterExtensionProps,
+} from '@deck.gl/extensions'
 import type { Layer, PickingInfo } from '@deck.gl/core'
 import type { KatmanId } from '@/durum/konsolDurumu'
 import {
   KAYNAK_ADI,
   ONCELIK_ADI,
   sosEkBilgi,
-  type Ekip,
   type HasarNoktasi,
   type SosCagrisi,
 } from '@/veri/sorgular'
+import { GOREV_DURUMU, gorevOzeti, kurumTur, uzaklikMetni, type Ekip } from '@/veri/gorev'
 import type { Kutu, Nokta } from '@/durum/secimDurumu'
 import type { Yol } from '@/veri/analiz'
 import type { AltlikVerisi, Etiket } from '@/veri/altlik'
+import { IHBAR_DURUMU, IHBAR_TURU, ihbarBasligi, ihbarKonumu, type Ihbar, type IhbarTuru } from '@/veri/ihbar'
 import { tarihSaat } from '@/lib/bicim'
 import { tokenPx, tokenRenk } from './tokenRenk'
 
@@ -59,7 +64,7 @@ const CAKISMA = new CollisionFilterExtension()
     1 +köy, 2 +mahalle, 3 +sokak. */
 export type EtiketSeviyesi = -1 | 0 | 1 | 2 | 3
 
-function etiketKatmani(id: string, data: Etiket[], boy: number, renk: [number, number, number]) {
+export function etiketKatmani(id: string, data: Etiket[], boy: number, renk: [number, number, number]) {
   return new TextLayer<Etiket, CollisionFilterExtensionProps<Etiket>>({
     id,
     data,
@@ -84,7 +89,7 @@ function etiketKatmani(id: string, data: Etiket[], boy: number, renk: [number, n
   })
 }
 
-function adKatmanlari(
+export function adKatmanlari(
   bolgeler: AltlikVerisi[],
   bolgeAdlari: Etiket[],
   seviye: EtiketSeviyesi,
@@ -120,7 +125,7 @@ function adKatmanlari(
 /** Kendi verimizden altlık: su, yapılar, nehirler, yollar — en altta çizilir.
     Yapılar yalnız `yapiGorunur` iken kurulur: uzak yakınlaştırmada seçilmezler,
     ama birkaç bölgenin 300 bini aşan çokgenini üçgenlemek arayüzü dondururdu. */
-function altlikKatmanlari(
+export function altlikKatmanlari(
   bolgeler: AltlikVerisi[],
   k: Record<KatmanId, boolean>,
   yapiGorunur: boolean,
@@ -193,6 +198,10 @@ export type KatmanGirdisi = {
   sos: SosCagrisi[]
   ekipler: Ekip[]
   seciliSos: string | null
+  /** Afetzede ihbarları (J-51) ve modun gösterdiği türler. */
+  ihbarlar?: Ihbar[]
+  ihbarTurleri?: readonly IhbarTuru[]
+  seciliIhbar?: string | null
   /** Bitmiş hasar analizinin yol geometrisi. */
   analiz?: { kapali: Yol[]; acik: Yol[] } | null
   /** Kanalların ağırlıklı karışımından çıkan ısı dokusu. */
@@ -303,19 +312,95 @@ export function katmanlariKur(g: KatmanGirdisi): Layer[] {
     )
   }
 
+  // Ekipler (J-54): müsait ekip vurgu renginde, görevdeki beyaz ve vurgu
+  // kenarlı, hizmet dışı gri. Görevdeki ekipten olaya rotası çizilir (J-55:
+  // araç ağında, tek yönlere uyarak); yol ağı dışındaki ekip için kesik düz
+  // çizgi, çünkü o bir yol değil yöndür. Adı noktanın üstünde yazar.
   if (g.katmanlar.ekipler) {
+    const ekipler = g.ekipler.filter(konumlu)
+    const giden = ekipler.filter((e) => e.gorev?.hedef)
+    const vurgu = tokenRenk('--color-accent')
     L.push(
-      new ScatterplotLayer<Ekip>({
+      new PathLayer<KonumluEkip>({
+        id: 'gorev-rotalari',
+        data: giden.filter((e) => e.gorev!.rota?.length),
+        getPath: (d) => d.gorev!.rota!,
+        getColor: [...vurgu, 220],
+        getWidth: 3,
+        widthUnits: 'pixels',
+        capRounded: true,
+        jointRounded: true,
+      }),
+      new PathLayer<KonumluEkip, { getDashArray: [number, number] }>({
+        id: 'gorev-cizgileri',
+        data: giden.filter((e) => !e.gorev!.rota?.length),
+        getPath: (d) => [
+          [d.lon, d.lat],
+          [d.gorev!.hedef!.lon, d.gorev!.hedef!.lat],
+        ],
+        getColor: [...vurgu, 180],
+        getWidth: 2,
+        widthUnits: 'pixels',
+        getDashArray: [4, 3],
+        extensions: [KESIK],
+      }),
+      new ScatterplotLayer<KonumluEkip>({
         id: 'ekipler',
-        data: g.ekipler,
+        data: ekipler,
         getPosition: (d) => [d.lon, d.lat],
         getRadius: 30,
-        radiusMinPixels: 4,
-        radiusMaxPixels: 10,
-        getFillColor: [69, 200, 224, 235],
+        radiusMinPixels: 5,
+        radiusMaxPixels: 11,
+        getFillColor: (d) =>
+          d.gorev
+            ? [...tokenRenk('--color-ink'), 245]
+            : d.durum === 'hizmet-disi'
+              ? [...tokenRenk('--color-ink-3'), 220]
+              : [...vurgu, 240],
         stroked: true,
-        lineWidthMinPixels: 1.4,
-        getLineColor: [8, 12, 18, 255],
+        lineWidthMinPixels: 1.8,
+        getLineColor: (d) => (d.gorev ? [...vurgu, 255] : [...tokenRenk('--color-ground'), 255]),
+        pickable: true,
+      }),
+      new TextLayer<KonumluEkip>({
+        id: 'ekip-adlari',
+        data: ekipler,
+        getPosition: (d) => [d.lon, d.lat],
+        getText: (d) => d.ad,
+        getSize: tokenPx('--text-small'),
+        getColor: [...tokenRenk('--color-ink'), 255],
+        getPixelOffset: [0, -16],
+        fontFamily: 'IBM Plex Sans, sans-serif',
+        fontWeight: 600,
+        characterSet: 'auto',
+        fontSettings: { sdf: true },
+        outlineWidth: 3,
+        outlineColor: [...tokenRenk('--color-ground'), 255],
+        getTextAnchor: 'middle',
+        getAlignmentBaseline: 'bottom',
+      }),
+    )
+  }
+
+  // Afetzede ihbarları: türün rengiyle (afetzede ekranındaki düğmeyle aynı).
+  // Kapanan ihbar sönük kalır; SOS'un altında çizilir.
+  if (g.katmanlar.ihbarlar && g.ihbarlar?.length) {
+    const turler = g.ihbarTurleri
+    const veri = turler ? g.ihbarlar.filter((i) => turler.includes(i.tur)) : g.ihbarlar
+    L.push(
+      new ScatterplotLayer<Ihbar>({
+        id: 'ihbarlar',
+        data: veri,
+        getPosition: (d) => [d.lon, d.lat],
+        getRadius: (d) => (g.seciliIhbar === d.id ? 46 : 30),
+        radiusUnits: 'meters',
+        radiusMinPixels: 4,
+        radiusMaxPixels: 12,
+        getFillColor: (d) => [...tokenRenk(IHBAR_TURU[d.tur].renk), d.durum === 'kapandi' ? 90 : 235],
+        stroked: true,
+        lineWidthMinPixels: 1.5,
+        getLineColor: (d) => (g.seciliIhbar === d.id ? [232, 236, 244, 255] : [10, 14, 20, 220]),
+        updateTriggers: { getRadius: g.seciliIhbar, getLineColor: g.seciliIhbar },
         pickable: true,
       }),
     )
@@ -387,26 +472,32 @@ export function katmanlariKur(g: KatmanGirdisi): Layer[] {
    Prototipteki gibi: nokta ne, ne zaman, ne kadar acil. Metin kullanıcıdan
    geldiği için HTML'e kaçırılarak yazılır. */
 
-const SOS_DURUMU: Record<SosCagrisi['durum'], string> = {
-  bekliyor: 'Bekliyor',
-  atandi: 'Ekip atandı',
-  kapandi: 'Kapandı',
+const KESIK = new PathStyleExtension({ dash: true })
+
+type KonumluEkip = Ekip & { lon: number; lat: number }
+const konumlu = (e: Ekip): e is KonumluEkip => e.lon != null && e.lat != null
+
+/** Olayın ekip durumu: kim gidiyor, yoksa bekliyor mu kapandı mı. */
+function sevkSatiri(durum: 'bekliyor' | 'atandi' | 'kapandi' | 'yeni' | 'goruldu', gorevler: Parameters<typeof gorevOzeti>[0]) {
+  return gorevOzeti(gorevler) ?? (durum === 'kapandi' ? 'Kapandı' : 'Ekip gönderilmedi')
 }
 
-/** Ekip durumu serbest metin; bilinenler Türkçe adıyla, ötekiler baş harfi büyük. */
-const EKIP_DURUMU: Record<string, string> = {
-  musait: 'Müsait',
-  gorevde: 'Görevde',
-  yolda: 'Yolda',
-  mola: 'Molada',
+/** Ekibin durumu: görevdeyse nereye ve hangi aşamada. */
+function ekipSatiri(e: Ekip): string {
+  if (e.gorev) {
+    const h = e.gorev.hedef
+    const nereye = h ? `${h.tur === 'sos' ? 'SOS' : IHBAR_TURU[h.tur].ad}${h.mahalle ? ` · ${h.mahalle}` : ''}` : e.gorev.hedefId
+    const uzaklik = e.gorev.durum !== 'olay-yerinde' ? uzaklikMetni(e.gorev.yol, e.gorev.kalanM) : null
+    const kalan = uzaklik ? `, olaya ${uzaklik}` : ''
+    return `Görevde: ${nereye} — ${GOREV_DURUMU[e.gorev.durum].kisa.toLocaleLowerCase('tr')}${kalan}`
+  }
+  return e.durum === 'hizmet-disi' ? 'Hizmet dışı' : 'Müsait'
 }
-const ekipDurumu = (d: string) =>
-  EKIP_DURUMU[d] ?? d.charAt(0).toLocaleUpperCase('tr') + d.slice(1)
 
 const kacis = (m: string) =>
   m.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 
-function ipucuKutusu(baslik: string, satirlar: Array<string | null | undefined | false>) {
+export function ipucuKutusu(baslik: string, satirlar: Array<string | null | undefined | false>) {
   const govde = satirlar
     .filter((x): x is string => !!x)
     .map((x) => `<div>${kacis(x)}</div>`)
@@ -423,13 +514,25 @@ export function haritaIpucu({ object, layer }: PickingInfo) {
     case 'sos': {
       const c = object as SosCagrisi
       const ek = sosEkBilgi(c)
-      return ipucuKutusu(`${c.id} · ${ONCELIK_ADI[c.oncelik].toLocaleLowerCase('tr')} aciliyet`, [
-        `${SOS_DURUMU[c.durum]}${c.ekipId ? ` (${c.ekipId})` : ''}`,
+      return ipucuKutusu(`SOS · ${ONCELIK_ADI[c.oncelik].toLocaleLowerCase('tr')} aciliyet`, [
+        sevkSatiri(c.durum, c.gorevler),
         c.mahalle,
         ek.kisiIhtiyac,
         c.metin,
         ek.yaklasik && ek.konum,
         tarihSaat(c.zaman),
+        'Tıkla: seç ve yakınlaş',
+      ])
+    }
+    case 'ihbarlar': {
+      const i = object as Ihbar
+      return ipucuKutusu(ihbarBasligi(i), [
+        IHBAR_DURUMU[i.durum].ad,
+        gorevOzeti(i.gorevler),
+        i.tur === 'ihtiyac' && i.kisiSayisi ? `${i.kisiSayisi} kişi` : null,
+        i.metin && i.metin.length > 140 ? `${i.metin.slice(0, 140)}…` : i.metin,
+        ihbarKonumu(i),
+        tarihSaat(i.zaman),
         'Tıkla: seç ve yakınlaş',
       ])
     }
@@ -443,9 +546,9 @@ export function haritaIpucu({ object, layer }: PickingInfo) {
     case 'ekipler': {
       const e = object as Ekip
       return ipucuKutusu(e.ad, [
-        ekipDurumu(e.durum),
-        e.gorev,
-        e.guncellendi ? `Konum güncellendi: ${tarihSaat(e.guncellendi)}` : null,
+        [kurumTur(e), e.kisiSayisi ? `${e.kisiSayisi} kişi` : null].filter(Boolean).join(' · '),
+        ekipSatiri(e),
+        e.konumZamani ? `Konum: ${e.yerAdi ? `${e.yerAdi} yakını, ` : ''}${tarihSaat(e.konumZamani)}` : null,
       ])
     }
     case 'analiz-kapali':

@@ -40,16 +40,53 @@ from depo import aktif_depo
 yonlendirici = APIRouter()
 
 
+def _kendi_olayi(hedef_tur: str, hedef_id: str, kullanici_id: str) -> bool:
+    depo = aktif_depo()
+    kayit = depo.sos_bul(hedef_id) if hedef_tur == "sos" else depo.ihbar_bul(hedef_id)
+    return bool(kayit) and kayit.get("kullanici_id") == kullanici_id
+
+
 def _afetzede_icin(mesaj: dict, kullanici_id: str):
-    """Afetzedeye giden akis (J-42): yalniz KENDI cagrisinin durum degisikligi
-    ve acil bildirimler. Baskasinin cagri konumu, ekip konumlari ve analiz
-    olaylari hic gitmez."""
+    """Afetzedeye giden akis (J-42): yalniz KENDI cagrisinin ve ihbarinin durum
+    degisikligi ve acil bildirimler. Baskasinin cagri konumu ve analiz olaylari
+    hic gitmez.
+
+    Ekip (J-54, kullanici karari): afetzede kendi olayina giden ekibin gorev
+    durumunu ve o ekip yoldayken konum degisikligini alir. Baska ekiplerin
+    konumu gitmez. Mesajda koordinat yok; istemci kendi cagrisini yeniden
+    ister, ekibin konumu oradan (yalniz gorev acikken) gelir."""
     if mesaj["tip"] == "bildirim":
         return mesaj
+    if mesaj["tip"] == "gorev":
+        if _kendi_olayi(mesaj.get("hedefTur", ""), mesaj.get("hedefId", ""), kullanici_id):
+            return {
+                "tip": "gorev",
+                "zaman": mesaj["zaman"],
+                "hedefTur": mesaj["hedefTur"],
+                "hedefId": mesaj["hedefId"],
+                "durum": mesaj.get("durum"),
+            }
+        return None
+    if mesaj["tip"] == "ekip-konumu":
+        gorev = aktif_depo().ekibin_acik_gorevi(mesaj.get("ekipId", ""))
+        if gorev and _kendi_olayi(gorev["hedef_tur"], gorev["hedef_id"], kullanici_id):
+            return {
+                "tip": "ekip-konumu",
+                "zaman": mesaj["zaman"],
+                "hedefTur": gorev["hedef_tur"],
+                "hedefId": gorev["hedef_id"],
+            }
+        return None
     if mesaj["tip"] == "yeni-sos":
         kayit = aktif_depo().sos_bul(mesaj.get("id", ""))
         if kayit and kayit.get("kullanici_id") == kullanici_id:
             return {"tip": "yeni-sos", "zaman": mesaj["zaman"], "id": kayit["id"], "durum": kayit["durum"]}
+    if mesaj["tip"] == "ihbar":
+        # Kendi ihbarinin durumu (J-51): "goruldu", "kapandi". Baskasinin
+        # ihbari ve konumu gitmez.
+        kayit = aktif_depo().ihbar_bul(mesaj.get("id", ""))
+        if kayit and kayit.get("kullanici_id") == kullanici_id:
+            return {"tip": "ihbar", "zaman": mesaj["zaman"], "id": kayit["id"], "tur": kayit["tur"], "durum": kayit["durum"]}
     return None
 
 
@@ -62,9 +99,12 @@ async def canli_akis(
 
     Sunucu YALNIZCA degisiklik oldugunda mesaj gonderir; istemci hicbir ucu
     yoklamaz. Mesaj tipleri: yeni-sos, is-durumu, yeni-analiz, isi-surumu,
-    ekip-konumu, bildirim. Sessiz gecen surelerde 20 saniyede bir yorum satiri
-    (": ping") gider; bu veri degil, baglantinin vekil sunucularca
-    kapatilmasini onleyen bir canlilik isaretidir.
+    ekip-konumu, bildirim, ihbar, gorev. Sessiz gecen surelerde 20 saniyede bir `nabiz`
+    olayi gider; bu veri degil, canlilik isaretidir: vekil sunucular bos
+    baglantiyi kapatmasin ve istemci olmus baglantiyi fark etsin. Eskiden
+    yorum satiriydi (": ping"); EventSource yorumlari JavaScript'e iletmedigi
+    icin istemci sessizce olen akisi goremiyor, ekran "canli" derken mesaj
+    kaciriyordu (J-45 sinamasi).
 
     Kimlik (J-42): akis eskiden herkese acikti -- giris yapmamis biri de her
     SOS cagrisinin konumunu ve ekiplerin konumunu aliyordu. EventSource baslik
@@ -89,7 +129,7 @@ async def canli_akis(
                 try:
                     mesaj = await asyncio.wait_for(kuyruk.get(), timeout=20.0)
                 except asyncio.TimeoutError:
-                    yield ": ping\n\n"
+                    yield 'event: nabiz\ndata: {"tip":"nabiz"}\n\n'
                     continue
                 if afetzede:
                     mesaj = _afetzede_icin(mesaj, kul["id"])

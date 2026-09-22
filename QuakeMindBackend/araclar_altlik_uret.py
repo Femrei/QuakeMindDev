@@ -10,6 +10,7 @@ tamsayi, butun dizi boyunca ardisik fark.
 
     python araclar_altlik_uret.py                 # butun bolgeler
     python araclar_altlik_uret.py antakya maras   # yalniz bunlar
+    python araclar_altlik_uret.py --hizmetler     # hastane, eczane vb. (J-50)
 
 Olculdu (21 Eylul 2026, Antakya +-8 km, GDAL 3.11 OSM surucusu): yollar
 36,9 sn (10 298 nesne), yapilar ve su 92 sn (59 476 nesne). Bolge basina ~2 dk.
@@ -202,6 +203,88 @@ def yerler_yaz():
     return len(yerler)
 
 
+# Afetzede haritasindaki hizmet noktalari (J-50). OSM `amenity` / `healthcare`
+# etiketi -> bizim tur adimiz. Toplanma alanlari buradan DEGIL, AFAD'in resmi
+# listesinden gelir (uclar/yerler.py).
+HIZMET_TURU = {
+    "hospital": "hastane",
+    "clinic": "saglik",
+    "doctors": "saglik",
+    "centre": "saglik",       # healthcare=centre (aile sagligi merkezi vb.)
+    "doctor": "saglik",
+    "pharmacy": "eczane",
+    "fire_station": "itfaiye",
+    "police": "polis",
+}
+
+
+def _etiket(other_tags, anahtar):
+    """GDAL'in `other_tags` alani: "anahtar"=>"deger","..."=>"..." bicimi."""
+    import re
+
+    if not isinstance(other_tags, str):
+        return None
+    m = re.search(r'"' + anahtar + r'"=>"([^"]*)"', other_tags)
+    return m.group(1) if m else None
+
+
+def hizmetler_uret(pbf):
+    """Bes bolgenin hastane, saglik merkezi, eczane, itfaiye ve polis noktalari.
+
+    Iki okuma yapilir (noktalar, alanlar) ve butun bolgeleri kapsayan tek kutu
+    kullanilir: OSM surucusu her okumada dosyanin tamamini gezdigi icin bolge
+    basina okumak bes kat surerdi. Alan olarak cizilmis yerin (hastane
+    yerleskesi gibi) temsil noktasi alinir. Kayit, yerel OSM kopyasinin
+    tarihindeki haritadir; yerin su an acik olup olmadigini soylemez."""
+    import pyogrio
+
+    kutular = {b["id"]: kutu_of(b) for b in BOLGELER}
+    birlesik = (
+        min(k[0] for k in kutular.values()), min(k[1] for k in kutular.values()),
+        max(k[2] for k in kutular.values()), max(k[3] for k in kutular.values()),
+    )
+    amenity = ",".join(f"'{a}'" for a in HIZMET_TURU)
+    t0 = time.time()
+    nokta = pyogrio.read_dataframe(
+        pbf, layer="points", bbox=birlesik, columns=["osm_id", "name", "other_tags"],
+        where="other_tags LIKE '%\"amenity\"=>%' OR other_tags LIKE '%\"healthcare\"=>%'")
+    t1 = time.time()
+    alan = pyogrio.read_dataframe(
+        pbf, layer="multipolygons", bbox=birlesik,
+        columns=["osm_id", "osm_way_id", "name", "amenity", "other_tags"],
+        where=f"amenity IN ({amenity}) OR other_tags LIKE '%\"healthcare\"=>%'")
+    t2 = time.time()
+
+    def bolgesi(lon, lat):
+        for bid, k in kutular.items():
+            if k[0] <= lon <= k[2] and k[1] <= lat <= k[3]:
+                return bid
+        return None
+
+    yerler, gorulen = [], set()
+    kayitlar = []
+    for _, r in nokta.iterrows():
+        a = _etiket(r["other_tags"], "amenity") or _etiket(r["other_tags"], "healthcare")
+        kayitlar.append((a, r["name"], r.geometry, f"node/{r['osm_id']}"))
+    for _, r in alan.iterrows():
+        a = r["amenity"] if isinstance(r["amenity"], str) else _etiket(r["other_tags"], "healthcare")
+        osm = f"way/{r['osm_way_id']}" if isinstance(r["osm_way_id"], str) else f"relation/{r['osm_id']}"
+        kayitlar.append((a, r["name"], r.geometry.representative_point() if r.geometry is not None else None, osm))
+
+    for a, ad, nokta_geo, osm in kayitlar:
+        tur = HIZMET_TURU.get(a or "")
+        if tur is None or nokta_geo is None or osm in gorulen:
+            continue
+        lon, lat = round(nokta_geo.x, 6), round(nokta_geo.y, 6)
+        bid = bolgesi(lon, lat)
+        if bid is None:
+            continue
+        gorulen.add(osm)
+        yerler.append({"tur": tur, "ad": ad if isinstance(ad, str) and ad.strip() else None,
+                       "lon": lon, "lat": lat, "bolge": bid, "osm": osm})
+    return yerler, {"nokta": round(t1 - t0, 1), "alan": round(t2 - t1, 1)}
+
+
 def main(secilen):
     sys.path.insert(0, str(BACKEND))
     from apps.road_damage.utils.network import LOCAL_PBF_PATH
@@ -217,6 +300,17 @@ def main(secilen):
         "dosyaTarihi": datetime.date.fromtimestamp(pbf.stat().st_mtime).isoformat(),
     }
     CIKTI.mkdir(parents=True, exist_ok=True)
+
+    if "--hizmetler" in secilen:
+        yerler, sure = hizmetler_uret(str(pbf))
+        cikti = {"kaynak": kaynak, "uretim": datetime.datetime.now().isoformat(timespec="seconds"),
+                 "bolgeler": [b["id"] for b in BOLGELER], "yerler": yerler}
+        (CIKTI / "hizmetler.json").write_text(json.dumps(cikti, ensure_ascii=False), encoding="utf-8")
+        from collections import Counter
+        print(f"hizmet noktalari: {dict(Counter(y['tur'] for y in yerler))} | "
+              f"okuma {sure['nokta']} + {sure['alan']} sn", flush=True)
+        return 0
+
     katalog_yolu = CIKTI / "katalog.json"
     katalog = {k["id"]: k for k in (json.loads(katalog_yolu.read_text(encoding="utf-8"))
                                     if katalog_yolu.exists() else [])}

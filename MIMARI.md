@@ -59,6 +59,38 @@ Bütün çıkarım çıktıları tek biçime iner:
 PostGIS tabloları (GIST mekânsal indeksli): `damage_points`, `road_blockages`,
 `sos_alerts`, `afad_assembly_points`, `osm_safety_polygons`, `users`.
 
+Afetzede ihbarları (22 Eylül 2026, J-51) ayrı tabloda durur: `ihbarlar` ve
+`ihbar_fotograflari`. Afetzede önce fotoğrafını ya da metnini modele inceletir; bu adım kayıt
+açmaz. İhbarı gönderince kayıt açılır. Modelin çıktısı sunucudaki incelemeden okunur,
+istemciden alınmaz. Model hasar ya da aciliyet çıkardıysa ihbar bu sözleşmeye de nokta
+olarak düşer (kaynak `kamera` / `metin`). İhtiyaç talebi hasar değildir; ısıya yazılmaz.
+
+Sevk görevi (22 Eylül 2026, J-54): her sevk `gorevler` tablosunda bir kayıttır. Kayıtta
+şunlar var: olay (SOS ya da ihbar), ekip, giden kişi sayısı, atayan, durum ve her adımın
+zamanı (atandı → yolda → olay yerinde → tamamlandı; her an iptal). `gorev_adimlari` her
+adımı kimden geldiğiyle tutar: ekibin telefonu ya da koordinasyon. Kurallar
+veritabanındadır:
+- Bir ekibin tek açık görevi olur (kısmi benzersiz indeks). Aynı ekip iki yere birden
+  gönderilemez.
+- Olaya zaten ekip gidiyorsa ikincisi yalnız "ek destek" olarak gider.
+- Olaydaki son görev bitince olayın durumu eşitlenir. İş bitti ise olay kapanır; iptal ya
+  da "olay sürüyor" ise SOS kuyruğa döner.
+- Olay kapatılınca açık görevler biter.
+
+Ekipten olaya uzaklık ve süre (J-55) araç ağından gelir. Ağ, yerel OSM kopyasından
+bölge başına bir kez üretilir (`araclar_arac_agi_uret.py`). Tek yönlere uyar ve bellekte
+durur. Arama olaydan ters ağda tek Dijkstra'dır (medyan 22 ms) ve önbellektedir. Süre, yol
+türüne göre ortalama hız varsayımıyla hesaplanır; anlık trafik yok.
+
+Ekip ve olay farklı şehirlerdeyse bölgeler arası ağ kullanılır. Bu ağda beş şehir ve
+aralarındaki ana yollar birliktedir (513 bin düğüm, arama medyan 111 ms). Şehir dışında ayrı
+bir hız varsayımı vardır. Beş şehri kapsayan kutunun dışındaki ekip için kuş uçuşu yazılır.
+
+Ekibin görevde olup olmadığı saklanmaz, görevlerden okunur. Eskiden ekip üç çağrıya atanmış
+iken "müsait" görünüyordu. `ekipler` tablosu kurum, tür ve kişi sayısı alanlarını kazandı.
+`kullanicilar.ekip_id` saha hesabını ekibe bağlar. Eski veritabanı açılışta tamamlanır
+(`ALTER TABLE ... ADD COLUMN`), veri kaybolmaz.
+
 Eklenecek indeksler: zaman kolonlarında BRIN (append-only), `source_type` için kısmi
 indeks, bölge kimliği için b-tree.
 
@@ -132,6 +164,22 @@ yeni analiz ve yeni SOS. Tek uvicorn worker'ı varsayar; çok worker'a geçilinc
 
 İstemci tarafında SSE mesajı ilgili sorguyu tazeler (TanStack Query). Yoklama yapılmaz.
 
+**Durum (22 Eyl):**
+- Mesaj tiplerine `bildirim` (J-45) ve `ihbar` (J-51: afetzede fotoğraf, yazılı ve ihtiyaç
+  ihbarı ile durum değişikliği) eklendi.
+- Afetzede yalnız kendi kaydının kimliğini ve durumunu alır.
+- İstemci mesaja göre yalnız değişen sorguyu tazeler. Örnek: ihbar ısıya nokta yazdıysa
+  yalnız o kanalın ızgarası tazelenir.
+- Canlı modda sorguların bitişi açıktır. Eskiden son dakikaya bağlıydı ve yeni kayıt 60 sn'ye
+  kadar geç düşüyordu (J-52). Başlangıç 15 dakikalık çapaya yuvarlanır (J-46).
+- `gorev` mesajı eklendi (J-54): görev açıldı ya da durumu değişti. Konsol olayı, ekip
+  listesini ve aday ekipleri tazeler.
+- Afetzedeye gidenler: kendi olayının `gorev` mesajı ve o olaya giden ekibin `ekip-konumu`
+  mesajı. Bu mesajlar koordinat taşımaz; istemci kendi çağrısını yeniden ister. Başka
+  ekiplerin konumu gitmez.
+- Ekibin telefonu konumunu sayfa açıkken gönderir: en çok 30 sn'de bir ya da 25 m'den fazla
+  yer değişince. Bu yoklama değildir; cihaz konum verdikçe gider.
+
 ---
 
 ## 7. Arayüz mimarisi
@@ -141,7 +189,10 @@ yeni analiz ve yeni SOS. Tek uvicorn worker'ı varsayar; çok worker'a geçilinc
 - **Tek kalıcı harita.** Harita uygulama iskeletinde bir kez kurulur. Sayfalar yerine
   **modlar** vardır (genel durum, SOS, yol ve rota, hasar analizi, metin, risk); mod
   değişince yan paneller ve açık katmanlar değişir, harita yerinde kalır.
-- **Rota bazlı kod bölme.** Afetzede ekranı harita motorunun ağır parçalarını indirmez.
+- **Rota bazlı kod bölme.** Afetzede ekranı analiz modüllerini indirmez. Harita motoru SOS formu
+  çizildikten sonra tembel yüklenir. Form ilk açılışta 137 KB (gzip) JS ile çalışır; harita
+  ~560 KB ile arkadan gelir. İhbar pencereleri de yalnız açılınca iner (J-51). Karar 22 Eylül
+  2026'da kullanıcıdan geldi (J-50); önceki kural haritayı hiç indirmemekti.
 - **Büyük veri ikili formatta** gelir (Arrow / typed array); JSON yalnız küçük yanıtlar için.
 - **Ağır çözümleme Web Worker'da** yapılır; ana iş parçacığı bloklanmaz.
 - Durum: sunucu verisi TanStack Query, arayüz durumu Zustand.
@@ -152,6 +203,13 @@ yeni analiz ve yeni SOS. Tek uvicorn worker'ı varsayar; çok worker'a geçilinc
 
 **Altlık bizim.** Yollar, yapılar ve su kendi verimizden çizilir (OSM + Copernicus).
 Dışarıdan karo servisi zorunlu değildir; kullanılırsa yalnız kolaylık içindir.
+
+**Yürüme yol ağı da bizim (22 Eylül 2026, J-44).** Beş bölgenin yürünebilir yolları
+yerel OSM kopyasından bir kez üretilir: `araclar_yol_agi_uret.py` → `veri/yol_agi/`.
+- Sunucu ağı bir kez belleğe alır (`yol_agi.py`).
+- Afetzede rotası tek bir Dijkstra koşusudur (~25 ms). Araç motorunun hasar cezası
+  (`risk_weight`) kullanılır; bilinen kapanmalar yumuşak maliyetle dolaşılır.
+- Dış rota servisine yalnız yol ağı olmayan bölgede ve afetzede isteyince gidilir.
 
 **Eşikler:**
 
@@ -179,6 +237,13 @@ nesneleri olarak bellekte tutmak.
 - Roller: afetzede · saha ekibi · koordinatör · yönetici. Rol yalnızca veritabanından okunur.
 - Kayıt düzeyinde kontrol: afetzede yalnız kendi çağrısını görür; ekip yalnız kendi görevini
   bırakabilir.
+- Sevk (J-54, 22 Eyl):
+  - Koordinatör ve yönetici her ekibi gönderir, her görevi günceller.
+  - Saha hesabı yalnız bağlı olduğu ekip adına çalışır: kendi ekibini gönderir, kendi
+    görevini ve konumunu günceller.
+  - Hesabı ekibe koordinasyon bağlar.
+  - Afetzede kendi olayına giden ekibin adını, kişi sayısını, aşamasını ve görev açıkken
+    konumunu görür (kullanıcı kararı). Kimin atadığını ve iç notu görmez.
 - Bölge bazlı yetki (ekip yalnız atandığı bölgeleri görür) ikinci aşamada eklenir.
 
 ---
@@ -248,3 +313,5 @@ Taban çizgi alınmadan iyileştirme yapılmaz. Ölçülecekler:
 | 20 Eyl 2026 | Isı haritası: kanal başına ızgara sunucuda, ağırlıklı karışım GPU'da, mutlak ölçek, negatif ağırlık desteklenir |
 | 20 Eyl 2026 | Zaman aralığı varsayılan **canlı**: pencere şimdiye kilitli, geri çekilince geçmiş moduna geçer |
 | 20 Eyl 2026 | Yeni konsol ayrı klasörde geliştirilir, onaydan sonra devralır |
+| 22 Eyl 2026 | Ekip-olay uzaklığı araç yolundan (J-55): kendi araç ağımız, tek yöne uyar; süre yol türü hız varsayımıyla, trafik verisi yok. Konum 10 dakikadan eskiyse afetzedeye süre gösterilmez |
+| 22 Eyl 2026 | Sevk bir görev kaydıdır (J-54). Ekip durumu görevden okunur. Durumu hem ekip telefonundan hem koordinasyon işaretler. Afetzede kendi olayına gelen ekibin adını, kişi sayısını ve konumunu görür |

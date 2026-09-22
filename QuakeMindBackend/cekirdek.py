@@ -1307,7 +1307,7 @@ class EmergencyNotificationRequest(BaseModel):
     magnitude: Optional[float] = None
     token: Optional[str] = None
 
-active_emergency_alerts = []
+# Bildirimler artik depoda (`bildirimler` tablosu, J-45); bellekteki liste kalkti.
 
 
 

@@ -35,7 +35,17 @@ export function useHarita(): HaritaApi {
   return api
 }
 
-export function HaritaKabugu({ children }: { children: React.ReactNode }) {
+type KabukSecenekleri = {
+  children: React.ReactNode
+  /** Haritanın dış kabının yerleşimi; verilmezse konsol yerleşimi. */
+  className?: string
+  /** Üstüne gelince bilgi; verilmezse konsolun ipucu (J-41). */
+  ipucu?: (bilgi: PickingInfo) => ReturnType<typeof haritaIpucu>
+  /** Açılış görünümü; verilmezse Antakya. */
+  baslangic?: { lon: number; lat: number; zoom: number }
+}
+
+export function HaritaKabugu({ children, className, ipucu, baslangic }: KabukSecenekleri) {
   const kutu = useRef<HTMLDivElement>(null)
   const harita = useRef<MlMap | null>(null)
   const ortu = useRef<MapboxOverlay | null>(null)
@@ -48,8 +58,8 @@ export function HaritaKabugu({ children }: { children: React.ReactNode }) {
     const m = new maplibregl.Map({
       container: kutu.current,
       style: haritaStili(),
-      center: [ANTAKYA.lon, ANTAKYA.lat],
-      zoom: ANTAKYA.zoom,
+      center: [(baslangic ?? ANTAKYA).lon, (baslangic ?? ANTAKYA).lat],
+      zoom: (baslangic ?? ANTAKYA).zoom,
       pitch: 0,
       bearing: 0,
       dragRotate: false,
@@ -60,7 +70,7 @@ export function HaritaKabugu({ children }: { children: React.ReactNode }) {
     m.addControl(new maplibregl.ScaleControl({ unit: 'metric', maxWidth: 96 }), 'bottom-right')
 
     // Üstüne gelince bilgi (J-41): ne, ne zaman, ne kadar acil.
-    const o = new MapboxOverlay({ interleaved: false, layers: [], getTooltip: haritaIpucu })
+    const o = new MapboxOverlay({ interleaved: false, layers: [], getTooltip: ipucu ?? haritaIpucu })
     m.addControl(o)
 
     harita.current = m
@@ -133,7 +143,7 @@ export function HaritaKabugu({ children }: { children: React.ReactNode }) {
       {/* Dar ekranda harita üstte durur; geniş ekranda paneller haritanın üstüne biner.
           Yerleşim sınıfları DIŞ kutuda: MapLibre kendi kabına `position: relative`
           yazıyor ve doğrudan verilen `absolute` sınıfını eziyor. */}
-      <div className="h-72 w-full shrink-0 genis:absolute genis:inset-0 genis:h-auto">
+      <div className={className ?? 'h-72 w-full shrink-0 genis:absolute genis:inset-0 genis:h-auto'}>
         <div ref={kutu} className="h-full w-full" aria-label="Durum haritası" role="application" />
       </div>
       {children}

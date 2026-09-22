@@ -36,3 +36,6 @@ benchmark/data/model_masks_emsr/*/preview.jpg
 
 # Harita altligi paketleri (J-40): yerel OSM kopyasindan uretilir, araclar_altlik_uret.py
 veri/altlik/
+
+# Yurume yol agi (J-44): yerel OSM kopyasindan uretilir, araclar_yol_agi_uret.py
+veri/yol_agi/

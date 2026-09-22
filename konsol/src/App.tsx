@@ -16,6 +16,8 @@ const KonsolKabugu = lazy(() =>
 const AfetzedeEkrani = lazy(() =>
   import('@/afetzede/AfetzedeEkrani').then((m) => ({ default: m.AfetzedeEkrani })),
 )
+// Saha ekibinin telefondaki görev ekranı (J-54); harita motorunu indirmez.
+const EkipEkrani = lazy(() => import('@/ekip/EkipEkrani').then((m) => ({ default: m.EkipEkrani })))
 
 export function App() {
   return (
@@ -43,6 +45,14 @@ export function App() {
                   element={
                     <RolKapisi izinli={['afetzede', 'koordinator', 'yonetici']}>
                       <AfetzedeEkrani />
+                    </RolKapisi>
+                  }
+                />
+                <Route
+                  path="/ekip"
+                  element={
+                    <RolKapisi izinli={['saha', 'koordinator', 'yonetici']}>
+                      <EkipEkrani />
                     </RolKapisi>
                   }
                 />

@@ -39,3 +39,36 @@
     grid-template-columns: 1fr 48px;
   }
 }
+
+/* Uzun ekran (yükseklik ≥ 860 px): afetzede ekranında ek yönlendirme kutusu
+   yalnız yer varken görünür; kısa ekranda SOS düğmesini aşağı itmesin. */
+@custom-variant uzun (@media (min-height: 860px));
+
+/* Afetzede portalı (J-50, J-51): alan adlı ızgara, yalnız geniş ekranda
+   (`genis:`). İki sütun: solda SOS ve gönderilenler, sağda "nereye" ve bildir
+   düğmeleri. ≥ 1600 px'te (`uclu:`) sağa duyurular sütunu eklenir. Dar ekranda
+   ızgara yoktur; kartlar `order` ile alt alta dizilir. */
+@utility kilav-afetzede {
+  grid-template-columns: var(--spacing-form) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'sos nereye' 'gonderilen nereye' 'gonderilen bildir';
+}
+@utility kilav-afetzede-uclu {
+  grid-template-columns: var(--spacing-form) minmax(0, 1fr) var(--spacing-form);
+  grid-template-areas: 'sos nereye duyuru' 'gonderilen nereye duyuru' 'gonderilen bildir duyuru';
+}
+@utility alan-sos {
+  grid-area: sos;
+}
+@utility alan-nereye {
+  grid-area: nereye;
+}
+@utility alan-gonderilen {
+  grid-area: gonderilen;
+}
+@utility alan-bildir {
+  grid-area: bildir;
+}
+@utility alan-duyuru {
+  grid-area: duyuru;
+}

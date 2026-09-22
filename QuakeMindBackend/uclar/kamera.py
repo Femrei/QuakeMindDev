@@ -45,30 +45,34 @@ def list_debris_reports():
     return {"reports": reports, "totalReports": len(reports)}
 
 
-@yonlendirici.post("/api/camera/analyze")
-def analyze_camera_frame(req: ck.CameraAnalysisRequest):
+def goruntu_coz(b64: Optional[str]):
+    """data URL ya da duz base64 -> OpenCV goruntusu (BGR); okunamazsa None."""
     import base64
     import cv2
     import numpy as np
 
-    model_type = req.modelType.lower()
+    if not b64:
+        return None
+    try:
+        if "," in b64:
+            b64 = b64.split(",", 1)[1]
+        nparr = np.frombuffer(base64.b64decode(b64), np.uint8)
+        return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    except Exception as e:
+        print(f"Error decoding camera frame image: {e}")
+        return None
+
+
+def yolo_tespit(img, model_type: str) -> tuple[list, list, bool]:
+    """Secilen YOLO modellerini goruntude kosar.
+
+    `model_type`: catlak | bina | hybrid. Donus: (tespitler, calisan modeller,
+    kritik var mi). Kamera ucu ve afetzede ihbari (J-51) ayni kodu kullanir.
+    """
+    model_type = model_type.lower()
     active_models = []
     detections = []
-    annotated_b64 = None
     has_critical = False
-
-    # Decode Base64 image if provided
-    img = None
-    if req.imageBase64:
-        try:
-            b64_data = req.imageBase64
-            if "," in b64_data:
-                b64_data = b64_data.split(",")[1]
-            img_bytes = base64.b64decode(b64_data)
-            nparr = np.frombuffer(img_bytes, np.uint8)
-            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        except Exception as e:
-            print(f"Error decoding camera frame image: {e}")
 
     # 1. Run yolo_catlak if requested or hybrid
     catlak_modeli = ck.get_yolo("catlak") if model_type in ["catlak", "crack", "hybrid"] else None
@@ -87,6 +91,7 @@ def analyze_camera_frame(req: ck.CameraAnalysisRequest):
                         has_critical = True
                     detections.append({
                         "label": f"Duvar/Kolon Çatlağı ({cls_name})",
+                        "sinif": cls_name,
                         "confidence": round(conf * 100, 1),
                         "model": "catlak.pt",
                         "box": [round(c, 1) for c in coords],
@@ -111,11 +116,25 @@ def analyze_camera_frame(req: ck.CameraAnalysisRequest):
                     label_tr = "Bina Ağır Hasarlı" if "VeryHeavy" in cls_name else ("Bina Orta Hasarlı" if "Moderate" in cls_name else "Bina Hasarsız / Güvenli")
                     detections.append({
                         "label": f"{label_tr} ({cls_name})",
+                        "sinif": cls_name,
                         "confidence": round(conf * 100, 1),
                         "model": "bina.pt",
                         "box": [round(c, 1) for c in coords],
                         "severity": severity
                     })
+
+    return detections, active_models, has_critical
+
+
+@yonlendirici.post("/api/camera/analyze")
+def analyze_camera_frame(req: ck.CameraAnalysisRequest):
+    import base64
+    import cv2
+
+    model_type = req.modelType.lower()
+    annotated_b64 = None
+    img = goruntu_coz(req.imageBase64)
+    detections, active_models, has_critical = yolo_tespit(img, model_type)
 
     # Draw bounding boxes on image if available
     if img is not None and detections:
@@ -140,12 +159,17 @@ def analyze_camera_frame(req: ck.CameraAnalysisRequest):
         status = "NO_DETECTION"
         advice = "🟢 GÖRÜNTÜDE HERHANGİ BİR ÇATLAK VEYA BİNA HASARI SAPTANMADI. Modeller kamera karesinde riskli bir alan tespit etmedi."
 
+    # Haritaya yalniz HASAR tespiti yazilir (J-50). Eskiden en guclu tespit
+    # "Bina Hasarsiz" olsa bile hasar noktasi olarak yaziliyordu: hasarsiz
+    # binanin fotografi ekiplerin isi haritasinda hasar gibi gorunuyordu.
+    hasar_tespitleri = [d for d in detections if "Hasarsız" not in d["label"]]
+
     # Best-effort: persist detections as damage_points if the caller sent a
     # location, so the heatmap/route engine can eventually see them too.
-    if req.latitude is not None and req.longitude is not None and detections:
+    if req.latitude is not None and req.longitude is not None and hasar_tespitleri:
         try:
-            catlak_dets = [d for d in detections if d["model"] == "catlak.pt"]
-            bina_dets = [d for d in detections if d["model"] == "bina.pt"]
+            catlak_dets = [d for d in hasar_tespitleri if d["model"] == "catlak.pt"]
+            bina_dets = [d for d in hasar_tespitleri if d["model"] == "bina.pt"]
             if catlak_dets:
                 top = max(catlak_dets, key=lambda d: d["confidence"])
                 postgis_engine.insert_damage_point(
@@ -163,7 +187,7 @@ def analyze_camera_frame(req: ck.CameraAnalysisRequest):
             # ozet sayilari buradan beslenir (TASIMA_PLANI Faz 3).
             from depo import aktif_depo
 
-            en_iyi = max(detections, key=lambda d: d["confidence"])
+            en_iyi = max(hasar_tespitleri, key=lambda d: d["confidence"])
             aktif_depo().hasar_ekle(
                 lon=req.longitude,
                 lat=req.latitude,
@@ -189,15 +213,15 @@ def analyze_camera_frame(req: ck.CameraAnalysisRequest):
     # uzerinde gorunur bir "enkaz/catlak" isareti olarak da sakla --
     # akis diyagramindaki "goruntu analizi -> haritada isaretle" adiminin
     # gercek karsiligi.
-    if detections and req.latitude is not None and req.longitude is not None:
+    if hasar_tespitleri and req.latitude is not None and req.longitude is not None:
         report = {
             "id": str(uuid.uuid4()),
             "latitude": req.latitude,
             "longitude": req.longitude,
             "status": status,
             "severity": "CRITICAL" if has_critical else "SAFE",
-            "detectionCount": len(detections),
-            "topLabel": detections[0]["label"] if detections else None,
+            "detectionCount": len(hasar_tespitleri),
+            "topLabel": max(hasar_tespitleri, key=lambda d: d["confidence"])["label"],
             "receivedAt": datetime.now(timezone.utc).isoformat(),
         }
         with ck.debris_lock:

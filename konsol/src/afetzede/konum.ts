@@ -1,4 +1,10 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import type { Yer } from './veri'
+
+/** Çağrıda ve haritada kullanılan konum: cihazdan ya da seçilen mahalleden. */
+export type EtkinKonum =
+  | { kaynak: 'gps'; lon: number; lat: number; dogrulukM: number }
+  | { kaynak: 'mahalle'; lon: number; lat: number; yer: Yer }
 
 /* ---------------------------------------------------------------------------
    Afetzedenin konumu (J-43).
@@ -126,6 +132,16 @@ export function yon(
     Math.cos(a.lat * r) * Math.sin(b.lat * r) - Math.sin(a.lat * r) * Math.cos(b.lat * r) * Math.cos(dl)
   const derece = (Math.atan2(y, x) / r + 360) % 360
   return { derece, ad: YONLER[Math.round(derece / 45) % 8] }
+}
+
+/** Kuş uçuşu uzaklık, metre (haversine). Yalnız iki noktayı karşılaştırmak
+    için; yakındaki yerlerin uzaklığını sunucu hesaplar. */
+export function kusUcusuM(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
+  const r = Math.PI / 180
+  const dLat = (b.lat - a.lat) * r
+  const dLon = (b.lon - a.lon) * r
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLon / 2) ** 2
+  return 2 * 6_371_000 * Math.asin(Math.sqrt(h))
 }
 
 /* ---- yer adı arama ------------------------------------------------------- */

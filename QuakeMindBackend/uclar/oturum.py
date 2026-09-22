@@ -45,6 +45,9 @@ def _profil(kayit: dict) -> dict:
         "rol": kayit["rol"],
         "birim": kayit.get("birim"),
         "sehir": kayit.get("sehir"),
+        # Saha kullanicisinin bagli oldugu ekip (J-54); yalniz gorunum icin,
+        # yetkiyi her uc sunucuda kendisi kontrol eder.
+        "ekipId": kayit.get("ekip_id"),
     }
 
 

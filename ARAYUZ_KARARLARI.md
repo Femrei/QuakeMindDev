@@ -66,6 +66,12 @@ orta `#F2C14E` · iyi `#4ED08B`.
 **Kanal renkleri:** uydu `#45C8E0` · SOS `#FF5C5C` · kamera `#F2C14E` · metin `#B08CFF`.
 Renk tek başına ayırt edici sayılmaz; her kanalın ayrıca adı ve sayısı yazılır.
 
+**İhbar türü renkleri** (22 Eylül 2026, J-51). Afetzede ekranı ile konsol aynı rengi
+kullanır: SOS `#FF5C5C` · hasar fotoğrafı `#F2C14E` (kamera kanalı) · yazılı ihbar `#B08CFF`
+(metin kanalı) · ihtiyaç talebi `#F28DBD`. İhtiyaç talebi hasar ya da aciliyet olmadığı için
+kırmızı, turuncu ve sarının dışında pembe seçildi. Her türün Phosphor simgesi ve adı da
+yazılır.
+
 **Harita renkleri:** otoyol `#5C687E` · birinci derece `#465165` · ikinci derece `#343E4E` ·
 yerel yol `#28303D` · patika `#222934` · su `#123641` · hasarsız yapı `#1A202A`.
 Hasar dereceleri durum renklerini kullanır.
@@ -134,20 +140,111 @@ Tam ekran harita zemindir; üstünde opak paneller durur:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ üst çubuk: marka · modlar · arama (Ctrl K) · canlı · görünüm │
+│ üst çubuk: marka · 5 ana mod · Analiz ▾ · arama · canlı      │
 ├───────────┬──────────────────────────────────┬───────────────┤
-│ katmanlar │        harita (tek örnek)        │  durum /      │
-│ ve        │                                  │  inceleme     │
-│ filtreler │                                  │               │
+│ seçili    │        harita (tek örnek)        │  durum /      │
+│ modun     │                                  │  inceleme     │
+│ paneli    │ [Katmanlar ▴]        [yeni olay] │               │
 ├───────────┴──────────────────────────────────┴───────────────┤
 │ zaman aralığı: histogram + pencere + hazır aralıklar         │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-- Sayfalar yerine **modlar**: genel durum · SOS · yol ve rota · hasar analizi · metin · risk.
-  Mod değişince harita yerinde kalır, paneller ve katmanlar değişir.
+- Sayfalar yerine **modlar**. Mod değişince harita yerinde kalır; paneller ve önerilen
+  katmanlar değişir.
+- **Üst çubuk** (22 Eylül 2026, kullanıcı: "üst menüde bir sürü alan var"; J-56). Beş ana
+  mod sekme olarak durur: genel durum, SOS kuyruğu, ekipler, ihtiyaç talepleri, acil
+  bildirim. Beş analiz modu tek "Analiz ▾" menüsündedir: hasar, kamera, metin, risk, yol.
+  Menü her modun ne işe yaradığını yazar. Seçili analiz modu düğmede yazar ("Analiz ·
+  Kamera tespiti"). Eskiden on sekme vardı ve 1366 px'te iki satıra kırılıyordu.
+- **Sol panel seçili modun panelidir** (J-56). Başlığında modun adı yazar. Eskiden başlık
+  her modda "Katmanlar"dı ve mod değişince neyin değiştiği anlaşılmıyordu. Panel içeriği
+  kadar uzar; altında harita görünür.
+- **Katmanlar haritanın sol alt köşesindedir** (J-56; kullanıcı: "katmanlar ve veri
+  kaynakları her yerde, kullanışsız"). Eskiden sol panelin altında her modda tekrar
+  ediyordu.
+  - Düğme açık katman sayısını gösterir.
+  - Açılan listede mod için önerilen katmanların açık olduğu ve mod değişince önerilerin
+    yeniden uygulandığı yazar.
+  - Katmanlar gruplu: olaylar ve ekipler, hasar, altlık. Her satırda kaynak ve sayı
+    yazar; ayrı "veri kaynakları" bölümü yoktur (kural 1).
+  - Haritaya bağlanmamış katmanın anahtarı yoktur, "bağlanmadı" yazar.
 - Dar ekranda (≤ 980 px) harita üstte, paneller altında dikey sıralanır.
-- Afetzede ekranı ayrıdır ve hafiftir: rota ve toplanma alanı; analiz ekranları yüklenmez.
+- Afetzede ekranı ayrıdır ve görev odaklıdır (22 Eylül 2026, kullanıcı kararı; J-50, üçüncü
+  tur J-51). Deprem sonrası giren kişi her şeyi tek ekranda, kaydırmadan bulur (≥ 1280 × 640).
+  Sayfa en çok 1920 px genişler; ≥ 1600 px'te üçüncü sütun olarak sağda duyurular durur
+  (kullanıcı, dördüncü tur: kenarlarda boş alan kalmasın, duyurular ilgi çeksin).
+  - Solda "Acil yardım": kırmızı SOS düğmesi sabit boydadır (64 px) ve boş yeri doldurmaz.
+    Durum, not ve kişi sayısı isteğe bağlıdır. Çağrı gidince aynı kart "Bekliyor → Ekip
+    atandı → Kapandı" adımlarını gösterir.
+  - SOS'un altında "Bildirimlerim": gönderilen çağrı ve ihbarların canlı durumu. Uzun ekranda
+    en altta duyuruların tam metni.
+  - Sağda "Nereye gidebilirim?": toplanma alanı, hastane, sağlık merkezi, eczane, itfaiye,
+    polis sekmeleri; liste önde, harita yanında ve küçük (harita yardımcıdır, ekranı kaplamaz).
+    Liste yürüme mesafesine göre sıralıdır. Yer seçilince rota yollar üzerinden, kendi yol
+    ağımızla çizilir (J-44). Kuş uçuşu kesikli çizgi yalnız rota yokken yön göstergesidir.
+  - Altında üç "Bildir" düğmesi, her biri kendi ihbar renginde: hasar fotoğrafı (fotoğraf →
+    model seçimi → modelin cevabı → ihbar), yazarak bildir, ihtiyaç bildir. Pencerede açılır.
+  - En yeni duyuru en üstte tek satır ve önem renginde; bütün duyurular üst çubuktan açılır.
+    Yeni duyuru gelince üst çubuğun altında uyarı çıkar (acil olan kapatılana kadar kalır);
+    istenirse tarayıcı bildirimi. Bilgi duyurusu vurgu renginde, gri değil.
+  - Dokunma hedefleri en az 40 px.
+  - Dar ekranda sıra: SOS, Bildir, Nereye, Bildirimlerim. Analiz ekranları yüklenmez. Harita
+    ve ihbar pencereleri tembel yüklenir; SOS düğmesi onları beklemez.
+- Konsol, afetzede ihbarlarını türüne uygun yerde gösterir (J-51):
+  - Genel durumda "Son ihbarlar".
+  - Fotoğraflar kamera modunda, yazılı ihbarlar metin modunda, ihtiyaç talepleri kendi
+    modunda.
+  - Yeni kayıt gelince köşede kısa kart çıkar (§10).
+
+### Sevk: "Kim gidiyor" (J-54, 22 Eylül 2026)
+
+Kullanıcı: "hangi ihbar, neredeki ihbar, hangi ekip gidecek ya da gidiyor, kaç kişi
+gidiyor; bunlar hep belirsiz."
+- **Olay ayrıntısı.** SOS, fotoğraf, yazılı ve ihtiyaç ihbarında aynı "Kim gidiyor" bölümü
+  var. Giden her ekip için şunlar yazar:
+  - adı, kurumu ve türü, kaç kişi;
+  - aşama rozeti (atandı, yolda, olay yerinde);
+  - dört adımın saati ve kimden geldiği (ekip ya da koordinasyon);
+  - ekip şu an nerede, olaya süresi ve yoldan uzaklığı ("~6 dk · yoldan 3,0 km"; J-55) ve
+    konumun ne zaman bildirildiği;
+  - nereden çıktığı ve koordinasyonun notu.
+- **Ekip gönderme.** Bütün ekipler olaya tahmini süreye göre listelenir (araç yolundan;
+  yol ağı dışındaki ekip kuş uçuşuyla ve bunu yazarak, en sonda). Gönderilemeyenler soluk
+  durur ve nedeni yazar ("Görevde: SOS · Akevler · yolda", "Hizmet dışı"). Kişi sayısı
+  ekibin kayıtlı sayısıyla sınırlı. Düğme ne olacağını söyler: "Gönder: AKUT 3, 6 kişi".
+  Olaya zaten ekip gidiyorsa düğme "Ek destek ekibi gönder" olur.
+- **Adım işaretleme.** Koordinasyon telsizle gelen adımı işaretler. İptalde neden
+  zorunludur. "İş bitti" sorulurken "olay sürüyor" seçilebilir; seçilirse olay kuyruğa
+  döner.
+- **Listeler.** SOS ve ihbar satırında tek satır yazar: "AKUT 1 yolda · 6 kişi" ya da "Ekip
+  gönderilmedi · 1 saat 12 dakikadır bekliyor". Bekleme süresi kısaltılmaz.
+- **Ekipler modu.**
+  - Ekipler görevdekiler önce listelenir; her birinin görevi, konumunun yaşı ve bağlı
+    hesapları yazar.
+  - "Olayı aç" ekibin gittiği olayı kendi modunda açar.
+  - Koordinasyon ekip ekler ve düzenler, saha hesaplarını ekibe bağlar.
+- **Harita.** Müsait ekip vurgu renginde, görevdeki beyaz ve vurgu kenarlı, hizmet dışı
+  gri. Görevdeki ekipten olaya rotası çizilir ve sokakları izler (J-55). Yol ağı dışındaki
+  ekip için çizgi kesik ve düzdür, çünkü o bir yol değil yöndür. Ekibin adı noktanın
+  üstünde yazar.
+- **Ekip ekranı (`/ekip`).** Saha hesabının açılış ekranıdır; telefon için tek sütun.
+  - Olayın bütün bilgisi var: kişi, not, konumun doğruluğu, yaklaşık konum uyarısı.
+  - Büyük düğmeler: "Yola çıktık", "Vardık", "İşimiz bitti…", "Gidemiyoruz…".
+  - Konum paylaşımı ekibin kendi seçimidir.
+  - "Telefonun haritasında aç" `geo:` bağlantısıdır; konum bir web hizmetine adres içinde
+    gönderilmez.
+- **Afetzede.** Çağrı kartında şunlar görünür:
+  - başlık aşamayı söyler: "Ekip yolda", "Ekip geldi";
+  - ekibin adı, kişi sayısı ve saati: "AKUT 1 (4 kişi) 15:27'de yola çıktı";
+  - dört adım: alındı, ekip atandı, yolda, geldi;
+  - ekip konumunu paylaştıysa nerede olduğu, yoldan süresi ve uzaklığı. Konum 10
+    dakikadan eskiyse süre gösterilmez: ekip o arada yer değiştirmiş olabilir, bu yazılır.
+
+  Haritada gelen ekip adıyla ve çağrıya kesik çizgiyle görünür. Görevlendirilen ekip
+  gelemezse bu yazılır.
+- **Renk.** Görev durumu vurgu, yeşil ve nötrle ayrılır. Kırmızı, turuncu ve sarı yine
+  yalnız hasar ve aciliyet içindir.
 
 ## 9. Panel kuralı — her panel kendini anlatır
 

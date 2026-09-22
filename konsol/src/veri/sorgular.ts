@@ -1,6 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPost } from './istemci'
+import { useCallback } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { apiGet } from './istemci'
 import { dogruluk } from '@/lib/bicim'
+import type { SorguAraligi } from '@/durum/zamanDurumu'
+import type { Gorev } from './gorev'
+
+export type { Ekip } from './gorev'
+export { useEkipler } from './gorev'
 
 /* ---------------------------------------------------------------------------
    Ortak çıktı sözleşmesi (CLAUDE.md kural 2):
@@ -65,6 +71,10 @@ export type SosCagrisi = {
   /** "gps": cihaz konumu · "mahalle": mahalle merkezi, yaklaşık konum. */
   konumKaynagi?: 'gps' | 'mahalle' | null
   konumDogrulukM?: number | null
+  /** false: afetzede durum seçmeden SOS'a bastı; öncelik "kritik" varsayıldı (J-50). */
+  durumSecildi?: boolean | null
+  /** Çağrıya giden ekipler, yeniden eskiye (J-54). */
+  gorevler?: Gorev[]
 }
 
 /**
@@ -74,6 +84,7 @@ export type SosCagrisi = {
 export function sosEkBilgi(c: SosCagrisi): { kisiIhtiyac: string | null; konum: string | null; yaklasik: boolean } {
   const kisiIhtiyac =
     [
+      c.durumSecildi === false ? 'Durum seçilmedi (tek dokunuş SOS)' : null,
       c.kisiSayisi ? `${c.kisiSayisi} kişi` : null,
       c.ihtiyaclar?.length ? c.ihtiyaclar.map((i) => IHTIYAC_ADI[i] ?? i).join(', ') : null,
     ]
@@ -88,57 +99,32 @@ export function sosEkBilgi(c: SosCagrisi): { kisiIhtiyac: string | null; konum: 
   return { kisiIhtiyac, konum, yaklasik }
 }
 
-export type Ekip = {
-  id: string
-  ad: string
-  lon: number
-  lat: number
-  durum: string
-  gorev?: string | null
-  guncellendi?: number
+
+/** Canlıda sunucu en çok 15 dakika geniş pencere döner (bkz. useSorguAraligi);
+    liste burada tam pencereye süzülür. Süzme yalnız dakika değişince yeniden
+    koşar, istek atmaz. */
+function useTamPencere<T extends { zaman: number }>(kesinBaslangic: number | null) {
+  return useCallback(
+    (l: T[]) => (kesinBaslangic == null ? l : l.filter((x) => x.zaman >= kesinBaslangic)),
+    [kesinBaslangic],
+  )
 }
 
-type Aralik = [number, number]
-
-export function useHasarNoktalari([t0, t1]: Aralik) {
+export function useHasarNoktalari({ baslangic, bitis, kesinBaslangic }: SorguAraligi) {
+  const suz = useTamPencere<HasarNoktasi>(kesinBaslangic)
   return useQuery({
-    queryKey: ['hasar', t0, t1],
-    queryFn: () => apiGet<HasarNoktasi[]>('/api/hasar-noktalari', { baslangic: t0, bitis: t1 }),
+    queryKey: ['hasar', baslangic, bitis ?? 'canli'],
+    queryFn: () => apiGet<HasarNoktasi[]>('/api/hasar-noktalari', { baslangic, bitis }),
+    select: suz,
   })
 }
 
-export function useSosCagrilari([t0, t1]: Aralik) {
+export function useSosCagrilari({ baslangic, bitis, kesinBaslangic }: SorguAraligi) {
+  const suz = useTamPencere<SosCagrisi>(kesinBaslangic)
   return useQuery({
-    queryKey: ['sos', t0, t1],
-    queryFn: () => apiGet<SosCagrisi[]>('/api/sos', { baslangic: t0, bitis: t1 }),
-  })
-}
-
-export function useEkipler() {
-  return useQuery({ queryKey: ['ekipler'], queryFn: () => apiGet<Ekip[]>('/api/ekipler') })
-}
-
-/** Çağrıya en yakın ekip — hesap sunucuda yapılır, istemci mesafe hesaplamaz. */
-export function useEnYakinEkip(sosId: string | null) {
-  return useQuery({
-    queryKey: ['en-yakin-ekip', sosId],
-    enabled: !!sosId,
-    queryFn: () =>
-      apiGet<{ ekip: Ekip | null; mesafeM: number | null }>(`/api/sos/${sosId}/en-yakin-ekip`),
-  })
-}
-
-/** Ekip sevki. Mükerrer sevki sunucu 409 ile reddeder. */
-export function useSosAta() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({ sosId, ekipId }: { sosId: string; ekipId: string }) =>
-      apiPost<SosCagrisi>(`/api/sos/${sosId}/ata`, { ekipId }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['sos'] })
-      void qc.invalidateQueries({ queryKey: ['ozet'] })
-      void qc.invalidateQueries({ queryKey: ['ekipler'] })
-    },
+    queryKey: ['sos', baslangic, bitis ?? 'canli'],
+    queryFn: () => apiGet<SosCagrisi[]>('/api/sos', { baslangic, bitis }),
+    select: suz,
   })
 }
 
@@ -158,20 +144,21 @@ export type IsiIzgarasi = {
 export function useIsiIzgarasi(
   merkez: { lon: number; lat: number },
   yaricapKm: number,
-  [t0, t1]: Aralik,
+  { baslangic, bitis }: SorguAraligi,
   kaynak: KaynakTipi,
   acik: boolean,
 ) {
+  // Anahtar kaynakla başlar: canlı akış yalnız değişen kanalı tazeler (J-51).
   return useQuery({
-    queryKey: ['isi', kaynak, merkez.lon, merkez.lat, yaricapKm, t0, t1],
+    queryKey: ['isi', kaynak, merkez.lon, merkez.lat, yaricapKm, baslangic, bitis ?? 'canli'],
     enabled: acik,
     queryFn: () =>
       apiGet<IsiIzgarasi>('/api/road_damage/heatmap', {
         latitude: merkez.lat,
         longitude: merkez.lon,
         radiusKm: yaricapKm,
-        baslangic: t0,
-        bitis: t1,
+        baslangic,
+        bitis,
         kaynak,
       }),
   })
@@ -185,13 +172,19 @@ export type Ozet = {
   bekleyenSos: number
   atananSos: number
   kapananSos: number
+  /* Ekipler şu anki durumuyla, zaman aralığından bağımsız (J-54). */
+  ekipSayisi?: number
+  musaitEkip?: number
+  gorevdekiEkip?: number
+  /** Açık görevlerde sahaya giden toplam kişi. */
+  sahadakiKisi?: number
   /** Kanal başına nokta sayısı: ısı panelindeki sayılar buradan gelir. */
   kaynakSayilari: Partial<Record<KaynakTipi, number>>
 }
 
-export function useOzet([t0, t1]: Aralik) {
+export function useOzet({ baslangic, bitis }: SorguAraligi) {
   return useQuery({
-    queryKey: ['ozet', t0, t1],
-    queryFn: () => apiGet<Ozet>('/api/ozet', { baslangic: t0, bitis: t1 }),
+    queryKey: ['ozet', baslangic, bitis ?? 'canli'],
+    queryFn: () => apiGet<Ozet>('/api/ozet', { baslangic, bitis }),
   })
 }

@@ -17,6 +17,7 @@ type SunucuKullanici = {
   rol: Rol
   birim?: string | null
   sehir?: string | null
+  ekipId?: string | null
 }
 
 type OturumYaniti = { erisimJetonu: string; kullanici: SunucuKullanici }
@@ -37,6 +38,7 @@ function oturumaCevir(y: OturumYaniti): Oturum {
     adSoyad: y.kullanici.adSoyad,
     eposta: y.kullanici.eposta,
     rol: y.kullanici.rol,
+    ekipId: y.kullanici.ekipId ?? null,
     kaynak: 'jwt',
   }
 }

@@ -76,7 +76,7 @@ export function Rozet({
   ton,
   children,
 }: {
-  ton: 'crit' | 'high' | 'mid' | 'ok' | 'nötr'
+  ton: 'crit' | 'high' | 'mid' | 'ok' | 'accent' | 'nötr'
   children: ReactNode
 }) {
   const tonlar: Record<string, string> = {
@@ -84,6 +84,7 @@ export function Rozet({
     high: 'border-high text-high',
     mid: 'border-mid text-mid',
     ok: 'border-ok text-ok',
+    accent: 'border-accent text-accent',
     nötr: 'border-line-2 text-ink-3',
   }
   return (

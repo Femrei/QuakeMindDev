@@ -5,6 +5,7 @@ import { Micro, Rozet } from '@/kabuk/parcalar'
 import { apiPost } from '@/veri/istemci'
 import { useKameraCozumleme, type KameraSonucu } from '@/durum/cozumlemeDurumu'
 import { sayi } from '@/lib/bicim'
+import { GelenIhbarlar } from './ihbarParcalari'
 
 /* Kamera modu: saha fotoğrafında çatlak ve yapı hasarı tespiti (YOLO).
    Görsel sunucuya gönderilir, model orada koşar; sonuç kutularıyla döner. */
@@ -87,13 +88,29 @@ export function KameraSol() {
   )
 }
 
+/** Afetzedelerin gönderdiği hasar fotoğrafları kamera modunun başında durur
+    (J-51): ekip yeni fotoğrafı burada görür, sonra kendi fotoğrafını da
+    inceletebilir. */
 export function KameraSag() {
+  return (
+    <>
+      <GelenIhbarlar
+        tur="fotograf"
+        baslik="Afetzedelerden gelen fotoğraflar"
+        amac="Afetzedenin seçtiği modelle incelenip ihbar edilen hasar fotoğrafları. Seçince fotoğraf, işaretler ve konum açılır."
+      />
+      <KendiTespitlerim />
+    </>
+  )
+}
+
+function KendiTespitlerim() {
   const sonuc = useKameraCozumleme((d) => d.sonuc)
 
   if (!sonuc) {
     return (
-      <Bolum baslik="Tespitler">
-        <Amac>Seçtiğin fotoğraftaki tespitler ve işaretlenmiş görsel burada görünür.</Amac>
+      <Bolum baslik="Kendi fotoğrafın">
+        <Amac>Soldan seçtiğin fotoğraftaki tespitler ve işaretlenmiş görsel burada görünür.</Amac>
         <div className="mt-2">
           <VeriYok ne="Tespit" neden="henüz fotoğraf gönderilmedi" />
         </div>

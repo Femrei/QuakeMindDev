@@ -14,7 +14,8 @@ export const KONSOL_ROLLERI: Rol[] = ['saha', 'koordinator', 'yonetici']
 
 /** Rolün açılışta gideceği yer. */
 export function varsayilanYol(rol: Rol): string {
-  return rol === 'afetzede' ? '/afetzede' : '/konsol/genel'
+  // Saha ekibi sahada telefonla çalışır: açılışta kendi görev ekranı (J-54).
+  return rol === 'afetzede' ? '/afetzede' : rol === 'saha' ? '/ekip' : '/konsol/genel'
 }
 
 export type Oturum = {
@@ -22,6 +23,9 @@ export type Oturum = {
   adSoyad: string
   eposta: string
   rol: Rol
+  /** Saha kullanıcısının bağlı olduğu ekip (J-54). Yalnız görünüm içindir;
+      yetkiyi her uçta sunucu kontrol eder. */
+  ekipId?: string | null
   /** Oturumun kaynağı; bugün tek seçenek imzalı erişim jetonu. */
   kaynak: 'jwt'
 }

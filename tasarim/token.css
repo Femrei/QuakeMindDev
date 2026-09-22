@@ -69,6 +69,23 @@
   --color-map-water: #123641;
   --color-map-building: #1a202a;
 
+  /* --- afetzede haritası: yer türleri (J-50). Kırmızı, turuncu ve sarı
+     aciliyete ayrıldığı için kullanılmaz; türler ayrıca harfle ayrılır. --- */
+  --color-yer-toplanma: #4ed08b;
+  --color-yer-saglik: #5aa9ff;
+  --color-yer-eczane: #b08cff;
+  --color-yer-guvenlik: #c3cad6;
+
+  /* --- ihbar türleri (J-51): afetzede ekranı ve konsol aynı rengi kullanır.
+     SOS aciliyettir (kırmızı); hasar fotoğrafı hasardır (sarı, kamera
+     kanalıyla aynı); yazılı ihbar metin kanalının rengindedir. İhtiyaç talebi
+     hasar ya da aciliyet değildir: kırmızı, turuncu ve sarının dışında pembe.
+     Renk tek başına ayırt edici değildir; her türün simgesi ve adı da yazılır. --- */
+  --color-ihbar-sos: #ff5c5c;
+  --color-ihbar-fotograf: #f2c14e;
+  --color-ihbar-metin: #b08cff;
+  --color-ihbar-ihtiyac: #f28dbd;
+
   /* --- yazı tipi aileleri --- */
   --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
   --font-cond: 'IBM Plex Sans Condensed', 'IBM Plex Sans', ui-sans-serif, sans-serif;
@@ -123,6 +140,7 @@
   --spacing-timeline: 144px;
   --spacing-gutter: 14px;
   --spacing-form: 420px;
+  --spacing-afetzede: 1920px; /* afetzede ekranının en geniş hâli; 1440 iki yanda boşluk bırakıyordu (J-51) */
   --spacing-palette: 560px;
   --spacing-palette-top: 14vh;
   --spacing-kap: 1120px;      /* tanıtım sitesi bölüm genişliği */
@@ -130,6 +148,8 @@
 
   /* --- kırılma noktası: dar ekranda (<= 980 px) paneller alta iner (ARAYUZ §8) --- */
   --breakpoint-genis: 981px;
+  /* afetzede ekranı bu genişlikte üç sütuna geçer: duyurular sağda kendi sütununda (J-51) */
+  --breakpoint-uclu: 1600px;
 
   /* --- harf aralığı --- */
   --tracking-marka: 0.13em;

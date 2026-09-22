@@ -21,7 +21,9 @@ from uclar import (
     eski_kimlik,
     eski_sos,
     genel,
+    gorev,
     hasar_analiz,
+    ihbar,
     kamera,
     kapanma,
     metin,
@@ -29,6 +31,7 @@ from uclar import (
     risk,
     rota,
     sozlesme,
+    yerler,
 )
 
 app = FastAPI(title="QuakeMind API", version="1.0.0", lifespan=ck.lifespan)
@@ -51,6 +54,9 @@ for modul in (
     eski_kimlik,
     bildirim,
     altlik,
+    yerler,
+    ihbar,
+    gorev,
 ):
     app.include_router(modul.yonlendirici)
 

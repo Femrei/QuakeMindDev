@@ -96,11 +96,15 @@
   "anahtarlar": [
    "atananSos",
    "bekleyenSos",
+   "ekipSayisi",
+   "gorevdekiEkip",
    "hasarliYapi",
    "hasarliYol",
    "kapananSos",
    "kaynakSayilari",
+   "musaitEkip",
    "olusturuldu",
+   "sahadakiKisi",
    "yikikYapi"
   ]
  },
@@ -118,7 +122,9 @@
   "ogeAnahtarlari": [
    "atamaZamani",
    "durum",
+   "durumSecildi",
    "ekipId",
+   "gorevler",
    "id",
    "ihtiyaclar",
    "kisiSayisi",
@@ -142,8 +148,15 @@
    "gorev",
    "guncellendi",
    "id",
+   "kisiSayisi",
+   "konumZamani",
+   "kurum",
    "lat",
-   "lon"
+   "lon",
+   "musait",
+   "tur",
+   "uyeler",
+   "yerAdi"
   ]
  },
  {
@@ -184,6 +197,81 @@
  },
  {
   "istek": "POST /api/ekipler/yok/konum +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/gorevler +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": null
+ },
+ {
+  "istek": "GET /api/gorevler",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/gorevler/aday-ekipler?hedefTur=sos&hedefId=yok +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/gorevler +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/gorevler",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/gorevler/yok/durum +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/ekibim +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "ekip",
+   "gecmis",
+   "gorev"
+  ]
+ },
+ {
+  "istek": "POST /api/ekipler +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/ekipler/uye-adaylari +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": [
+   "adSoyad",
+   "ekipId",
+   "eposta",
+   "id"
+  ]
+ },
+ {
+  "istek": "PUT /api/ekipler/yok/uyeler +jeton",
   "durum": 404,
   "anahtarlar": [
    "detail"
@@ -551,6 +639,168 @@
   "durum": 422,
   "anahtarlar": [
    "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/bildirimler",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/bildirimler +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/bildirimler +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": [
+   "baslik",
+   "buyukluk",
+   "gonderen",
+   "id",
+   "kaldiran",
+   "kaldirildi",
+   "kaynak",
+   "konum",
+   "metin",
+   "onem",
+   "zaman"
+  ]
+ },
+ {
+  "istek": "POST /api/bildirimler/yok/kaldir +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/yakin-yerler?lat=36.2086&lon=36.1547 +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "hizmetKapsami",
+   "kaynaklar",
+   "yaricapKm",
+   "yerler",
+   "yurume"
+  ]
+ },
+ {
+  "istek": "GET /api/yakin-yerler?lat=36.2086&lon=36.1547",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/sokak-rotasi",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/fotograf-analiz",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/fotograf-analiz +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/metin-analiz",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/metin-analiz +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/ihbarlar",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/ihbarlar +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/ihbarlar?baslangic=0&bitis=1 +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": null
+ },
+ {
+  "istek": "GET /api/ihbarlar",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/ihbarlar/yok/fotograf +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/ihbarlar/yok/durum +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/rota",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/rota +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/rota +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "adimlar",
+   "algoritma",
+   "baglanti",
+   "hasar",
+   "kaynak",
+   "koordinatlar",
+   "uyari",
+   "uzunlukM",
+   "yuruyusDk"
   ]
  }
 ]

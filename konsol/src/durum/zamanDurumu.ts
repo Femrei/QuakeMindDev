@@ -88,6 +88,42 @@ export function useAralik(): [number, number] {
   return useMemo(() => [bitis - uzunluk, bitis], [bitis, uzunluk])
 }
 
+/** Sorguların kullandığı aralık (J-46, J-51).
+
+    Canlı modda pencerenin bitişi AÇIKTIR (`bitis: null`). Eskiden bitiş saatin
+    son dakikasıydı: yeni gelen SOS ya da ihbar o dakikadan sonra kaydedildiği
+    için canlı akış sorguyu tazelese bile listeye girmiyor, bir sonraki dakikayı
+    (en çok 60 sn) bekliyordu.
+
+    Canlıda başlangıç 15 dakikalık çapaya yuvarlanır: sorgu anahtarı dakikada
+    bir değişmez, sorgular yalnız canlı akış mesajıyla tazelenir (kural 4).
+    Listeler tam pencereye istemcide süzülür (`kesinBaslangic`); sunucunun
+    saydığı özet ve ısı en çok 15 dakika geniş pencereyle hesaplanır.
+    Geçmiş modunda aralık olduğu gibi gider. */
+export type SorguAraligi = {
+  baslangic: number
+  bitis: number | null
+  /** Canlıda pencerenin gerçek başlangıcı; geçmişte null (süzme gerekmez). */
+  kesinBaslangic: number | null
+}
+
+export const CANLI_CAPA = 15 * 60_000
+
+export function useSorguAraligi(): SorguAraligi {
+  const canli = useZaman((d) => d.canli)
+  const bitis = useZaman((d) => (d.canli ? d.simdi : d.bitis))
+  const uzunluk = useZaman((d) => d.uzunluk)
+  const baslangic = bitis - uzunluk
+  const capa = Math.floor(baslangic / CANLI_CAPA) * CANLI_CAPA
+  return useMemo(
+    () =>
+      canli
+        ? { baslangic: capa, bitis: null, kesinBaslangic: baslangic }
+        : { baslangic, bitis, kesinBaslangic: null },
+    [canli, capa, baslangic, bitis],
+  )
+}
+
 /** Hangi hazır pencere seçili görünüyor? */
 export function seciliPencere(d: ZamanDurumu): PencereId | null {
   if (d.canli) return 'canli'

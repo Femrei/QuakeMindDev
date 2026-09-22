@@ -6,6 +6,7 @@ import { useZaman } from '@/durum/zamanDurumu'
 import { useIsler } from '@/durum/islerDurumu'
 import { analizSonucuAl } from '@/veri/analiz'
 import { useOturum } from '@/kimlik/oturum'
+import { yeniOlayIsle } from './yeniOlaylar'
 
 /**
  * Akış ve saat, uygulamada BİR kez kurulur.
@@ -24,6 +25,8 @@ export function CanliSaglayici({ children }: { children: ReactNode }) {
     if (!kullaniciId) return
     return canliAkisBaslat(qc, {
       dinleyici: (m) => {
+        // Yeni SOS ve ihbar: konsolda köşede kısa kart (J-51).
+        yeniOlayIsle(m)
         if (m.tip !== 'is-durumu') return
         const { isGuncelle, isler } = useIsler.getState()
         if (!isler[m.isId]) {

@@ -1072,8 +1072,741 @@ toplandığı ve R0'ın öğrenmeyen ajan olduğu açıkça yazılmalı.
 
 ---
 
+## J-57 🟠 `npm run kontrol` konsol kaynaklarının yanına `.js` yazıyor; Vite bu kopyaları `.tsx`'ten önce yükler
+**Durum:** AÇIK — yazılan dosyalar silindi; betik değiştirilmedi, öneri aşağıda · **Bulundu:** 22 Eylül 2026 (commit öncesi denetimde) · **İlgili:** kural 6 (token denetimi), J-56
+
+**Ne oldu.** Commit öncesi `npm run kontrol` koşuldu. Tip ve token denetimi geçti. Ama betik
+`konsol/src` içinde her `.ts`/`.tsx` dosyasının yanına derlenmiş bir `.js` yazdı. Toplam 82
+dosya: kaynak kopyaları ve `konsol/vite.config.js`.
+- **Neden** [K]. Betik `tsc -b --noEmit false --emitDeclarationOnly false` koşuyor. İki
+  tsconfig'de de `noEmit: true` var ve `outDir` yok. Komut satırındaki bayrak ayarı eziyor ve
+  çıktı kaynağın yanına yazılıyor. Betik ilk konsol commit'inden (a8080a3) beri böyle.
+- **Tehlike** [K]. Vite 7.3.6 uzantısız içe aktarmayı `.mjs, .js, .mts, .ts, .jsx, .tsx`
+  sırasıyla çözüyor. Yapılandırmada da `vite.config.js`'i `vite.config.ts`'ten önce okuyor.
+  Kopyalar kalsaydı geliştirme sunucusu yeniden açılınca bayat `.js`'i yükleyecekti;
+  `.tsx`'teki düzenlemeler ekrana yansımayacaktı.
+- **Yapılan.** Silmeden önce iki şey denetlendi: 82 dosyanın hepsinin `.ts`/`.tsx` kardeşi
+  var ve hepsi o koşuda oluşmuş. Sonra silindi. Çalışan geliştirme sunucusunun günlüğünde o
+  saatten sonra kayıt yok; sunucu etkilenmedi.
+
+**Öneri.** Betik `tsc -b && node scripts/token-kontrol.mjs` olmalı. `build` betiği de `tsc -b`
+kullanıyor ve iki tsconfig'deki `noEmit: true` ile çıktı yazmıyor. Değişiklikten sonra iki
+şey denenmeli: bilerek bozulmuş bir tip hatası yakalanıyor mu, `git status`'ta yeni dosya
+çıkıyor mu.
+
+---
+
+## J-56 🟠 Konsol düzeni: sol panel her modda "Katmanlar", 10 katman anahtarının 4'ü hiçbir şey çizmiyordu
+**Durum:** KAPALI (22 Eylül 2026) — önizlemede denetlendi; dört katman hâlâ bağlı değil (aşağıda) · **Bulundu:** 22 Eylül 2026 (kullanıcı, sol panelin görüntüsüyle: "bu katmanlar ve veri kaynakları kısmı her yerde var, aşağı kaydırınca geliyor, tasarım olarak sevmedim, kullanışsız; üst menüde bir sürü alan var, birini seçince soldaki katmanlar kısmı değişiyor gibi, anlamadım") · **İlgili:** ARAYUZ §8, J-54, kural 1
+
+**Sorunlar.**
+1. **Sol panelin başlığı yanlıştı.** Başlık her modda "Katmanlar" ve "7 katman açık"tı. Oysa
+   içerik moda göre değişiyordu (SOS'ta çağrı kuyruğu, Ekipler'de ekip listesi). Üst
+   çubukta mod seçince neyin değiştiği anlaşılmıyordu.
+2. **Her modun altında aynı iki bölüm vardı.** "Harita katmanları" (10 anahtar) ve "Veri
+   kaynakları", her modda kaydırınca geliyordu.
+3. **10 katman anahtarının 4'ü hiçbir şey çizmiyordu:**
+   - "Hasarlı yollar" boş veriyle çiziliyordu (`data: []`).
+   - "Depremler", "Toplanma alanları" ve "Fay hatları" haritaya hiç bağlı değildi.
+   - "Depremler" genel modda açık geliyordu ve "7 katman açık" sayısına giriyordu.
+   - Veri kaynakları listesi "Harita altlığı: karo ucu henüz bağlanmadı" diyordu; oysa
+     altlık J-40'tan beri yerel OSM kopyasından geliyor.
+4. **On mod sekmesi üst çubuğa sığmıyordu.** 1366 px'te hepsi iki satıra kırılıyordu
+   (J-54'ün açık maddesi).
+
+**Yapılan.**
+- **Sol panel seçili modun paneli** (`SolPanel.tsx`). Başlıkta modun adı yazıyor. Panel
+  içeriği kadar uzuyor; altında harita görünüyor.
+- **Katmanlar düğmesi** (`KatmanDugmesi.tsx`) haritanın sol alt köşesinde; düğmede açık
+  katman sayısı var. Açılan listede:
+  - bu mod için önerilen katmanların açık olduğu ve mod değişince önerilerin yeniden
+    uygulandığı yazıyor;
+  - SOS çağrıları "her zaman açık" satırı var;
+  - üç grup var: olaylar ve ekipler, hasar, altlık. Her katmanın yanında kaynağı ve sayısı
+    yazıyor (kural 1); ayrı kaynak bölümü kalktı;
+  - bağlı olmayan dört katman anahtarsız, "bağlanmadı" ve nedeniyle yazıyor. Sayaç
+    yalnız bağlı katmanları sayıyor.
+- **Üst çubuk** (`UstCubuk.tsx`): beş ana mod sekme; hasar, kamera, metin, risk ve yol tek
+  "Analiz ▾" menüsünde. Menü her modun ne işe yaradığını yazıyor; seçili analiz modu
+  düğmede görünüyor.
+- Dar ekranda (≤ 980 px) katmanlar düğmesi panellerin üstünde, aşağı açılıyor.
+
+**Denetim.** Test sunucusuna bağlı konsolda gerçek istekle denendi:
+- 1366 × 768 ve 1280 × 720'de üst çubuk tek satır ve taşmıyor, en uzun düğme adı ("Analiz ·
+  Kamera tespiti") ile de.
+- Sol panel başlığı modla değişiyor: Genel durum, SOS kuyruğu, Ekipler, Kamera tespiti.
+- Katman sayacı: genel 5, SOS 2, Ekipler 3.
+- Liste Escape ile ve dışarı tıklayınca kapanıyor. Analiz menüsünden mod seçince menü
+  kapanıyor.
+- SOS modunda sol panel 323 px (kaydırma yok); genel ve Ekipler'de sütun boyunda
+  kaydırılıyor.
+
+**Açık kalanlar.** "Hasarlı yollar" (kayıtlı kapanmalar), "Depremler", "Fay hatları"
+(Deprem riski modunda liste olarak var) ve "Toplanma alanları" (afetzede ekranında var)
+konsol haritasına bağlanmalı. Bağlanana kadar "bağlanmadı" yazıyor.
+
+---
+
+## J-55 🟠 Sevkte ekibin olaya uzaklığı kuş uçuşuydu; araç yolundan süre yoktu
+**Durum:** KAPALI (22 Eylül 2026) — ölçüldü; hız varsayımı ölçülmedi, açık maddeler en altta · **Bulundu:** 22 Eylül 2026 (kullanıcı: "neden kuş uçuşu, normal yolda normal trafiğin aktığı şekilde yoldan yapamaz mısın") · **İlgili:** J-54, J-44, J-34, kural 3
+
+**Sorun.** J-54'te ekibin olaya uzaklığı kuş uçuşuydu. Afetzedenin yürüme ağı (J-44) araca
+uymaz: tek yönü bilmez, yaya yollarını içerir. Eski araç motoru (`apps/road_damage`,
+networkx) Python'da çalışır ve her istekte yavaştır.
+
+**Yapılan.**
+- **Araç ağı** (`araclar_arac_agi_uret.py`). Yerel OSM kopyasından beş bölge için üretiliyor
+  (~3 dk; her bölgede OSM dosyasının tamamı taranıyor, okuma ~35 sn). Ağda şunlar var:
+  - motorlu aracın girdiği yol türleri; `no/private` erişimli yollar yok;
+  - tek yön (`oneway`, kavşak halkası, otoyol);
+  - en büyük güçlü bağlı parça; her düğümden her düğüme yol var.
+
+  Antakya ağı: 103.501 düğüm, 212.735 yönlü kenar, 747 tek yönlü yol. Güçlü bağlı parça
+  oranı beş bölgede %97,8–98,3. Beş dosya toplam 12,8 MB; depoya girmez.
+- **Rota** (`arac_rotasi.py`).
+  - Olaydan ters ağda tek Dijkstra; olaya gelen bütün ekiplerin süresi bu tek aramadan
+    çıkıyor.
+  - Arama önbellekte (32 olay); hasar verisi değişince yenileniyor.
+  - Hasar cezası ve kapanma kuralı yürüme rotasıyla aynı. Kapanmadan geçen rota ekranda
+    söyleniyor.
+- **Süre.** Yol türüne göre ortalama hız varsayımıyla hesaplanıyor [T]: ana yol 40, ara
+  yol 35, sokak 20 km/sa; ışık ve kavşak hıza gömülü.
+  - Yolun yasal sınırı daha düşükse sınır kullanılıyor. OSM'de sınır yolların yalnız
+    %0,2–2,9'unda yazılı; süre neredeyse tamamen varsayıma dayanıyor.
+  - Anlık trafik verisi yok.
+  - Varsayım sunucuda (`HIZ_KMS`); değişince ağ yeniden üretilmez.
+- **Nerede görünüyor.**
+  - Ekip seçicide ekipler süreye göre sıralı: "~6 dk · yoldan 3,0 km".
+  - "Kim gidiyor" kartında, Ekipler modunda, ekip ekranında ve afetzede kartında süre ve
+    yoldan uzaklık var.
+  - Haritalarda rota çizgisi sokakları izliyor. Yol ağı dışındaki ekip için kesik düz
+    çizgi ve "kuş uçuşu" yazısı var.
+- **Afetzedeye eski süre gösterilmiyor.** Ekibin konumu 10 dakikadan eskiyse süre yerine
+  "konum eski olduğu için süre verilemiyor" yazıyor. İlk denemede 28 dakikalık konumla
+  "~6 dk" yazıyordu; denerken düzeltildi.
+
+**Ölçüm** (Antakya, test sunucusu, kopya veritabanı):
+- Yeni olay araması: medyan 22 ms, en çok 23 ms (12 olay). Önbellekten 0,1 ms. Ekip başına
+  rota 1 ms'nin altında.
+- İlk istek 2,1 sn sürüyordu: ağ yükleme 0,6 sn, hasar çarpanları ~1,4 sn. Artık sunucu
+  açılışında arka planda yapılıyor.
+- Kuş uçuşu ile fark:
+  - Cebrail → Akevler: kuş uçuşu 1.176 m, yoldan 3.023 m (2,6 kat), ~6 dk. Köprüden
+    dolaşıyor.
+  - Öteki iki örnek: 1,7 ve 1,3 kat.
+- Tek yön: 76 düğümlük rotada ters gidiş yok. Aynı iki nokta arasında A→B 3.023 m,
+  B→A 2.961 m.
+- API yanıtı (medyan, önbellekle): aday ekipler 4 ms, `/api/sos` 4 ms, `/api/ekipler` 4 ms.
+- Denetimler:
+  - API testi 11/11. Ağ dışı ekip (Ankara) kuş uçuşuna düşüyor, listede sonra geliyor.
+  - J-54'ün uçtan uca testi (52/52) ve depo testi (44/44) yeniden geçti.
+  - Duman testi 93 istek; tek fark veriye bağlı (`/api/gorevler` listesi artık dolu).
+- Arayüz, test sunucusunda gerçek isteklerle denendi: konsol, ekip ekranı ("Olaya yoldan
+  2,0 km · tahmini ~4 dk") ve afetzede ("sana yoldan ~2 dk (1,7 km, tahmini)").
+
+**Açık kalanlar.**
+- **Hız varsayımı ölçülmedi.** Görev kaydı yola çıkış ve varış saatini tutuyor. Yeterli
+  görev birikince tahmin bu kayıtlarla karşılaştırılmalı ve hız tablosu buna göre
+  ayarlanmalı.
+- **Anlık trafik yok.** Açık bir kaynak yok; ticari servis kullanılmadı.
+- **Hasar süreye eklenmiyor.** Hasar noktası rota seçimini etkiliyor, ama enkazlı yolda
+  yavaşlama yok.
+- **Kapsam.** Aşağıdaki ek ile şehirler arası da yoldan. Beş şehri kapsayan kutunun
+  (+0,15°) dışından gelen ekip için hâlâ kuş uçuşu yazılıyor.
+
+**Ek (22 Eylül): şehirler arası yine kuş uçuşuydu.** Kullanıcı genel durum ekranının
+görüntüsüyle geldi ("bak ne durumda"). Haritada Antakya'daki AKUT 1'den Kahramanmaraş'taki
+çağrıya (Abdülhamid Han) 160 km'lik kesik düz çizgi vardı.
+- **Neden.** Kullanıcı AKUT 1'i (Antakya) o çağrıya önce 2, sonra 4 kişiyle göndermiş.
+  Şehir ağları yalnız şehrin 12 km çevresini kapsıyordu. İki şehir arasında ağ olmadığı
+  için rota bulunamadı ve ekran sessizce kuş uçuşuna düştü.
+- **Yapılan.**
+  - Bölgeler arası ağ (`araclar_arac_agi_uret.py --genel`): beş şehir ağı (dosyadan) ve
+    şehirleri bağlayan ana yollar (otoyol, devlet ve il yolu; OSM'den tek okuma, 28 sn)
+    kavşaklarından birleşti.
+  - Ağın boyutu: 513.343 düğüm, 1.004.496 yönlü kenar, 8.622 ana yol, şehir dışında
+    9.894 km yol; güçlü bağlı parça %98,3; dosya 15,1 MB.
+  - Ekip ve olay aynı şehirdeyse şehir ağı (hızlı), farklı şehirlerdeyse genel ağ
+    kullanılıyor.
+  - Şehir dışı yolda ayrı hız varsayımı var [T]: otoyol 100, devlet yolu 80, ana yol 70,
+    il yolu 60 km/sa. Şehir içi hızlar şehirler arasında süreyi iki katına çıkarırdı.
+  - Uzun rota çizgisi yaklaşık 15 m sapmayla sadeleşiyor (178 km → 199 nokta); liste
+    yanıtları şişmiyor.
+  - Uzun süre saat ve dakikayla yazılıyor ("~2 sa 26 dk").
+- **Ölçüm.**
+
+  | Nereden → Kahramanmaraş | Yoldan | Tahmini süre | Kuş uçuşu |
+  |---|---|---|---|
+  | Antakya (AKUT 1, kullanıcının görevi) | 178,4 km | ~2 sa 26 dk | 166,5 km |
+  | Gaziantep | 80,8 km | ~1 sa 15 dk | 71,7 km |
+  | Malatya | 221,8 km | ~3 sa | 149,5 km |
+  | Adıyaman | 163,8 km | ~2 sa 16 dk | 122,1 km |
+
+  - Genel ağ yükleme 1,0 sn, ilk hasar çarpanı ~1 sn; ikisi de sunucu açılışında arka
+    planda yapılıyor.
+  - Yeni şehirler arası arama medyan 111 ms, önbellekten 6 ms.
+  - Kullanıcının verisinin kopyasıyla (sürekli durum): `/api/sos` 11 ms,
+    `/api/ekipler` 9 ms, aday ekipler 13 ms. İlk istek 135 ms.
+- **Not.** Tahminler genel olarak bilinen yol sürelerine yakın; ama hız varsayımı
+  ölçülmedi. Madde yukarıda "Açık kalanlar"da.
+
+---
+
+## J-54 🔴 Sevkte kim, nereye, kaç kişiyle gidiyor belirsiz; ekip üç yere birden "müsait" görünüyor
+**Durum:** KAPALI (22 Eylül 2026) — sevk görevi, ekip ekranı ve afetzede görünümü yapıldı; test sunucusunda uçtan uca ölçüldü. Açık maddeler en altta · **Bulundu:** 22 Eylül 2026 (kullanıcı: "hangi ihbar, neredeki ihbar, hangi ekip gidecek ya da gidiyor, kaç kişi gidiyor; bunlar hep belirsiz") · **İlgili:** J-43, J-51, J-53, kural 5
+
+Kod ve çalışan veritabanı okunarak doğrulandı:
+1. **Ekibin durumu atamayla değişmiyor.** Veritabanında tek ekip var (EKP-01, "AKUT 1").
+   Üç çağrı ona atanmış, ama ekip hâlâ "müsait" ve görevi boş. `sos_ata` yalnız çağrıyı
+   güncelliyor (`depo/sqlite_surucu.py:401`). En yakın ekip hesabı müsaitleri seçtiği
+   için aynı ekibi yeniden öneriyor. Bir ekip aynı anda üç yere gidiyor görünüyor.
+2. **Ekip seçilemiyor.** "Ekip gönder" yalnız sunucunun önerdiği en yakın ekibi atıyor
+   (`konsol/src/modlar/sos.tsx:171`).
+3. **Kaç kişi gittiği yok.** Ekip kaydında kişi sayısı, türü ve kurumu yok.
+4. **Gidiş izlenmiyor.** Çağrı yalnız bekliyor → atandı → kapandı. Yola çıkış, varış ve
+   bitiş zamanı yok. Kimin atadığı yazılmıyor.
+5. **Ad yerine kimlik.** Liste ve harita "Ekip atandı (EKP-01)" yazıyor, ekibin adını değil.
+6. **İhbarlar ekibe atanamıyor.** Fotoğraf, yazılı ve ihtiyaç ihbarında yalnız
+   "görüldü / kapandı" var (`uclar/ihbar.py:520`).
+7. **İkinci ekip gönderilemiyor.** Yalnız bekleyen çağrı atanıyor. Enkazda çoğu zaman
+   ek ekip gerekir.
+8. **Ekip tanımlanamıyor.** Konsol "ekipler koordinatör tarafından tanımlanır" diyor ama
+   bunun ekranı yok; tek ekip API ile girilmiş.
+9. **Afetzede** yalnız "Ekip atandı" görüyor; ekibin yola çıkıp çıkmadığını bilmiyor.
+10. Eski web'in `/api/team/claim` uçları bellekte ve oturumsuz (`uclar/ekip.py`); konsol
+    kullanmıyor. J-53'ün listesinde yok.
+
+**Kullanıcının kararları (22 Eylül).**
+- Durumu kim işaretler: ikisi de. Ekip kendi telefonundan, koordinasyon telsizle gelen
+  bilgiyle işaretler; her adım kimden geldiğiyle yazılır.
+- Afetzede ne görür: durum, saat, kişi sayısı, ekibin adı ve ekibin nerede olduğu.
+
+**Yapılan.**
+- **Görev kaydı** (`gorevler`, `gorev_adimlari`; MIMARI §3).
+  - Her sevk bir kayıttır: olay, ekip, giden kişi, atayan, adımlar ve saatleri.
+  - Kurallar veritabanında:
+    - bir ekibin tek açık görevi olur;
+    - ikinci ekip yalnız "ek destek" olarak gider;
+    - giden kişi, ekibin kayıtlı sayısını geçemez;
+    - kapanmış olaya ekip gitmez.
+  - Son görev bitince olay eşitlenir. İş bittiyse olay kapanır; iptal ya da "olay sürüyor"
+    ise SOS kuyruğa döner. Olay kapatılınca açık görevler biter.
+  - Madde 1–7 kapandı.
+- **Uçlar** (`uclar/gorev.py`, `uclar/gorev_bicim.py`):
+  - `GET/POST /api/gorevler`, `POST /api/gorevler/{id}/durum`,
+    `GET /api/gorevler/aday-ekipler`, `GET /api/ekibim`;
+  - `POST /api/ekipler`, `PUT /api/ekipler/{id}/uyeler`, `GET /api/ekipler/uye-adaylari`;
+  - SOS ve ihbar çıktısı `gorevler`, ekip çıktısı kurum/tür/kişi/görev/üyeler, özet
+    ekip sayılarını kazandı.
+  - Eski `/api/sos/{id}/ata` artık görev açıyor.
+  - Canlı akışta yeni `gorev` mesajı var.
+- **Yetki.** Saha hesabı yalnız bağlı olduğu ekip adına çalışır (gönderme, adım, konum);
+  hesabı ekibe koordinasyon bağlar. Afetzede sevk uçlarına giremez.
+- **Konsol** (madde 8 kapandı):
+  - Olay ayrıntısında "Kim gidiyor" bölümü ve ekip seçici var.
+  - Yeni "Ekipler" modunda ekip ekleme, düzenleme ve hesap bağlama yapılıyor.
+  - Harita görevdeki ekipten olaya çizgi çekiyor; ekip adları haritada yazıyor.
+  - Özet kartlarına "Görevdeki ekip" ve "Sahadaki kişi" eklendi.
+  - Ayrıntı ARAYUZ §8'de.
+- **Ekip ekranı (`/ekip`).** Saha hesabı açılışta buraya gelir. Olayın bütün bilgisini
+  görür; "Yola çıktık / Vardık / İşimiz bitti / Gidemiyoruz" düğmeleri var. İsterse
+  konumunu paylaşır (sayfa açıkken, 30 sn ya da 25 m'de bir).
+- **Afetzede** (madde 9 kapandı):
+  - Çağrı kartında aşama, ekibin adı, kişi sayısı ve saat görünür; dört adım çizelgesi var.
+  - Ekip konumunu paylaştıysa nerede olduğu ve uzaklığı yazar.
+  - Haritada gelen ekip ve çağrıya kesik çizgi görünür.
+  - Görevlendirilen ekip gelemezse bu yazılır.
+  - Afetzedeye atayan, iç not ve adımların kimden geldiği gitmez.
+
+**Denerken bulunan ve düzeltilenler.**
+- SOS kuyruğunun süzgeçleri ("Yalnız kritik" vb.) yalnız sayıyı değiştiriyordu, liste
+  süzülmüyordu. Süzgeç artık iki panelde ortak.
+- "Ekibe yakınlığa göre sırala" anahtarı hiçbir şey yapmıyordu (`SosSol` içinde yerel
+  durumdu, sıralamaya bağlı değildi). Kaldırıldı.
+- Bekleyen çağrılar artık en uzun bekleyen üstte sıralanıyor. Eskiden en yeni üstteydi.
+- Bekleme süresi aşağı yuvarlanıyordu: 1 saat 59 dakika "1 saattir" yazıyordu. Artık
+  "1 saat 59 dakikadır" yazıyor.
+- Saat ekleri sabitti ("14:02'te" yanlış). Artık okunuşa göre: "14:02'de", "14:05'te",
+  "14:30'da".
+- Ekip yeri adı: noktaya en yakın OSM yer adı (5 km içinde yoksa yazılmaz).
+- Görev kaydından önce yapılmış üç atama (EKP-01) var. Bunlar "eski kayıt: kaç kişi ve
+  hangi aşamada bilinmiyor" diye gösteriliyor; görev uydurulmadı.
+
+**Sınama.** Gerçek veritabanının kopyasıyla, test sunucusunda (8001):
+- Depo katmanı: 44/44 denetim. Eski veritabanı tamamlanıyor, ikinci açılış hatasız.
+  Veritabanı ikinci açık görevi reddediyor. Olay eşitlemenin dört durumu ölçüldü.
+- Uçtan uca: 52/52 denetim. Koordinatör, saha hesabı ve iki afetzede aynı anda canlı
+  akışı dinledi. Ölçülenler:
+  - Afetzedeye yalnız kendi olayının `gorev` ve `ekip-konumu` mesajı gitti; öteki
+    afetzedeye hiçbiri gitmedi.
+  - Afetzede çıktısında atayan, not ve adım yok.
+  - Saha hesabı başka ekibin görevine ve konumuna 403 aldı.
+  - Eski `ata` ucu görev açıyor.
+- Duman testi 93 istek. Önceki 83'ün 80'i aynı. Farklı olan 3'ü beklenen: `/api/sos`'ta
+  `gorevler`, ekiplerde yeni alanlar, özette ekip sayıları. 10 istek yeni uçlar için.
+  Referans (`testler/uc_imzalari.json`) yeniden kaydedildi.
+- Arayüz, test sunucusuna bağlı konsolda gerçek isteklerle denendi:
+  - Koordinatör: T2'yi "hizmet dışı"dan "müsait"e aldı ve bekleyen çağrıya 3 kişiyle
+    gönderdi ("Gönder: Test UMKE 9, 3 kişi"). "Yola çıktı"yı işaretledi.
+  - İptal nedensiz kaydedilmedi; iptalden sonra çağrı kuyruğa döndü ve "Test UMKE 9
+    gelemedi (…)" yazdı.
+  - Ekip ekranında "Paylaş" konumu sunucuya yazdı; "Vardık" adımı "ekip · Önizleme Saha
+    Veli" olarak geldi.
+  - Afetzede kartında "Ekip yolda · AKUT 1 (4 kişi) 15:27'de yola çıktı · sana kuş uçuşu
+    1,2 km" yazdı; haritada ekip ve kesik çizgi göründü.
+  - 1600 px, 1366 px ve telefonda (375 px) sayfa yatay kaymıyor.
+- Üretim derlemesi geçti. Ekip ekranı ayrı parça: 12,4 KB (4,1 KB gzip); harita motorunu
+  indirmiyor.
+- Test sonrası gerçek API yeniden başlatıldı. Veritabanına yalnız yeni tablolar ve
+  sütunlar eklendi; 11 çağrı ve EKP-01 yerinde.
+
+**Açık kalanlar.**
+- **Arka planda konum yok.** Tarayıcı, sayfa kapalı ya da arka plandayken konum vermez.
+  Ekip telefonu cebe koyunca konum eskir; ekranda konumun yaşı yazar. Yerel uygulama ya da
+  arka plan konumu mobil kapsamında (bugün kapsam dışı).
+- ~~**Uzaklık kuş uçuşu.**~~ J-55'te çözüldü: araç ağında yoldan uzaklık ve tahmini süre.
+- **Ekibe bildirim yok.** Görev atanınca ekibin telefonuna yalnız sayfa açıksa düşer
+  (canlı akış). Anlık bildirim (push) yok.
+- **Kimin gittiği.** Kişi sayısı tutuluyor, isimler değil; yalnız ekibe bağlı hesaplar
+  biliniyor.
+- ~~**Üst çubuk.**~~ J-56'da çözüldü: beş ana mod sekme, analiz modları tek menüde;
+  1280 px'te de tek satır.
+- **Eski uçlar.** `/api/team/claim` bellekte ve oturumsuz duruyor (madde 10); J-53'ün
+  kararıyla birlikte ele alınmalı.
+
+---
+
+## J-53 🔴 Eski uçlar oturumsuz yanıt veriyor: vatandaş ihbarlarının metni ve konumu açık
+**Durum:** AÇIK — KARAR BEKLİYOR (eski web bu uçlara oturumsuz bağlı) · **Bulundu:** 22 Eylül 2026 (J-51'in duman testi imzalarında) · **İlgili:** CLAUDE.md kural 5, J-45, J-51
+
+**Sorun.** Duman testinin referans imzasında (`testler/uc_imzalari.json`) jetonsuz istekler
+200 dönüyor:
+- `GET /api/nlp/locations`: eski metin ucunun çözümlediği ihbarlar, konumları ve metnin
+  kendisi (`sourceText`).
+- `GET /api/camera/reports`: kamera ucunun enkaz/çatlak raporları ve konumları.
+- `GET /api/sos/alerts`, `POST /api/sos/alert`: eski SOS listesi ve SOS açma.
+- `GET /api/road_damage/heatmap`: bütün kanalların (SOS dahil) yoğunluk ızgarası.
+- `POST /api/camera/analyze`: herkes model koşturabiliyor (`/api/nlp/analyze` 422 döndü,
+  o da kimlik istemiyor).
+
+J-51'in yeni kayıtları bu listelere yazılmıyor; yeni uçlar kimlik ister. Ama ihbarın ısı
+noktası, oturumsuz ısı ucundan yoğunluk olarak görünür.
+
+**Öneri.**
+- Isı ucu hemen kimliğe bağlanabilir: konsol onu zaten jetonla çağırıyor.
+- Ötekileri yeni konsol kullanmıyor. Eski web onaydan sonra kalkacağı için bu uçlar bayrak
+  arkasına alınabilir ya da `Depends(kimlik.kullanici)` alabilir. Her ikisi de eski webi
+  bozar. Karar kullanıcıda (CLAUDE.md §7: eski webde yalnız kritik düzeltme).
+
+---
+
+## J-52 🟠 Canlı modda yeni SOS ve ihbar konsol listesine en çok 60 sn geç düşüyordu
+**Durum:** KAPALI (22 Eylül 2026) — kodda düzeltildi [K]; gerçek sunucu ve oturumla tarayıcıda ölçülmedi · **Bulundu:** 22 Eylül 2026 (J-51 yazılırken, kod okumasıyla) · **İlgili:** J-43, J-46, ARAYUZ §10, kural 4
+
+**Sorun.** Canlı modda sorguların bitişi saatin son dakikasıydı (`simdi`, dakikada bir
+ilerliyor). Yeni SOS o dakikadan sonra kaydediliyordu. Canlı akış sorguyu tazelese de sunucu
+kaydı `zaman <= bitis` süzgecinde eliyordu. Kayıt bir sonraki dakikaya kadar listede
+görünmüyordu: ortalama 30, en çok 60 sn. İstemcinin saati sunucudan gerideyse gecikme daha
+da uzardı. Kullanıcının istediği "yönetici panelinde anlık düşmeli" bu yüzden sağlanmıyordu.
+
+**Yapıldı.**
+- `useSorguAraligi` (`durum/zamanDurumu.ts`): canlıda bitiş gönderilmez (açık uç).
+- Başlangıç 15 dakikalık çapaya yuvarlanır. Listeler tam pencereye istemcide süzülür (`select`).
+- Canlı akış yalnız değişen şeyi tazeler (`tazelenecekler`). Yeni SOS'ta yalnız SOS ısı
+  kanalı, ihbarda yalnız ilgili kanal tazelenir, durum değişikliğinde hiçbiri. Eskiden bir
+  mesaj tipi sabit bir anahtar listesini tazeliyordu.
+
+---
+
+## J-51 🔴 Afetzedenin fotoğraf, yazılı ve ihtiyaç ihbarı konsola düşmüyordu; fotoğrafta model seçimi yoktu
+**Durum:** KAPALI (22 Eylül 2026) — kodda, uçtan uca betikte ve önizlemede sınandı; gerçek oturumla son bakış kullanıcıda; "Açık" başlığındaki üç madde sürüyor · **Bulundu:** 22 Eylül 2026 (kullanıcı: "afetzedenin fotoğraf çekip modele karar vereceği ve seçilen modele göre cevap alacağı ve ihbar oluşturabileceği sistem yok … SOS ihbarları, enkaz / çatlak ihbarları, NLP ihbarları, ihtiyaç ihbarları yönetici panelinde uygun yere anlık olarak düşmeli") · **İlgili:** J-50, J-52, J-53, J-13, kural 2, 3, 4, 5
+
+**Sorun.**
+- Afetzede ekranındaki hasar fotoğrafı iki modeli birden koşuyordu. Afetzede model
+  seçemiyor, ihbarı kendisi açamıyordu. Konum varsa kamera ucu sonucu sessizce haritaya
+  yazıyordu.
+- Yazılı ihbar (metin modeli) afetzede ekranında yoktu. İhtiyaç talebi yalnız SOS'un
+  içinde bir seçimdi.
+- Konsola canlı akışla yalnız SOS düşüyordu. Kamera ucu canlı akışa bir şey yayınlamıyordu.
+  Fotoğraf raporları bellekteki bir listede duruyor, sunucu yeniden başlayınca kayboluyordu.
+
+**Yapıldı (sunucu).**
+- **Depo.** `ihbarlar` ve `ihbar_fotograflari` tabloları. Fotoğraf ayrı tabloda; liste
+  okunurken görüntü belleğe alınmaz.
+- **İki adımlı akış** (`uclar/ihbar.py`):
+  1. İnceleme. `POST /api/afetzede/fotograf-analiz` (model: çatlak / bina / ikisi) ve
+     `POST /api/afetzede/metin-analiz`. Kayıt açmaz, haritaya yazmaz. Sonuç 30 dakika
+     sunucu belleğinde durur.
+  2. İhbar. `POST /api/ihbarlar` (fotograf / metin / ihtiyac). Modelin çıktısı istemciden
+     alınmaz, sunucudaki incelemeden okunur. Aynı inceleme ikinci ihbarı açamaz (409).
+- Model hasar ya da aciliyet çıkardıysa ihbar ortak sözleşmeye de nokta olarak yazılır
+  (kaynak `kamera` / `metin`). İhtiyaç talebi hasar değildir, ısıya yazılmaz.
+- Hasar skoru sınıfın ağırlığından gelir: ağır 1,0, orta 0,6, çatlak 0,5 (tasarım kararı [T]).
+  Güven modelin olasılığıdır. Eski kamera ucu ikisine de güveni yazıyordu.
+- Kötüye kullanım sınırı: bir kişi 10 dakikada en çok 20 ihbar açar (429).
+- Fotoğraf sunucuda yeniden kodlanır, EXIF silinir. `GET /api/ihbarlar/{id}/fotograf`
+  yalnız sahibine ve saha rolüne ve üstüne açık. Fotoğraf JSON içinde döner, jeton adrese
+  yazılmaz.
+- Durum: `POST /api/ihbarlar/{id}/durum` (görüldü / kapandı; yalnız ileri gider).
+- Seçilen model yüklenemezse 503 döner. Eski kamera ucu modeli atlayıp "tespit yok"
+  diyordu.
+- **Canlı akış.** Yeni mesaj tipi `ihbar`. Konsol rolleri konumlu tam mesajı alır.
+  Afetzede yalnız kendi ihbarının kimliğini, türünü ve durumunu alır.
+- Kamera ucunun YOLO kodu ortak işleve ayrıldı (`yolo_tespit`); eski ucun davranışı aynı
+  (duman testi).
+
+**Yapıldı (konsol).**
+- "Son ihbarlar" (genel durum): SOS, fotoğraf, metin ve ihtiyaç tek listede; tür süzgeci,
+  sayı ve renkli simge var. Seçilen ihbarın ayrıntısı açılır: işaretli fotoğraf, metin
+  modelinin sonucu ya da ihtiyaçlar. "Gördüm", "Kapat" ("Karşılandı") ve "Haritada"
+  düğmeleri var. Uydu noktaları ihbar olmadığı için listeden çıktı.
+- Kamera modunda "Afetzedelerden gelen fotoğraflar", metin modunda "Afetzedelerden gelen
+  yazılı ihbarlar" başlıkları var.
+- Yeni "İhtiyaç talepleri" modu: ihtiyaç başına talep ve kişi sayısı, süzgeçler, liste.
+- Harita katmanı "Afetzede ihbarları": nokta türün renginde; her mod kendi türünü gösterir.
+- Yeni SOS ya da ihbar gelince köşede 20 sn'lik kart çıkar (ARAYUZ §10). Tıklayınca ilgili
+  mod açılır, kayıt seçilir, harita oraya gider.
+
+**Yapıldı (afetzede ekranı).** Ayrıntı J-50 üçüncü turda.
+- "Bildir" düğmeleri:
+  - Hasar fotoğrafı: fotoğraf → model seçimi → modelin cevabı → ihbar.
+  - Yazarak bildir: metin → modelin anladığı → ekibin gideceği yer → ihbar.
+  - İhtiyaç bildir.
+- "Bildirimlerim": gönderilen SOS'ların ve ihbarların canlı durumu.
+- İhbar türü token'ları (`--color-ihbar-*`): SOS kırmızı, fotoğraf sarı (kamera kanalı),
+  metin mor (metin kanalı), ihtiyaç pembe. Pembe hasar ya da aciliyet rengi değildir.
+
+**Ölçüldü / sınandı.**
+- **Uçtan uca betik.** Test sunucusu (8001) kopya veritabanıyla çalıştı; 39/39 kontrol geçti.
+  - Fotoğraf incelemesi sunucuda 400–665 ms sürdü (çatlak / bina / ikisi). Seçilen modelin
+    dışında model koşmadı.
+  - Metin incelemesi ilk istekte 43,5 sn sürdü: model yükleme ve adres araması. İncelemenin
+    kendisi 13,5 sn; model yüklüyken ikinci metin 8,1 sn.
+  - Afetzede başkasının ihbarını, fotoğrafını ve canlı mesajını alamıyor. Konsol her ihbarı
+    ve durum değişikliğini alıyor.
+- **Duman testi.** 10 yeni istek eklendi (toplam 80). Önceki 70 istek referansla aynı.
+  Referans imza güncellendi.
+- **Önizleme.** İki sekmeyle yapıldı: sahte sunucu, test sunucusundan alınmış gerçek
+  yanıtlar. Oturum açılamadığı için bu yol seçildi; sayfa denetimden sonra silindi.
+  - Afetzedenin gönderdiği fotoğraf, metin ve ihtiyaç ihbarı konsol sekmesine anında düştü:
+    kart, liste ve harita.
+  - Karttaki "Göster" kamera modunu açtı, ihbarı seçti, haritayı oraya götürdü.
+  - Konsolda "Gördüm", afetzedenin satırını canlı olarak "Görüldü" yaptı.
+- **Üretim derlemesi.** Afetzede ekranının ilk açılışı 136,6 KB gzip (J-50 ikinci tur:
+  116,2). Artışın çoğu simgelerden. İhbar pencereleri yalnız açılınca iner (1,8–3,1 KB).
+
+**Açık.**
+- **Kural 3.** Model çıkarımı hâlâ istek yolunda. YOLO ~0,5 sn sürüyor; metin modeli adres
+  araması yüzünden 8–15 sn. İş kuyruğuna ve canlı akışa taşınmalı.
+- **Adres çözümü.** Metin modeli çoğu zaman yalnız ilçeyi buluyor: metinde "Akevler"
+  geçmesine rağmen sonuç "Antakya, Hatay" oldu. Bu yüzden ekran ekibin gideceği yeri
+  varsayılan seçmiyor ve metindeki adresin afetzedeye uzaklığını yazıyor. Adres çözümü J-13.
+- **Dış servis.** Metindeki adres, konuma çevrilmek için Nominatim'e gidiyor. Ekran bunu
+  afetzedeye yazıyor.
+
+---
+
+## J-50 🟠 Afetzede ekranı telefon gibi dar yapılmıştı; harita, hastane ve fotoğraf yoktu
+**Durum:** DEVAM EDİYOR — üçüncü tur (J-51) tamam ve önizlemede denetlendi; gerçek oturumla son bakış kullanıcıda · **Bulundu:** 22 Eylül 2026 (kullanıcı: "afetzede tarafını mobil gibi yapmışsın… webe yapıyorsun… SOS butonu kırmızı, text yazabilecekler, en yakın toplanma merkezi, hastane ve benzeri yerleri haritadan görebilecekler") · **İlgili:** J-43, J-44, ARAYUZ §8, MIMARI §7
+
+**Sorun.**
+- J-43'teki ekran tek dar sütundu (420 px) ve haritasızdı. Tasarım belgesindeki "afetzede
+  ekranı hafif, harita motoru indirmez" kuralı uygulanmıştı; kullanıcı ekranı web için ve
+  haritalı istiyor.
+- Eski webin afetzede portalında olup yeni ekranda olmayanlar vardı: büyük SOS düğmesi,
+  haritada toplanma alanı ve rota, bina/duvar fotoğrafıyla hasar tarama.
+
+**Yapıldı.**
+- **Düzen (web).** Solda SOS kartı, çağrılarım ve hasar fotoğrafı; ortada harita; sağda
+  yakındaki yerler. Dar ekranda sütunlar alt alta dizilir.
+- **SOS kartı.** Büyük kırmızı "SOS · Yardım çağır" düğmesi var. "Durumunu yaz" metin alanı
+  öne alındı. Durum seçimi isteğe bağlı: seçilmezse çağrı "kritik" gider ve ekip bunu
+  "Durum seçilmedi (tek dokunuş SOS)" diye görür. Sözleşmeye `durumSecildi` alanı eklendi.
+- **Harita.** Konsolun harita kabuğu ve kendi OSM altlığımız kullanılıyor. Haritada konumun
+  (doğruluk çemberiyle), yakındaki yerler (renkli daire ve harf), açık çağrıların, seçilen
+  yere kuş uçuşu kesikli çizgi ve istenirse yürüyüş rotası görünüyor. Yer türleri haritada
+  açılıp kapatılabiliyor. Harita tembel yükleniyor.
+- **Yakındaki yerler.** Yeni uç `GET /api/yakin-yerler` (kimlik ister).
+  - Toplanma alanları AFAD listesinden geliyor; adlar Türkçe büyük/küçük harf kuralıyla
+    yazılıyor.
+  - Hastane, sağlık merkezi, eczane, itfaiye ve polis yerel OSM kopyasından çıkarıldı:
+    `araclar_altlik_uret.py --hizmetler`, 1.386 kayıt (1.160 eczane, 128 sağlık, 68 hastane,
+    23 polis, 7 itfaiye), okuma 31 + 145 sn.
+  - Veri yalnız beş bölgede var. Kapsam dışında ekran "yok" değil "bu bölge için üretilmedi"
+    yazıyor.
+  - AFAD listesi bir kez belleğe alınıyor. Sunucu açılırken arka planda yükleniyor: ilk istek
+    1,8 sn sürüyordu, sonrakiler 9 ms.
+- **Yürüyüş rotası.** Yalnız istenince çiziliyor: `POST /api/afetzede/sokak-rotasi`, OSRM
+  yaya profili, routing.openstreetmap.de.
+  - Ekran, konumun dış servise gideceğini ve rotanın yıkık ve kapalı yolları bilmediğini
+    yazıyor.
+  - Servis yanıt vermezse hata dönüyor. Eski uç böyle durumda kuş uçuşu çizgiyi "rota" diye
+    gösteriyordu.
+  - Hasar bilgili rota hâlâ J-44.
+- **Hasar fotoğrafı.** Eski kamera sayfasının dürüst hâli:
+  - Sahte sonuç yok. Eski sayfa sunucuya ulaşamayınca "%96,2 derin çatlak" uyduruyordu.
+  - "Güvenli" hükmü yok. Sonuç "modelin tahmini; binanın güvenli olduğunu göstermez" diye
+    yazılıyor.
+  - Fotoğraf göndermeden önce 1280 piksele küçültülüyor.
+  - Kutular tarayıcıda çiziliyor. Sunucunun görüntüsü kullanılmıyor, çünkü üstüne
+    "Bina Hasarsız / Güvenli" yazıyor ve Türkçe harfleri bozuyor.
+- **Kamera ucu düzeltmesi.** Model "hasarsız" dese bile en güçlü tespit ekiplerin haritasına
+  hasar noktası olarak yazılıyordu. Hasarsız binanın fotoğrafı ısı haritasında hasar gibi
+  görünüyordu. Artık yalnız hasar tespitleri yazılıyor.
+- **Belgeler.** ARAYUZ §8 ve MIMARI §7 kullanıcı kararıyla güncellendi.
+
+**Ölçüldü / sınandı.**
+- **Yakındaki yerler.** Akevler (Antakya) için 10 toplanma (en yakın 3 m), 5 hastane (en yakın
+  1.556 m), 10 sağlık merkezi, 10 eczane. Kızılay (Ankara) için 10 toplanma; hizmet kapsamı
+  yok olarak işaretli.
+- **Rota.** Akevler'den Antakya Devlet Hastanesi'ne 2.245 m yürüyüş (~28 dk), kuş uçuşu
+  1.747 m; yanıt 273 ms.
+- **Kimliksiz istek.** Yakındaki yerler ve rota 401 dönüyor.
+- **Duman testi.** 70 istek. İki fark bilerek yapıldı: `/api/sos`'a `durumSecildi` alanı ve
+  3 yeni istek. Referans imza güncellendi.
+- **Üretim derlemesi.** Afetzede rotası ilk açılışta 112,3 KB gzip JS. Harita (~570 KB)
+  sayfa çizildikten sonra ayrıca yükleniyor.
+- **Kalan.** Oturumlu ekranın tarayıcıda görsel denetimi. Giriş şifresini Claude yazamaz;
+  kullanıcı panelde giriş yapınca yapılacak.
+
+**İkinci tur (22 Eylül 2026).** Kullanıcı: "harita ortada çok büyük olmuş; afetzedelere özel,
+kaydırmadan her şeyi kolayca bulacakları bir tasarım yap."
+
+- **Görev odaklı tek ekran** (≥ 1280 × 640, kaydırmasız):
+  - Solda "Yardıma mı ihtiyacın var?" kartı: isteğe bağlı durum, "durumunu yaz", kişi ve
+    ihtiyaç; altta büyük kırmızı SOS. Düğme kalan yeri doldurur, en çok 288 px olur.
+  - Çağrı gidince aynı kart "Çağrının durumu"na döner: büyük durum yazısı, üç adım (alındı /
+    ekip atandı / kapandı, saatleriyle), gönderilenin özeti, "Ekip gelene kadar" önerileri,
+    **Düdük sesi** düğmesi ve "Durumum değişti".
+  - Düdük sesi üç kısa sestir (uluslararası yardım işareti) ve cihazda çalar; sunucuya bir
+    şey gitmez.
+  - Sağda "Nereye gidebilirim?": tür sekmeleri, 10 yerlik liste ve yanında küçük harita.
+  - Hasar fotoğrafı, duyurular ve çağrı geçmişi altta üç düğme; pencerede (`<dialog>`)
+    açılır.
+  - En yeni duyuru en üstte tek satır. Konum yoksa SOS'a basınca konum penceresi açılır.
+  - Uzun ekranda (yükseklik ≥ 860 px) formun altında "Deprem sonrası ilk adımlar" kutusu çıkar.
+- **Dar ekran.** Kartlar alt alta dizilir, SOS ilk ekranda kalır. Üst çubuk sadeleşir: marka,
+  canlılık noktası, 112, çıkış.
+- **Denetim.** Oturum açılamadığı için geçici bir önizleme sayfası kullanıldı. Sayfa gerçek
+  API'den önceden alınmış yanıtlarla çalıştı: Akevler yakın yerleri, altlık kataloğu, mahalle
+  listesi, Antakya altlığı. Denetimden sonra silindi.
+  - 1366×680, 1280×640, 1024×700 ve 1920×980'de ana alan ve SOS kartı kaymıyor.
+  - Telefonda (375×812) SOS ilk ekranda.
+  - Konum, hasar, duyuru ve çağrı pencereleri açılıyor. SOS gönderimi kartı "Bekliyor"
+    durumuna çeviriyor.
+- **Denerken düzeltilenler.**
+  - Esc pencereyi kapatmıyordu; açık işleyici eklendi.
+  - Dar ekranda kartlar ekrana sıkıştırılıyor, SOS görünmüyor ve harita düğmelerin üstüne
+    biniyordu; sıkıştırma artık yalnız geniş ekranda.
+  - SOS düğmesine ekran okuyucu adı verildi.
+- **Kamera ucu.** Konumsuz gönderilen bir görüntüde 1,4 sn'de 4 tespit döndü, hepsinde kutu
+  bilgisi var; ekip haritasına bir şey yazılmadı.
+  - Model alakasız bir uydu görüntüsünde bile %29–38 güvenle "ağır hasar" işaretledi. Arayüzün
+    sonucu "modelin tahmini" diye sunması bu yüzden gerekli.
+- **Üretim derlemesi.** Afetzede rotası ilk açılışta 113,5 KB gzip JS; harita sonradan gelir.
+
+**Üçüncü tur (22 Eylül 2026, J-51 ile).** Kullanıcı: "SOS butonu çok büyük ve ölü alan var;
+renkler hep aynı, ayırt edici değil; bazı butonlar küçük, ayırt edilemiyor." Ayrıca fotoğrafta
+model seçimi ve ihbar istendi (J-51).
+- **SOS.** Düğme sabit boyda (64 px); boş yeri doldurmuyor. Kart içeriği kadar uzuyor.
+  İhtiyaç seçimi SOS'tan çıktı, kendi penceresine taşındı: SOS hayati tehlike içindir.
+  Durum seçenekleri simgeli ve 48 px.
+- **Ölü alan.** SOS'un altında "Bildirimlerim" duruyor: gönderilen çağrı ve ihbarların canlı
+  durumu. Boşken deprem sonrası ilk adımları yazıyor. Uzun ekranda (≥ 860 px) en altta
+  duyuruların tam metni var. Sayfa 1440 px'te duruyor; geniş ekranda harita büyüyüp ekranı
+  kaplamıyor.
+- **Renk.**
+  - Her ihbar türünün rengi ve simgesi var: SOS kırmızı, fotoğraf sarı, metin mor, ihtiyaç
+    pembe. Konsolda da aynı renkler kullanılıyor.
+  - Yer türü sekmeleri seçilince kendi renklerini alıyor.
+  - Kartların başlığında simge var; SOS kartının üstünde kırmızı şerit var.
+- **Düğmeler.** Dokunma hedefleri en az 40 px: kişi sayacı, konum, yol tarifi, üst çubuk
+  (Duyurular, 112, Çıkış) ve pencere düğmeleri. Simgeler Phosphor'dan (ARAYUZ §6).
+- **Düzen.**
+  - Solda SOS ve Bildirimlerim; sağda Nereye gidebilirim ve üç "Bildir" düğmesi.
+  - Duyurular üst çubukta, sayısıyla.
+  - Konum penceresi ihbar penceresinin üstünde açılıyor; seçilen fotoğraf ya da yazılan
+    metin kaybolmuyor.
+  - Dar ekranda sıra: SOS, Bildir, Nereye, Bildirimlerim.
+- **Denetim.** Önizleme sayfasıyla yapıldı; ayrıntı J-51'de.
+  - 1280×640, 1366×680 ve 1920×980'de sayfa kaymıyor. 1280×640'ta çağrı durumu hâli de
+    sığıyor.
+  - Telefonda (375×812) kartlar üst üste binmiyor.
+- **Denerken düzeltilenler.**
+  - Dar ekranda "Nereye" ve "Bildirimlerim" üst üste biniyordu. Sıkışma artık yalnız geniş
+    ekranda.
+  - 1920 px'te sol altta büyük boşluk kalıyordu ve harita çok büyüyordu. Sayfa 1440 px'e
+    sınırlandı ve duyuru kartı eklendi.
+  - Fotoğraf incelendikten sonra 1. adım boş kalıyordu; "Başka fotoğraf seç" eklendi.
+  - Kişi sayacında hızlı çift tıklama bir artışı yutuyordu. Artık işlevsel güncelleme
+    kullanılıyor.
+  - Metin modelinin adresi varsayılan hedefti. İlçe düzeyinde çözüldüğü için ekibi ilçe
+    merkezine gönderecekti. Artık seçim afetzedede ve uzaklık yazılıyor.
+  - Köşedeki kart 12 sn'de kapanıyordu; 20 sn yapıldı.
+
+**Dördüncü tur (22 Eylül 2026).** Kullanıcı 1918×944 ekran görüntüsüyle geldi: "sağda ve
+solda ölü alan var; duyurular ve gönderilenler alt alta sıkışmış, çok küçük; duyurular ilgi
+çekmeli, bildirim düşmeli; 'Mahalleme dön' düğmesi haritanın bazı yerlerinde altta kalıyor."
+- **Genişlik.** Sayfa sınırı 1440 → 1920 px. ≥ 1600 px'te üç sütun (`uclu:`):
+  - Sol: SOS ve gönderilenler.
+  - Orta: "Nereye" ve bildir düğmeleri.
+  - Sağ: duyurular, boydan boya.
+  - Izgara alan adlarıyla kuruldu (`kilav-afetzede`, `alan-*`). Dar ekranda kartlar
+    `order` ile diziliyor.
+- **Duyurular.**
+  - Sağ sütun en önemli duyurunun renginde çerçeveleniyor. Üst bant duyurunun önem
+    renginde zeminli.
+  - Üst çubuktaki "Duyurular" düğmesi, duyuru varken renkli ve sayılı.
+  - "Bilgi" önemi gri değil, vurgu renginde (kırmızı ve turuncu yine yalnız acil ve uyarı
+    için).
+  - Yeni duyuru canlı akıştan gelince üst çubuğun altında uyarı çıkıyor. Acil uyarı
+    kapatılana kadar, ötekiler 30 sn kalıyor. Yeni kart bir kez vurgulanıyor.
+  - İstenirse tarayıcı bildirimi var ("Bildirim aç"). Sekme arka plandayken düşüyor.
+  - Dar ekranda en yeni iki duyuru gösteriliyor, kalanı pencerede.
+- **Harita düğmesi.** Harita kabı `isolate` ile kendi katman bağlamında. deck.gl tuvali
+  "Konumuma / Mahalleme dön" düğmesinin ve künyenin üstüne boyanıyordu. Düğme büyüdü ve
+  simge aldı.
+- **Denetim.** Önizleme, test sunucusunun gerçek yanıtlarıyla yapıldı: iki test duyurusu kopya
+  veritabanına yayınlandı, sayfa denetimden sonra silindi. Panel gizli olduğu için
+  denetimin çoğu ölçümle yapıldı.
+  - 1918×944: üç sütun. Gönderilenler 180 → 400 px, "Nereye" 1022 px geniş, duyurular
+    814 px. Sayfa kaymıyor.
+  - 1600×900: üç sütun, harita 421×479.
+  - 1366×680: iki sütun. Acil duyuru bandıyla gönderilenler 136 px'e iniyor.
+  - Telefon: sıra SOS, Bildir, Duyurular (iki tane), Nereye, Gönderilenler.
+  - Düğmenin ortasındaki noktada artık düğmenin kendisi var (`elementFromPoint`).
+- **Denerken düzeltilen.** Telefonda duyuru kartı 5 px'e eziliyordu; sıkışma yalnız geniş
+  ekranda.
+- **Not.** Kullanıcının görüntüsünde liste "kuş uçuşu" diyordu. Sayfa, sunucu yeni rota
+  koduyla yeniden başlamadan önce açılmıştı ve eski liste önbellekte kalmıştı. Mahalle
+  merkezinden (Akevler) sunucu yürüme mesafesini veriyor: Cebrail 358 → 476 m. Sayfa
+  yenilenince düzelir.
+- Afetzede ilk açılışı 140,7 KB gzip (önceki 137,4).
+
+**Beşinci tur (22 Eylül 2026): mahalle araması.** Kullanıcı konum penceresinin görüntüsüyle
+geldi: "a yazınca a ile olanlar çıksın, b yazınca b ile olanlar; yoksa onu belirtsin; ab
+yazarsa ab ile başlayanlar olsun."
+- **Sorun.** Eski arama iki harften önce çalışmıyordu: "a" yazınca liste boştu ve "yok"
+  da denmiyordu. İki harften sonra adın herhangi bir yerinde geçen diziyi buluyordu ("ab"
+  yazınca adının ortasında "ab" geçenler de çıkıyordu). En çok 8 sonuç gösteriyordu ve
+  kaç tane bulunduğunu söylemiyordu.
+- **Yapılan** (`MahalleSecici.tsx`):
+  - Arama ilk harften başlıyor.
+  - Önce adı yazılanla başlayan yerler geliyor, sonra adındaki başka bir kelimesi
+    yazılanla başlayanlar ("ab" → "Hacı Abdi"). Adın ortasındaki harf dizisi sayılmıyor.
+  - Liste alfabetik. Eşleşen harfler kalın, kaç yer bulunduğu yazılıyor.
+  - Sonuç yoksa "“xq” ile başlayan yer yok." yazıyor; ne yapılacağı da altında.
+  - En çok 50 sonuç gösteriliyor; fazlası varsa "bir harf daha yaz" deniyor.
+  - Enter ilk sonucu seçiyor, oklar listede geziyor.
+- **Türkçe harfler.**
+  - Düz harf Türkçe karşılığını da buluyor: "c" hem C'yi hem Ç'yi getiriyor.
+  - Türkçe harf yazılırsa birebir aranıyor: "ç" yalnız Ç ile başlayanları getiriyor.
+  - Büyük "I" Türkçe klavyede ı, İngilizce klavyede i. İkisini de buluyor. Birebir
+    arama ilk denendiğinde "I" yazınca İbrahimli, İnönü gibi 19 yer kayboluyordu;
+    denerken düzeltildi.
+- **Denetim.** Önizleme sayfası, gerçek yer listesiyle (`veri/altlik/yerler.json`,
+  496 yer) yapıldı. Sayfa denetimden sonra silindi.
+
+  | Yazılan | Sonuç |
+  |---|---|
+  | (boş) | ipucu |
+  | a | 46 yer |
+  | ab | 5: Abdulgaffar, Abdülhamid Han (iki bölge), Hacı Abdi, Şehit. Abdullah Çavuş. Mah. |
+  | c / ç | 30 / 18 |
+  | cu / çu | 6 (Cumhuriyet'ler ve Çukurdere) / 1 (Çukurdere) |
+  | I, i, İ | 19 (İ ile başlayanlar) |
+  | xq | "“xq” ile başlayan yer yok." |
+
+  Klavye: aşağı ok → Akasya, Akbulut; yukarı ok arama kutusuna dönüyor; Enter Akasya'yı
+  seçip pencereyi kapatıyor.
+
+---
+
+## J-49 🔴 Oturumsuz açılış "Yükleniyor…"da takılıyordu (b998807 ile gelen hata)
+**Durum:** KAPALI (21 Eylül 2026) · **Bulundu:** 21 Eylül 2026 (kullanıcı: "yükleniyor diyor kalıyor ekran") · **İlgili:** J-43, J-48
+
+**Sorun.** J-43'te `apiPost`'a "401 gelirse jetonu yenile, bir kez tekrar dene" adımı
+eklendi. Bu adım kimlik uçlarına da uygulanıyordu:
+- Oturum yokken açılıştaki yenileme isteği 401 alıyor.
+- `apiPost` bu yüzden yenileme başlatmak istiyor.
+- Yenileme fonksiyonu uçuştaki isteğin kendisini döndürüyor; istek kendi bitmesini bekliyor.
+
+Sonuç: oturumu olmayan herkes, yeni afetzede dahil, "Yükleniyor…" ekranında kalıyordu.
+Yanlış şifreyle giriş de hiç bitmezdi. Tarayıcı testleri hep açık oturumla yapıldığı için
+yakalanmadı.
+
+**Yapıldı.** Kimlik uçlarında (`/api/oturum/*`) yenileme denenmiyor. Öteki POST'larda
+(SOS, bildirim, analiz) 401'de bir kez yenileyip yeniden gönderme sürüyor.
+
+**Denetlendi.** Çerezsiz adreste (`127.0.0.1:3200/afetzede`) denendi:
+- Düzeltmeden önce 5 saniye sonra hâlâ "Yükleniyor…" vardı ve tek bir yenileme isteği
+  gitmişti.
+- Düzeltmeden sonra sayfa giriş ekranına yönlendi.
+- Oturumu açık sekme afetzede ekranını açmaya devam ediyor.
+
+**Ders.** Oturumsuz açılış da sınanmalı. Çerezsiz sekme için `localhost` yerine `127.0.0.1`
+kullanılabilir.
+
+---
+
+## J-48 🟠 Afetzede hesap açamıyordu; konsolda afetzede ekranına giden yol yoktu
+**Durum:** KAPALI (21 Eylül 2026) · **Bulundu:** 21 Eylül 2026 (kullanıcı: "hani ben göremiyorum afetzede tarafını") · **İlgili:** J-43, kural 5
+
+**Sorun.**
+- Giriş ekranı "yeni hesaplar afetzede yetkisiyle açılır" diyordu ama hesap açma formu yoktu.
+  Kayıt ucu (`/api/oturum/kayit`) çalışıyordu, arayüzden ulaşılamıyordu. Gerçek bir afetzede
+  ekrana hiç giremiyordu.
+- Koordinatör girişte konsola yönleniyordu. Konsolda afetzede ekranına bağlantı yoktu; ekran
+  ancak adres elle yazılınca açılıyordu.
+
+**Yapıldı.**
+- **Giriş ekranı.** "Hesap aç" formu eklendi: ad soyad, e-posta, en az 8 karakterlik şifre.
+  Rol alanı yok; sunucu afetzede açar. Hesap açılınca doğrudan afetzede ekranına gidiliyor.
+  Başlık "Konsola giriş" yerine "Giriş yap" oldu, çünkü afetzede de buradan giriyor.
+- **Konsol.** Üst çubukta koordinatör ve yönetici için "Afetzede ekranı" bağlantısı var
+  (önizleme).
+- **Afetzede önizlemesi.** "Konsol" dönüş bağlantısı eklendi.
+
+**Denetlendi.**
+- Üst çubukta bağlantı `/afetzede`'ye gidiyor.
+- Çerezsiz adreste (`127.0.0.1`) giriş ekranında "Hesap aç" düğmesi ve form görünüyor.
+- Formla hesap açmayı Claude denemedi (şifre girmek kullanıcıya ait). Kayıt ucunun yeni
+  hesabı afetzede rolüyle açtığı J-42/J-45 testlerinde görüldü.
+
+---
+
+## J-47 🟠 Canlı akış sessizce ölünce ekran "canlı" diyordu; kopukken gelen mesajlar kayboluyordu
+**Durum:** KAPALI (21 Eylül 2026) · **Bulundu:** 21 Eylül 2026 (J-45 sınanırken) · **İlgili:** J-42, J-45, kural 4
+
+**Sorun.**
+- **Ölü bağlantı fark edilmiyordu.** Arka uç yeniden başlayınca geliştirme vekili (Vite)
+  tarayıcıya giden akışı kapatmadı. EventSource bağlantıyı açık sandı, ekran "canlı" dedi,
+  sunucuda ise hiç bağlantı yoktu. Üç dakika beklendi; yeniden bağlanma olmadı. Aynı durum
+  mobil ağda bağlantı sessizce koptuğunda da olur.
+- **Nabız istemciye ulaşmıyordu.** Sunucunun 20 saniyelik nabzı SSE yorum satırıydı
+  (`: ping`). EventSource yorumları JavaScript'e iletmediği için istemci ölü akışı göremiyordu.
+- **Kopukken gelen mesajlar kayboluyordu.** Sunucu mesaj biriktirmez; istemci de yeniden
+  bağlanınca verisini tazelemiyordu. Kopukluk sırasında geri çekilen bildirim afetzede
+  ekranında kaldı. Ekip ataması ve yeni bildirim de aynı yoldan kaçabilirdi.
+
+**Yapıldı.**
+- Sunucu nabzı adlandırılmış olay olarak gönderiyor: `event: nabiz`.
+- İstemcide yerel bir bekçi var. 45 saniye hiçbir sinyal (mesaj ya da nabız) gelmezse
+  bağlantıyı düşmüş sayıyor ve yeniden bağlanıyor. Bekçi sunucuya istek atmıyor.
+- Akış **yeniden** bağlandığında akışa bağlı sorgular bir kez tazeleniyor: çağrılar, özet,
+  bildirimler, hasar, ısı ve ekipler. Yoklama değil; yalnız bağlantı geri geldiğinde oluyor.
+
+**Sınandı.** Afetzede sekmesi açıkken test bildirimi yayınlandı. Sonra:
+- Arka uç kapatılıp açıldı.
+- Bildirim, sekme yeniden bağlanmadan geri çekildi (o anda sunucuda 0 akış bağlantısı vardı).
+- Sekme 27 saniye sonra bekçiyle yeniden bağlandı ve hemen çağrılarını ve bildirimlerini
+  yeniden istedi.
+- Bant kalktı. Düzeltmeden önceki aynı denemede bant kalmış, sekme hiç yeniden bağlanmamıştı.
+
+---
+
 ## J-46 🟠 Konsol canlı modda dakikada bir bütün pencere sorgularını yeniden istiyor
-**Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 (J-43'ün ağ kaydında) · **İlgili:** kural 4, ARAYUZ §10, J-11
+**Durum:** KISMEN KAPALI (22 Eylül 2026) — öneri J-52 ile birlikte uygulandı [K]; ağ kaydıyla ölçüm yapılmadı · **Bulundu:** 21 Eylül 2026 (J-43'ün ağ kaydında) · **İlgili:** kural 4, ARAYUZ §10, J-11, J-52
 
 **Sorun.** Canlı modda zaman penceresi saatle birlikte kayıyor (varsayılan: son 6 saat) ve
 pencere, sorgu anahtarının parçası. Dakika değişince anahtarlar değişiyor ve pencereye bağlı
@@ -1089,10 +1822,18 @@ ama kural 4 "yalnızca değişiklik olduğunda" diyor.
 - Tam pencereyi istemci süzsün. Yeni veri zaten canlı akışla geliyor.
 - Isı ızgarası sunucuda üretiliyor; onu da aynı çapaya bağla.
 
+**22 Eylül 2026 (J-52 ile).**
+- Canlıda sorgu başlangıcı 15 dakikalık çapaya bağlandı ve bitiş açık bırakıldı. Listeler
+  tam pencereye istemcide süzülüyor. Sorgu anahtarları artık dakikada bir değişmiyor;
+  yalnız çapa değişince (15 dakikada bir) ve canlı akış mesajında tazeleniyor.
+- Sunucunun saydığı özet ve ısı en çok 15 dakika geniş pencereyle hesaplanıyor. Listeler
+  tam.
+- **Ölçülmedi.** Dakikadaki istek sayısı gerçek oturumla ağ kaydında sayılmalı; hedef ~0.
+
 ---
 
 ## J-45 🔴 Eski demo hesaplarının jetonu kodda sabit; herkes acil bildirim yayınlayabiliyor
-**Durum:** KARAR BEKLİYOR · **Bulundu:** 21 Eylül 2026 (J-43 sınanırken) · **İlgili:** J-43, CLAUDE.md kural 5
+**Durum:** KISMEN KAPALI (21 Eylül 2026) — madde 1 yapıldı (yeni bildirim ucu, konsol modu, kalıcı kayıt, geri çekme); madde 2 (eski demo hesapları bayrak arkasına) KARAR BEKLİYOR · **Bulundu:** 21 Eylül 2026 (J-43 sınanırken) · **İlgili:** J-43, J-47, CLAUDE.md kural 5
 
 **Sorun.**
 - `cekirdek.py::_demo_user` sekiz demo hesap tanımlıyor. Jetonları kodda sabit:
@@ -1114,10 +1855,58 @@ ama kural 4 "yalnızca değişiklik olduğunda" diyor.
    Geliştirmede açık, dağıtımda kapalı olur. Varsayılanı değiştirmek eski webin demo girişini
    kapatır.
 
+**Yapıldı: madde 1** (21 Eylül 2026, kullanıcı: "J-45'teki bildirim ucunu yap").
+- **Kalıcı kayıt.** Bildirimler artık depoda (`bildirimler` tablosu). Eskiden bellekteydi:
+  sunucu yeniden başlayınca yayındaki bildirim kayboluyor, kimin gönderdiği tutulmuyordu.
+  Önem tek sözlükte: `acil` / `uyari` / `bilgi`.
+- **Yeni uçlar.**
+  - `POST /api/bildirimler`: yalnız koordinatör ve yönetici (`Depends(rol_gerektir)`).
+    Başlık 3–120, metin 3–1000 karakter, büyüklük 0–10; ikisi de isteğe bağlı olan bölge ve
+    büyüklük boş kalabiliyor.
+  - `POST /api/bildirimler/{id}/kaldir`: yanlış ya da tanımadık bildirimi geri çeker. Kayıt
+    silinmez; kimin ve ne zaman çektiği yazılır. İkinci kez çekmek 409.
+  - `GET /api/bildirimler`: konsol için geçmiş, gönderen ve kaynakla (saha ve üstü).
+  - `GET /api/bildirimler/aktif`: afetzedeye yalnız yayındakiler gider; gönderenin adı ve
+    kaynak gitmez.
+- **Eski uçlar aynı tabloda.** `send_emergency` artık depoya `kaynak = eski` diye yazıyor,
+  `/api/notifications/active` depodan okuyor. İkisinin biçimi değişmedi. Konsoldan yayınlanan
+  bildirim eski webde de görünüyor. Sınır: eski webin bandı geri çekilen bildirimi sayfa
+  yenilenene kadar göstermeye devam ediyor; eski web dondurulduğu için düzeltilmedi.
+- **Konsol modu "Acil bildirim".**
+  - Dört şablon var: artçı sarsıntı, tahliye, dağıtım noktası, yol kapalı. Şablondaki
+    `[bölge]` gibi köşeli ayraçlı yerler doldurulmadan yayın açılmıyor; şablon metni gerçek bir
+    olaymış gibi gidemiyor. Elle yazılmış metin şablonla sessizce ezilmiyor, önce soruluyor.
+  - Önizleme, afetzedenin göreceği kartın aynısı (ortak bileşen: `kabuk/BildirimKarti.tsx`).
+  - Yayın iki adımlı onayla yapılıyor.
+  - Sağ panel yayındakileri ve geri çekilenleri gösteriyor. Eski uçtan gelen kayıtta şu
+    uyarı var: "o uç sabit demo jetonlarını kabul ediyor, tanımadığın bir bildirimse geri çek".
+    Böylece madde 2 kararına kadar sahte bildirim en azından kaldırılabiliyor.
+
+**Sınandı.**
+- **Uçtan uca, 22 denetim geçti.**
+  - Kimliksiz istek 401, afetzede 403 alıyor (yayın, geçmiş ve geri çekme). Geçersiz önem,
+    boş başlık ve 12 büyüklük 422 dönüyor.
+  - Yayın afetzedenin akışına düşüyor; afetzedeye gönderen gitmiyor.
+  - Eski web aynı bildirimi kendi biçiminde görüyor.
+  - Sabit demo jetonuyla eski uçtan gönderilen kayıt konsolda `eski` ve "Afet Saha Ekibi"
+    diye çıkıyor.
+  - Geri çekme sırayla akışa düşüyor; ikinci çekme 409, olmayan kayıt 404.
+- **Kalıcılık.** Yayın sonrası arka uç yeniden başlatıldı; bildirim yayında kaldı.
+- **Tarayıcı.**
+  - Şablon, köşeli ayraç kilidi, ezme sorusu, önizleme ve onay denendi.
+  - Konsoldan yayınlanan bildirim ikinci sekmedeki afetzede ekranına yoklamasız düştü
+    (açılış dahil 2 istek). Konsoldan geri çekildi.
+- **Duman testi.** 67 istek. İlk 63'ü önceki imzayla aynı; 4 yeni istek eklendi ve referans
+  imza güncellendi.
+- **Üretim derlemesi.** Afetzede rotası 108,3 KB gzip JS; harita motoru girmiyor.
+
+**Test kayıtları.** 5 bildirim, hepsi "TEST J-45" etiketli ve geri çekilmiş; bir test
+afetzede hesabı.
+
 ---
 
 ## J-44 🟠 Afetzedeye hasar bilgili yol tarifi verilemiyor
-**Durum:** AÇIK · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-43, J-34, J-17, ARAYUZ §8 ("rota ve toplanma alanı")
+**Durum:** KAPALI (22 Eylül 2026) — beş bölgede kendi yol ağımız ve Dijkstra; üç açık madde aşağıda · **Bulundu:** 21 Eylül 2026 · **İlgili:** J-43, J-34, J-17, J-50, D-04, ARAYUZ §8 ("rota ve toplanma alanı")
 
 **Sorun.**
 - Kapanma bilgisi yalnız analiz oturumunda duruyor: bellekte ve 30 dakika
@@ -1138,6 +1927,106 @@ ama kural 4 "yalnızca değişiklik olduğunda" diyor.
    Yanıtta sokak adlarıyla adım listesi, uzunluk, geçilen riskli kenar ve kullanılan kapanma
    verisinin tarihi olsun.
 4. Ekranda harita motoru olmadan adım listesi. İstenirse küçük bir SVG çizimi.
+
+**22 Eylül 2026 — yapıldı (kullanıcı: "A* / Dijkstra çalışmıyor herhalde, toplanma alanına
+giderken yollardan değil kuş bakışı çiziyor").**
+
+**Sebep.** Motor bozuk değildi; afetzede ekranı yol ağına hiç bağlı değildi. Yer seçilince
+haritada kuş uçuşu kesikli çizgi çiziliyordu. "Yürüyerek yol tarifi" düğmesi dış servise
+(OSRM) gidiyordu ve bilinen kapanmaları bilmiyordu. Not: kodda ve eski arayüzde geçen "GNN
+rota motoru" bir sinir ağı değil, Dijkstra/A*'dır (D-04).
+
+**Yapıldı.**
+- **Yol ağı** (öneri 1): `araclar_yol_agi_uret.py`.
+  - Yerel OSM kopyasından beş bölgenin (±12 km) yürünebilir yolları okunuyor. Kavşaklar
+    koordinat birleştirilerek kuruluyor (1e-7°).
+  - `foot=no` ve `access=no/private` yollar ve otoyol dışarıda. Tek yön yayaya
+    uygulanmıyor. En büyük bağlı parça tutuluyor.
+  - Çıktı `veri/yol_agi/<bölge>.npz` ve `katalog.json` (git dışında).
+- **Rota motoru** (`yol_agi.py`, öneri 2–3).
+  - Ağ bir kez belleğe alınıyor. Afetzedenin konumundan tek bir Dijkstra koşuyor
+    (scipy, C); seçilen yere rota ve yakındaki bütün yerlerin yürüme mesafesi aynı
+    aramadan çıkıyor.
+  - **Hasar cezası:** araç motorunun `risk_weight` işlevi. Hasar noktasına 50 m içinde
+    3×, 150 m içinde 1,5×, 400 m içinde 1,1×. Uzaklık kenarın doğru parçasına ölçülüyor.
+    Hasar noktası şunlar: uydu (skor ≥ 0,5), kamera ihbarı, enkaz bildiren yazılı ihbar.
+    SOS tehlike sayılmıyor.
+  - **Bilinen kapanma:** Uydu analizinden gelen kapanmanın 25 m içindeki kenar silinmiyor,
+    maliyeti 20 kat oluyor (yumuşak maliyet, J-34). Başka yol yoksa rota yine bulunuyor ve
+    ekran bunu yazıyor. Tasarım kararı [T].
+- **Uçlar.**
+  - `POST /api/afetzede/rota` (kimlik ister; dış servise istek gitmez). Yanıtta yol
+    koordinatları, uzunluk, süre, sokak adlarıyla adımlar, rotadaki riskli metre ve
+    kapanma, hesaba katılan kapanma ve hasar sayısı var.
+  - `GET /api/yakin-yerler` her yer için yürüme mesafesi (`yuruyusM`) veriyor. Liste buna
+    göre sıralı.
+- **Afetzede ekranı.**
+  - Yer seçilince rota yollar üzerinden kendiliğinden çiziliyor; harita bütün rotayı
+    sığdırıyor.
+  - Seçili satırda uzunluk ve süre, kuş uçuşu uzaklık, ilk dört adım ve hasar uyarıları
+    yazıyor.
+  - Liste başlığı "yürüme mesafesi" diyor.
+  - Kuş uçuşu çizgi yalnız rota yokken görünüyor. Dış servis rotası yalnız yol ağı
+    üretilmemiş bölgede ve istenince kullanılıyor.
+
+**Ölçüldü.**
+- **Üretim.** Beş bölge ~5 dk sürdü (okuma 44–69 sn/bölge, kurulum ≤ 1,7 sn). Diskte
+  14,6 MB tuttu.
+
+  | Bölge | Düğüm | Kenar | En büyük parça |
+  |---|---|---|---|
+  | Antakya | 139.749 | 147.013 | %99,5 |
+  | Antep | 131.492 | 152.390 | %99,3 |
+  | Malatya | 113.407 | 121.372 | %98,0 |
+  | Maraş | 98.580 | 107.945 | %99,4 |
+  | Adıyaman | 57.104 | 61.595 | %99,1 |
+
+- **Süre.** Ağ yükleme 0,66 sn (açılışta arka planda). Hasar cezası ve Dijkstra 23–25 ms.
+  Çarpan hesabı veri değişince bir kez yapılıyor, 6 ms sürüyor; uzun kenarlar ayrı
+  denenmeden önce 1.372 ms sürüyordu. Uç üzerinden rota 65–75 ms, 35 yerin yürüme
+  mesafesiyle yakın yerler 97–117 ms.
+- **Hasar verisi.** Antakya'daki 39 kapanmanın hepsi yola oturdu (48 kenar). Uzaklık kenar
+  orta noktasından ölçülünce 4'ü kaçıyordu.
+- **Akevler → Antakya Devlet Hastanesi.** 2.097 m, ~26 dk. OSRM 2.245 m, kuş uçuşu 1.747 m.
+  Adımlar: 7. Bahçeli Sk. → 2. Bahçeli Sk. → Şen Sk. → Cumhuriyet Cd. → Mehmet Kafadar Cd.
+- **Sıralama.** Kuş uçuşunda en yakın hastane Özel Mozaik (1.556 m); yürüyerek 2.498 m ile
+  ikinci. Malatya'da "Şifa" toplanma alanı kuş uçuşu 144 m, yürüyerek 446 m.
+- **Duman testi.** 83 istek. Önceki 80'den fark: yakın yerler `yurume` alanını kazandı;
+  3 yeni rota isteği (kimliksiz 401, Ankara 404, Antakya 200) eklendi.
+- **Önizleme.** Test sunucusunun gerçek yanıtlarıyla bakıldı. Rota haritada sokakları
+  izliyor. Yol ağı yokken ekran kuş uçuşuna ve dış servis düğmesine dönüyor.
+
+**Açık.**
+- Yol ağı yalnız beş bölgede (±12 km). Dışarıda kuş uçuşu ve istenirse dış servis kalıyor.
+- Kapanma verisi yalnız uydu analizinden geliyor. Sahadan bildirilen kapanma
+  (`/report_blockage`) ve EMSR648 katmanı bu depoya yazılmıyor, rota onları bilmiyor.
+- Konsolun "Yol ve rota" modu hâlâ bağlı değil. Ekip rotası ayrı iş.
+
+**22 Eylül 2026 — adım adım tarif (kullanıcı: "bu bilgileri sen mi yazdın, adım adım ilerleyişi
+yapan bir sistemimiz var mı; gösterimi modern ve belirgin yapalım").**
+- **Kaynak.** Adımlar elle yazılmıyor, rotanın kendisinden çıkıyor.
+  - Aynı adlı (OSM `name`) ardışık kenarlar tek adım. Adsız yol, türüne göre adlanıyor
+    ("yaya yolu", "merdiven").
+  - 12 m'den kısa kavşak parçası komşu adıma katılıyor.
+- **Dönüş yönü (yeni).** Sokak geçişinde kavşaktan 20 m önceki ve sonraki noktaya göre açı
+  farkı ölçülüyor. Sınıflar: düz (< 20°), hafif (20–60°), dönüş (60–135°), keskin (≥ 135°);
+  sağ ve sol ayrı. İlk adımda yürüme yönü (8 yön) veriliyor.
+- **Ekran.** Rota kartı yenilendi.
+  - Üstte büyük uzunluk ve süre.
+  - Rotadaki hasar durumu renkli etiketle: yeşil "bilinen kapanma ya da hasar yok",
+    turuncu "hasar noktasına yakın", kırmızı "kapanmadan geçiyor".
+  - Dönüş oklu zaman çizelgesi, varış adımı, "tüm adımlar" düğmesi, katlanan "Nasıl
+    hesaplandı?".
+- **Sınır.** Yürürken hangi adımda olunduğunu izleyen bir sistem (canlı yön tarifi, rotadan
+  sapınca yeniden hesap) YOK. Liste rota istendiğinde bir kez hesaplanıyor; ekran bunu da
+  yazıyor.
+- **Ölçüldü.** Akevler (ekrandaki konum) → Antakya Devlet Hastanesi: 2.097 m, 8 adım, uç 39 ms.
+  - Adımlar: güneybatıya başla 7. Bahçeli Sk. → sağ 2. Bahçeli Sk. → sol Şen Sk. → sağ
+    Cumhuriyet Cd. 713 m → düz Mehmet Kafadar Cd. 582 m → sol → sağ → sol.
+  - Haraparası rotasında "sola dön" haritadaki kuzeye kıvrılışla tutarlı.
+- **Harita denetimleri.** Ölçek çubuğu ve künye "Konumuma dön" düğmesiyle aynı görünüşte:
+  opak zemin, belirgin kenar, açık yazı, gölge. deck.gl tuvalinin üstünde; ölçek konsolda da
+  değişti.
 
 ---
 
@@ -2898,3 +3787,13 @@ tavana varmadan tetikleniyor.
 | 19 Eylül 2026 | **A-18 eklendi** — yeniden kurulan QuickQuakeBuildings verisinde: 95 hasar etiketli "sağlam" bina (43'ü dış sınamada), dış sınamanın 23/74 karosu doğrulama bloklarında, dışlanan dağlık kesimde etiketsiz bina riski, Maxar lisans çelişkisi. Kaynak: `Furkan--Utku--Model_ve_veriseti_aktarımı/AKTARIM_BELGESI.md` (Ç-02). |
 | 19 Eylül 2026 | **A-19 eklendi** — smp focal kaybında α = 0,25 hasar piksellerini arka plandan az ağırlıklandırıyor (doğrulandı: `_functional.py` 83–84); α taraması önerisi. Kaynak: `AKTARIM_BELGESI.md` Ç-11 (DA-SegFormer). |
 | 20 Eylül 2026 | **A-20 eklendi** — Tablo 15 tasarımı il ile veri kümesini karıştırıyor (Hatay ağırlıkla KATE-PD, Kahramanmaraş ağırlıkla MEDBFS) ve "Birleşik" satırı aktarım testi değil; il-dışarıda-bırakma satırı, oran sütunu ve yalnız KATE-PD kontrolü önerildi. Kaynak: `AKTARIM_BELGESI.md` Ç-16 (Valentijn vd. 2020). |
+| 22 Eylül 2026 | **J-51, J-52, J-53 eklendi; J-50 üçüncü tur; J-46 kısmen kapandı.** Afetzede ihbarları (fotoğraf, yazılı, ihtiyaç): model seçimi, iki adımlı inceleme/ihbar, kalıcı kayıt, canlı akışta `ihbar` mesajı. Konsolda "Son ihbarlar", kamera ve metin modlarında gelen ihbarlar, yeni "İhtiyaç talepleri" modu, harita katmanı ve köşe kartı. J-52: canlı modda yeni kayıt 60 sn'ye kadar geç düşüyordu; bitiş açık bırakıldı. J-53: eski uçlar oturumsuz açık, karar kullanıcıda. Uçtan uca betik 39/39; duman testi 80 istek, önceki 70'i aynı. |
+| 22 Eylül 2026 | **J-44 kapandı.** Afetzede rotası artık kendi yol ağımızda: beş bölgenin yürüme ağı yerel OSM kopyasından üretildi (`araclar_yol_agi_uret.py`, ~5 dk, 14,6 MB). Rota Dijkstra ile hesaplanıyor; araç motorunun `risk_weight` hasar cezası ve bilinen kapanmalardan kaçınan yumuşak maliyet kullanılıyor. Yakın yerler yürüme mesafesine göre sıralı. Rota 65–75 ms; Akevler → Antakya Devlet Hastanesi 2.097 m. Duman testi 83 istek. |
+| 22 Eylül 2026 | **J-50 dördüncü tur:** afetzede ekranı 1920 px'e kadar genişliyor; ≥ 1600 px'te üç sütun, duyurular sağda. Yeni duyuru uyarısı (acil kapatılana kadar kalır) ve isteğe bağlı tarayıcı bildirimi eklendi; bilgi duyurusu vurgu renginde. Haritadaki "Konumuma dön" düğmesi artık harita katmanının üstünde. |
+| 22 Eylül 2026 | **J-44 ek:** yürüme rotasına dönüş yönlü adım adım tarif (açıdan hesaplanır; canlı yön tarifi yok) ve yeni rota kartı (zaman çizelgesi, hasar etiketi, varış). Harita ölçeği ve künye belirginleşti. |
+| 22 Eylül 2026 | **J-56 kapandı:** sol panel artık seçili modun paneli ve başlığında modun adı yazıyor. Katmanlar haritanın köşesindeki düğmede; her katman kaynağını ve sayısını yazıyor. Hiçbir şey çizmeyen dört katman anahtarı "bağlanmadı" oldu. Üst çubukta beş ana mod ve bir "Analiz" menüsü var; 1280 px'te tek satır. |
+| 22 Eylül 2026 | **J-55 ek:** şehirler arası da yoldan. Antakya'daki ekip Kahramanmaraş'taki çağrıya kuş uçuşu çizgiyle görünüyordu. Bölgeler arası ağ eklendi: beş şehir ve aralarındaki ana yollar, 513 bin düğüm. Antakya→Kahramanmaraş 178 km, ~2 sa 26 dk. Şehir dışında ayrı hız varsayımı var; uzun süre saat ve dakikayla yazılıyor. |
+| 22 Eylül 2026 | **J-55 kapandı:** ekibin olaya uzaklığı artık araç yolundan. Beş bölgenin araç ağı yerel OSM kopyasından üretildi; tek yönlere uyuyor, kapanmalardan kaçınıyor. Olaydan ters ağda tek arama medyan 22 ms. Süre yol türüne göre ortalama hız varsayımıyla (trafik verisi yok). Ekip seçici süreye göre sıralı; haritalarda rota sokakları izliyor. Afetzedeye 10 dakikadan eski konumla süre gösterilmiyor. |
+| 22 Eylül 2026 | **J-54 kapandı:** her sevk bir görev kaydı. Kayıtta olay, ekip, kaç kişi, kim gönderdi ve adımlar (atandı, yolda, olay yerinde, bitti; her biri kimden) var. Bir ekip aynı anda iki yere gönderilemiyor, ikinci ekip yalnız ek destek olarak gidiyor. Konsolda "Kim gidiyor" bölümü, ekip seçici ve "Ekipler" modu var. Saha hesabı için telefonda `/ekip` ekranı eklendi. Afetzede kendi çağrısına gelen ekibin adını, kişi sayısını, aşamasını ve konumunu görüyor. SOS süzgeçleri artık listeyi süzüyor; sahte sıralama anahtarı kaldırıldı. Depo 44/44, uçtan uca 52/52, duman 93 istek. |
+| 22 Eylül 2026 | **J-50 beşinci tur:** afetzede mahalle araması baştan eşleşiyor. İlk harften çalışıyor; önce adı, sonra adındaki bir kelimesi yazılanla başlayanlar geliyor. Sonuç yoksa söylüyor. Türkçe harf birebir, düz harf iki türü de buluyor. |
+| 22 Eylül 2026 | **J-57 eklendi:** `npm run kontrol` konsol kaynaklarının yanına 82 `.js` dosyası yazıyor (`vite.config.js` dahil). Vite bu kopyaları `.tsx`'ten önce yükler. Yazılanlar silindi; betik düzeltmesi önerildi. |

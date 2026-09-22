@@ -2,29 +2,38 @@ import { useEffect, useMemo } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { HaritaKabugu, useHarita } from '@/harita/HaritaKabugu'
 import { AlanSecici } from '@/harita/AlanSecici'
-import { katmanlariKur, type EtiketSeviyesi } from '@/harita/katmanlar'
+import { katmanlariKur } from '@/harita/katmanlar'
 import { useKonsol } from '@/durum/konsolDurumu'
 import { useSecim, type Kutu } from '@/durum/secimDurumu'
-import { useAralik } from '@/durum/zamanDurumu'
+import { useSorguAraligi } from '@/durum/zamanDurumu'
 import { useEkipler, useHasarNoktalari, useIsiIzgarasi, useSosCagrilari } from '@/veri/sorgular'
+import { useIhbarlar, type IhbarTuru } from '@/veri/ihbar'
 import { isiDokusuKur } from '@/harita/isiDokusu'
 import { KANALLAR } from '@/durum/konsolDurumu'
 import { useAnalizSegmentleri } from '@/veri/analiz'
-import { kutularKesisir, useAltlikKatalogu, useAltlikPaketleri } from '@/veri/altlik'
+import { useAltlikKatalogu } from '@/veri/altlik'
 import { gunMetni } from '@/lib/bicim'
 import { Chip } from './parcalar'
-import type { Etiket } from '@/veri/altlik'
+import {
+  ALTLIK_EN_AZ_ZOOM,
+  kisaAd,
+  kutuMerkezi,
+  useAltlikGirdisi,
+  useGorunenAltlik,
+} from '@/harita/altlikGorunumu'
 import { sonIsSec, useIsler } from '@/durum/islerDurumu'
-import { MODLAR, VARSAYILAN_MOD, modBul } from '@/modlar/modlar'
+import { MODLAR, VARSAYILAN_MOD, modBul, type ModId } from '@/modlar/modlar'
 import { UstCubuk } from './UstCubuk'
 import { SolPanel } from './SolPanel'
 import { SagPanel } from './SagPanel'
 import { ZamanSeridi } from './ZamanSeridi'
 import { KomutPaleti } from './KomutPaleti'
+import { YeniOlaylar } from './YeniOlaylar'
+import { KatmanDugmesi } from './KatmanDugmesi'
 
 /* ---------------------------------------------------------------------------
-   Konsol kabuğu: üst çubuk · sol katman paneli · harita · sağ durum paneli ·
-   alt zaman şeridi (ARAYUZ §8).
+   Konsol kabuğu: üst çubuk · sol mod paneli · harita (köşesinde katmanlar
+   düğmesi) · sağ durum paneli · alt zaman şeridi (ARAYUZ §8).
 
    Harita bu kabukta BİR kez kurulur. Mod değişince kabuk yeniden kurulmaz;
    yalnız panellerin içeriği ve açık katmanlar değişir.
@@ -48,12 +57,26 @@ export function KonsolKabugu() {
           {/* Dar ekranda (<= 980 px) harita üstte, paneller altında dikey sıralanır. */}
           <div className="relative z-10 flex flex-col gap-gutter p-gutter genis:pointer-events-none genis:absolute genis:inset-0 genis:h-full genis:overflow-hidden">
             <div className="flex min-h-0 flex-1 flex-col gap-gutter genis:flex-row genis:items-stretch">
-              <div className="genis:pointer-events-auto genis:w-panel-l genis:shrink-0 flex min-h-0">
+              {/* Dar ekranda katmanlar düğmesi panellerin üstünde, aşağı açılır. */}
+              <div className="genis:hidden">
+                <KatmanDugmesi yukari={false} />
+              </div>
+              {/* Sol panel içeriği kadar uzar (en çok sütun boyu), altında harita görünür. */}
+              <div className="genis:pointer-events-auto genis:w-panel-l genis:shrink-0 genis:self-start genis:max-h-full flex min-h-0">
                 <SolPanel mod={tanim.id} />
               </div>
-              <div className="hidden flex-1 genis:flex genis:items-start genis:justify-center">
+              <div className="hidden flex-1 genis:flex genis:flex-col genis:items-center genis:justify-between">
                 <div className="genis:pointer-events-auto">
                   <SehirDugmeleri />
+                </div>
+                {/* Solda katmanlar (J-56), sağda yeni SOS ve ihbar kartı (ARAYUZ §10, J-51). */}
+                <div className="flex w-full items-end justify-between gap-gutter">
+                  <div className="genis:pointer-events-auto">
+                    <KatmanDugmesi />
+                  </div>
+                  <div className="genis:pointer-events-auto">
+                    <YeniOlaylar />
+                  </div>
                 </div>
               </div>
               <div className="genis:pointer-events-auto genis:w-panel-r genis:shrink-0 flex min-h-0">
@@ -75,30 +98,17 @@ export function KonsolKabugu() {
   )
 }
 
+/** Modun gösterdiği ihbar türleri; listede olmayan mod hepsini gösterir. */
+const MOD_IHBARLARI: Partial<Record<ModId, readonly IhbarTuru[]>> = {
+  kamera: ['fotograf'],
+  metin: ['metin'],
+  ihtiyac: ['ihtiyac'],
+}
+
 // Isı ızgarası şimdilik sabit bir bölge için isteniyor; harita kaydırınca
 // yeni istek atılmaz (kural 4). Bölge seçimi ilerleyen adımda panelden gelecek.
 const ISI_MERKEZI = { lon: 36.161, lat: 36.202 }
 const ISI_YARICAP_KM = 10
-
-/** Altlık bölge ölçeğinde çizilir; bundan uzakta paket indirilmez. */
-const ALTLIK_EN_AZ_ZOOM = 9
-/** Yapılar bu yakınlaştırmadan itibaren seçilir; altında katman kurulmaz. */
-const YAPI_EN_AZ_ZOOM = 13
-
-/** Yakınlaştırmaya göre yazılan adlar (J-41): uzakta bölge adı, sonra şehir ve
-    ilçe, köy, mahalle, en yakında sokak. */
-function etiketSeviyesi(zoom: number | undefined): EtiketSeviyesi {
-  if (zoom === undefined || zoom < ALTLIK_EN_AZ_ZOOM) return -1
-  if (zoom < 12) return 0
-  if (zoom < 13) return 1
-  if (zoom < 15) return 2
-  return 3
-}
-
-/** "Antakya (Hatay)" → "Antakya": düğme ve uzak ad kısa yazılır. */
-const kisaAd = (ad: string) => ad.replace(/\s*\(.*\)\s*$/, '')
-
-const kutuMerkezi = (k: Kutu): [number, number] => [(k[0] + k[2]) / 2, (k[1] + k[3]) / 2]
 
 /** Şehre git (J-41): prototipteki görünüm düğmeleri gibi; tek tıkla şehir
     merkezine, "Tüm bölge" ile bütün şehirleri kapsayan görünüme uçar. */
@@ -147,20 +157,6 @@ function SehirDugmeleri() {
   )
 }
 
-/** Görünen alanla kesişen altlık bölgeleri (katalogdan). */
-function useGorunenAltlik() {
-  const { gorunum } = useHarita()
-  const katalog = useAltlikKatalogu()
-  const gorunen = useMemo(
-    () =>
-      gorunum && gorunum.zoom >= ALTLIK_EN_AZ_ZOOM
-        ? (katalog.data ?? []).filter((b) => kutularKesisir(b.kutu, gorunum.kutu))
-        : [],
-    [katalog.data, gorunum],
-  )
-  return { katalog, gorunum, gorunen }
-}
-
 /** Kaynak künyesi her zaman ekranda durur (ARAYUZ §11): altlık nereden, hangi
     tarihli; görünen alanda altlık yoksa bu da yazar. */
 function HaritaKunyesi() {
@@ -199,20 +195,18 @@ function KatmanKopru() {
   const seciliKayit = useKonsol((d) => d.seciliKayit)
   const katmanlariAyarla = useKonsol((d) => d.katmanlariAyarla)
   const kayitSec = useKonsol((d) => d.kayitSec)
-  const aralik = useAralik()
+  const aralik = useSorguAraligi()
   const secimKutusu = useSecim((d) => d.kutu)
   const secimCokgeni = useSecim((d) => d.cokgen)
   const secimTaslagi = useSecim((d) => d.taslak)
 
   const hasar = useHasarNoktalari(aralik)
   const sos = useSosCagrilari(aralik)
+  const ihbar = useIhbarlar(aralik)
   const ekipler = useEkipler()
 
   // Altlık: yalnız görünen bölgelerin paketleri iner (harita durunca), bir kez.
-  const { gorunen, gorunum, katalog } = useGorunenAltlik()
-  const altlik = useAltlikPaketleri(gorunen)
-  const altlikYapiGorunur = (gorunum?.zoom ?? 0) >= YAPI_EN_AZ_ZOOM
-  const adSeviyesi = etiketSeviyesi(gorunum?.zoom)
+  const { altlik, altlikYapiGorunur, bolgeAdlari, adSeviyesi, gorunum } = useAltlikGirdisi()
   // Isı yakınlaştıkça saydamlaşır: sokak ölçeğinde zemini, yapıları ve adları
   // örtmesin (z13'e kadar 0,72, z16 ve üstü 0,30). 0,05 adımlı: her kaydırmada
   // katmanlar yeniden kurulmasın.
@@ -221,15 +215,6 @@ function KatmanKopru() {
     const o = z <= 13 ? 0.72 : z >= 16 ? 0.3 : 0.72 - ((z - 13) / 3) * 0.42
     return Math.round(o * 20) / 20
   }, [gorunum?.zoom])
-  const bolgeAdlari = useMemo<Etiket[]>(
-    () =>
-      (katalog.data ?? []).map((b) => {
-        const [lon, lat] = kutuMerkezi(b.kutu)
-        return { ad: kisaAd(b.ad), lon, lat, aci: 0, oncelik: 100 }
-      }),
-    [katalog.data],
-  )
-
   // Haritada bir ihbara ya da ekibe tıklayınca oraya yakınlaşılır; SOS seçilir.
   useEffect(() => {
     if (!hazir) return
@@ -238,7 +223,8 @@ function KatmanKopru() {
       const katman = bilgi.layer?.id
       if (!nesne || nesne.lon == null || nesne.lat == null) return
       if (katman === 'sos' && nesne.id) kayitSec({ tip: 'sos', id: nesne.id })
-      if (katman === 'sos' || katman === 'hasar-noktalari' || katman === 'ekipler') {
+      if (katman === 'ihbarlar' && nesne.id) kayitSec({ tip: 'ihbar', id: nesne.id })
+      if (katman === 'sos' || katman === 'ihbarlar' || katman === 'hasar-noktalari' || katman === 'ekipler') {
         ucus(nesne.lon, nesne.lat, Math.max(15.5, haritaAl()?.getZoom() ?? 0))
       }
     })
@@ -289,6 +275,9 @@ function KatmanKopru() {
         sos: sos.data ?? [],
         ekipler: ekipler.data ?? [],
         seciliSos: seciliKayit?.tip === 'sos' ? seciliKayit.id : null,
+        ihbarlar: ihbar.data ?? [],
+        ihbarTurleri: MOD_IHBARLARI[tanim.id],
+        seciliIhbar: seciliKayit?.tip === 'ihbar' ? seciliKayit.id : null,
         secim: { kutu: secimKutusu, cokgen: secimCokgeni, taslak: secimTaslagi },
         analiz: segmentler.data ?? null,
         isi: isiDokusu,
@@ -302,6 +291,8 @@ function KatmanKopru() {
       isiOrtuculugu,
       hasar.data,
       sos.data,
+      ihbar.data,
+      tanim.id,
       ekipler.data,
       seciliKayit,
       secimKutusu,
