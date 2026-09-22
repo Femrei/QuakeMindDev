@@ -122,6 +122,6 @@
     "early_stopping": true,
     "random_state": 42
   },
-  "train_seconds": 2.83,
+  "train_seconds": 2.59,
   "feature_importance": null
 }

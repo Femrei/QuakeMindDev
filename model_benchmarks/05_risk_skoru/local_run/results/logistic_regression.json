@@ -116,7 +116,7 @@
     "max_iter": 2000,
     "random_state": 42
   },
-  "train_seconds": 0.12,
+  "train_seconds": 0.13,
   "feature_importance": {
     "rolling_max_7d": 0.484465345881184,
     "latitude": 0.3562982293212366,

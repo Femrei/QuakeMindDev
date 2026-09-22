@@ -114,6 +114,6 @@
     "final_estimator": "LogisticRegression",
     "cv": 3
   },
-  "train_seconds": 123.95,
+  "train_seconds": 38.17,
   "feature_importance": null
 }

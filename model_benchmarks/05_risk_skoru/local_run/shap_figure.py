@@ -68,10 +68,14 @@ def main():
     order = np.argsort(imp)[-15:]
     labels = [turkish_label(cols[i]) for i in order]
     vals = imp[order]
-    fig1, ax1 = plt.subplots(figsize=(7, max(3.5, 0.35 * len(labels))))
+    fig1, ax1 = plt.subplots(figsize=(7.5, max(3.5, 0.35 * len(labels))))
     ax1.barh(labels, vals, color="#55A868")
     ax1.set_xlabel("Ortalama Öznitelik Önemi (CatBoost, son kat)")
-    ax1.set_title("Esas Alınan CatBoost Modelinde Öznitelik Önemi")
+    for spine in ax1.spines.values():
+        spine.set_visible(False)
+    ax1.set_axisbelow(True)
+    ax1.grid(axis="x", color="#dddddd", linewidth=0.9)
+    ax1.tick_params(length=0)
     plt.tight_layout()
     top_path = RESULTS / "shap_top_importance.png"
     plt.savefig(top_path, dpi=300)

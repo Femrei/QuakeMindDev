@@ -119,7 +119,7 @@
     "verbose": false,
     "auto_class_weights": "Balanced"
   },
-  "train_seconds": 27.96,
+  "train_seconds": 18.4,
   "feature_importance": {
     "days_since_start": 15.785620888629012,
     "latitude": 13.025566254842847,

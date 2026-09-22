@@ -214,11 +214,33 @@ def main():
     json.dump(ds_info, open(RESULTS / "dataset_info.json", "w", encoding="utf-8"),
                indent=2, ensure_ascii=False)
 
-    # grafikleri uret
+    # OOF tahminlerini diske yaz (Sekil 17/19/20-SHAP icin yeniden kullanilabilir olsun)
+    oof_dir = RESULTS / "oof"
+    oof_dir.mkdir(exist_ok=True)
+    for name, r in all_results.items():
+        np.savez(oof_dir / f"{name}_oof.npz", oof_true=r["oof_true"], oof_prob=r["oof_prob"],
+                 oof_idx=r["oof_idx"])
+
+    # grafikleri uret (eski stil - degistirilmedi)
     from plots_risk import make_all_plots
     make_all_plots(all_results, X, y)
 
-    print("\nTum modeller tamamlandi. Rapor icin: python build_docx_report_risk.py")
+    # temiz stil (Sekil 16/17/18/19)
+    from plots_risk_clean_style import (plot_comparison_bar as pcb_clean,
+                                         plot_fold_variance as pfv_clean,
+                                         plot_feature_importance as pfi_clean,
+                                         plot_roc_pr_calibration_clean)
+    clean_results = {name: {**r["agg"], "fold_metrics": r["fold_metrics"],
+                             "feature_importance": r["importance"], "title": r["title"],
+                             "oof_true": r["oof_true"], "oof_prob": r["oof_prob"]}
+                      for name, r in all_results.items()}
+    pcb_clean(clean_results)
+    pfv_clean(clean_results)
+    pfi_clean(clean_results, "catboost")
+    plot_roc_pr_calibration_clean(clean_results)
+
+    print("\nTum modeller tamamlandi. SHAP icin ayrica: python shap_figure.py")
+    print("Rapor icin: python build_docx_report_risk.py")
 
 
 if __name__ == "__main__":

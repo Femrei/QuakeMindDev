@@ -121,7 +121,7 @@
     "verbose": -1,
     "class_weight": "balanced"
   },
-  "train_seconds": 3.47,
+  "train_seconds": 2.14,
   "feature_importance": {
     "days_since_start": 2911.4,
     "longitude": 2759.4,

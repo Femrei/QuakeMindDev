@@ -1,0 +1,284 @@
+{
+  "district_components": {
+    "H-Z1": {
+      "lat": 36.2025574,
+      "lon": 36.1640991,
+      "short_risk": 0.11805912255776689,
+      "long_hazard": 0.42578647035187933,
+      "fault_score": 1.0
+    },
+    "H-Z2": {
+      "lat": 36.5902266,
+      "lon": 36.1710354,
+      "short_risk": 0.08905981332046288,
+      "long_hazard": 0.540058296271049,
+      "fault_score": 1.0
+    },
+    "H-Z3": {
+      "lat": 36.4989553,
+      "lon": 36.3621728,
+      "short_risk": 0.134023480784818,
+      "long_hazard": 0.540058296271049,
+      "fault_score": 1.0
+    },
+    "H-Z4": {
+      "lat": 36.0851597,
+      "lon": 35.9799375,
+      "short_risk": 0.07926123272781681,
+      "long_hazard": 0.42578647035187933,
+      "fault_score": 1.0
+    },
+    "H-Z5": {
+      "lat": 36.4916742,
+      "lon": 36.1944459,
+      "short_risk": 0.06617246450248021,
+      "long_hazard": 0.540058296271049,
+      "fault_score": 1.0
+    },
+    "K-Z1": {
+      "lat": 37.5777575,
+      "lon": 36.923735,
+      "short_risk": 0.164716847241184,
+      "long_hazard": 0.6315781906715998,
+      "fault_score": 1.0
+    },
+    "K-Z2": {
+      "lat": 38.2022294,
+      "lon": 37.1903006,
+      "short_risk": 0.16513978740992977,
+      "long_hazard": 0.603447555704678,
+      "fault_score": 0.7
+    },
+    "K-Z3": {
+      "lat": 37.4908476,
+      "lon": 37.2899692,
+      "short_risk": 0.1919381538138396,
+      "long_hazard": 0.6702677098750351,
+      "fault_score": 1.0
+    }
+  },
+  "baseline_weights": [
+    0.4,
+    0.3,
+    0.3
+  ],
+  "baseline_category_by_district": {
+    "H-Z1": "ORTA",
+    "H-Z2": "ORTA",
+    "H-Z3": "YUKSEK",
+    "H-Z4": "ORTA",
+    "H-Z5": "ORTA",
+    "K-Z1": "YUKSEK",
+    "K-Z2": "ORTA",
+    "K-Z3": "YUKSEK"
+  },
+  "grid_sweep": [
+    {
+      "w_short": 0.3,
+      "w_long": 0.2,
+      "w_fault": 0.5,
+      "is_baseline": false,
+      "category_by_district": {
+        "H-Z1": "YUKSEK",
+        "H-Z2": "YUKSEK",
+        "H-Z3": "YUKSEK",
+        "H-Z4": "YUKSEK",
+        "H-Z5": "YUKSEK",
+        "K-Z1": "YUKSEK",
+        "K-Z2": "YUKSEK",
+        "K-Z3": "YUKSEK"
+      },
+      "category_distribution": {
+        "DUSUK": 0,
+        "ORTA": 0,
+        "YUKSEK": 8,
+        "COK_YUKSEK": 0
+      },
+      "n_districts_changed_vs_baseline": 5
+    },
+    {
+      "w_short": 0.3,
+      "w_long": 0.3,
+      "w_fault": 0.4,
+      "is_baseline": false,
+      "category_by_district": {
+        "H-Z1": "YUKSEK",
+        "H-Z2": "YUKSEK",
+        "H-Z3": "YUKSEK",
+        "H-Z4": "YUKSEK",
+        "H-Z5": "YUKSEK",
+        "K-Z1": "YUKSEK",
+        "K-Z2": "YUKSEK",
+        "K-Z3": "YUKSEK"
+      },
+      "category_distribution": {
+        "DUSUK": 0,
+        "ORTA": 0,
+        "YUKSEK": 8,
+        "COK_YUKSEK": 0
+      },
+      "n_districts_changed_vs_baseline": 5
+    },
+    {
+      "w_short": 0.3,
+      "w_long": 0.4,
+      "w_fault": 0.3,
+      "is_baseline": false,
+      "category_by_district": {
+        "H-Z1": "YUKSEK",
+        "H-Z2": "YUKSEK",
+        "H-Z3": "YUKSEK",
+        "H-Z4": "ORTA",
+        "H-Z5": "YUKSEK",
+        "K-Z1": "YUKSEK",
+        "K-Z2": "YUKSEK",
+        "K-Z3": "YUKSEK"
+      },
+      "category_distribution": {
+        "DUSUK": 0,
+        "ORTA": 1,
+        "YUKSEK": 7,
+        "COK_YUKSEK": 0
+      },
+      "n_districts_changed_vs_baseline": 4
+    },
+    {
+      "w_short": 0.4,
+      "w_long": 0.2,
+      "w_fault": 0.4,
+      "is_baseline": false,
+      "category_by_district": {
+        "H-Z1": "YUKSEK",
+        "H-Z2": "YUKSEK",
+        "H-Z3": "YUKSEK",
+        "H-Z4": "YUKSEK",
+        "H-Z5": "YUKSEK",
+        "K-Z1": "YUKSEK",
+        "K-Z2": "ORTA",
+        "K-Z3": "YUKSEK"
+      },
+      "category_distribution": {
+        "DUSUK": 0,
+        "ORTA": 1,
+        "YUKSEK": 7,
+        "COK_YUKSEK": 0
+      },
+      "n_districts_changed_vs_baseline": 4
+    },
+    {
+      "w_short": 0.4,
+      "w_long": 0.3,
+      "w_fault": 0.3,
+      "is_baseline": true,
+      "category_by_district": {
+        "H-Z1": "ORTA",
+        "H-Z2": "ORTA",
+        "H-Z3": "YUKSEK",
+        "H-Z4": "ORTA",
+        "H-Z5": "ORTA",
+        "K-Z1": "YUKSEK",
+        "K-Z2": "ORTA",
+        "K-Z3": "YUKSEK"
+      },
+      "category_distribution": {
+        "DUSUK": 0,
+        "ORTA": 5,
+        "YUKSEK": 3,
+        "COK_YUKSEK": 0
+      },
+      "n_districts_changed_vs_baseline": 0
+    },
+    {
+      "w_short": 0.4,
+      "w_long": 0.4,
+      "w_fault": 0.2,
+      "is_baseline": false,
+      "category_by_district": {
+        "H-Z1": "ORTA",
+        "H-Z2": "ORTA",
+        "H-Z3": "ORTA",
+        "H-Z4": "ORTA",
+        "H-Z5": "ORTA",
+        "K-Z1": "YUKSEK",
+        "K-Z2": "ORTA",
+        "K-Z3": "YUKSEK"
+      },
+      "category_distribution": {
+        "DUSUK": 0,
+        "ORTA": 6,
+        "YUKSEK": 2,
+        "COK_YUKSEK": 0
+      },
+      "n_districts_changed_vs_baseline": 1
+    },
+    {
+      "w_short": 0.5,
+      "w_long": 0.2,
+      "w_fault": 0.3,
+      "is_baseline": false,
+      "category_by_district": {
+        "H-Z1": "ORTA",
+        "H-Z2": "ORTA",
+        "H-Z3": "ORTA",
+        "H-Z4": "ORTA",
+        "H-Z5": "ORTA",
+        "K-Z1": "YUKSEK",
+        "K-Z2": "ORTA",
+        "K-Z3": "YUKSEK"
+      },
+      "category_distribution": {
+        "DUSUK": 0,
+        "ORTA": 6,
+        "YUKSEK": 2,
+        "COK_YUKSEK": 0
+      },
+      "n_districts_changed_vs_baseline": 1
+    },
+    {
+      "w_short": 0.5,
+      "w_long": 0.3,
+      "w_fault": 0.2,
+      "is_baseline": false,
+      "category_by_district": {
+        "H-Z1": "ORTA",
+        "H-Z2": "ORTA",
+        "H-Z3": "ORTA",
+        "H-Z4": "ORTA",
+        "H-Z5": "ORTA",
+        "K-Z1": "ORTA",
+        "K-Z2": "ORTA",
+        "K-Z3": "ORTA"
+      },
+      "category_distribution": {
+        "DUSUK": 0,
+        "ORTA": 8,
+        "YUKSEK": 0,
+        "COK_YUKSEK": 0
+      },
+      "n_districts_changed_vs_baseline": 3
+    },
+    {
+      "w_short": 0.5,
+      "w_long": 0.4,
+      "w_fault": 0.1,
+      "is_baseline": false,
+      "category_by_district": {
+        "H-Z1": "ORTA",
+        "H-Z2": "ORTA",
+        "H-Z3": "ORTA",
+        "H-Z4": "ORTA",
+        "H-Z5": "ORTA",
+        "K-Z1": "ORTA",
+        "K-Z2": "ORTA",
+        "K-Z3": "ORTA"
+      },
+      "category_distribution": {
+        "DUSUK": 0,
+        "ORTA": 8,
+        "YUKSEK": 0,
+        "COK_YUKSEK": 0
+      },
+      "n_districts_changed_vs_baseline": 3
+    }
+  ]
+}
