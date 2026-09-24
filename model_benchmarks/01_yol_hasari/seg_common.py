@@ -10,6 +10,13 @@ Butun kiyaslama mimarileri AYNI kodlayici / AYNI protokol / AYNI metrik ile.
 VERI: Roboflow Universe'ten "Semantic Segmentation Masks" (PNG) formatinda indir.
       Dataset > Download > format: "PNG Mask (Semantic)" > "show download code".
       Anahtar + slug'lari asagidaki CONFIG'e gir. Alternatif: local images/ + masks/.
+
+NOT (D-05, D-03): bu dosya `01_unet_resnet18.ipynb`...`07_segformer_scale.ipynb`
+tarafindan kullanilan ORIJINAL/koşulmamis sablondur. Makalede raporlanan gercek
+sonuclar bu dosyayi DEGIL, `local_colab_run/build_notebook.py`'nin uretttigi
+`00_tum_mimariler.ipynb`'i kullandi (veri: KATE-CD+MedBFS bina hasari, Roboflow
+degil). Asagidaki CONFIG artik `build_notebook.py` ile birebir ayni hiperparametreleri
+tasiyor ki bu sablon defterler calistirilirsa farkli sonuc alinmasin.
 """
 from pathlib import Path
 import json
@@ -37,9 +44,12 @@ CONFIG = {
     # ortak:
     "img_size": 512,
     "num_classes": 1,              # ikili maske (hasar var / yok)
-    "batch_size": 4,      # T4 16GB icin; B5/DeepLab-R101/Mask2Former OOM verirse 2 yap
-    "epochs": 30,
-    "lr": 6e-5,
+    "batch_size": 8,       # build_notebook.py ile ayni; T4 16GB'de OOM verirse 4'e dusur
+    "epochs": 50,
+    "patience": 8,
+    "lr": 2e-4,
+    "weight_decay": 1e-2,
+    "grad_clip_max_norm": 1.0,
 }
 
 
@@ -154,14 +164,23 @@ def focal_dice_loss():
 # --- Egitim dongusu ------------------------------------------------
 
 def train_model(model, dl, cfg=CONFIG, device=None):
+    """build_notebook.py::train_one_arch ile birebir ayni protokol (D-05):
+    AdamW(lr, weight_decay) + CosineAnnealingWarmRestarts + grad clip + early stopping.
+    """
     import torch
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
-    opt = torch.optim.AdamW(model.parameters(), lr=cfg["lr"], weight_decay=1e-4)
-    sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=cfg["epochs"])
+    opt = torch.optim.AdamW(model.parameters(), lr=cfg["lr"],
+                             weight_decay=cfg.get("weight_decay", 1e-2))
+    sched = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+        opt, T_0=5, T_mult=2, eta_min=1e-6)
     lossf = focal_dice_loss()
     scaler = torch.cuda.amp.GradScaler(enabled=(device == "cuda"))
+    max_norm = cfg.get("grad_clip_max_norm", 1.0)
+    patience = cfg.get("patience", 8)
 
+    best_val_iou = 0.0
+    epochs_no_improve = 0
     for ep in range(cfg["epochs"]):
         model.train()
         run = 0.0
@@ -171,6 +190,8 @@ def train_model(model, dl, cfg=CONFIG, device=None):
             with torch.cuda.amp.autocast(enabled=(device == "cuda")):
                 loss = lossf(model(img), m)
             scaler.scale(loss).backward()
+            scaler.unscale_(opt)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=max_norm)
             scaler.step(opt); scaler.update()
             run += loss.item()
         sched.step()
@@ -178,6 +199,14 @@ def train_model(model, dl, cfg=CONFIG, device=None):
         if "valid" in dl:
             vm = evaluate_seg(model, dl["valid"], device)
             msg += f"  val mIoU {vm['mean_iou']:.4f}  F1 {vm['f1']:.4f}"
+            if vm["mean_iou"] > best_val_iou:
+                best_val_iou = vm["mean_iou"]
+                epochs_no_improve = 0
+            else:
+                epochs_no_improve += 1
+                if epochs_no_improve >= patience:
+                    print(msg + "  [erken durdurma]")
+                    break
         print(msg)
     return model
 

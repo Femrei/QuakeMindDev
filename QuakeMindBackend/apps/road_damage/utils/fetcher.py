@@ -48,7 +48,18 @@ def num2deg(xtile, ytile, zoom):
     return (lat_deg, lon_deg)
 
 def fetch_satellite_area(lat, lon, bbox=None, zoom_level=18, wayback_id=None, provider='google', custom_url=None):
-    """Downloads tiles covering a bounding box or a single coordinate."""
+    """Downloads tiles covering a bounding box or a single coordinate.
+
+    NOT (D-01): `provider='google'` varsayilani yalnizca CANLI/interaktif kullanim
+    (web/mobil uzerinden kullanicinin anlik analiz istegi) icindir. Google'in tile
+    servisi toplu indirme/akademik yeniden dagitim icin lisanslanmamistir. Makalede
+    raporlanan hicbir olcum bu fonksiyonu kullanmaz -- model_benchmarks/ altindaki
+    tum senaryo/kiyaslama kosumlari (SegFormer egitim-degerlendirme, EMSR648 kiyasi,
+    QQB dis sinama vb.) Maxar Open Data (CC BY-NC 4.0, atifla) veya OSM/Copernicus
+    EMSR648'den once indirilip diske kaydedilmis veri kullanir. Akademik/toplu bir
+    kosum icin `provider='esri'` (Wayback, acik lisansli) ya da onceden indirilmis
+    yerel bir Maxar karosu tercih edilmeli.
+    """
     def _try_fetch(z):
         n = 2.0 ** z
         if not bbox:

@@ -16,11 +16,11 @@
     "score": 0.9226001501083374
   },
   "Yarali var kanama var acil saglik ekibi gerekiyor": {
-    "category": "Enkaz Bildirimi",
+    "category": "Acil Yardım İhtiyacı",
     "score": 0.8255931735038757
   },
   "Isinamiyoruz battaniye ve giysi ihtiyacimiz var soguktan donuyoruz": {
-    "category": "Lojistik İhtiyaç Bildirimi",
+    "category": "Acil Yardım İhtiyacı",
     "score": 0.7847001552581787
   },
   "Cadir ve barinma malzemesi lazim disarida kaldik": {
@@ -36,7 +36,7 @@
     "score": 0.6786141395568848
   },
   "Tuvalet ve hijyen malzemesi ihtiyacimiz var": {
-    "category": "Alakasız",
+    "category": "Belirsiz",
     "score": 0.26950085163116455
   },
   "Sadece bilgi almak istiyorum tesekkur ederim": {

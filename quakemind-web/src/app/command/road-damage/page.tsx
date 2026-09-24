@@ -811,15 +811,15 @@ function DamageAnalysisTab() {
         </div>
 
         {/* Before / After comparison */}
-        {result?.imageOriginalB64 && result?.imageDamageOverlayB64 && (
+        {result?.imageOriginalUrl && result?.imageDamageOverlayUrl && (
           <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-3">
             <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
               <Layers className="w-4 h-4 text-blue-400" /> ÖNCE / SONRA KARŞILAŞTIRMA
             </span>
             <div className="h-[450px] rounded-2xl overflow-hidden border border-slate-800">
               <CompareMap
-                beforeImage={result.imageOriginalB64}
-                afterImage={result.imageDamageOverlayB64}
+                beforeImage={result.imageOriginalUrl}
+                afterImage={result.imageDamageOverlayUrl}
                 bounds={result.bounds}
               />
             </div>
@@ -832,17 +832,17 @@ function DamageAnalysisTab() {
         )}
 
         {/* Diagnostics grid */}
-        {result?.imageDamageMaskB64 && (
+        {result?.imageDamageMaskUrl && (
           <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-3">
             <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
               <Layers className="w-4 h-4 text-blue-400" /> DİAGNOSTİK
             </span>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { src: result.imageDamageMaskB64, label: "Model Yıkıntı Tahmini" },
-                { src: result.imageRoadMaskB64, label: "OSM Yol Maskesi" },
-                { src: result.imageIntersectionB64, label: "Yol & Yıkıntı Kesişimi" },
-                { src: result.imageSegmentationOverlayB64, label: "Uydu + Segmentasyon" },
+                { src: result.imageDamageMaskUrl, label: "Model Yıkıntı Tahmini" },
+                { src: result.imageRoadMaskUrl, label: "OSM Yol Maskesi" },
+                { src: result.imageIntersectionUrl, label: "Yol & Yıkıntı Kesişimi" },
+                { src: result.imageSegmentationOverlayUrl, label: "Uydu + Segmentasyon" },
               ].map((panel, idx) => (
                 <div key={idx} className="space-y-1.5">
                   {panel.src && (

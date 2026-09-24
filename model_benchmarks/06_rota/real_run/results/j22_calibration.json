@@ -1,0 +1,134 @@
+[
+  {
+    "name": "H-Z1-A",
+    "n_edges": 1256,
+    "truth_closed": 14,
+    "truth_pct": 1.1146496815286624,
+    "n_damage_points": 3,
+    "sweep": {
+      "5": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "10": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "15": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "25": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "50": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "100": {
+        "n_closed": 0,
+        "pct": 0.0
+      }
+    }
+  },
+  {
+    "name": "H-Z1-B",
+    "n_edges": 4055,
+    "truth_closed": 0,
+    "truth_pct": 0.0,
+    "n_damage_points": 6,
+    "sweep": {
+      "5": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "10": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "15": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "25": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "50": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "100": {
+        "n_closed": 0,
+        "pct": 0.0
+      }
+    }
+  },
+  {
+    "name": "K-Z1-A",
+    "n_edges": 138676,
+    "truth_closed": 72,
+    "truth_pct": 0.05191958233580432,
+    "n_damage_points": 10,
+    "sweep": {
+      "5": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "10": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "15": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "25": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "50": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "100": {
+        "n_closed": 11,
+        "pct": 0.007932158412414549
+      }
+    }
+  },
+  {
+    "name": "K-Z1-B",
+    "n_edges": 132416,
+    "truth_closed": 6,
+    "truth_pct": 0.004531174480425326,
+    "n_damage_points": 3,
+    "sweep": {
+      "5": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "10": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "15": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "25": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "50": {
+        "n_closed": 0,
+        "pct": 0.0
+      },
+      "100": {
+        "n_closed": 0,
+        "pct": 0.0
+      }
+    }
+  }
+]

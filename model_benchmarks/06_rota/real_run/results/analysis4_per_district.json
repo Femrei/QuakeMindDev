@@ -1,0 +1,120 @@
+{
+  "H-Z1": {
+    "strict": {
+      "R0": {
+        "n": 60,
+        "n_unreachable": 0,
+        "n_total": 60,
+        "mean_time_min": 25.73880962988746,
+        "std_time_min": 47.36033630014117,
+        "mean_k": 0.7333333333333333
+      },
+      "R3": {
+        "n": 60,
+        "n_unreachable": 0,
+        "n_total": 60,
+        "mean_time_min": 10.807818569031838,
+        "std_time_min": 6.114915780668672,
+        "mean_k": 0
+      },
+      "diff_min": 14.930991060855622
+    },
+    "medium": {
+      "R0": {
+        "n": 60,
+        "n_unreachable": 0,
+        "n_total": 60,
+        "mean_time_min": 49.80045438467048,
+        "std_time_min": 95.67307682538157,
+        "mean_k": 1.9
+      },
+      "R3": {
+        "n": 60,
+        "n_unreachable": 0,
+        "n_total": 60,
+        "mean_time_min": 10.978350976670859,
+        "std_time_min": 6.066243579065716,
+        "mean_k": 0
+      },
+      "diff_min": 38.82210340799962
+    },
+    "loose": {
+      "R0": {
+        "n": 60,
+        "n_unreachable": 0,
+        "n_total": 60,
+        "mean_time_min": 49.80045438467048,
+        "std_time_min": 95.67307682538157,
+        "mean_k": 1.9
+      },
+      "R3": {
+        "n": 60,
+        "n_unreachable": 0,
+        "n_total": 60,
+        "mean_time_min": 10.978350976670859,
+        "std_time_min": 6.066243579065716,
+        "mean_k": 0
+      },
+      "diff_min": 38.82210340799962
+    }
+  },
+  "K-Z1": {
+    "strict": {
+      "R0": {
+        "n": 60,
+        "n_unreachable": 0,
+        "n_total": 60,
+        "mean_time_min": 12.569920224560258,
+        "std_time_min": 5.595075961803732,
+        "mean_k": 0
+      },
+      "R3": {
+        "n": 60,
+        "n_unreachable": 0,
+        "n_total": 60,
+        "mean_time_min": 12.569920224560258,
+        "std_time_min": 5.595075961803732,
+        "mean_k": 0
+      },
+      "diff_min": 0.0
+    },
+    "medium": {
+      "R0": {
+        "n": 58,
+        "n_unreachable": 2,
+        "n_total": 60,
+        "mean_time_min": 103.30264910352479,
+        "std_time_min": 162.29576545784997,
+        "mean_k": 4.310344827586207
+      },
+      "R3": {
+        "n": 58,
+        "n_unreachable": 2,
+        "n_total": 60,
+        "mean_time_min": 13.038386288314829,
+        "std_time_min": 5.851487236482544,
+        "mean_k": 0
+      },
+      "diff_min": 90.26426281520996
+    },
+    "loose": {
+      "R0": {
+        "n": 58,
+        "n_unreachable": 2,
+        "n_total": 60,
+        "mean_time_min": 103.30264910352479,
+        "std_time_min": 162.29576545784997,
+        "mean_k": 4.310344827586207
+      },
+      "R3": {
+        "n": 58,
+        "n_unreachable": 2,
+        "n_total": 60,
+        "mean_time_min": 13.038386288314829,
+        "std_time_min": 5.851487236482544,
+        "mean_k": 0
+      },
+      "diff_min": 90.26426281520996
+    }
+  }
+}

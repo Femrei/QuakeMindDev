@@ -11,12 +11,12 @@ class RoadDamageJobStatus {
     this.progressMessage,
   });
 
-  factory RoadDamageJobStatus.fromJson(Map<String, dynamic> json) {
+  factory RoadDamageJobStatus.fromJson(Map<String, dynamic> json, {String? baseUrl}) {
     final status = json['status'] as String? ?? 'error';
     if (status == 'done') {
       return RoadDamageJobStatus(
         status: status,
-        result: RoadDamageResult.fromJson(json),
+        result: RoadDamageResult.fromJson(json, baseUrl: baseUrl),
         progress: 100,
       );
     }

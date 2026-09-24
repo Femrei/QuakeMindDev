@@ -19,15 +19,26 @@ class RoadDamageResult {
     required this.satelliteTileUrl,
     required this.satelliteAttribution,
     required this.timingsMs,
-    this.imageOriginalB64,
-    this.imageDamageOverlayB64,
-    this.imageDamageMaskB64,
-    this.imageRoadMaskB64,
-    this.imageIntersectionB64,
-    this.imageSegmentationOverlayB64,
+    this.imageOriginalUrl,
+    this.imageDamageOverlayUrl,
+    this.imageDamageMaskUrl,
+    this.imageRoadMaskUrl,
+    this.imageIntersectionUrl,
+    this.imageSegmentationOverlayUrl,
   });
 
-  factory RoadDamageResult.fromJson(Map<String, dynamic> json) {
+  /// J-18: backend `/api/road_damage/image/{id}/{kind}` gibi GORELI URL'ler
+  /// dondurur (eskiden B64 data URI donuyordu). [baseUrl] verilirse ("/" ile
+  /// baslayan) goreli yollar mutlak hale getirilir.
+  factory RoadDamageResult.fromJson(Map<String, dynamic> json, {String? baseUrl}) {
+    String? resolveImageUrl(String? raw) {
+      if (raw == null || raw.isEmpty) return null;
+      if (baseUrl != null && baseUrl.isNotEmpty && raw.startsWith('/')) {
+        return '$baseUrl$raw';
+      }
+      return raw;
+    }
+
     return RoadDamageResult(
       analysisId: json['analysisId'] as String? ?? '',
       city: json['city'] as String? ?? '',
@@ -50,12 +61,12 @@ class RoadDamageResult {
       satelliteTileUrl: json['satelliteTileUrl'] as String? ?? '',
       satelliteAttribution: json['satelliteAttribution'] as String? ?? '',
       timingsMs: _parseTimings(json['timingsMs']),
-      imageOriginalB64: json['imageOriginalB64'] as String?,
-      imageDamageOverlayB64: json['imageDamageOverlayB64'] as String?,
-      imageDamageMaskB64: json['imageDamageMaskB64'] as String?,
-      imageRoadMaskB64: json['imageRoadMaskB64'] as String?,
-      imageIntersectionB64: json['imageIntersectionB64'] as String?,
-      imageSegmentationOverlayB64: json['imageSegmentationOverlayB64'] as String?,
+      imageOriginalUrl: resolveImageUrl(json['imageOriginalUrl'] as String?),
+      imageDamageOverlayUrl: resolveImageUrl(json['imageDamageOverlayUrl'] as String?),
+      imageDamageMaskUrl: resolveImageUrl(json['imageDamageMaskUrl'] as String?),
+      imageRoadMaskUrl: resolveImageUrl(json['imageRoadMaskUrl'] as String?),
+      imageIntersectionUrl: resolveImageUrl(json['imageIntersectionUrl'] as String?),
+      imageSegmentationOverlayUrl: resolveImageUrl(json['imageSegmentationOverlayUrl'] as String?),
     );
   }
 
@@ -110,12 +121,12 @@ class RoadDamageResult {
   final String satelliteTileUrl;
   final String satelliteAttribution;
   final Map<String, double> timingsMs;
-  final String? imageOriginalB64;
-  final String? imageDamageOverlayB64;
-  final String? imageDamageMaskB64;
-  final String? imageRoadMaskB64;
-  final String? imageIntersectionB64;
-  final String? imageSegmentationOverlayB64;
+  final String? imageOriginalUrl;
+  final String? imageDamageOverlayUrl;
+  final String? imageDamageMaskUrl;
+  final String? imageRoadMaskUrl;
+  final String? imageIntersectionUrl;
+  final String? imageSegmentationOverlayUrl;
 }
 
 class RoadPoint {

@@ -401,13 +401,20 @@ def run_analysis_job(req: dict) -> dict:
     try:
         damage_overlay = build_damage_overlay(img_np, road_mask_binary, pred_mask_binary, intersection)
         segmentation_overlay = build_segmentation_overlay(img_np, pred_mask_binary)
+        # J-18 duzeltmesi: bu 6 gorsel artik top-level'a B64 olarak SPREAD
+        # edilmiyor (eskiden /status yaniti 17MB'a, %33'u sadece B64 sisme
+        # olacak sekilde sisiyordu). Bunun yerine "kind" adiyla anahtarlanmis
+        # kucuk bir alt-sozluk dondurulur; ana surecteki done-callback bunlari
+        # ayri bir bellek deposuna tasiyip /status'a sadece
+        # /api/road_damage/image/{id}/{kind} URL'lerini yazacak (bkz.
+        # fastapi_app.py::_on_road_damage_job_done).
         diagnostic_images = {
-            "imageOriginalB64": image_array_to_b64(img_np),
-            "imageDamageOverlayB64": image_array_to_b64(damage_overlay),
-            "imageDamageMaskB64": image_array_to_b64(pred_mask_binary * 255),
-            "imageRoadMaskB64": image_array_to_b64(road_mask_binary * 255),
-            "imageIntersectionB64": image_array_to_b64(intersection * 255),
-            "imageSegmentationOverlayB64": image_array_to_b64(segmentation_overlay),
+            "original": image_array_to_b64(img_np),
+            "damage_overlay": image_array_to_b64(damage_overlay),
+            "damage_mask": image_array_to_b64(pred_mask_binary * 255),
+            "road_mask": image_array_to_b64(road_mask_binary * 255),
+            "intersection": image_array_to_b64(intersection * 255),
+            "segmentation_overlay": image_array_to_b64(segmentation_overlay),
         }
     except Exception:
         diagnostic_images = {}
@@ -437,7 +444,7 @@ def run_analysis_job(req: dict) -> dict:
         "satelliteSource": source_label,
         "satelliteTileUrl": satellite_tile_url,
         "satelliteAttribution": satellite_attribution,
-        **diagnostic_images,
+        "diagnosticImages": diagnostic_images,
         "timingsMs": {
             "satellite": round(satellite_fetch_ms, 1),
             "roads": round(overpass_ms, 1),

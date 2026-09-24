@@ -244,20 +244,31 @@ BRIGHT / xBD (ön eğitim adayı), Microsoft/ÇŞB/L'Aquila (erişim araştırma
 
 ---
 
-## 🖼️ BÖLÜM C — BEKLEYEN GÖRSEL İSTEKLERİ
+## 🖼️ BÖLÜM C — UYGULAMA GÖRSELLERİ ✅ TAMAMLANDI (2026-09-24)
 
-Aşağıdaki 4 görsel **güncel uygulama arayüzünden gerçek veriyle** üretilip bu
-isimlerle iletilmeli (PNG, ~300 dpi netlik, tarayıcı çubuğu görünmeden). docx'e
-Şekil 21-24 olarak Türkçe alt yazıyla eklenecek.
+4 görsel **güncel uygulama arayüzünden gerçek veriyle** üretildi ve docx'e **yeni
+§4.12 "Uygulama Arayüzü" alt bölümü** olarak (§4.11 ile §5 TARTIŞMA arasına)
+**gömüldü**. Yerleşim: **2×2 kenarlıksız ızgara** (Şekil 21|22 üst sıra, 23|24 alt
+sıra; her görsel ~7,3 cm, altyazı 9 pt "Şekil NN." kalın) — 4 tam-genişlik görsel
+peş peşe ~2 sayfa yer kapladığı için ızgaraya alındı, artık ~1 sayfaya sığıyor
+(PDF s.60-61 ile doğrulandı). Gömme öncesi yedek:
+`makale/arsiv/..._YEDEK_pre_sekil2124.docx`.
 
-1. **`1_catlak_tespit.png`** — ❌ **Yapılmadı.** Çatlak + bina hasarı tespiti. Kaynak: "Çatlak/Hasar Tespit" ekranı, gerçek fotoğraf üzerinde. Görünür: tespit kutuları + sınıf + güven skoru. → Bölüm 3.2. **Kullanıcıdan gerçek bir fotoğraf gerekiyor** (tek engel).
-2. **`2_risk_skoru.png`** — ✅ **Çekildi (2026-09-24)**, `makale/sekiller_hazir/2_risk_skoru.png`; docx'e henüz gömülmedi. Hatay, gerçek risk skoru (47,58/100 ORTA) + fay/deprem kümesi haritası. → Bölüm 4.11.
-3. **`3_nlp_harita.png`** — ✅ **Çekildi (2026-09-24)**, `makale/sekiller_hazir/3_nlp_harita.png`; docx'e henüz gömülmedi. Gerçek Hatay/Antakya örnek metni, %96 güven, P-5 aciliyet, geocoding pini. → Bölüm 3.6 / 4.10.
-4. **`4_isi_haritasi_guzergah.png`** — ❌ **Yapılmadı.** Güvenli güzergah kısmı PostGIS'siz de çalışıyor (denenmedi); tam ısı haritası noktaları için yerel PostgreSQL+PostGIS kurulumu gerekiyor. → Sistem tanıtımı / Bölüm 4.5.
+**Atıf rozeti temizliği (2026-09-24):** Şekil 22/23/24'teki harita köşe atıf/filigran
+rozeti (Leaflet · "Zemin: Esri" · "© Google (Simülasyon)") ekran görüntüsünden
+`.leaflet-control-attribution` CSS'i ile gizlenip yeniden çekildi; atıf makale
+metninde verildiği için görsel temiz tutuldu. docx bu temiz sürümlerle yeniden gömüldü.
 
-**Kozmetik not (2/3/4):** Harita zemin katmanı Carto'nun ücretsiz API anahtarı
-istediği "API KEY REQUIRED" filigranını gösteriyor; veri/analiz gerçek ve doğru,
-yalnız zemin haritası placeholder — istenirse tile sağlayıcısı değiştirilebilir.
+1. **`1_catlak_tespit.png`** — ✅ **Çekildi ve gömüldü (Şekil 21).** Gerçek `catlak.pt`+`bina.pt` hibrit YOLO çıkarımı: yüklenen duvar çatlağı fotoğrafı (`imacges.jpg`) üzerinde 4 tespit kutusu, duvar/kolon çatlağı %83,8/%76,8 güven, "taşıyıcı elemanda derin yapısal çatlak" uyarısı. → §4.12.
+2. **`2_risk_skoru.png`** — ✅ **Çekildi ve gömüldü (Şekil 22).** Hatay, gerçek risk skoru (47,58/100 ORTA) + fay/deprem kümesi haritası. Filigran giderildi. → §4.12.
+3. **`3_nlp_harita.png`** — ✅ **Çekildi ve gömüldü (Şekil 23).** Gerçek Hatay/Antakya örnek metni, %96 güven, P-5 aciliyet, geocoding pini. Filigran giderildi. → §4.12.
+4. **`4_isi_haritasi_guzergah.png`** — ✅ **Çekildi ve gömüldü (Şekil 24).** Antakya gerçek Google uydu görüntüsü üzerinde açık (yeşil) / hasarlı (kırmızı) yol ağı, "Örnek Verilerle Simüle Et" senaryosuyla; ısı haritası katmanı aktif. Not: ısı glow'u uydu üstünde silik kalıyor, güvenli güzergâh yeşil açık yollarla temsil ediliyor. → §4.12.
+
+**Filigran düzeltmesi (2026-09-24):** Harita zemin katmanı eskiden Carto'nun ücretsiz
+API anahtarı istediği "API KEY REQUIRED" filigranını gösteriyordu. Web istemcisindeki
+tile kaynakları anahtarsız/filigransız **Esri Dark Gray Canvas**'a çevrildi
+(`quakemind-web/src/components/map/LeafletContainer.tsx` ve `SafeEvacuationMap.tsx`);
+2/3/4 numaralı görseller bu düzeltmeden sonra yeniden çekildi ve artık temiz.
 
 **Ortam kurulumu ve çekim script'i:** `makale/DEVAM_NOTU_2026-09-24.md` (bu makineye
 özel Node.js/Python 3.12/Playwright kurulumu yeni makinede yeniden yapılmalı) ve

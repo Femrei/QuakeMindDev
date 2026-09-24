@@ -100,12 +100,15 @@ export interface RoadDamageResponse {
   satelliteSource: string;
   satelliteTileUrl: string;
   satelliteAttribution?: string;
-  imageOriginalB64?: string;
-  imageDamageOverlayB64?: string;
-  imageDamageMaskB64?: string;
-  imageRoadMaskB64?: string;
-  imageIntersectionB64?: string;
-  imageSegmentationOverlayB64?: string;
+  // J-18: bunlar artik B64 data URI degil, /api/road_damage/image/{id}/{kind}
+  // ikili endpoint'ine goreli URL (bkz. api.ts::getRoadDamageStatus, mutlak
+  // URL'e API_BASE_URL ile cevrilir).
+  imageOriginalUrl?: string;
+  imageDamageOverlayUrl?: string;
+  imageDamageMaskUrl?: string;
+  imageRoadMaskUrl?: string;
+  imageIntersectionUrl?: string;
+  imageSegmentationOverlayUrl?: string;
 }
 
 export interface SOSAlert {
@@ -267,13 +270,32 @@ export async function analyzeRoadDamage(params: {
   return res.json();
 }
 
+const ROAD_DAMAGE_IMAGE_URL_FIELDS = [
+  "imageOriginalUrl",
+  "imageDamageOverlayUrl",
+  "imageDamageMaskUrl",
+  "imageRoadMaskUrl",
+  "imageIntersectionUrl",
+  "imageSegmentationOverlayUrl",
+] as const;
+
 export async function getRoadDamageStatus(analysisId: string): Promise<RoadDamageStatusResponse> {
   const res = await fetch(`${API_BASE_URL}/api/road_damage/status/${analysisId}`);
   if (!res.ok) {
     const detail = await res.json().catch(() => null);
     throw new Error(detail?.detail || "Analiz durumu okunamadı.");
   }
-  return res.json();
+  const data = await res.json();
+  // J-18: backend goreli goruntu URL'leri dondurur (ör. "/api/road_damage/
+  // image/<id>/original"); <img src> icin mutlak hale getir.
+  if (data?.status === "done") {
+    for (const field of ROAD_DAMAGE_IMAGE_URL_FIELDS) {
+      if (typeof data[field] === "string" && data[field].startsWith("/")) {
+        data[field] = `${API_BASE_URL}${data[field]}`;
+      }
+    }
+  }
+  return data;
 }
 
 // Polls getRoadDamageStatus until the job reaches "done" (resolves with the

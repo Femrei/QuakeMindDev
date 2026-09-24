@@ -31,3 +31,8 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Editor / gecici
+.vscode/
+**/cache/
+makale/scratch*/

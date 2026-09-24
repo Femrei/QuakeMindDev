@@ -13,6 +13,13 @@ class ApiConfig {
 
   static String? _resolvedBackendUrl;
 
+  /// J-18: senkron erisim icin onbellege alinmis backend URL'i (henuz hic
+  /// [getBackendUrl] cagrilmadiysa null). Bir sonuc ekraninin goreli goruntu
+  /// URL'lerini mutlaklastirmasi gibi, async beklemenin uygun olmadigi
+  /// yerlerde kullanilir -- bu noktaya varan her akis zaten en az bir kez
+  /// [getBackendUrl] cagirmis olmalidir.
+  static String? get cachedBackendUrl => _resolvedBackendUrl;
+
   static Future<String> getBackendUrl() async {
     if (_resolvedBackendUrl != null) return _resolvedBackendUrl!;
 

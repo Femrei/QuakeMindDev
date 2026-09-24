@@ -1,5 +1,15 @@
 # 01 · Uydudan yol hasarı segmentasyonu
 
+> **⚠️ Klasör adı yanıltıcı (D-03).** Bu klasördeki defterler (`01_unet_resnet18`…
+> `07_segformer_scale`, `00_leaderboard`) Roboflow'dan çekilecek **piksel-etiketli yol
+> hasarı** verisi için tasarlanmıştı, ama makalede raporlanan gerçek sonuçlar
+> (`local_colab_run/`) bunlardan **hiçbiriyle üretilmedi** — onun yerine KATE-CD +
+> MedBFS **bina hasarı** verisiyle koşuldu (bkz. `local_colab_run/build_notebook.py`
+> satır 3, "Veri: KATE-CD + MedBFS"). Yol hasarı için piksel-etiketli bir Türkiye
+> kümesi hâlâ yok (bkz. Tablo 5 kararı — gelecek çalışmaya bırakıldı). Aşağıdaki
+> "Defterler"/"Veri" bölümü orijinal (koşulmamış) tasarımı anlatıyor; makaledeki
+> sayıların gerçek kaynağı `local_colab_run/results/*.json` + `00_comparison_table.csv`.
+
 **Bizim yöntem:** SegFormer (MiT-B4 kodlayıcı), ikili maske, focal + dice bileşik
 kayıp; örtüşmeli karolama + ağırlıklı pencere harmanlama + üç seviyeli morfolojik
 son-işleme.

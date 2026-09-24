@@ -460,8 +460,8 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
         <MapEventsHandler />
 
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; CARTO &copy; AFAD / QuakeMind GIS'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+          attribution='Zemin: Esri &copy; AFAD / QuakeMind GIS'
         />
 
         {/* OPEN ROADS (GREEN) - real segments from the satellite damage analysis */}

@@ -8,7 +8,7 @@ from geopy.extra.rate_limiter import RateLimiter
 from pathlib import Path
 from huggingface_hub import snapshot_download
 
-from src.tr_locations import PROVINCES, PROVINCE_TO_DISTRICTS
+from src.tr_locations import PROVINCES, PROVINCE_TO_DISTRICTS, PROVINCE_COORDS, DISTRICT_COORDS
 
 
 PLACE_TYPES = {"city", "town", "village", "suburb", "quarter", "neighbourhood", "road", "square"}
@@ -28,6 +28,11 @@ NOISE_WORDS = {
     "yardımedin", "yardimedin", "trapped", "help", "emergency"
 }
 STOP_FALLBACK_TOKENS = ADDRESS_HINTS | NOISE_WORDS
+
+# J-13: Nominatim'e giden sorgu varyasyon sayisinin ust siniri (eskiden bir
+# konum icin 23'e kadar cikabiliyordu -- her biri bir ag gidis-donusu, ilk
+# (onbelleksiz) sorgu icin olculen 7-10 sn, en kotu durumda ~28 sn).
+MAX_GEOCODE_QUERIES = 4
 
 
 class LocationExtractor:
@@ -89,7 +94,14 @@ class LocationExtractor:
         return re.sub(r"\s+", " ", text).strip(" ,.-")
 
     def _tokenize(self, text):
-        normalized_text = unicodedata.normalize("NFKD", str(text).casefold())
+        # J-13 yan-duzeltmesi: Turkce noktasiz 'ı' (U+0131) NFKD altinda 'i'ye
+        # AYRISMAZ (bilesik bir aksanli harf degil, ayri bir temel harf) --
+        # bu yuzden ASCII yazilmis "pazarcik" ile dogru yazilmis "Pazarcık"
+        # asla eslesmiyordu (_extract_admin_hints ilce/il eslestirmesini
+        # kirıyordu, hem eski Nominatim-sorgu yolu hem yeni yerel geocode
+        # icin). Digerleri (ç,ğ,ö,ş,ü) zaten NFKD ile dogru katlaniyor.
+        normalized_text = str(text).casefold().replace("ı", "i")
+        normalized_text = unicodedata.normalize("NFKD", normalized_text)
         normalized_text = "".join(char for char in normalized_text if not unicodedata.combining(char))
         normalized_text = re.sub(r"[^\w\s]", " ", normalized_text)
         return [token for token in re.split(r"\s+", normalized_text) if token]
@@ -341,26 +353,59 @@ class LocationExtractor:
             if reduced:
                 queries.append(f"{reduced}, Turkey")
 
-        ascii_queries = []
-        for query in queries:
-            ascii_query = self._ascii_fallback_text(query)
-            if ascii_query and ascii_query != query:
-                ascii_queries.append(ascii_query)
-
-        queries.extend(ascii_queries)
-
+        # J-13: en oncelikli MAX_GEOCODE_QUERIES varyasyonu tut (siralama
+        # zaten en-spesifikten en-genele dogru); ascii yedeklerini de
+        # yalniz bu kesilmis kumeye ekle, tum listeye degil.
         seen = []
         for query in queries:
             if query not in seen:
                 seen.append(query)
-        return seen
+        seen = seen[:MAX_GEOCODE_QUERIES]
+
+        ascii_queries = []
+        for query in seen:
+            ascii_query = self._ascii_fallback_text(query)
+            if ascii_query and ascii_query != query and ascii_query not in seen:
+                ascii_queries.append(ascii_query)
+
+        seen.extend(ascii_queries)
+        return seen[:MAX_GEOCODE_QUERIES]
+
+    def _local_geocode(self, raw_text):
+        """J-13: Nominatim'e hic gitmeden yerel il/ilce koordinat sozlugunden
+        aninda sonuc dondurur. Il merkezi/ilce merkezi hassasiyetinde --
+        sokak duzeyinde degil, ama offline modda ya da Nominatim'in yavas/
+        ban riskli oldugu durumlarda "konum bulunamadi" yerine kaba da olsa
+        bir bolge dondurmeyi saglar. `_extract_admin_hints` zaten aksan-
+        duyarsiz ifade eslestirmesi yapiyor, burada tekrar kullanilir."""
+        if not raw_text:
+            return None
+        hints = self._extract_admin_hints(raw_text)
+        province, district = hints.get("province"), hints.get("district")
+        if province and district:
+            coords = DISTRICT_COORDS.get((province, district))
+            if coords:
+                return coords
+        if province:
+            coords = PROVINCE_COORDS.get(province)
+            if coords:
+                return coords
+        return None
 
     def get_coordinates(self, location_text, raw_text=None):
         """
         Converts a location string (e.g., "Hatay Antakya") to GPS coordinates.
-        Uses progressive fallback if the exact street query fails.
+
+        J-13 duzeltmesi: yerel il/ilce sozlugu ONCE denenir (ag gerektirmez,
+        aninda doner); Nominatim yalniz yerel sozlukte eslesme yoksa (ör.
+        bilinmeyen/kucuk bir mahalle) son care olarak devreye girer.
         """
         candidates = location_text if isinstance(location_text, list) else [location_text]
+        first_candidate = candidates[0] if candidates else None
+
+        local_coords = self._local_geocode(raw_text or first_candidate)
+        if local_coords:
+            return list(local_coords), first_candidate
 
         for candidate in candidates:
             for query in self._build_queries(candidate, raw_text=raw_text):

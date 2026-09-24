@@ -15,7 +15,6 @@ geopy
 catboost
 xgboost
 lightgbm
-scipy
 scikit-learn
 zeyrek
 osmnx
@@ -23,6 +22,7 @@ geopandas
 pyrosm
 networkx
 shapely
+scipy
 fastapi
 uvicorn
 segmentation-models-pytorch

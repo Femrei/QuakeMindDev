@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../models/road_damage_job_status.dart';
+import 'api_config.dart';
 import 'bridge_client.dart';
 
 class RoadDamageBridgeUnavailableException extends BridgeUnavailableException {
@@ -91,7 +92,10 @@ class RoadDamageService {
       return const RoadDamageJobStatus(status: 'not_found', errorMessage: 'Analiz bulunamadi.');
     }
     if (outcome.json != null && outcome.statusCode != null && outcome.statusCode! >= 200 && outcome.statusCode! < 300) {
-      return RoadDamageJobStatus.fromJson(outcome.json!);
+      // J-18: bu istek zaten backend'e ulasti, yani ApiConfig zaten cozulmus
+      // olmali -- goreli goruntu URL'lerini mutlaklastirmak icin onbellekteki
+      // adresi kullan (senkron, ek bir agi cagrisi gerektirmez).
+      return RoadDamageJobStatus.fromJson(outcome.json!, baseUrl: ApiConfig.cachedBackendUrl);
     }
     // Transport error or a non-2xx/404 response -- treat as transient so the
     // poll loop keeps retrying instead of failing on one dropped request.

@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import base64
 import bcrypt
 import math
 import sys
@@ -261,6 +262,23 @@ road_damage_jobs: "dict[str, dict]" = {}
 road_damage_jobs_order: list = []
 road_damage_jobs_lock = Lock()
 ROAD_DAMAGE_JOB_LIMIT = 20
+
+# J-18: diagnostik gorsellerin (PNG bayt) ayrik deposu. /status yanitindan
+# cikarilip buraya tasinir; /api/road_damage/image/{id}/{kind} bunlari
+# ikili olarak sunar. road_damage_jobs ile AYNI FIFO sirasinda (ayni
+# analysisId'ler) tahliye edilir -- bkz. _store_road_damage_job.
+road_damage_images: "dict[str, dict[str, bytes]]" = {}
+
+# worker.py'nin dondurdugu kisa "kind" adlarini frontend'in bekledigi
+# alan adlarina esler (RoadDamageResponse tipindeki *Url alanlari).
+ROAD_DAMAGE_IMAGE_FIELD_MAP = {
+    "original": "imageOriginalUrl",
+    "damage_overlay": "imageDamageOverlayUrl",
+    "damage_mask": "imageDamageMaskUrl",
+    "road_mask": "imageRoadMaskUrl",
+    "intersection": "imageIntersectionUrl",
+    "segmentation_overlay": "imageSegmentationOverlayUrl",
+}
 # Soft cap on concurrently *queued* jobs -- pool.submit() itself never
 # blocks (unlike the old semaphore-gated thread-pool route), so this is
 # just cheap backpressure against a client hammering /analyze.
@@ -285,6 +303,7 @@ def _store_road_damage_job(analysis_id, data):
         while len(road_damage_jobs_order) > ROAD_DAMAGE_JOB_LIMIT:
             oldest = road_damage_jobs_order.pop(0)
             road_damage_jobs.pop(oldest, None)
+            road_damage_images.pop(oldest, None)
 
 
 def _count_queued_road_damage_jobs():
@@ -311,6 +330,28 @@ def _on_road_damage_job_done(analysis_id, future):
             safe_graph = result.pop("safeGraph", None)
             if safe_graph is not None:
                 _store_road_damage_session(analysis_id, {"safe_G": safe_graph, "bounds": result.get("bounds")})
+
+            # J-18: diagnostik gorselleri (B64 PNG) /status govdesinden
+            # cikarip ayri bir depoya tasi, yerlerine ikili endpoint URL'i
+            # yaz. Boylece /status kucuk kalir, gorseller tarayici tarafindan
+            # paralel/onbellekli ayri istekler olarak cekilir.
+            diagnostic_images = result.pop("diagnosticImages", None) or {}
+            decoded_images = {}
+            for kind, data_uri in diagnostic_images.items():
+                if not data_uri:
+                    continue
+                try:
+                    _, b64_payload = data_uri.split(",", 1)
+                    decoded_images[kind] = base64.b64decode(b64_payload)
+                except (ValueError, TypeError):
+                    continue
+            if decoded_images:
+                road_damage_images[analysis_id] = decoded_images
+                for kind in decoded_images:
+                    field = ROAD_DAMAGE_IMAGE_FIELD_MAP.get(kind)
+                    if field:
+                        result[field] = f"/api/road_damage/image/{analysis_id}/{kind}"
+
             job["status"] = "done"
             job["result"] = result
             job["progress"] = 100
@@ -757,6 +798,18 @@ def get_road_damage_status(analysis_id: str):
             "progress": job.get("progress", 0),
             "progressMessage": job.get("progressMessage"),
         }
+
+
+@app.get("/api/road_damage/image/{analysis_id}/{kind}")
+def get_road_damage_image(analysis_id: str, kind: str):
+    """J-18: /status'tan cikarilan diagnostik gorselleri ikili olarak sunar.
+    Tarayici bunlari (varsa) paralel ve HTTP cache basliklariyla cekebilir."""
+    with road_damage_jobs_lock:
+        images = road_damage_images.get(analysis_id)
+        png_bytes = images.get(kind) if images else None
+    if png_bytes is None:
+        raise HTTPException(status_code=404, detail="Gorsel bulunamadi ya da suresi doldu.")
+    return Response(content=png_bytes, media_type="image/png")
 
 
 @app.post("/api/road_damage/route")

@@ -36,6 +36,37 @@ CATEGORY_MAPPING = {
     "Yemek": "Acil Yardım İhtiyacı",
 }
 
+# E-04 duzeltmesi (Bolum 3.6): eski kural yalniz yol/ulasim terimleri icin bir
+# "kurtarma" (rescue) mekanizmasina sahipti -- bu asimetri, hayati saglik/enkaz
+# ihbarlarinin (dusuk model guveniyle "Alakasiz" tahmin edilince) sessizce
+# elenmesine yol acti (6 test ihbarinin 2'si, ikisi de hayati medikal cagriydi).
+# Kurtarma kumesi artik P-5'teki BES ilgili kategorinin tumunu kapsiyor.
+RESCUE_KEYWORDS = {
+    # Hayati oncelik: saglik/tibbi acil durum + arama-kurtarma
+    "Acil Yardım İhtiyacı": [
+        "yaralı", "yarali", "kanama", "bilinci kapalı", "bilinci kapali", "nefes al",
+        "kalp krizi", "ambulans", "ilaç", "ilac", "doktor", "hasta", "ölüyor", "oluyor",
+        "can çekişiyor", "can cekisiyor", "arama kurtarma", "kurtarın", "kurtarin",
+        "ekip lazım", "ekip lazim", "hipotermi", "donuyoruz", "aç", "susuz", "yiyecek yok",
+        "su yok", "elektrik yok", "ısınamıyoruz", "isinamiyoruz",
+    ],
+    "Enkaz Bildirimi": [
+        "enkaz", "çöktü", "coktu", "yıkıldı", "yikildi", "göçük", "gocuk",
+        "altında kaldı", "altinda kaldi", "bina yıkık", "bina yikik", "duvar çöktü",
+        "duvar coktu", "ses geliyor", "sesi geliyor",
+    ],
+    "Lojistik İhtiyaç Bildirimi": [
+        "çadır", "cadir", "battaniye", "barınma", "barinma", "giysi", "kıyafet",
+        "kiyafet", "malzeme lazım", "malzeme lazim", "yardım malzemesi", "yardim malzemesi",
+    ],
+    "Yol Kapanma Bilgisi / Lojistik": [
+        "yol", "köprü", "kopru", "ulasim", "ulaşım", "kapalı", "kapandi", "kapandı",
+        "gecemiyor", "geçemiyor", "tır geçemiyor", "tir gecemiyor",
+    ],
+}
+# Onceki "road_keywords" adiyla, geriye donuk uyumluluk icin ayrica tutulur.
+road_keywords = RESCUE_KEYWORDS["Yol Kapanma Bilgisi / Lojistik"]
+
 
 def _has_required_local_model_files(model_dir):
     return all((model_dir / filename).exists() for filename in REQUIRED_MODEL_FILES)
@@ -92,10 +123,26 @@ class DisasterClassifier:
             top_k=None,
         )
 
+    @staticmethod
+    def _keyword_rescue(lowered_text):
+        """E-04: 5 P-5 kategorisinin tumunde anahtar kelime kurtarmasi dener.
+        Oncelik sirasi hayati onem sirasina gore (saglik/enkaz > lojistik > yol)
+        -- birden fazla kategori eslesirse en oncelikli olan donulur."""
+        for category in ("Acil Yardım İhtiyacı", "Enkaz Bildirimi",
+                          "Lojistik İhtiyaç Bildirimi", "Yol Kapanma Bilgisi / Lojistik"):
+            if any(keyword in lowered_text for keyword in RESCUE_KEYWORDS[category]):
+                return category
+        return None
+
     def classify(self, text):
         """
         Metni sınıflandırır ve P-5 standardındaki üst kategoriye eşler.
         En yüksek güvene sahip etiketi ve skorunu döndürür.
+
+        E-04 duzeltmesi (Bolum 3.6): anahtar kelime kurtarmasi artik yalniz yol
+        degil, BES ilgili P-5 kategorisi icin de calisir; hicbir anahtar kelimeyle
+        kurtarilamayan DUSUK GUVENLI kayitlar ("Alakasiz" degil, "Belirsiz")
+        kuyruguna alinir -- boylece sessizce elenmek yerine incelenebilir kalirlar.
         """
         if not text or len(text.strip()) < 5:
             return "Alakasız", 0.0
@@ -110,18 +157,23 @@ class DisasterClassifier:
             score = top_pred["score"]
 
             lowered_text = text.lower()
-            road_keywords = ["yol", "köprü", "ulasim", "ulaşım", "kapalı", "kapandi", "kapandı", "gecemiyor", "geçemiyor"]
 
-            if normalized_label == "Alakasiz" and any(keyword in lowered_text for keyword in road_keywords):
-                return "Yol Kapanma Bilgisi / Lojistik", max(score, 0.50)
+            rescued_category = self._keyword_rescue(lowered_text)
+            if rescued_category is not None:
+                return rescued_category, max(score, 0.50)
 
-            if score < 0.30 or normalized_label == "Alakasiz":
+            if score < 0.30:
+                # Anahtar kelimeyle kurtarilamayan, dusuk guvenli kayit: "Alakasiz"
+                # diye sessizce elemek yerine incelemeye acik "Belirsiz" olarak isaretle.
+                return "Belirsiz", score
+
+            if normalized_label == "Alakasiz":
                 return "Alakasız", score
 
             p5_label = CATEGORY_MAPPING.get(normalized_label, "Diğer")
 
             if normalized_label == "Lojistik":
-                if any(keyword in lowered_text for keyword in road_keywords):
+                if any(keyword in lowered_text for keyword in RESCUE_KEYWORDS["Yol Kapanma Bilgisi / Lojistik"]):
                     p5_label = "Yol Kapanma Bilgisi / Lojistik"
                 else:
                     p5_label = "Lojistik İhtiyaç Bildirimi"

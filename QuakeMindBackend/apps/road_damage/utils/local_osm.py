@@ -161,10 +161,42 @@ def _bbox_from_points(user_lat, user_lon, dest_lat, dest_lon):
     )
 
 
-def _nearest_graph_node(graph, lat, lon):
+def _nearest_graph_node(graph, lat, lon, k_candidates=8):
+    """En yakin graf dugumunu bulur (Backend perf madde 17 / _nearest_graph_node
+    O(n) duzeltmesi). scipy cKDTree ile aday kume kuculttukten sonra sadece o
+    adaylar icin tam haversine mesafesi hesaplanir -- sonuc O(n) taramayla
+    birebir ayni (haversine ile secilen en yakin node), sadece cok daha hizli.
+    Kucuk bir yerel alan (birkac km) icin derece-uzayi Oklit yakinligi ile
+    gercek en yakin komsu arasindaki fark ihmal edilebilir; k_candidates>1
+    kullanmak bu yaklaşıksama hatasina karsi ek guvenlik payi saglar."""
+    nodes = list(graph.nodes(data=True))
+    if not nodes:
+        return None, float("inf")
+
+    try:
+        from scipy.spatial import cKDTree
+    except ImportError:
+        best_node = None
+        best_distance = float("inf")
+        for node, data in nodes:
+            distance = _haversine_m(lat, lon, data["lat"], data["lon"])
+            if distance < best_distance:
+                best_node = node
+                best_distance = distance
+        return best_node, best_distance
+
+    node_ids = [n for n, _ in nodes]
+    coords = np.array([[d["lat"], d["lon"]] for _, d in nodes])
+    tree = cKDTree(coords)
+    k = min(k_candidates, len(node_ids))
+    _, idx = tree.query([lat, lon], k=k)
+    idx = np.atleast_1d(idx)
+
     best_node = None
     best_distance = float("inf")
-    for node, data in graph.nodes(data=True):
+    for i in idx:
+        node = node_ids[int(i)]
+        data = graph.nodes[node]
         distance = _haversine_m(lat, lon, data["lat"], data["lon"])
         if distance < best_distance:
             best_node = node
