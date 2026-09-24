@@ -13,6 +13,9 @@ huggingface-hub
 transformers
 geopy
 catboost
+xgboost
+lightgbm
+scipy
 scikit-learn
 zeyrek
 osmnx

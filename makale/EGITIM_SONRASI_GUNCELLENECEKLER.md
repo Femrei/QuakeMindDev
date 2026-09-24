@@ -2,6 +2,10 @@
 
 _Oluşturulma: 2026-09-22_
 
+> **✅ UYGULANDI (2026-09-24).** Aşağıdaki 13 maddenin tamamı, Furkan'ın Kaggle'da tamamladığı
+> 10 model koşumuyla docx'e işlendi (paragraf numaraları bu koşumda değişti — güncel karşılıkları
+> için `DURUM.md` Bölüm A2'ye bakın). Bu dosya artık yalnız tarihsel kayıt olarak tutuluyor.
+
 > Bu dosya, `model_benchmarks/02_bina_hasari` (ve varsa yol hasarı) altındaki 6
 > mimarinin (SegFormer MiT-B4 dahil) **aynı kodlayıcı/bölme/tohum/protokolle**
 > yeniden eğitilmesi tamamlandığında docx'te güncellenmesi gereken yerlerin

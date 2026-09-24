@@ -1,0 +1,80 @@
+{
+  "metric": "roc_auc",
+  "ranking": [
+    [
+      "logistic_regression",
+      0.6370375967760197
+    ],
+    [
+      "mlp",
+      0.6328770036485081
+    ],
+    [
+      "random_forest",
+      0.6170573916414254
+    ],
+    [
+      "catboost",
+      0.5928376644472628
+    ],
+    [
+      "xgboost",
+      0.5842059698029853
+    ],
+    [
+      "lightgbm",
+      0.5810470562092003
+    ],
+    [
+      "stacking_ensemble",
+      0.5179875030353196
+    ]
+  ],
+  "pairs": [
+    {
+      "pair": "logistic_regression vs catboost",
+      "n_folds": 5,
+      "mean_a": 0.6370375967760197,
+      "mean_b": 0.5928376644472628,
+      "mean_diff": 0.04419993232875681,
+      "wilcoxon_stat": 4.0,
+      "p_value": 0.4375
+    },
+    {
+      "pair": "logistic_regression vs mlp",
+      "n_folds": 5,
+      "mean_a": 0.6370375967760197,
+      "mean_b": 0.6328770036485081,
+      "mean_diff": 0.004160593127511492,
+      "wilcoxon_stat": 7.0,
+      "p_value": 1.0
+    },
+    {
+      "pair": "logistic_regression vs random_forest",
+      "n_folds": 5,
+      "mean_a": 0.6370375967760197,
+      "mean_b": 0.6170573916414254,
+      "mean_diff": 0.01998020513459422,
+      "wilcoxon_stat": 4.0,
+      "p_value": 0.4375
+    },
+    {
+      "pair": "catboost vs xgboost",
+      "n_folds": 5,
+      "mean_a": 0.5928376644472628,
+      "mean_b": 0.5842059698029853,
+      "mean_diff": 0.008631694644277533,
+      "wilcoxon_stat": 5.0,
+      "p_value": 0.625
+    },
+    {
+      "pair": "catboost vs lightgbm",
+      "n_folds": 5,
+      "mean_a": 0.5928376644472628,
+      "mean_b": 0.5810470562092003,
+      "mean_diff": 0.011790608238062595,
+      "wilcoxon_stat": 2.0,
+      "p_value": 0.1875
+    }
+  ]
+}

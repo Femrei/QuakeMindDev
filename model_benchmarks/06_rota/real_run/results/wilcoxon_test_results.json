@@ -1,0 +1,56 @@
+[
+  {
+    "label": "Sentetik 8 bolge: R0 vs R1 (gorus mesafeli)",
+    "n": 429,
+    "mean_a": 187.3594455792323,
+    "mean_b": 182.58429126469164,
+    "mean_diff": 4.7751543145406545,
+    "wilcoxon_stat": 18220.0,
+    "p_value": 5.085053830122913e-07
+  },
+  {
+    "label": "Sentetik 8 bolge: R0 vs R2 (bilgi paylasan)",
+    "n": 430,
+    "mean_a": 189.61148299652518,
+    "mean_b": 179.35247865147005,
+    "mean_diff": 10.259004345055093,
+    "wilcoxon_stat": 305.0,
+    "p_value": 2.0256590310954173e-09
+  },
+  {
+    "label": "Sentetik 8 bolge: R0 vs R3 (onerilen sistem)",
+    "n": 430,
+    "mean_a": 189.61148299652518,
+    "mean_b": 13.004986163423881,
+    "mean_diff": 176.60649683310126,
+    "wilcoxon_stat": 0.0,
+    "p_value": 7.365165417207696e-64
+  },
+  {
+    "label": "EMSR648 orta kural (4 ilce): R0 vs R3 (onerilen sistem)",
+    "n": 238,
+    "mean_a": 49.91431058892766,
+    "mean_b": 10.769094784666326,
+    "mean_diff": 39.14521580426134,
+    "wilcoxon_stat": 0.0,
+    "p_value": 1.6479364449501875e-08
+  },
+  {
+    "label": "EMSR648 gevsek kural (4 ilce): R0 vs R3 (onerilen sistem)",
+    "n": 238,
+    "mean_a": 49.91431058892766,
+    "mean_b": 10.769094784666326,
+    "mean_diff": 39.14521580426134,
+    "wilcoxon_stat": 0.0,
+    "p_value": 1.6479364449501875e-08
+  },
+  {
+    "label": "EMSR648 kati kural (4 ilce): R0 vs R3 (onerilen sistem)",
+    "n": 240,
+    "mean_a": 14.27896353045481,
+    "mean_b": 10.631080123873263,
+    "mean_diff": 3.64788340658155,
+    "wilcoxon_stat": 0.0,
+    "p_value": 0.007632441648205508
+  }
+]

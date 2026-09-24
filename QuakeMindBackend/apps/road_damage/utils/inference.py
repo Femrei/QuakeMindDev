@@ -91,6 +91,38 @@ def _postprocess_mask(pred_mask_binary, level=1):
     return cleaned
 
 
+def tile_quality_score(bgr_image, blur_threshold=100.0, cloud_fraction_threshold=0.4):
+    """Karo kalite eşiği V0 (Bölüm 3.3) için CPU-only, model-öncesi bir on-filtre.
+
+    İki bileşen ölçer:
+      - `blur_variance`: gri tonlamalı görüntünün Laplacian varyansı; düşük değer
+        bulanıklığa işaret eder (Pech-Pacheco vd. 2000'den beri yaygın bir sezgisel).
+      - `cloud_fraction`: HSV uzayında yüksek parlaklık (V>200) + düşük doygunluk
+        (S<40) koşulunu sağlayan piksellerin oranı; bulut/aşırı pozlanmış alanları
+        yaklaşık olarak yakalar.
+
+    Eşikler (blur_threshold=100, cloud_fraction_threshold=0.4) literatürden alınan
+    kaba varsayılanlardır ve KATE-PD/QQB gibi etiketli bir karo kümesi üzerinde
+    IoU'ya etkisiyle doğrulanmamıştır — bkz. makale Tablo 21, "Karo kalite eşiği V0"
+    satırı ve DURUM.md B-6 madde 31.
+    """
+    gray = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2GRAY)
+    blur_variance = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+
+    hsv = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2HSV)
+    saturation = hsv[:, :, 1]
+    value = hsv[:, :, 2]
+    cloud_mask = (value > 200) & (saturation < 40)
+    cloud_fraction = float(np.mean(cloud_mask))
+
+    passes = (blur_variance >= blur_threshold) and (cloud_fraction <= cloud_fraction_threshold)
+    return {
+        "blur_variance": blur_variance,
+        "cloud_fraction": cloud_fraction,
+        "passes_quality_gate": passes,
+    }
+
+
 def run_inference(img, road_mask_binary, model, device, damage_booster, threshold,
                   use_imagenet_norm=False, postprocess_level=1, progress_callback=None):
     """
