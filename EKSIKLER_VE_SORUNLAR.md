@@ -205,7 +205,7 @@ kadar Tablo 13 "Kural" sütunu, Tablo 19, Bölüm 4.8 ve EMSR satırları yazıl
 ---
 
 ## A-15 🔴 Tablo 13'teki SegFormer ile beş mimari aynı koşullarda karşılaştırılmamış
-**Durum:** KARAR BEKLİYOR — hangi mimarilerle yeniden koşulacağı kullanıcıya soruldu · **Bulundu:** 19 Eylül 2026 · **Birleşik liste:** M-96, M-90 (ayrıntı) · **İlgili:** KALAN_ISLER.md madde 6
+**Durum:** KOŞULDU (23 Eylül 2026) — 10 modelin hepsi aynı mekânsal bölme, aynı veri (P2: KATE-PD sonrası + KATE-CD öncesi, 1 013 karo), aynı tarif (focal α 0,25 + dice, sabır 20, ≤50 dönem), aynı ölçüt ve aynı cihazla (Kaggle Tesla T4) koşuldu; tohum 42, artırım tohumlu (A-22). Kayıt: `QuakeMind_veri/cikti/kosular/kaggle/P2/`, şekiller `cikti/kosular/sekiller/modeller_kaggle_P2.png` ve `maliyet_kaggle_P2.png`. Tablo 13 bundan üretilecek, `[KARŞILAŞTIRILAMAZ]` kalkabilir. **Sınama IoU_hasar:** unet_mitb4 0,433 · upernet_mitb4 0,425 · deeplabv3plus_mitb4 0,412 · segformer_mitb2 0,409 · segformer_mitb4 0,407 · fpn_mitb4 0,397 · segformer_mitb0 0,382 · unet_resnet18 0,339 · deeplabv3plus_resnet101 0,339 · upernet_convnext_small 0,327. **Okuma:** belirleyici olan kodlayıcı — MiT-B4 kodlayıcılı beş modelin hepsi (0,397–0,433) ResNet/ConvNeXt kodlayıcılıların (0,327–0,339) üstünde; kod çözücüler arasındaki fark (0,397–0,433) tohum oynamasına (±0,02) yakın, tek tohumla "en iyi mimari" iddiası edilemez. Makalenin SegFormer tercihi ayakta ama "SegFormer en iyisi" denemez; U-Net MiT-B4 bu koşuda önde · **Bulundu:** 19 Eylül 2026 · **Birleşik liste:** M-96, M-90 (ayrıntı) · **İlgili:** KALAN_ISLER.md madde 6
 
 Kaynaklar (yalnız `makale` dalında var; `main` ve diğer dallarda `model_benchmarks/` yok):
 beş mimari `model_benchmarks/01_yol_hasari/local_colab_run/build_notebook.py`, SegFormer depo kökündeki
@@ -367,7 +367,7 @@ girişindeki "iskelet" cümlesi. Doldurma yolu:
 ---
 
 ## A-18 🟠 Yeniden kurulan QuickQuakeBuildings verisinde etiket ve bölme sorunları
-**Durum:** AÇIK · **Bulundu:** 19 Eylül 2026 (QQB makalesinin incelemesi, `Furkan--Utku--Model_ve_veriseti_aktarımı/AKTARIM_BELGESI.md` Ç-02) · **İlgili:** A-15, A-16
+**Durum:** KISMEN KAPALI (21 Eylül 2026) — madde 1 yapıldı: 95 bina maskede 255 (`qqb_karola.py`, `qqb_bolme.py`, pakette `belirsiz`), dış sınamadaki sağlam bina 1 109 → 1 066; 02 defterinde kayıp (`ignore_index=255`) ve bütün ölçütler 255'i atlıyor. Madde 2–3 açık · **Bulundu:** 19 Eylül 2026 (QQB makalesinin incelemesi, `Furkan--Utku--Model_ve_veriseti_aktarımı/AKTARIM_BELGESI.md` Ç-02) · **İlgili:** A-15, A-16
 
 1. **"Sağlam" listesinde hasar etiketli binalar:** 1 Mart 2023 OSM verisinde 3 859 sağlam binanın 95'inde
    `earthquake:damage` (49 "yes", 18 "possible") ya da `damaged:building=yes` (27) etiketi var. 49'u eğitim, 43'ü dış sınama,
@@ -384,10 +384,18 @@ girişindeki "iskelet" cümlesi. Doldurma yolu:
 Ek bilgi: QQB'nin 5 katı rastgele (1. katta en yakın komşunun %81,4'ü başka katta); yayımlanmış bina düzeyi sonuçları
 (optik F1 0,605) bizim piksel IoU'muzla kıyaslanamaz.
 
+**Ölçüm — QQB eğitime eklenince (21 Eylül 2026, SegFormer-B4, P2, tohum 42, Colab T4):** eğitim 1 013 → 1 352 karo.
+Doğrulama IoU_hasar 0,455 → 0,431; sınama 0,413 → 0,392 (kesinlik 0,615 → 0,498, duyarlılık 0,558 → 0,646). QQB dış
+sınamasında sağlam bina yanlış alarmı %1,03 → %1,13 (11 → 12 / 1 066), yıkık duyarlılığı 22 → 23 / 36; Adıyaman
+(HOTOSM dış sınama) yıkık duyarlılığı 54 → 37 / 208. Aynı P2 ayarı iki ayrı günde sınamada 0,434 ve 0,413 verdiği için
+tek tohum oynaması ~±0,02; fark bu sınırda ama doğrulama ile sınama aynı yönde. QQB'nin beklenen katkısı (yanlış
+alarmı azaltmak) görülmedi. Öneri: veri kurulumu doğrulamaya göre seçildiği için QQB eğitime alınmasın; böylece QQB
+dış sınaması da gerçekten dış kalır. Kayıt: `QuakeMind_veri/cikti/kosular/` (`P2`, `P2_qqb`).
+
 ---
 
 ## A-19 🟡 Focal kaybın α = 0,25 ayarı hasar piksellerine arka plandan daha az ağırlık veriyor
-**Durum:** AÇIK (deney önerisi) · **Bulundu:** 19 Eylül 2026 (DA-SegFormer incelemesi, `AKTARIM_BELGESI.md` Ç-11) · **İlgili:** A-15, Tablo 21
+**Durum:** ÖLÇÜLDÜ, VARSAYILAN KORUNDU (22 Eylül 2026) — Kaggle, SegFormer-B4, P2, tohum 42: α 0,25 doğrulama 0,435 (tohum 7: 0,457) / sınama 0,426; **α 0,5** doğrulama **0,475** / sınama **0,400**; **α 0,75** doğrulama 0,470 / sınama 0,419; dengeli örnekleyici (%50) doğrulama 0,450 / sınama 0,423. Doğrulama α'yı büyütmeyi istiyor, sınama istemiyor: α kesinliği artırıp duyarlılığı düşürüyor (α 0,5: kesinlik 0,639, duyarlılık 0,517) ve **eşik 0,5'te sabit** olduğu için kalibrasyon farkı ölçüme karışıyor. İki ölçüt çeliştiği için varsayılan α 0,25 korundu; üç değer Tablo 21'e satır olarak girer. Eşiği doğrulamada ayarlamak ya da eşikten bağımsız ölçüt (AP) eklemek açık iş · **Bulundu:** 19 Eylül 2026 (DA-SegFormer incelemesi, `AKTARIM_BELGESI.md` Ç-11) · **İlgili:** A-15, Tablo 21
 
 smp 0.5.0 `losses/_functional.py` satır 83–84: `loss *= alpha * target + (1 - alpha) * (1 - target)`. Bütün
 eğitimlerimizde kullanılan `FocalLoss(mode="binary", alpha=0.25, gamma=2.0)` hasar piksellerini 0,25, arka planı 0,75 ile
@@ -399,7 +407,7 @@ tohumla doğrulanmalı.
 ---
 
 ## A-20 🟠 Tablo 15 (bölgeler arası genelleme) tasarımı il ile veri kümesini karıştırıyor ve gerçek aktarım testi içermiyor
-**Durum:** AÇIK (tasarım önerisi) · **Bulundu:** 20 Eylül 2026 (Valentijn vd. 2020 incelemesi, `AKTARIM_BELGESI.md` Ç-16) · **İlgili:** A-15, A-16, Tablo 15
+**Durum:** KISMEN (21 Eylül 2026) — 02 defterinde il-dışarıda-bırakma (`BOLGE_EGITIMI = "haric:Hatay"` / `"haric:Kahramanmaraş"`) ve Tablo 15'te oran sütunu. P2'de MEDBFS eğitimde olmadığı için bölge koşuları zaten KATE-PD (+ KATE-CD öncesi) ile yapılır; bu koşularda QQB/HOTOSM kapalı tutulmalı. Madde 3 açık · **Bulundu:** 19 Eylül 2026 (Valentijn vd. 2020 incelemesi, `AKTARIM_BELGESI.md` Ç-16; önceki kayıtta tarih yanlışlıkla 20 Eylül yazılmıştı) · **İlgili:** A-15, A-16, Tablo 15
 
 1. **Kaynak küme karışıklığı:** Hatay'ın karoları ağırlıkla KATE-PD (340 KATE-PD + 26 MEDBFS), Kahramanmaraş'ınkiler ağırlıkla
    MEDBFS (199 KATE-PD + 283 MEDBFS; 0,75 m, farklı etiket protokolü). Hatay ↔ Maraş farkı il değil veri kümesi farkı olabilir.
@@ -408,6 +416,92 @@ tohumla doğrulanmalı.
    (il-dışarıda-bırakma) satırı ve IoU(kaynak→hedef)/IoU(hedef→hedef) oran sütunu.
 3. İsteğe bağlı: tek il eğitimlerini eşit eğitim miktarına alt-örnekleyen kontrol; az etiketle ince ayar eğrisi (1/2/5/10
    blok); eşik kayması (kaynak eşiği / kâhin eşik / AP) ayrı raporlanmalı.
+
+---
+
+## A-21 🟠 HOTOSM yıkık bina verisiyle eğitim genişletmesi — veri kalitesi notları
+**Durum:** KARAR VERİLDİ (22 Eylül 2026, kullanıcıyla) — HOTOSM eğitime alınmıyor, yalnız Adıyaman dış sınaması; ikinci tohum koşulmadı (ölçüm tablosu ve madde 8'deki etiket kayması yeterli görüldü). 10 model P2 (KATE-PD + KATE-CD öncesi) ile — pakette eğitim 164 karo (106 dik, 58 eğik; 903 yıkık bina) + Adıyaman dış sınama 44 karo (208 yıkık bina); 02 defterine gömüldü, yerel duman testinde görüntü ve maske birebir. Etkisi SegFormer koşularıyla ölçülecek: ilk HOTOSM koşusu (P2_qqb_hotdik) veri yüklenmişken, eğitim başlamadan Colab ücretsiz çalışma zamanının ~3,3 saatte bağlantıyı kesmesiyle koşulamadı (21 Eylül 2026, 14.09); QQB'nin katkısı olumsuz çıktığı için (A-18) HOTOSM koşularının QQB'siz yapılması önerildi · **Bulundu:** 21 Eylül 2026 (veri genişletme; `QuakeMind_veri/araclar/hotosm_*.py`) · **İlgili:** A-15, A-16, A-18
+
+HOTOSM yıkık binaları (ODbL) + Maxar Open Data deprem sonrası görüntüsü (CC BY-NC 4.0) ile yeni ilçelerde eğitim karosu:
+1. **HDX dışa aktarımı eksik:** HOTOSM'un HDX'teki GeoJSON'u (22 Mayıs 2023) 3 239 poligon; aynı süzgeç ve tarihle
+   Overpass 3 434 yol veriyor. Eksik 195 binanın 127'si seçili karolara düşüyor (çoğu Nurdağı ve Kahramanmaraş merkez).
+   Eksikler tarihli Overpass kimlik sorgusuyla tamamlandı; aksi hâlde bu binalar maskede "hasarsız" (0) sayılırdı.
+2. **Görüntü çoğunlukla eğik ve kaba:** KATE-PD ile çakışmayan 517 aday karonun 469'unda deprem sonrası Maxar var;
+   yalnız 151'inde bakış açısı ≤ 30° (ortalama 21°), tümünün ortalaması 35°. Sahnelerin çoğu WorldView-2, 0,46–0,65 m.
+   Karolar bu yüzden 0,5 m'de kesildi (256 m, 512 px). Eğik sahnede bina izi ile çatı arasında kayma olur.
+   **Geç sahneler dışarıda (21 Eylül kontrol panosu):** 28 Şubat sahnelerinde bazı yıkık binaların enkazı kaldırılmış;
+   etiket 1, görüntü düz toprak → model "boş arsa = hasar" öğrenebilir. Kullanılan sahnelere göre: dik + erken (≤ 13 Şubat)
+   124 karo, eğik + erken 108, dik + geç 27, eğik + geç 210. 23–28 Şubat sahneli 237 karo deftere gömülen pakete girmez;
+   deneyler `HOTOSM_EGITIME = "dik"` (124'ün eğitime düşenleri) ve `"erken"` (232'nin eğitime düşenleri).
+   Ayrıca OSM izleri ile çatılar arasında 1–3 m kayma görülüyor (izler başka görüntülerden çizilmiş).
+3. **Etiket tanımı farklı:** HOTOSM yalnız "yıkık" (destroyed:building); KATE-PD "hasarlı bina". HOTOSM eksiksiz de değil →
+   maskede yıkık = 1, diğer binalar = 255 (yok say), gerisi 0.
+4. **"Diğer binalar" (255) Microsoft Global ML Building Footprints'ten (ODbL):** OSM'den çekilmek istendi; tarihli
+   (2023-05-22) ve bugünkü sorgular genel Overpass sunucularında saatlerce 504 / zaman aşımı verdi (232 erken karonun ~30'u
+   alınabildi; ilk 10 karoda 2023 ile bugün arasındaki fark %0,8 ölçülmüştü). Kullanıcı onayıyla (300 MB'a kadar) 8 quadkey
+   dosyası, 84 MB indirildi; erken karolara 15 419 bina düştü (`araclar/hotosm_ms_binalar.py`). Yıkık binalar yine OSM/HOTOSM.
+5. **Adıyaman merkez** hiç eğitilmez; yeni ilçede yıkık bina duyarlılığı için dış sınama.
+6. **Görüntü:** 469 karonun hepsi okundu (COG pencere okuması, dosya indirilmedi); 83 karoda ilk sahnede veri dışı (siyah)
+   alan çıktı, yedek sahne kullanıldı ve karonun sahne bilgisi (tarih, uydu, bakış) yedeğe göre yazıldı.
+7. **Bulut:** Maxar bulut maskesi 1 837 sahnenin yalnız 13'ünde var; sahne düzeyi bulut yüzdesi karo için yanıltıcı (%21
+   bulutlu sahneden temiz karolar çıktı). Karo düzeyinde parlak + düşük doygunluklu + dokusuz + geniş alan = bulut
+   (kalibrasyon: bulutlu karolarda %46–79, bulutsuz sahnelerde %0–2). Bulut > %25 olan 13 karo çıkarıldı, kalanlarda bulut
+   pikselleri (yıkık bina dahil) 255. Karla kaplı ama dokusu görünen karolar (ör. Adıyaman, 8 Şubat) bulut sayılmadı, kaldı.
+   Dik karoların çoğu 7 Şubat GeoEye-1 / WorldView-3 sahnelerinden; GeoEye-1 sahneleri belirgin karanlık (eğitimdeki parlaklık
+   artırması karşılar diye bırakıldı). "Önce bulutsuz" seçim kuralında bulutsuz erken sahnelerin neredeyse hepsi eğik (9 dik).
+
+8. **Etiket kayması görsel olarak doğrulandı (22 Eylül, kullanıcı fark etti):** QQB (OSM) ve HOTOSM + Microsoft
+   poligonları görüntüdeki çatılardan kayık (`QuakeMind_veri/cikti/etiket_kaymasi_qqb.png`, `…_hotosm.png`, 3× büyütme).
+   Nedenler: poligonlar bu görüntüde değil başka görüntülerde çizilmiş; eğik çekimde (ör. 21,5°) yüksek binanın çatısı
+   zemindeki izden bina yüksekliği × tan(açı) kadar kayar (15 m bina ≈ 6 m ≈ 12 piksel, 0,5 m'de). Bazı "yıkık" izlerin
+   üstünde sağlam görünen çatı var: ya kayma ya da katların çöküp çatının üstte kaldığı çökme (uydudan ayırt etmek zor).
+   HOTOSM eksik: her yıkık bina haritalanmamış, Microsoft izleri bazı binaları atlıyor. Bakılan KATE-PD örneklerinde
+   etiketler görüntüyle uyumlu görünüyor (kayma ölçülmedi). Sonuç: QQB/HOTOSM piksel IoU'su kaymadan cezalanır; bina
+   düzeyi ölçüm (≥ %25 örtüşme) daha toleranslı. QQB ve HOTOSM'un eğitime katkı vermemesinin olası bir nedeni.
+
+**Ölçüm (22 Eylül 2026, Kaggle T4, SegFormer-B4, P2, tohum 42; Colab ücretsiz kotası dolduğu için eğitim Kaggle'a
+taşındı, P2 aynı platformda yeniden koşuldu):**
+
+| | P2 | + HOTOSM dik (1 119 karo) | + HOTOSM erken (1 177 karo) |
+|---|---|---|---|
+| Doğrulama IoU (en iyi dönem) | 0,435 | 0,452 | 0,454 |
+| Doğrulama, en iyi 5 dönemin ortalaması | 0,430 | 0,443 | 0,447 |
+| Sınama IoU | 0,426 | 0,346 | 0,423 |
+| Adıyaman yıkık bina bulunan | 40 / 208 | 50 / 208 | 36 / 208 |
+| QQB sağlam binada yanlış alarm | 7 / 1 066 | 30 / 1 066 | 10 / 1 066 |
+
+Doğrulamadaki artış (+0,017…0,019) aynı P2 ayarının Colab–Kaggle farkı (0,455 / 0,435) kadar; sınamada ve dış
+sınamalarda tutarlı kazanç yok (dik: sınama −0,08, yanlış alarm 4 kat). HOTOSM'un katkısı tek tohumla gürültüden
+ayrılamıyor. Karar (22 Eylül, kullanıcıyla): ikinci tohum koşulmadan HOTOSM eğitimden çıkarıldı (madde 8'deki etiket
+kayması da göz önüne alınarak). Kayıt: `QuakeMind_veri/cikti/kosular/kaggle/`.
+
+---
+
+## A-22 🟠 Veri artırımı tohuma bağlı değildi — "tohum 42" koşuları tekrarlanabilir değil
+**Durum:** DÜZELTİLDİ (22 Eylül 2026) — 02/03 defterinin üreteci (`araclar/defter_dokuz_model.py`): `tohumla()` artırımı da tohumlar, DataLoader işçileri torch'un işçi tohumundan yeniden tohumlanır; sonuç kaydında `ayarlar.artirim_tohumlu = true` · **Bulundu:** 22 Eylül 2026 (öncesi + sonrası deneyi eklenirken yerel duman testinin iki koşusu farklı çıktı) · **İlgili:** A-15, B-11
+
+albumentations 2.x `random.seed` / `np.random.seed` / `torch.manual_seed`'i dikkate almıyor: aynı tohumla iki süreçte
+aynı dönüşüm farklı sonuç verdi (ölçüldü, 2.0.8). Bu yüzden 21–22 Eylül'deki bütün eğitimlerde (Colab P2, P2_qqb; Kaggle
+oturum 1 ve 2) artırım tohumdan bağımsızdı: aynı tohum aynı sonucu vermez; tohumlar arası oynamanın bir kısmı buradan
+(Colab–Kaggle P2 farkı 0,455 / 0,435 de kısmen). Düzeltmeden sonra yerelde aynı tohumla iki koşu birebir aynı (CPU;
+GPU'da cuDNN'in küçük sayısal farkları kalabilir). 10 model tablosu düzeltilmiş defterle koşulacak; makalede tekrarlanabilirlik
+cümlesi buna göre yazılmalı ve önceki koşular "artırım tohumsuz" diye ayrılmalı.
+
+---
+
+## A-23 🟡 Deprem öncesi görüntüyü de girdi yapmak (değişim tespiti) kazanç vermedi
+**Durum:** ÖLÇÜLDÜ (23 Eylül 2026) — 03 defterinde `GIRDI = "cd_oncesi_sonrasi"` (6 kanal: sonrası RGB + öncesi RGB, öncesi renkleri sonrasına histogram eşlemesiyle uydurulur) ve kıyas tabanı `"cd_sonrasi"`; ikisi de KATE-CD'nin 377 eğitim çiftiyle, aynı 41 sınama karosunda · **Bulundu:** 22 Eylül 2026 (kullanıcı önerisi: "KATE-CD'de öncesi, sonrası ve etiket var") · **İlgili:** A-15, A-16
+
+| SegFormer-B4, tohum 42 | Eğitim | Doğrulama IoU | Sınama IoU (41 karo) | Kesinlik | Duyarlılık |
+|---|---|---|---|---|---|
+| Yalnız sonrası (`cd_sonrasi`) | 377 çift | 0,456 | **0,448** | 0,602 | 0,637 |
+| Öncesi + sonrası (`cd_oncesi_sonrasi`) | 377 çift | 0,449 | **0,449** | 0,555 | 0,701 |
+
+Fark +0,001: öncesi görüntüsü bu veri ve bu mimaride kazanç vermiyor (duyarlılık +0,06, kesinlik −0,05; denge kayıyor).
+Olası nedenler: öncesi görüntüler farklı tarih/mevsim ve bazı çiftlerde eşlemesi kusurlu; erken birleştirme (6 kanal) yerine
+iki kollu (siyam) mimari ve fark özellikleri denenmedi; 377 çift az. Aynı 41 karoda tam veriyle eğitilen 10 modelin değeri
+0,313–0,490 (en iyi upernet_mitb4 0,490) — yani çift verisiyle sınırlı eğitim, tam veriyle eğitmenin gerisinde kalabiliyor.
+**Yapılacak (isteğe bağlı):** siyam mimari + fark katmanı; MEDBFS çiftleriyle (438) birlikte eğitim.
 
 ---
 
@@ -3786,9 +3880,15 @@ tavana varmadan tetikleniyor.
 | 19 Eylül 2026 | **Eğitim Utku'ya devredildi (A-15):** devir paketi `QuakeMind_Devir_Utku_Egitim_2026-09-19` (+ zip, BENIOKU.md) ve web sürümü hazırlandı; 9 model defteri `02_dokuz_model_protokol.ipynb` (P1/P2, tohum döngüsü, QQB eğitim + 74 karoluk QQB dış sınama, bölge / kayıp / morfoloji deneyleri, özet tabloları) yerelde duman testinden geçti. |
 | 19 Eylül 2026 | **A-18 eklendi** — yeniden kurulan QuickQuakeBuildings verisinde: 95 hasar etiketli "sağlam" bina (43'ü dış sınamada), dış sınamanın 23/74 karosu doğrulama bloklarında, dışlanan dağlık kesimde etiketsiz bina riski, Maxar lisans çelişkisi. Kaynak: `Furkan--Utku--Model_ve_veriseti_aktarımı/AKTARIM_BELGESI.md` (Ç-02). |
 | 19 Eylül 2026 | **A-19 eklendi** — smp focal kaybında α = 0,25 hasar piksellerini arka plandan az ağırlıklandırıyor (doğrulandı: `_functional.py` 83–84); α taraması önerisi. Kaynak: `AKTARIM_BELGESI.md` Ç-11 (DA-SegFormer). |
-| 20 Eylül 2026 | **A-20 eklendi** — Tablo 15 tasarımı il ile veri kümesini karıştırıyor (Hatay ağırlıkla KATE-PD, Kahramanmaraş ağırlıkla MEDBFS) ve "Birleşik" satırı aktarım testi değil; il-dışarıda-bırakma satırı, oran sütunu ve yalnız KATE-PD kontrolü önerildi. Kaynak: `AKTARIM_BELGESI.md` Ç-16 (Valentijn vd. 2020). |
+| 19 Eylül 2026 | **A-20 eklendi** — Tablo 15 tasarımı il ile veri kümesini karıştırıyor (Hatay ağırlıkla KATE-PD, Kahramanmaraş ağırlıkla MEDBFS) ve "Birleşik" satırı aktarım testi değil; il-dışarıda-bırakma satırı, oran sütunu ve yalnız KATE-PD kontrolü önerildi. Kaynak: `AKTARIM_BELGESI.md` Ç-16 (Valentijn vd. 2020). |
+| 21 Eylül 2026 | **Eğitim Utku'dan bize geçti:** Utku bölütleme eğitimini, veri hazırlığını ve makale eksiklerini yapmıyor; Furkan + Claude yapacak. YOLO (yer seviyesi) eğitilmeyecek. **A-15 karar verildi:** 10 model (9 + U-Net ResNet-18) aynı bölme, veri, tarif, ölçüt ve cihazla. |
+| 21 Eylül 2026 | **A-18 kısmen kapandı:** QQB'de hasar etiketli 95 "sağlam" bina maskede 255; dış sınamadaki sağlam bina 1 109 → 1 066. 02 defteri: kayıp `ignore_index=255`, bütün ölçütler 255'i atlıyor (255 olmayan karolarda sonuç değişmez). |
+| 21 Eylül 2026 | **A-19 / A-20 deneyleri hazır:** 02 defterine `FOCAL_ALFA` (varsayılan 0,25 değişmedi), `ORNEKLEYICI` (varsayılan kapalı), `unet_resnet18`, il-dışarıda-bırakma (`BOLGE_EGITIMI = "haric:<il>"`) ve Tablo 15 oran sütunu eklendi. Her koşu Drive'daki `tum_kosular.csv`'ye de eklenir; yerel kopya `araclar/kosu_kaydet.py` ile `cikti/kosular/`. A-20'nin tarihi 19 Eylül olarak düzeltildi. |
+| 21 Eylül 2026 | **A-21 eklendi** — HOTOSM ile eğitim genişletmesi: HDX dışa aktarımında 195 yıkık bina eksik (Overpass'tan tamamlandı), Maxar sonrası görüntülerin çoğu eğik (469 karonun 151'i ≤ 30°) → 0,5 m karolar, "dik"/"hepsi" ayrı deney; yıkık = 1, diğer binalar = 255; Adıyaman merkez dış sınama. |
+| 21 Eylül 2026 | **İlk iki SegFormer-B4 veri koşusu ölçüldü (P2, tohum 42, Colab T4):** P2 doğrulama 0,455 / sınama 0,413; P2 + QQB doğrulama 0,431 / sınama 0,392 (A-18'e işlendi, QQB'nin eğitime alınmaması önerildi). Üçüncü koşu (P2_qqb_hotdik) başlamadan Colab ücretsiz çalışma zamanı ~3,3 saatte bağlantıyı kesti (A-21). Sonuçlar Drive'da ve yerelde `QuakeMind_veri/cikti/kosular/`. |
 | 22 Eylül 2026 | **J-51, J-52, J-53 eklendi; J-50 üçüncü tur; J-46 kısmen kapandı.** Afetzede ihbarları (fotoğraf, yazılı, ihtiyaç): model seçimi, iki adımlı inceleme/ihbar, kalıcı kayıt, canlı akışta `ihbar` mesajı. Konsolda "Son ihbarlar", kamera ve metin modlarında gelen ihbarlar, yeni "İhtiyaç talepleri" modu, harita katmanı ve köşe kartı. J-52: canlı modda yeni kayıt 60 sn'ye kadar geç düşüyordu; bitiş açık bırakıldı. J-53: eski uçlar oturumsuz açık, karar kullanıcıda. Uçtan uca betik 39/39; duman testi 80 istek, önceki 70'i aynı. |
 | 22 Eylül 2026 | **J-44 kapandı.** Afetzede rotası artık kendi yol ağımızda: beş bölgenin yürüme ağı yerel OSM kopyasından üretildi (`araclar_yol_agi_uret.py`, ~5 dk, 14,6 MB). Rota Dijkstra ile hesaplanıyor; araç motorunun `risk_weight` hasar cezası ve bilinen kapanmalardan kaçınan yumuşak maliyet kullanılıyor. Yakın yerler yürüme mesafesine göre sıralı. Rota 65–75 ms; Akevler → Antakya Devlet Hastanesi 2.097 m. Duman testi 83 istek. |
+| 22 Eylül 2026 | **Eğitim Kaggle'a taşındı ve A-21 ölçüldü:** Colab ücretsiz GPU kotası dolunca 10 model planı Kaggle'a geçti (haftada 30 GPU saati, arka planda; defter `03_kaggle_protokol`, girdi paketleri özel Kaggle veri setinde, SHA-1 denetimli). Oturum 1 (SegFormer-B4, tohum 42): doğrulama P2 0,435, +HOTOSM dik 0,452, +HOTOSM erken 0,454; sınama 0,426 / 0,346 / 0,423. Aynı P2 ayarı Colab'da 0,455 verdiği için fark tohum/platform oynaması düzeyinde; karar ikinci tohuma kaldı. |
 | 22 Eylül 2026 | **J-50 dördüncü tur:** afetzede ekranı 1920 px'e kadar genişliyor; ≥ 1600 px'te üç sütun, duyurular sağda. Yeni duyuru uyarısı (acil kapatılana kadar kalır) ve isteğe bağlı tarayıcı bildirimi eklendi; bilgi duyurusu vurgu renginde. Haritadaki "Konumuma dön" düğmesi artık harita katmanının üstünde. |
 | 22 Eylül 2026 | **J-44 ek:** yürüme rotasına dönüş yönlü adım adım tarif (açıdan hesaplanır; canlı yön tarifi yok) ve yeni rota kartı (zaman çizelgesi, hasar etiketi, varış). Harita ölçeği ve künye belirginleşti. |
 | 22 Eylül 2026 | **J-56 kapandı:** sol panel artık seçili modun paneli ve başlığında modun adı yazıyor. Katmanlar haritanın köşesindeki düğmede; her katman kaynağını ve sayısını yazıyor. Hiçbir şey çizmeyen dört katman anahtarı "bağlanmadı" oldu. Üst çubukta beş ana mod ve bir "Analiz" menüsü var; 1280 px'te tek satır. |
@@ -3796,4 +3896,7 @@ tavana varmadan tetikleniyor.
 | 22 Eylül 2026 | **J-55 kapandı:** ekibin olaya uzaklığı artık araç yolundan. Beş bölgenin araç ağı yerel OSM kopyasından üretildi; tek yönlere uyuyor, kapanmalardan kaçınıyor. Olaydan ters ağda tek arama medyan 22 ms. Süre yol türüne göre ortalama hız varsayımıyla (trafik verisi yok). Ekip seçici süreye göre sıralı; haritalarda rota sokakları izliyor. Afetzedeye 10 dakikadan eski konumla süre gösterilmiyor. |
 | 22 Eylül 2026 | **J-54 kapandı:** her sevk bir görev kaydı. Kayıtta olay, ekip, kaç kişi, kim gönderdi ve adımlar (atandı, yolda, olay yerinde, bitti; her biri kimden) var. Bir ekip aynı anda iki yere gönderilemiyor, ikinci ekip yalnız ek destek olarak gidiyor. Konsolda "Kim gidiyor" bölümü, ekip seçici ve "Ekipler" modu var. Saha hesabı için telefonda `/ekip` ekranı eklendi. Afetzede kendi çağrısına gelen ekibin adını, kişi sayısını, aşamasını ve konumunu görüyor. SOS süzgeçleri artık listeyi süzüyor; sahte sıralama anahtarı kaldırıldı. Depo 44/44, uçtan uca 52/52, duman 93 istek. |
 | 22 Eylül 2026 | **J-50 beşinci tur:** afetzede mahalle araması baştan eşleşiyor. İlk harften çalışıyor; önce adı, sonra adındaki bir kelimesi yazılanla başlayanlar geliyor. Sonuç yoksa söylüyor. Türkçe harf birebir, düz harf iki türü de buluyor. |
+| 22 Eylül 2026 | **A-21 karar, A-22 eklendi:** HOTOSM de eğitimden çıkarıldı (10 model P2 = KATE-PD + KATE-CD öncesi); etiket kayması görsel olarak doğrulandı (A-21 madde 8). **A-22:** albumentations 2.x global tohumu dikkate almıyor → önceki bütün koşularda artırım tohumsuzdu; üreteç düzeltildi (artırım ve DataLoader işçileri tohumlu), yerelde aynı tohum birebir aynı sonuç. Deftere değişim tespiti deneyi eklendi (`GIRDI = "cd_oncesi_sonrasi"`: KATE-CD çiftleri, 6 kanal; kıyas tabanı `"cd_sonrasi"`); varsayılan `"sonrasi"`. |
 | 22 Eylül 2026 | **J-57 eklendi:** `npm run kontrol` konsol kaynaklarının yanına 82 `.js` dosyası yazıyor (`vite.config.js` dahil). Vite bu kopyaları `.tsx`'ten önce yükler. Yazılanlar silindi; betik düzeltmesi önerildi. |
+| 22 Eylül 2026 | **Tarif denemeleri ölçüldü (A-19), varsayılan korundu:** Kaggle oturum 2 — focal α 0,5 ve 0,75 doğrulamayı 0,435/0,457'den 0,475 ve 0,470'e çıkardı ama sınamayı 0,426'dan 0,400 ve 0,419'a düşürdü; örnekleyici fark etmedi (0,450 / 0,423). Sabit eşik 0,5 kalibrasyonu karıştırdığı için çelişki; 10 model varsayılan tarifle (α 0,25, örnekleyici kapalı) koşulacak. |
+| 23 Eylül 2026 | **10 model koşuldu (A-15 kapanmaya hazır) ve A-23 eklendi:** Kaggle oturum 3–4, hepsi P2 + aynı tarif + tohum 42 + tohumlu artırım. Sınama IoU: unet_mitb4 0,433 · upernet_mitb4 0,425 · deeplabv3plus_mitb4 0,412 · segformer_mitb2 0,409 · segformer_mitb4 0,407 · fpn_mitb4 0,397 · segformer_mitb0 0,382 · unet_resnet18 0,339 · deeplabv3plus_resnet101 0,339 · upernet_convnext_small 0,327. Kodlayıcı belirleyici (MiT-B4 ailesi önde), kod çözücü farkları tohum bandında. **A-23:** öncesi+sonrası girdi (KATE-CD çiftleri) kazanç vermedi (0,449 / 0,448). Yedek: özel Kaggle veri seti `quakemind-sonuclar` (17,8 MB, 192 dosya). |
