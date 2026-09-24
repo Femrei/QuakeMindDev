@@ -10,6 +10,9 @@ _Son güncelleme: 2026-09-24_
 
 **Güncel docx:** `QuakeMind_Makale_Taslak_2026-09-16_sekillieklendi_v3_LOCAL_2026-09-21.docx`
 **Eski docx/yedek/PDF:** `makale/arsiv/` altına taşındı.
+**Makine değiştiriyorsan önce oku:** `makale/DEVAM_NOTU_2026-09-24.md` — 2026-09-24
+oturumunun tam özeti, ortam kurulum adımları (Node.js/Python 3.12/Playwright bu
+makineye özel, yeni makinede yeniden kurulmalı) ve tam olarak nerede kalındığı.
 
 **İş bölümü:** Furkan = 9 model eğitim/koşum (GPU/Colab, B-2). Utku = veri
 kararları, yerel ölçümler, makale düzeltmeleri, dış iletişim. "Sen/Kullanıcı" =
@@ -247,10 +250,18 @@ Aşağıdaki 4 görsel **güncel uygulama arayüzünden gerçek veriyle** üreti
 isimlerle iletilmeli (PNG, ~300 dpi netlik, tarayıcı çubuğu görünmeden). docx'e
 Şekil 21-24 olarak Türkçe alt yazıyla eklenecek.
 
-1. **`1_catlak_tespit.png`** — Çatlak + bina hasarı tespiti. Kaynak: "Çatlak/Hasar Tespit" ekranı, gerçek fotoğraf üzerinde. Görünür: tespit kutuları + sınıf + güven skoru. → Bölüm 3.2.
-2. **`2_risk_skoru.png`** — Deprem risk skoru. Kaynak: Risk sayfası, **Hatay veya Kahramanmaraş** (İstanbul/demo OLMASIN). Görünür: gerçek risk skoru + harita/ısı. → Bölüm 4.11.
-3. **`3_nlp_harita.png`** — NLP çıktısı haritalı. Kaynak: NLP sayfası, gerçek ihbar metni, sınıflandırma + konum çıkarımı, mümkünse harita pin. → Bölüm 3.6 / 4.10.
-4. **`4_isi_haritasi_guzergah.png`** — Isı haritası + güvenli güzergâh. Kaynak: Harita/komuta sayfası tam ekran, ısı katmanı + güzergâh çizili. → Sistem tanıtımı / Bölüm 4.5.
+1. **`1_catlak_tespit.png`** — ❌ **Yapılmadı.** Çatlak + bina hasarı tespiti. Kaynak: "Çatlak/Hasar Tespit" ekranı, gerçek fotoğraf üzerinde. Görünür: tespit kutuları + sınıf + güven skoru. → Bölüm 3.2. **Kullanıcıdan gerçek bir fotoğraf gerekiyor** (tek engel).
+2. **`2_risk_skoru.png`** — ✅ **Çekildi (2026-09-24)**, `makale/sekiller_hazir/2_risk_skoru.png`; docx'e henüz gömülmedi. Hatay, gerçek risk skoru (47,58/100 ORTA) + fay/deprem kümesi haritası. → Bölüm 4.11.
+3. **`3_nlp_harita.png`** — ✅ **Çekildi (2026-09-24)**, `makale/sekiller_hazir/3_nlp_harita.png`; docx'e henüz gömülmedi. Gerçek Hatay/Antakya örnek metni, %96 güven, P-5 aciliyet, geocoding pini. → Bölüm 3.6 / 4.10.
+4. **`4_isi_haritasi_guzergah.png`** — ❌ **Yapılmadı.** Güvenli güzergah kısmı PostGIS'siz de çalışıyor (denenmedi); tam ısı haritası noktaları için yerel PostgreSQL+PostGIS kurulumu gerekiyor. → Sistem tanıtımı / Bölüm 4.5.
+
+**Kozmetik not (2/3/4):** Harita zemin katmanı Carto'nun ücretsiz API anahtarı
+istediği "API KEY REQUIRED" filigranını gösteriyor; veri/analiz gerçek ve doğru,
+yalnız zemin haritası placeholder — istenirse tile sağlayıcısı değiştirilebilir.
+
+**Ortam kurulumu ve çekim script'i:** `makale/DEVAM_NOTU_2026-09-24.md` (bu makineye
+özel Node.js/Python 3.12/Playwright kurulumu yeni makinede yeniden yapılmalı) ve
+`QuakeMindBackend/capture_app_screenshots.py`.
 
 **Bu turda kapsam dışı (GPU/Colab bekliyor):** yol hasarı segmentasyon overlay'i
 (SegFormer checkpoint yerelde yok); bina hasarı segmentasyon overlay'i (aynı GPU
