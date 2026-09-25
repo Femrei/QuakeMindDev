@@ -33,14 +33,30 @@ _Son güncelleme: 2026-09-25_
       örtüşme** (DP=0 tüm τ'larda) — Tablo 19'un bağımsız bulgusuyla tutarlı.
       Docx'e işlendi. _DURUM B-2/12._
 
-## ⏳ GPU/Colab'a bağlı (Furkan)
+## ⏳ GPU/Colab'a bağlı (Furkan) → HAZIR DEFTER: `olcum_egitim_colab.ipynb`
 
-- [ ] Tablo 15 il-dışarıda-bırakma (4 satır) + F₁/Kesinlik/Duyarlılık. _DURUM B-2/13._
-- [ ] Tablo 14 kalan 5 mimari (U-Net/LinkNet/FPN/PSPNet/DeepLabV3+) — ağırlık
-      yok, yeniden eğitim gerekir. Furkan'a soru: Kaggle protokolüyle mi? _DURUM B-2/12._
-- [ ] Eşik (0,5) duyarlılık taraması; kayıp ağırlıkları (λ_f/λ_d). _DURUM B-2/10, B-2/14._
+> **2026-09-25:** Ölçüm envanteri + Furkan iş paketi + Colab defteri üretildi:
+> `OLCUM_ENVANTERI_2026-09-25.md`, `FURKAN_GPU_IS_PAKETI_2026-09-25.md`,
+> `olcum_egitim_colab.ipynb`. Karar: Tablo 14'te **MiT-B4 sabit** — U-Net/FPN/DeepLabV3+
+> zaten Tablo 13'te eğitildi (Kaggle'dan indir), sadece **LinkNet+PSPNet (ResNet-34)** yeni.
+
+- [ ] **Grup A** — LinkNet+PSPNet eğit (`olcum_egitim_colab.ipynb` Grup A) → yerelde
+      `table14_segformer_closure.py` genel yükleyiciyle koş → Tablo 14 (35 hücre). _DURUM B-2/12._
+- [ ] **Grup B** — Tablo 15 il-ayrık 🔴 **VERİ ENGELİ**: KATE-CD `scene='none'`, şehir
+      etiketi yok. AOI-etiketli KATE-PD gerekli. Furkan'a: r5/r6 (0,387/0,399) nasıl
+      hesaplandı, AOI karoları nerede? _DURUM B-2/13._
+- [ ] **Grup C** — λ_f/λ_d ızgarası (`olcum_egitim_colab.ipynb` Grup C, opsiyonel). _DURUM B-2/14._
+- [ ] Eşik (0,5) duyarlılık taraması. _DURUM B-2/10._
 - [ ] YOLOv8 çatlak+bina mAP@0,5 (yeni Roboflow anahtarı sonrası). _DURUM B-2/15._
 - [ ] Dış sınama: HaitiBRD + Noto (veri setleri indirilmeli). _DURUM B-2/17._
+
+## 🔴 Sarı vurgu taramasından çıkan sayısal çelişkiler (2026-09-25) → `SARI_VURGU_TUTARLILIK_2026-09-25.md`
+
+- [ ] **P232 — yarılama sabitliği yanlış bölge.** "Belen (H-Z5)… sabit" yanlış;
+      `full_run.json` H-Z5 halvings=[2,2,1,2,2,1,2,3,1,1]. Sabit olanlar **H-Z3 + K-Z1** (hep 0).
+- [ ] **P234/P316/P447 — sentetik kapanma oranları yeniden üretilemiyor.** Metin %0,55–4,50
+      / %2,84±0,20; `full_run.json` hesabı %1,32–1,97 / ~%1,59. Kaynak koşum yeniden eşleştirilmeli.
+- [ ] **P333 — "430-433/480" off-by-one:** fiili maks. rotalanan 432 (R3), 433 yok.
 
 ## 📦 Diskte olmayan etiketli veriye bağlı
 
