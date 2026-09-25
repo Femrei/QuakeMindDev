@@ -1,0 +1,360 @@
+{
+  "model": "SegFormer (MiT-B4, optimized_mitb4_focal_dice30.pth)",
+  "wayback_id": "57965",
+  "samples": [
+    {
+      "name": "H-Z1-1",
+      "aoi": "AOI11",
+      "n_edges": 939
+    },
+    {
+      "name": "H-Z1-2",
+      "aoi": "AOI11",
+      "n_edges": 717
+    },
+    {
+      "name": "H-Z1-3",
+      "aoi": "AOI11",
+      "n_edges": 892
+    },
+    {
+      "name": "H-Z1-4",
+      "aoi": "AOI11",
+      "n_edges": 745
+    },
+    {
+      "name": "K-Z1-3",
+      "aoi": "AOI04",
+      "n_edges": 759
+    },
+    {
+      "name": "K-Z1-4",
+      "aoi": "AOI04",
+      "n_edges": 461
+    }
+  ],
+  "total_edges": 4513,
+  "tau_sweep": {
+    "0.10": {
+      "strict": {
+        "DP": 0,
+        "YN": 0,
+        "YP": 188,
+        "DN": 4325,
+        "precision": 0.0,
+        "recall": NaN,
+        "f1": NaN
+      },
+      "medium": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 188,
+        "DN": 4145,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      },
+      "loose": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 188,
+        "DN": 4145,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      }
+    },
+    "0.15": {
+      "strict": {
+        "DP": 0,
+        "YN": 0,
+        "YP": 168,
+        "DN": 4345,
+        "precision": 0.0,
+        "recall": NaN,
+        "f1": NaN
+      },
+      "medium": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 168,
+        "DN": 4165,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      },
+      "loose": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 168,
+        "DN": 4165,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      }
+    },
+    "0.20": {
+      "strict": {
+        "DP": 0,
+        "YN": 0,
+        "YP": 165,
+        "DN": 4348,
+        "precision": 0.0,
+        "recall": NaN,
+        "f1": NaN
+      },
+      "medium": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 165,
+        "DN": 4168,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      },
+      "loose": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 165,
+        "DN": 4168,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      }
+    },
+    "0.25": {
+      "strict": {
+        "DP": 0,
+        "YN": 0,
+        "YP": 154,
+        "DN": 4359,
+        "precision": 0.0,
+        "recall": NaN,
+        "f1": NaN
+      },
+      "medium": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 154,
+        "DN": 4179,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      },
+      "loose": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 154,
+        "DN": 4179,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      }
+    },
+    "0.30": {
+      "strict": {
+        "DP": 0,
+        "YN": 0,
+        "YP": 150,
+        "DN": 4363,
+        "precision": 0.0,
+        "recall": NaN,
+        "f1": NaN
+      },
+      "medium": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 150,
+        "DN": 4183,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      },
+      "loose": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 150,
+        "DN": 4183,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      }
+    },
+    "0.35": {
+      "strict": {
+        "DP": 0,
+        "YN": 0,
+        "YP": 144,
+        "DN": 4369,
+        "precision": 0.0,
+        "recall": NaN,
+        "f1": NaN
+      },
+      "medium": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 144,
+        "DN": 4189,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      },
+      "loose": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 144,
+        "DN": 4189,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      }
+    },
+    "0.40": {
+      "strict": {
+        "DP": 0,
+        "YN": 0,
+        "YP": 136,
+        "DN": 4377,
+        "precision": 0.0,
+        "recall": NaN,
+        "f1": NaN
+      },
+      "medium": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 136,
+        "DN": 4197,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      },
+      "loose": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 136,
+        "DN": 4197,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      }
+    },
+    "0.45": {
+      "strict": {
+        "DP": 0,
+        "YN": 0,
+        "YP": 132,
+        "DN": 4381,
+        "precision": 0.0,
+        "recall": NaN,
+        "f1": NaN
+      },
+      "medium": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 132,
+        "DN": 4201,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      },
+      "loose": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 132,
+        "DN": 4201,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      }
+    },
+    "0.50": {
+      "strict": {
+        "DP": 0,
+        "YN": 0,
+        "YP": 132,
+        "DN": 4381,
+        "precision": 0.0,
+        "recall": NaN,
+        "f1": NaN
+      },
+      "medium": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 132,
+        "DN": 4201,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      },
+      "loose": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 132,
+        "DN": 4201,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      }
+    },
+    "0.55": {
+      "strict": {
+        "DP": 0,
+        "YN": 0,
+        "YP": 128,
+        "DN": 4385,
+        "precision": 0.0,
+        "recall": NaN,
+        "f1": NaN
+      },
+      "medium": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 128,
+        "DN": 4205,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      },
+      "loose": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 128,
+        "DN": 4205,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      }
+    },
+    "0.60": {
+      "strict": {
+        "DP": 0,
+        "YN": 0,
+        "YP": 124,
+        "DN": 4389,
+        "precision": 0.0,
+        "recall": NaN,
+        "f1": NaN
+      },
+      "medium": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 124,
+        "DN": 4209,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      },
+      "loose": {
+        "DP": 0,
+        "YN": 180,
+        "YP": 124,
+        "DN": 4209,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": NaN
+      }
+    }
+  },
+  "best_tau": null,
+  "best_tau_results": null
+}

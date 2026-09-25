@@ -1,6 +1,6 @@
 # QuakeMind Makalesi — Yapılacaklar (Kısa Liste)
 
-_Son güncelleme: 2026-09-24_
+_Son güncelleme: 2026-09-25_
 
 > Bu dosya **sıradaki eyleme yönelik** kısa listedir. Tüm ayrıntılı durum/gerekçe
 > tek kaynak olan **`DURUM.md`**'dedir; buradaki maddeler oraya işaret eder.
@@ -26,10 +26,18 @@ _Son güncelleme: 2026-09-24_
 - [ ] **TE23D / TUE-CD lisans teyidi** (dış iletişim; taslaklar `lisans_epostalari_taslak.md`). _DURUM B-1/4._
 - [ ] (İsteğe bağlı) Üretim dağıtımında `QUAKEMIND_DEMO_TOKEN=false`. _DURUM B-1/3._
 
+## ✅ 2026-09-25'te tamamlanan
+
+- [x] **Tablo 14 SegFormer satırı** — `table14_segformer_closure.py` gerçek
+      checkpoint + EMSR648 + 6 karo/4513 kenarla koşuldu. Sonuç: **sıfır
+      örtüşme** (DP=0 tüm τ'larda) — Tablo 19'un bağımsız bulgusuyla tutarlı.
+      Docx'e işlendi. _DURUM B-2/12._
+
 ## ⏳ GPU/Colab'a bağlı (Furkan)
 
 - [ ] Tablo 15 il-dışarıda-bırakma (4 satır) + F₁/Kesinlik/Duyarlılık. _DURUM B-2/13._
-- [ ] Tablo 13/14 EMSR648 kesim-düzeyi (36 boş hücre) + τ taraması. _DURUM B-2/12._
+- [ ] Tablo 14 kalan 5 mimari (U-Net/LinkNet/FPN/PSPNet/DeepLabV3+) — ağırlık
+      yok, yeniden eğitim gerekir. Furkan'a soru: Kaggle protokolüyle mi? _DURUM B-2/12._
 - [ ] Eşik (0,5) duyarlılık taraması; kayıp ağırlıkları (λ_f/λ_d). _DURUM B-2/10, B-2/14._
 - [ ] YOLOv8 çatlak+bina mAP@0,5 (yeni Roboflow anahtarı sonrası). _DURUM B-2/15._
 - [ ] Dış sınama: HaitiBRD + Noto (veri setleri indirilmeli). _DURUM B-2/17._

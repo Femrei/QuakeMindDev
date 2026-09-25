@@ -1,6 +1,6 @@
 # QuakeMind Makalesi — Güncel Durum ve Yapılacaklar (TEK KAYNAK)
 
-_Son güncelleme: 2026-09-24_
+_Son güncelleme: 2026-09-25_
 
 > **Bu dosya tüm eski liste/durum dosyalarının yerine geçer.** Önceki dosyalar
 > (`UTKU_ICIN_LISTE.md`, `EKSIKLER_VE_SORUNLAR_2026-09-19_guncel.md`,
@@ -151,17 +151,18 @@ kayıtlı, ama fiilen yalnız SegFormer-B4 iki tohumla (42, 7) koşulmuş; paket
 ## ⚠️ BÖLÜM B — HÂLÂ AÇIK İŞLER
 
 ### B-0 · Kararsız/beklemede: J-22 (r_h kalibrasyonu) — docx'e YAZILMADI
-⚠️ **Düzeltme (2026-09-24):** `06_rota/real_run/_j22_calibration.py` repoda **bulunamadı** —
-önceki oturumda üretilip hiç commit'lenmemiş görünüyor; aşağıdaki bulgu bu kayıp script'in
-çıktısına dayanıyor ama dosyanın kendisi yeniden yazılmadan tekrarlanamaz. Sonuç dosyaları
-(`results/j22_calibration*.json`) de diskte yok. Gerçek Esri Wayback [2023-02-23,
-id=57965] + gerçek SegFormer + gerçek EMSR648 kullanıldığı belirtilmişti. Tek temiz örneklem (H-Z1-A,
-Antakya): r_h=25m'de model %2,1 yol kapatıyor, EMSR648 %13,2 → model **eksik**
-kapatıyor; r_h=100m'de örtüşüyor. Bu, makaledeki "r_h=25m'de ~8 kat fazla kapatıyor"
-bulgusunun **tam tersi**. Tek örneklemle gerçek bulgu mu metodoloji hassasiyeti mi
-ayırt edilemez → docx'teki dürüst "tek örneklem, kalibrasyon için yetersiz" notu
-korundu.
-- **Kalan dosyalar:** `_j22_calibration.py` (çalışır), `results/j22_calibration.json` (ilk hatalı bbox koşumu), `results/j22_calibration_kz1.json` (boş, Overpass zaman aşımı).
+✅ **Düzeltme (2026-09-25):** `06_rota/real_run/_j22_calibration.py` "kayıp" notu **yanlıştı** —
+dosya `origin/makale` commit `9041696`'da (2026-09-24, Furkan) geri gelmiş, bu oturumda
+`git pull` ile çekildi ve içeriği okunup doğrulandı: çalışır durumda, gerçek Esri Wayback
+[2023-02-23, id=57965] + gerçek SegFormer (`optimized_mitb4_focal_dice30.pth`) + gerçek
+EMSR648 (`emsr648_closures.py`) kullanıyor. Aşağıdaki bulgu bu script'in daha önceki
+koşumuna dayanıyor: Tek temiz örneklem (H-Z1-A, Antakya): r_h=25m'de model %2,1 yol
+kapatıyor, EMSR648 %13,2 → model **eksik** kapatıyor; r_h=100m'de örtüşüyor. Bu, makaledeki
+"r_h=25m'de ~8 kat fazla kapatıyor" bulgusunun **tam tersi**. Tek örneklemle gerçek bulgu mu
+metodoloji hassasiyeti mi ayırt edilemez → docx'teki dürüst "tek örneklem, kalibrasyon için
+yetersiz" notu korundu.
+- **Kalan dosyalar:** `_j22_calibration.py` (çalışır, repoda), `results/j22_calibration.json` (ilk hatalı bbox koşumu), `results/j22_calibration_kz1.json` (boş, Overpass zaman aşımı).
+- **Bu script'in bileşenleri Tablo 14/madde 12'nin SegFormer satırı için de yeniden kullanıldı** — bkz. B-2 madde 12.
 - **Yapılacak (isteğe bağlı):** Overpass erişilince K-Z1 örneklerini tamamla; H-Z1'e 2-3 örnek daha ekle; yine de resmî "kalibrasyon" iddiası yerine ek gözlem/duyarlılık notu olarak girmesi daha savunulabilir.
 
 ### B-1 · 🔴 GÜVENLİK & DIŞ EYLEM (yalnız kullanıcı/insan)
@@ -186,7 +187,7 @@ korundu.
 **Tablo/şekil doldurma (eğitim çıktısına bağlı)**
 | # | Kaynak | İş |
 |---|---|---|
-| 12 | Tablo 13/14·A-17·B-05 | Kapanma katmanı EMSR648 kesim-düzeyi değerlendirme (36 boş hücre) + τ taraması |
+| 12 | Tablo 13/14·A-17·B-05 | 🟡 **KISMEN (2026-09-25) — SegFormer satırı KAPANDI, sonuç sıfır-örtüşme.** `table14_segformer_closure.py` gerçek checkpoint + `emsr648_closures.py` + `_j22_calibration.py` altyapısıyla H-Z1 (Antakya, 4 örnek) ve K-Z1 (Onikisubat, 2 örnek — 2 örnek Overpass zaman aşımıyla atlandı) bölgelerinde, toplam 4513 OSM kenarında koşuldu. **Bulgu:** τ∈[0,10; 0,60] taramasının hiçbir noktasında model, EMSR648'in kapalı saydığı 180 kenardan hiçbirini doğru tahmin etmedi (DP=0 tüm τ'larda) — Kesinlik=Duyarlılık=F₁=0,000 (orta kural, raporlanan τ=0,40 üretim varsayılanı, veri güdümlü değil çünkü hiçbir τ diğerinden iyi değildi). Katı kuralda örneklemde "Destroyed" kesit yoktu. Docx'e işlendi (Tablo 14 r6 + açıklama paragrafı); yedek `arsiv/..._YEDEK_2026-09-25_pre_tablo14*.docx`. Bu sıfır-örtüşme, Tablo 19'un bağımsız bulgusuyla (aynı model görev tabanlı değerlendirmede R0'a göre iyileşme sağlamadı) tutarlı — makalenin dürüstlüğünü güçlendiriyor, zayıflatmıyor. **Küçük örneklem (6 karo) uyarısı not edildi.** **Kalan 5 mimari (U-Net, LinkNet, FPN, PSPNet, DeepLabV3+) hâlâ GPU'ya bağlı**: `01_yol_hasari/local_colab_run/results/linknet_resnet18.json` ve `pspnet_resnet18.json` var ama farklı/kontrolsüz protokolden (tek tohum, mekânsal blok belirtilmemiş, KATE-CD+MedBFS bina verisi — D-03) ve checkpoint diskte yok. **Furkan'a soru:** bu 5 mimari Kaggle'daki "aynı bölme/tohum" protokolüyle yeniden eğitilip ağırlıkları indirilebilir mi? |
 | 13 | Tablo 15·A-20·B-06·Ç-16 | 🟡 **KISMEN (2026-09-24)** — Birleşik→Hatay (0,387) ve Birleşik→Kahramanmaraş (0,399) IoU_hasar dolduruldu (SegFormer-B4); il-dışarıda-bırakma (4 satır) ve F₁/Kesinlik/Duyarlılık hâlâ açık. "Yalnız-KATE-PD kontrol" P2 tabanının kendisiyle zaten örtüşüyor olabilir. |
 | 14 | Tablo 21·A-17·B-07 | 🟡 **KISMEN** — r_h/λ(d) VE risk ağırlıkları satırları zaten CPU'da tamamdı (önceki not "5 satır GPU" yanlıştı — risk ağırlıkları satırı da bitmiş, bkz. `table21_row7_risk_weights.py`); focal α bu oturumda eklendi. **Kalan:** kayıp ağırlıkları (λ_f/λ_d, gerçek GPU eğitimi gerektirir — kayıpta şu an ağırlık parametresi bile yok), morfoloji (CPU'da mümkün, uygun test karosu gerekiyor), V₀ (madde 31 kararınca şimdi yazılacak, henüz yazılmadı) |
 | 15 | Tablo 24·B-03·§8.1 | YOLOv8 çatlak+bina mAP@0,5 (defter hazır, yeni Roboflow anahtarı gerekli — item 1) |
