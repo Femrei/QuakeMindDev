@@ -31,12 +31,17 @@ def _ensure_model_file(model_path):
 
 _model_cache = {}
 
-def load_simple_model(model_path):
-    cache_key = str(model_path)
+def load_simple_model(model_path, arch="Segformer", encoder="mit_b4"):
+    """arch/encoder: segmentation_models_pytorch mimari sınıfı adı ve kodlayıcı adı.
+    Varsayılanlar üretimde kullanılan SegFormer/MiT-B4 ile birebir aynı; Tablo 14'ün
+    diğer mimarileri (U-Net, FPN, DeepLabV3+ MiT-B4; LinkNet, PSPNet ResNet-34) için
+    farklı checkpoint yüklenirken bu parametreler geçilir (bkz. table14_segformer_closure.py)."""
+    cache_key = f"{model_path}|{arch}|{encoder}"
     if cache_key in _model_cache:
         return _model_cache[cache_key]
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = smp.Segformer(encoder_name="mit_b4", encoder_weights=None, in_channels=3, classes=1).to(device)
+    model_cls = getattr(smp, arch)
+    model = model_cls(encoder_name=encoder, encoder_weights=None, in_channels=3, classes=1).to(device)
     resolved_model_path = _ensure_model_file(model_path)
     if resolved_model_path.exists():
         model.load_state_dict(torch.load(resolved_model_path, map_location=device))

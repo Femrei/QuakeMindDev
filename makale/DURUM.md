@@ -9,10 +9,15 @@ _Son güncelleme: 2026-09-25_
 > Kaynak kimlikleri (A-16, Ç-03, D-02, J-22, §6.5-#7b …) izlenebilirlik için korundu.
 
 **Güncel docx:** `QuakeMind_Makale_Taslak_2026-09-16_sekillieklendi_v3_LOCAL_2026-09-21.docx`
-**Eski docx/yedek/PDF:** `makale/arsiv/` altına taşındı.
-**Makine değiştiriyorsan önce oku:** `makale/DEVAM_NOTU_2026-09-24.md` — 2026-09-24
-oturumunun tam özeti, ortam kurulum adımları (Node.js/Python 3.12/Playwright bu
-makineye özel, yeni makinede yeniden kurulmalı) ve tam olarak nerede kalındığı.
+(ayrıca Google Drive'da: klasör https://drive.google.com/drive/folders/1208L5qJP92tYUVJR8-tSJsc7N0jqANWx —
+düzenlemeler yerelde yapılıp Drive'a "yeni sürüm" olarak yükleniyor)
+**Eski docx/yedek/PDF:** `makale/arsiv/` altına taşındı. Tamamlanmış/tarihsel analiz
+notları (`SARI_VURGU_TUTARLILIK`, `FURKAN_GPU_IS_PAKETI`, `OLCUM_ENVANTERI`,
+`BOLUM84_ATIF_DENETIM`, `EGITIM_SONRASI_GUNCELLENECEKLER`) `makale/analiz_arsivi/`
+altına taşındı (2026-09-26 klasör temizliği).
+**Makine değiştiriyorsan önce oku:** `makale/DEVAM_NOTU_2026-09-26.md` — en güncel
+oturum özeti ve kaldığımız yer (Tablo 14: 3 checkpoint indirildi, LinkNet/PSPNet Kaggle'da eğitiliyor).
+Ortam kurulum adımları için `makale/arsiv/DEVAM_NOTU_2026-09-24.md`.
 
 **İş bölümü:** Furkan = 9 model eğitim/koşum (GPU/Colab, B-2). Utku = veri
 kararları, yerel ölçümler, makale düzeltmeleri, dış iletişim. "Sen/Kullanıcı" =

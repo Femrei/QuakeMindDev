@@ -1,8 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-Tablo 14: SegFormer icin EMSR648 kesim-duzeyi (cut-level) degerlendirme.
+Tablo 14: EMSR648 kesim-duzeyi (cut-level) degerlendirme -- COKLU MIMARI.
 
-Model: optimized_mitb4_focal_dice30.pth (SegFormer MiT-B4, uretimde aktif).
+Kullanim (5 mimarinin tamami icin, checkpoint indirildikce):
+    python table14_segformer_closure.py --label segformer --arch Segformer --encoder mit_b4 \
+        --checkpoint .../optimized_mitb4_focal_dice30.pth   # varsayilan, arguman gerekmez
+    python table14_segformer_closure.py --label unet --arch Unet --encoder mit_b4 \
+        --checkpoint .../unet_mitb4.pth   # Kaggle furkanemrence/quakemind-modeller
+    python table14_segformer_closure.py --label fpn --arch FPN --encoder mit_b4 \
+        --checkpoint .../fpn_mitb4.pth    # ayni veri seti
+    python table14_segformer_closure.py --label deeplabv3p --arch DeepLabV3Plus --encoder resnet101 \
+        --checkpoint .../deeplabv3plus_resnet101.pth   # ayni veri seti
+    python table14_segformer_closure.py --label linknet --arch Linknet --encoder resnet34 \
+        --checkpoint .../linknet_r34_s42.pth
+    python table14_segformer_closure.py --label pspnet --arch PSPNet --encoder resnet34 \
+        --checkpoint .../pspnet_r34_s42.pth
+
+Her calistirma kendi sonucunu results/table14_closure_{label}.json'a yazar (mevcut
+segformer sonucu table14_segformer_closure.json adinda ayrica korunur, uzeirne
+yazilmaz). Ayni sahneler/orneklem/tau taramasi/olcut tanimi TUM mimariler icin
+birebir aynidir (bkz. asagidaki sabitler) -- yalniz model ve checkpoint degisir.
+
+Varsayilan (arguman verilmezse): SegFormer MiT-B4, uretimde aktif checkpoint.
 Zemin gercegi: emsr648_closures.closed_osm_edges (katı/orta/gevsek, M-76
 esleme kurali -- degistirilmedi).
 Bolgeler: scenario.DISTRICTS["H-Z1"] (Antakya, AOI11) ve ["K-Z1"]
@@ -204,8 +223,16 @@ def run_sample(name, aoi_code, lat, lon, model, device):
 
 
 def main():
-    print(f"Model yukleniyor: {MODEL_PATH}", flush=True)
-    model, device = load_simple_model(str(MODEL_PATH))
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--label", default="segformer", help="cikti dosyasi ve rapor etiketi")
+    ap.add_argument("--arch", default="Segformer", help="smp mimari sinifi (Segformer/Unet/FPN/DeepLabV3Plus/Linknet/PSPNet)")
+    ap.add_argument("--encoder", default="mit_b4", help="kodlayici adi (mit_b4/resnet34/resnet101/...)")
+    ap.add_argument("--checkpoint", default=str(MODEL_PATH), help="checkpoint (.pth) yolu")
+    args = ap.parse_args()
+
+    print(f"Model yukleniyor: {args.checkpoint} (arch={args.arch}, encoder={args.encoder})", flush=True)
+    model, device = load_simple_model(args.checkpoint, arch=args.arch, encoder=args.encoder)
     if model is None:
         print("MODEL YUKLENEMEDI - cikiliyor", flush=True)
         return
@@ -270,7 +297,8 @@ def main():
                   f"Kesinlik={r['precision']:.3f}  Duyarlilik={r['recall']:.3f}  F1={r['f1']:.3f}", flush=True)
 
     out = {
-        "model": "SegFormer (MiT-B4, optimized_mitb4_focal_dice30.pth)",
+        "model": f"{args.arch} ({args.encoder}, {Path(args.checkpoint).name})",
+        "label": args.label,
         "wayback_id": WAYBACK_ID,
         "samples": [{"name": s["name"], "aoi": s["aoi"], "n_edges": s["n_edges"]} for s in all_samples],
         "total_edges": total_edges,
@@ -278,7 +306,8 @@ def main():
         "best_tau": best_tau,
         "best_tau_results": sweep_results.get(best_tau) if best_tau is not None else None,
     }
-    out_path = Path(__file__).resolve().parent / "results" / "table14_segformer_closure.json"
+    out_name = "table14_segformer_closure.json" if args.label == "segformer" else f"table14_closure_{args.label}.json"
+    out_path = Path(__file__).resolve().parent / "results" / out_name
     out_path.parent.mkdir(exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
