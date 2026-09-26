@@ -11,6 +11,9 @@ import { kutularKesisir, useAltlikKatalogu, useAltlikPaketleri, type Etiket } fr
 export const ALTLIK_EN_AZ_ZOOM = 9
 /** Yapılar bu yakınlaştırmadan itibaren seçilir; altında katman kurulmaz. */
 export const YAPI_EN_AZ_ZOOM = 13
+/** Toplanma alanları (J-56): beş bölgede 3.682 kayıt var; bölge ölçeğinde
+    hepsi çizilince harita nokta tarlasına dönüyordu. Şehir ölçeğinde çizilir. */
+export const TOPLANMA_EN_AZ_ZOOM = 11
 
 /** Yakınlaştırmaya göre yazılan adlar (J-41): uzakta bölge adı, sonra şehir ve
     ilçe, köy, mahalle, en yakında sokak. */

@@ -25,7 +25,17 @@ import type { Kutu, Nokta } from '@/durum/secimDurumu'
 import type { Yol } from '@/veri/analiz'
 import type { AltlikVerisi, Etiket } from '@/veri/altlik'
 import { IHBAR_DURUMU, IHBAR_TURU, ihbarBasligi, ihbarKonumu, type Ihbar, type IhbarTuru } from '@/veri/ihbar'
-import { tarihSaat } from '@/lib/bicim'
+import { DEPREM_EN_AZ, type Deprem, type Fay, type Kapanma, type ToplanmaAlani } from '@/veri/katman'
+import { VARYANT_ADI, type SimGorev, type SimKenar } from '@/veri/simulasyon'
+import { goruntuKatmani } from './goruntuKatmani'
+import {
+  simKatmanlari,
+  simZeminKatmanlari,
+  type GorevUcu,
+  type RotaCizgisi,
+  type SimHaritaGirdisi,
+} from './simKatmanlari'
+import { mesafe, sureMetni, tarihSaat, tarihSaatYilli } from '@/lib/bicim'
 import { tokenPx, tokenRenk } from './tokenRenk'
 
 /* Veri katmanları altlıktan belirgin şekilde ayrılır: altlık soğuk ve sönük,
@@ -189,6 +199,8 @@ export type KatmanGirdisi = {
   altlik?: AltlikVerisi[]
   /** Yakınlaştırma yapıların seçilebileceği kadar mı (bkz. altlikKatmanlari). */
   altlikYapiGorunur?: boolean
+  /** Toplanma alanları şehir ölçeğinde çizilir (TOPLANMA_EN_AZ_ZOOM). */
+  toplanmaGorunur?: boolean
   /** Uzak yakınlaştırmada yazılan bölge adları (altlık kataloğundan). */
   bolgeAdlari?: Etiket[]
   /** Isı katmanının örtücülüğü; yakınlaştıkça azalır (bkz. KatmanKopru). */
@@ -202,8 +214,17 @@ export type KatmanGirdisi = {
   ihbarlar?: Ihbar[]
   ihbarTurleri?: readonly IhbarTuru[]
   seciliIhbar?: string | null
+  /** Soldan seçilen görüntü kaynağının karosu (Hasar analizi modu). */
+  goruntu?: { url: string; kunye: string; ortuculuk?: number } | null
   /** Bitmiş hasar analizinin yol geometrisi. */
   analiz?: { kapali: Yol[]; acik: Yol[] } | null
+  /** Tatbikat koşusunun katmanları (SIMULASYON_SOZLESMESI.md §5). */
+  simulasyon?: SimHaritaGirdisi
+  /** Başvuru katmanları (J-56); her biri kendi ucundan gelir. */
+  kapanmalar?: Kapanma[]
+  depremler?: Deprem[]
+  faylar?: Fay[]
+  toplanma?: ToplanmaAlani[]
   /** Kanalların ağırlıklı karışımından çıkan ısı dokusu. */
   isi?: { goruntu: ImageData; sinirlar: [number, number, number, number] } | null
   /** Analiz alanı seçimi: kesinleşmiş şekil ve çizim sürerken taslak. */
@@ -225,6 +246,32 @@ function kutuHalkasi(k: Kutu): Nokta[] {
 
 export function katmanlariKur(g: KatmanGirdisi): Layer[] {
   const L: Layer[] = altlikKatmanlari(g.altlik ?? [], g.katmanlar, g.altlikYapiGorunur ?? false)
+
+  // Seçilen uydu/drone görüntüsü: altlığın hemen ÜSTÜNDE, olay ve analiz
+  // katmanlarının ALTINDA. Modelin ne gördüğü ekranda olsun (kural 1).
+  L.push(...goruntuKatmani(g.goruntu ?? null, g.katmanlar.analizGoruntusu))
+
+  // Fay hatları (J-56): jeolojik başvuru, bir olay değil. Bu yüzden altlığın
+  // hemen üstünde, kesik ve sönük çizilir; aciliyet renkleri (kırmızı, turuncu,
+  // sarı) hasara ayrılı olduğu için kendi token'ı var. GEM veri setinde ad alanı
+  // boş olduğundan çizgilerin etiketi yazılmaz.
+  if (g.katmanlar.faylar && g.faylar?.length) {
+    L.push(
+      new PathLayer<Fay, { getDashArray: [number, number] }>({
+        id: 'faylar',
+        data: g.faylar,
+        getPath: (d) => d.cizgi,
+        getColor: [...tokenRenk('--color-fay'), 205],
+        getWidth: 2,
+        widthUnits: 'pixels',
+        widthMinPixels: 1.5,
+        getDashArray: [7, 4],
+        extensions: [KESIK],
+        capRounded: true,
+        pickable: true,
+      }),
+    )
+  }
 
   // Isı haritası: kanal ızgaraları sunucudan gelir, karışım istemcide yapılır
   // ve doku olarak çizilir. İkinci bir bulanıklaştırma YOK (MIMARI §5).
@@ -274,25 +321,108 @@ export function katmanlariKur(g: KatmanGirdisi): Layer[] {
     )
   }
 
-  if (g.katmanlar.hasarliYollar) {
+  // Yol kapanmaları (J-56): depoda duran kalıcı kayıtlar. Bunlar NOKTA, çünkü
+  // analiz biterken kapalı yol parçasının yalnız orta noktası yazılıyor
+  // (`cekirdek._kapanmalari_depoya_yaz`). Çizgi olarak gösterilseydi kapalı
+  // parçanın uzunluğunu biliyormuş gibi olurduk. Renk hasar turuncusu.
+  if (g.katmanlar.hasarliYollar && g.kapanmalar?.length) {
+    // Çizgisi olan kapanma KIRMIZI ÇİZGİ olarak çizilir (J-58). Eski kayıtlarda
+    // yalnız orta nokta var; onlar nokta kalır, yoksa harita kapanmaları nokta
+    // tarlası gibi gösteriyordu.
+    const cizgili = g.kapanmalar.filter((d) => (d.cizgi?.length ?? 0) >= 2)
+    const noktali = g.kapanmalar.filter((d) => (d.cizgi?.length ?? 0) < 2)
+    if (cizgili.length) {
+      L.push(
+        new PathLayer<Kapanma>({
+          id: 'yol-kapanmalari-cizgi',
+          data: cizgili,
+          getPath: (d) =>
+            (d.cizgi ?? []).map(([enlem, boylam]) => [boylam, enlem] as [number, number]),
+          getColor: [...tokenRenk('--color-crit'), 235],
+          getWidth: 4,
+          widthUnits: 'pixels',
+          widthMinPixels: 2.5,
+          capRounded: true,
+          jointRounded: true,
+          pickable: true,
+        }),
+      )
+    }
     L.push(
-      new PathLayer<{ path: [number, number][]; derece: number }>({
-        id: 'hasarli-yollar',
-        data: [],
-        getPath: (d) => d.path,
-        getColor: [255, 145, 82, 255],
-        getWidth: 4,
-        widthUnits: 'pixels',
-        widthMinPixels: 2.5,
-        capRounded: true,
+      new ScatterplotLayer<Kapanma>({
+        id: 'yol-kapanmalari',
+        data: noktali,
+        getPosition: (d) => [d.lon, d.lat],
+        getRadius: 14,
+        radiusUnits: 'meters',
+        radiusMinPixels: 3,
+        radiusMaxPixels: 9,
+        getFillColor: [...tokenRenk('--color-high'), 235],
+        stroked: true,
+        getLineColor: [...tokenRenk('--color-ground'), 220],
+        lineWidthUnits: 'pixels',
+        getLineWidth: 1,
         pickable: true,
       }),
     )
   }
 
+  // Tatbikatın hasar maskesi adların ALTINDA: raster, sokak adlarını örtmesin.
+  if (g.simulasyon) L.push(...simZeminKatmanlari(g.simulasyon))
+
   // Adlar zeminin, ısının ve yolların üstünde, veri noktalarının altında:
   // bir sokak adı SOS noktasının üstüne binmesin (veri önde, ARAYUZ §11).
   L.push(...adKatmanlari(g.altlik ?? [], g.bolgeAdlari ?? [], g.etiketSeviyesi ?? -1))
+
+  // Tatbikatın kenar, rota ve görev katmanları adların üstünde.
+  if (g.simulasyon) L.push(...simKatmanlari(g.simulasyon))
+
+  // Depremler (J-56): katalogdan gelen geçmiş kayıtlar, bugünün hasarı değil.
+  // Bu yüzden içi boş halka çizilir; dolu nokta olsaydı canlı veriyle karışırdı.
+  // Halkanın çapı büyüklüğe göre artar.
+  if (g.katmanlar.depremler && g.depremler?.length) {
+    L.push(
+      new ScatterplotLayer<Deprem>({
+        id: 'depremler',
+        data: g.depremler,
+        getPosition: (d) => [d.lon, d.lat],
+        getRadius: (d) => 4 + Math.max(0, d.buyukluk - DEPREM_EN_AZ) * 2.6,
+        radiusUnits: 'pixels',
+        // İçi çok sönük dolu, kenarı belirgin: küçük halka koyu zeminde kaybolmasın.
+        filled: true,
+        getFillColor: [...tokenRenk('--color-deprem'), 45],
+        stroked: true,
+        getLineColor: [...tokenRenk('--color-deprem'), 230],
+        lineWidthUnits: 'pixels',
+        getLineWidth: 1.5,
+        pickable: true,
+      }),
+    )
+  }
+
+  // Toplanma alanları (J-56): AFAD listesi; afetzede ekranıyla aynı veri ve aynı
+  // renk. Kayıt alanın şu an açık ya da kullanılabilir olduğunu söylemez (kural 1);
+  // ipucu bunu yazar. Bölge ölçeğinde 3.682 nokta haritayı kapattığı için
+  // yalnız şehir ölçeğinde çizilir.
+  if (g.katmanlar.toplanma && g.toplanmaGorunur && g.toplanma?.length) {
+    L.push(
+      new ScatterplotLayer<ToplanmaAlani>({
+        id: 'toplanma',
+        data: g.toplanma,
+        getPosition: (d) => [d.lon, d.lat],
+        getRadius: 16,
+        radiusUnits: 'meters',
+        radiusMinPixels: 2.5,
+        radiusMaxPixels: 8,
+        getFillColor: [...tokenRenk('--color-yer-toplanma'), 225],
+        stroked: true,
+        getLineColor: [...tokenRenk('--color-ground'), 200],
+        lineWidthUnits: 'pixels',
+        getLineWidth: 1,
+        pickable: true,
+      }),
+    )
+  }
 
   // Hasar noktaları birleşik ısının kaynağıdır; ısıyla birlikte açılır.
   // ("Yapılar" bayrağı artık altlıktaki yapıları çizer.)
@@ -553,6 +683,73 @@ export function haritaIpucu({ object, layer }: PickingInfo) {
     }
     case 'analiz-kapali':
       return ipucuKutusu('Kapalı yol', ['Uydu analizinden: modelin tahmini, sahada doğrulanmadı.'])
+    case 'yol-kapanmalari': {
+      const k = object as Kapanma
+      return ipucuKutusu('Yol kapanması', [
+        k.kaynak === 'uydu' ? 'Uydu analizinden: modelin tahmini, sahada doğrulanmadı.' : `Kaynak: ${k.kaynak}`,
+        'Kapalı bulunan yol parçasının orta noktası.',
+        tarihSaatYilli(k.zaman),
+      ])
+    }
+    case 'depremler': {
+      const d = object as Deprem
+      return ipucuKutusu(`M ${d.buyukluk.toFixed(1)} deprem`, [
+        d.yer,
+        d.derinlikKm != null ? `Derinlik ${d.derinlikKm.toFixed(0)} km` : null,
+        tarihSaatYilli(d.zaman),
+        'Katalog kaydı (Kandilli, USGS); bugünün hasarı değil.',
+      ])
+    }
+    case 'faylar':
+      return ipucuKutusu('Etkin fay hattı', [
+        'GEM Global Active Faults; veri setinde ad alanı boş.',
+        'Jeolojik başvuru: bugünkü hasarla ilgisi yok.',
+      ])
+    case 'toplanma': {
+      const t = object as ToplanmaAlani
+      return ipucuKutusu(t.ad ?? 'Toplanma alanı', [
+        t.adres,
+        'AFAD listesi; alanın şu an açık olduğunu göstermez.',
+      ])
+    }
+    // --- tatbikat (SIMULASYON_SOZLESMESI.md §5) ---
+    case 'sim-kapanma-kapali':
+      return ipucuKutusu('Tatbikat: kapalı yol', [
+        'Modelin hasar maskesinden türetildi; sahada doğrulanmadı.',
+        `Kenar: ${(object as SimKenar).id}`,
+      ])
+    case 'sim-kapanma-cezali': {
+      const k = object as SimKenar
+      return ipucuKutusu('Tatbikat: riskli yol', [
+        k.carpan ? `Maliyet çarpanı ${k.carpan.toString().replace('.', ',')}` : null,
+        'Kapalı değil; hasara yakın olduğu için cezalı.',
+        `Kenar: ${k.id}`,
+      ])
+    }
+    case 'sim-rota-depremOncesi':
+    case 'sim-rota-kapanmali':
+    case 'sim-rota-riskli': {
+      const r = object as RotaCizgisi
+      const v = r.rota.varyantlar[r.varyant]
+      return ipucuKutusu(`Tatbikat rotası · ${VARYANT_ADI[r.varyant]}`, [
+        `${r.rota.baslangic.ad} → ${r.rota.hedef.ad}`,
+        v ? `${mesafe(v.uzunlukM)} · ${sureMetni(v.sureDk)}` : null,
+        'Tatbikat: gerçek bir sevk değil.',
+      ])
+    }
+    case 'sim-gorev-ekip':
+    case 'sim-gorev-afetzede': {
+      const u = object as GorevUcu
+      const g2: SimGorev = u.gorev
+      return ipucuKutusu(u.ad, [
+        u.tur === 'ekip'
+          ? g2.gercekTesis
+            ? 'Ekip üssü · gerçek tesis (OpenStreetMap)'
+            : 'Ekip üssü'
+          : 'Afetzede konumu ÜRETİLDİ (senaryo), gerçek çağrı değil.',
+        `Varış tahmini ${sureMetni(u.etaDk)}`,
+      ])
+    }
     default:
       return null
   }

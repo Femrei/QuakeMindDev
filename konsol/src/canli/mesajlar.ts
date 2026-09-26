@@ -17,11 +17,25 @@ export type CanliMesaj =
   | {
       tip: 'is-durumu'
       isId: string
+      /** 'hasar-analizi' | 'simulasyon' (SIMULASYON_SOZLESMESI.md §3) | … */
       isTipi: string
-      durum: 'kuyrukta' | 'calisiyor' | 'bitti' | 'hata'
+      /** 'iptal' yalnız simülasyonda: tatbikat bitirildi, istemciler normal akışa döner. */
+      durum: 'kuyrukta' | 'calisiyor' | 'bitti' | 'hata' | 'iptal'
+      /** Hasar analizi YÜZDE gönderiyor (0-100); simülasyon sözleşmesi 0..1
+          diyor. Çeviri tek yerde: `CanliSaglayici`. */
       ilerleme?: number
       mesaj?: string
       hata?: string
+    }
+  /** Simülasyonun bir katmanı çizilmeye hazır (SIMULASYON_SOZLESMESI.md §3).
+      Sıra: hasar → kapanma → rota → görev. Arayüz sonucun tamamını beklemez;
+      her mesajda koşunun o ana kadarki hâlini ister. */
+  | {
+      tip: 'simulasyon-katman'
+      isId: string
+      katman: 'hasar' | 'kapanma' | 'rota' | 'gorev'
+      /** Kaç poligon / kenar / rota (bilinmiyorsa gelmez). */
+      sayi?: number
     }
   | { tip: 'yeni-analiz'; kaynak: string; isId?: string; bolge?: string; sayi?: number }
   | { tip: 'isi-surumu'; surum: string; bolge?: string }
@@ -73,6 +87,7 @@ export const MESAJ_TIPLERI: CanliMesaj['tip'][] = [
   'bildirim',
   'ihbar',
   'gorev',
+  'simulasyon-katman',
 ]
 
 /** Mesaj → tazelenecek sorgu anahtarları. Yalnız değişen şey tazelenir: yeni
@@ -89,7 +104,8 @@ export function tazelenecekler(m: CanliMesaj): string[][] {
     case 'is-durumu':
       return [['isler']]
     case 'yeni-analiz':
-      return [['hasar'], ['ozet'], ['isi', 'uydu']]
+      // Biten uydu analizi kapanmaları da depoya yazar (J-56 katmanı).
+      return [['hasar'], ['ozet'], ['isi', 'uydu'], ['katman', 'kapanmalar']]
     case 'isi-surumu':
       return [['isi']]
     case 'ekip-konumu':
@@ -108,6 +124,11 @@ export function tazelenecekler(m: CanliMesaj): string[][] {
       ]
     case 'bildirim':
       return [['bildirimler']]
+    case 'simulasyon-katman':
+      // Yalnız o koşunun sonucu; başka hiçbir sorgu etkilenmez. Sunucu
+      // katmanları sırayla bitirdiği için sonuç her mesajda bir parça daha
+      // dolu gelir (SIMULASYON_SOZLESMESI.md §3).
+      return [['simulasyon', 'kosu', m.isId]]
   }
 }
 
@@ -125,4 +146,6 @@ export const AKIS_ANAHTARLARI: string[][] = [
   ['gorevler'],
   ['aday-ekipler'],
   ['ekibim'],
+  // Fay, deprem ve toplanma katmanları değişmez; yalnız kapanmalar tazelenir.
+  ['katman', 'kapanmalar'],
 ]

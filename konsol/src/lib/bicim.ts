@@ -30,6 +30,21 @@ export const tarihSaat = (ms: number) => saatBicim.format(ms)
 export const tarih = (ms: number) => gunBicim.format(ms)
 export const saat = (ms: number) => saatiBicim.format(ms)
 
+const yilliBicim = new Intl.DateTimeFormat('tr-TR', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'Europe/Istanbul',
+})
+
+/** Olay verisi bu yıla ait olduğu için yıl yazılmaz. Ama deprem kataloğu 1933'e
+    kadar gidiyor (J-56): 2023'teki bir kayıt "6 Şub 05:31" diye yazılınca bu yıl
+    olmuş gibi okunuyordu. Başka yıldaki kayıtta yıl da yazılır. */
+export const tarihSaatYilli = (ms: number) =>
+  new Date(ms).getFullYear() === new Date().getFullYear() ? tarihSaat(ms) : yilliBicim.format(ms)
+
 const gunUzunBicim = new Intl.DateTimeFormat('tr-TR', {
   day: 'numeric',
   month: 'long',

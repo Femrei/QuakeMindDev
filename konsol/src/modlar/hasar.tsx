@@ -4,6 +4,8 @@ import { Chip, Kaydirici, Micro, Rozet } from '@/kabuk/parcalar'
 import { sonIsSec, useIsler, type IsKunyesi } from '@/durum/islerDurumu'
 import { useCanliAkisDurumu } from '@/canli/canliAkis'
 import { useHarita } from '@/harita/HaritaKabugu'
+import { karoAdresi } from '@/harita/goruntuKatmani'
+import { useKonsol } from '@/durum/konsolDurumu'
 import {
   BOLGELER,
   KAYNAKLAR,
@@ -16,6 +18,7 @@ import {
   sonOlayOncesi,
   surumunGoruntusu,
   useAnalizSegmentleri,
+  useAnalizModelleri,
   useOamArama,
   useUyduModeli,
   useWaybackGoruntuGecmisi,
@@ -99,6 +102,10 @@ export function HasarSol() {
   const [oamBitis, setOamBitis] = useState('2023-02-28')
   const [oamArandi, setOamArandi] = useState(true)
   const [oamSecili, setOamSecili] = useState<OamGoruntu | null>(null)
+  /* Model seçimi (J-76): bütün künyeler listelenir, seçilen model koşar.
+     Seçilmezse sunucunun etkin modeli kullanılır — eski davranış. */
+  const modeller = useAnalizModelleri()
+  const [seciliModel, setSeciliModel] = useState<string | null>(null)
   const [oamElle, setOamElle] = useState(false)
 
   const secimModu = useSecim((d) => d.modu)
@@ -133,6 +140,18 @@ export function HasarSol() {
     [kutu, merkezLon, merkezLat, ayar.radiusKm],
   )
 
+  /* Sunucuya giden yarıçap ANALİZ KUTUSUNDAN hesaplanır (J-76). Önceden alan
+     çizilse bile hazır ayarın yarıçapı (2,5 km) gidiyordu; sunucu da
+     yakınlaştırmayı ondan seçtiğinden 0,4 km'lik bir seçim z15'te (~3,86 m/px)
+     analiz ediliyor, model hiçbir şey bulamıyordu. Sunucu tarafı da düzeltildi;
+     burası ekrandaki yazının da doğru olmasını sağlar. */
+  const etkinYaricapKm = useMemo(() => {
+    const [b, g, d, k] = analizKutusu
+    const enKm = (d - b) * 111.32 * Math.cos(((g + k) / 2) * (Math.PI / 180))
+    const boyKm = (k - g) * 111.32
+    return Math.max(0.05, Math.max(enKm, boyKm) / 2)
+  }, [analizKutusu])
+
   // Wayback: bu konumda hangi sürüm hangi tarihte çekilmiş görüntüyü gösteriyor.
   const gecmis = useWaybackGoruntuGecmisi({
     lat: merkezLat,
@@ -152,6 +171,24 @@ export function HasarSol() {
   }, [waybackElle, gecmis.data, ilkSonrasi, liste, waybackId])
 
   const seciliSurum = liste.find((v) => v.id === waybackId)
+
+  /* Seçilen görüntü haritada görünür (J-75): modelin NE GÖRDÜĞÜ ekranda olsun.
+     Katman anahtarı "Analiz görüntüsü" adıyla Katmanlar menüsünde; kapatılınca
+     harita yalnız altlığa döner. */
+  const karo = karoAdresi({
+    kaynak,
+    waybackId,
+    waybackTarihi: seciliSurum?.date ?? null,
+    oamTmsUrl: oamSecili?.tms_url ?? null,
+    oamBasligi: oamSecili?.title ?? null,
+    oamTarihi: oamSecili?.date ?? null,
+  })
+  const analizKarosuYaz = useKonsol((d) => d.analizKarosuYaz)
+  useEffect(() => {
+    analizKarosuYaz(karo)
+    // Moddan çıkınca görüntü kalmasın: katman hasar analizine ait.
+    return () => analizKarosuYaz(null)
+  }, [karo?.url, karo?.kunye, analizKarosuYaz])
   const seciliGoruntu = seciliSurum ? surumunGoruntusu(seciliSurum.date, gecmis.data) : undefined
 
   const oam = useOamArama({
@@ -209,7 +246,8 @@ export function HasarSol() {
         // Yalnız modelinkinden farklıysa gönderilir; yoksa sunucu künyeyi kullanır.
         threshold: esikNeden === 'modelin' ? undefined : etkinEsik,
         postProcessLevel: ayar.postProcessLevel ?? undefined,
-        radiusKm: ayar.radiusKm,
+        radiusKm: etkinYaricapKm,
+        modelAdi: seciliModel ?? undefined,
         waybackId: tarihliKaynak ? (waybackId ?? undefined) : undefined,
         oamTileUrl: oamKaynak ? (oamSecili?.tms_url ?? undefined) : undefined,
         // Alan çizildiyse merkez+yarıçap yerine kutu gönderilir.
@@ -340,6 +378,43 @@ export function HasarSol() {
             analiz edilir, köşelerdeki fazlalık da hesaba girer.
           </p>
         )}
+
+        {/* Model seçimi (J-76): eğitilen bütün modeller listelenir ve SEÇİLEN
+            model koşar. Ağırlığı olmayan künye seçilemez; her satır kendi
+            künyesini (mimari, sınama IoU, eşik) yazar — kural 1. */}
+        <label className="mt-3 block text-micro ls-micro text-ink-3 uppercase" htmlFor="model">
+          Model
+        </label>
+        {modeller.isError && <VeriYok ne="Model listesi" neden="uç yanıt vermedi" />}
+        <select
+          id="model"
+          value={seciliModel ?? ''}
+          onChange={(e) => setSeciliModel(e.target.value || null)}
+          className="mt-1.5 w-full rounded-control border border-line-2 bg-sunken px-2.5 py-2 text-body text-ink"
+        >
+          <option value="">Sunucunun etkin modeli</option>
+          {(modeller.data ?? [])
+            .filter((m) => m.hazir)
+            .map((m) => (
+              <option key={m.ad} value={m.ad}>
+                {m.mimari}
+                {m.sinamaIoU != null ? ` · IoU ${m.sinamaIoU.toFixed(3).replace('.', ',')}` : ''}
+              </option>
+            ))}
+        </select>
+        {(() => {
+          const m = (modeller.data ?? []).find((x) => x.ad === seciliModel)
+          if (!m) return null
+          return (
+            <p className="mt-1.5 text-small text-ink-3">
+              {m.etiket} · eşik {m.esik.toFixed(2).replace('.', ',')} · eğitim çözünürlüğü{' '}
+              {m.egitimGsdM[0]}–{m.egitimGsdM[1]} m/piksel
+              {m.ileriGecis512Sn != null
+                ? ` · 512×512 ileri geçiş ${m.ileriGecis512Sn.toFixed(2).replace('.', ',')} sn`
+                : ''}
+            </p>
+          )
+        })()}
 
         <label className="mt-3 block text-micro ls-micro text-ink-3 uppercase" htmlFor="bolge">
           Bölge

@@ -4,9 +4,19 @@ import { useQueryClient } from '@tanstack/react-query'
 import { canliAkisBaslat } from './canliAkis'
 import { useZaman } from '@/durum/zamanDurumu'
 import { useIsler } from '@/durum/islerDurumu'
+import { useSimulasyon } from '@/durum/simulasyonDurumu'
 import { analizSonucuAl } from '@/veri/analiz'
 import { useOturum } from '@/kimlik/oturum'
 import { yeniOlayIsle } from './yeniOlaylar'
+
+/** İlerleme yüzdeye çevrilir. Hasar analizi 0-100 gönderiyor
+    (`cekirdek.py`), simülasyon sözleşmesi 0..1 diyor
+    (SIMULASYON_SOZLESMESI.md §3). İki ölçek tek yerde birleşir; 1'den küçük
+    değer oran sayılır. Bu fark backend oturumuna bildirildi (J-62). */
+function yuzdeye(ilerleme: number | undefined, durum: string): number {
+  if (ilerleme == null) return durum === 'bitti' ? 100 : 0
+  return ilerleme <= 1 ? Math.round(ilerleme * 100) : ilerleme
+}
 
 /**
  * Akış ve saat, uygulamada BİR kez kurulur.
@@ -27,6 +37,18 @@ export function CanliSaglayici({ children }: { children: ReactNode }) {
       dinleyici: (m) => {
         // Yeni SOS ve ihbar: konsolda köşede kısa kart (J-51).
         yeniOlayIsle(m)
+        // Simülasyonun katman haberi: o koşunun sonucu tazelenir (sorgu
+        // anahtarı `tazelenecekler`'de), ekran katmanı çizmeye başlar.
+        if (m.tip === 'simulasyon-katman') {
+          useSimulasyon.getState().katmanHazir(m.isId, m.katman)
+          return
+        }
+        // Tatbikat bitirildi: AÇIK olan bütün ekranlar normal akışa döner —
+        // bitiren sekmeyi temizlemek yetmez, başka bir koordinatör de bakıyor
+        // olabilir (SIMULASYON_SOZLESMESI.md §3).
+        if (m.tip === 'is-durumu' && m.isTipi === 'simulasyon' && m.durum === 'iptal') {
+          useSimulasyon.getState().temizle()
+        }
         if (m.tip !== 'is-durumu') return
         const { isGuncelle, isler } = useIsler.getState()
         if (!isler[m.isId]) {
@@ -35,7 +57,7 @@ export function CanliSaglayici({ children }: { children: ReactNode }) {
         }
         isGuncelle(m.isId, {
           durum: m.durum,
-          ilerleme: m.ilerleme ?? (m.durum === 'bitti' ? 100 : 0),
+          ilerleme: yuzdeye(m.ilerleme, m.durum),
           mesaj: m.mesaj ?? '',
           hata: m.hata,
           bitis: m.durum === 'bitti' || m.durum === 'hata' ? Date.now() : undefined,

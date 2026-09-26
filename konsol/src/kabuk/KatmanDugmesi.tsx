@@ -14,6 +14,7 @@ import { MODLAR, modBul } from '@/modlar/modlar'
 import { useSorguAraligi } from '@/durum/zamanDurumu'
 import { useEkipler, useOzet, useSosCagrilari } from '@/veri/sorgular'
 import { useIhbarlar } from '@/veri/ihbar'
+import { DEPREM_EN_AZ, useDepremler, useFaylar, useKapanmalar, useToplanmaAlanlari } from '@/veri/katman'
 import { sayi } from '@/lib/bicim'
 import { sn } from '@/lib/sinif'
 
@@ -41,6 +42,12 @@ export function KatmanDugmesi({ yukari = true }: { yukari?: boolean }) {
   const sos = useSosCagrilari(aralik)
   const ihbar = useIhbarlar(aralik)
   const ekipler = useEkipler()
+  // Aynı sorgu anahtarları kabuktakilerle paylaşılır: katman kapalıyken istek
+  // atılmaz, açıkken sayı önbellekten gelir.
+  const kapanmalar = useKapanmalar(katmanlar.hasarliYollar)
+  const depremler = useDepremler(katmanlar.depremler)
+  const faylar = useFaylar(katmanlar.faylar)
+  const toplanma = useToplanmaAlanlari(katmanlar.toplanma)
 
   const acikSayisi = KATMANLAR.filter((k) => katmanlar[k] && KATMAN_BILGI[k].bagli).length
 
@@ -65,6 +72,10 @@ export function KatmanDugmesi({ yukari = true }: { yukari?: boolean }) {
     ihbarlar: ihbar.data ? `${sayi(ihbar.data.length)} ihbar` : null,
     ekipler: ekipler.data ? `${sayi(ekipler.data.length)} ekip` : null,
     isi: noktalar != null ? `${sayi(noktalar)} nokta` : null,
+    hasarliYollar: kapanmalar.data ? `${sayi(kapanmalar.data.sayi)} kapanma` : null,
+    depremler: depremler.data ? `${sayi(depremler.data.sayi)} deprem · M ≥ ${DEPREM_EN_AZ}` : null,
+    faylar: faylar.data ? `${sayi(faylar.data.sayi)} hat` : null,
+    toplanma: toplanma.data ? `${sayi(toplanma.data.sayi)} alan` : null,
   }
 
   return (

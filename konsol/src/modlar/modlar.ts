@@ -50,7 +50,7 @@ export const MODLAR = [
     grup: 'analiz',
     ad: 'Hasar analizi',
     ozet: 'Uydu görüntüsünden yol kapanmalarını çıkaran analizi başlat ve izle.',
-    katmanlar: ['analizSonucu', 'yollar', 'hasarliYollar'],
+    katmanlar: ['analizGoruntusu', 'analizSonucu', 'yollar', 'hasarliYollar'],
   },
   {
     id: 'kamera',
@@ -72,6 +72,13 @@ export const MODLAR = [
     ad: 'Deprem riski',
     ozet: 'Bölge bazlı risk skoru: sismik geçmiş, fay uzaklığı, son hareketlilik.',
     katmanlar: ['yollar', 'depremler', 'faylar'],
+  },
+  {
+    id: 'simulasyon',
+    grup: 'analiz',
+    ad: 'Simülasyon (tatbikat)',
+    ozet: 'Gerçek görüntüde model koşturup rotaları tatbikat olarak dener; gerçek olay değildir.',
+    katmanlar: ['yollar', 'simHasar', 'simKapanma', 'simRota', 'simGorev'],
   },
   {
     id: 'yol',

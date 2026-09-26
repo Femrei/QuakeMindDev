@@ -35,6 +35,12 @@ export function kimlikBagla(kaynak: () => string | null, yenile: () => Promise<u
   jetonYenile = yenile
 }
 
+/** Geçerli erişim jetonu. Harita karolarını deck.gl kendi `fetch`'iyle
+    indirdiği için başlığı oraya elle geçirmek gerekiyor (bkz. goruntuKatmani). */
+export function erisimJetonu(): string | null {
+  return jetonKaynagi()
+}
+
 function basliklar(ek?: Record<string, string>): Record<string, string> {
   const jeton = jetonKaynagi()
   return { ...(ek ?? {}), ...(jeton ? { authorization: `Bearer ${jeton}` } : {}) }
@@ -99,4 +105,18 @@ export async function apiGet<T>(
 
   if (!y.ok) throw new ApiHatasi(`${yol} → HTTP ${y.status}`, y.status)
   return (await y.json()) as T
+}
+
+/** Yetki isteyen bir görseli indirir (simülasyonun hasar maskesi gibi).
+    `<img src>` kullanılamaz: tarayıcı o istekte Authorization başlığı
+    göndermez. Gövde JSON değil, ikili veridir. */
+export async function apiGorsel(yol: string): Promise<Blob> {
+  const getir = () => fetch(yol, { credentials: 'same-origin', headers: basliklar() })
+  let y = await getir()
+  if (y.status === 401 && jetonYenile) {
+    await jetonYenile()
+    y = await getir()
+  }
+  if (!y.ok) throw new ApiHatasi(`${yol} → HTTP ${y.status}`, y.status)
+  return await y.blob()
 }

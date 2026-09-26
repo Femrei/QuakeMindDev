@@ -5,7 +5,7 @@ import { create } from 'zustand'
    Hiçbir yerde zamanlayıcıyla durum sorulmaz (CLAUDE.md kural 4).
 --------------------------------------------------------------------------- */
 
-export type IsDurumu = 'kuyrukta' | 'calisiyor' | 'bitti' | 'hata'
+export type IsDurumu = 'kuyrukta' | 'calisiyor' | 'bitti' | 'hata' | 'iptal'
 
 /** İşi başlatırken gönderdiğimiz koşullar. Sonuç bunun yanında gösterilir,
     böylece hangi görüntüden çıktığı ekranda yazar (CLAUDE.md kural 1). */

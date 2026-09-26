@@ -6,7 +6,12 @@ import { create } from 'zustand'
    açık katmanlar değişir (MIMARI §7, ARAYUZ §8).
 --------------------------------------------------------------------------- */
 
+/** Hasar analizi modunda soldan seçilen görüntünün karo adresi; harita
+    katmanı buradan okur (mod paneli ile kabuk arasındaki tek bağ). */
+export type AnalizKarosu = { url: string; kunye: string; ortuculuk?: number } | null
+
 export const KATMANLAR = [
+  'analizGoruntusu',
   'analizSonucu',
   'yapilar',
   'yollar',
@@ -17,52 +22,102 @@ export const KATMANLAR = [
   'ekipler',
   'faylar',
   'ihbarlar',
+  // Tatbikat katmanları (SIMULASYON_SOZLESMESI.md §5): yalnız simülasyon
+  // modunda önerilir, koşu yoksa hiçbir şey çizmez.
+  'simHasar',
+  'simKapanma',
+  'simRota',
+  'simGorev',
 ] as const
 export type KatmanId = (typeof KATMANLAR)[number]
 
 export const KATMAN_ADI: Record<KatmanId, string> = {
+  analizGoruntusu: 'Analiz görüntüsü (modelin gördüğü)',
   analizSonucu: 'Analiz sonucu (kapalı yollar)',
   yapilar: 'Yapılar',
   yollar: 'Yol ağı',
-  hasarliYollar: 'Hasarlı yollar',
+  hasarliYollar: 'Yol kapanmaları',
   isi: 'Birleşik ısı',
   depremler: 'Depremler',
   toplanma: 'Toplanma alanları',
   ekipler: 'Saha ekipleri',
   faylar: 'Fay hatları',
   ihbarlar: 'Afetzede ihbarları',
+  simHasar: 'Tatbikat: hasar maskesi',
+  simKapanma: 'Tatbikat: kapanan yollar',
+  simRota: 'Tatbikat: rotalar',
+  simGorev: 'Tatbikat: ekip ve afetzede',
 }
 
 /** Katmanın grubu, kaynağı ve haritaya bağlı olup olmadığı (J-56). Kaynak her
     katmanın yanında yazılır (kural 1). `bagli: false` katman haritada henüz
     çizilmiyor: anahtarı yok, "bağlanmadı" yazar. Eskiden anahtarı vardı ama
     hiçbir şey çizmiyordu (hasarlı yollar boş veriyle, ötekiler hiç). */
-export const KATMAN_BILGI: Record<KatmanId, { grup: 'olay' | 'hasar' | 'altlik'; kaynak: string; bagli: boolean }> = {
+export const KATMAN_BILGI: Record<
+  KatmanId,
+  { grup: 'olay' | 'hasar' | 'altlik' | 'tatbikat'; kaynak: string; bagli: boolean }
+> = {
   ihbarlar: { grup: 'olay', kaynak: 'Afetzede ekranı: fotoğraf (YOLO), yazılı (BERTurk), ihtiyaç', bagli: true },
   ekipler: { grup: 'olay', kaynak: 'Ekip kaydı; konum ekibin telefonundan ya da koordinasyondan', bagli: true },
   isi: { grup: 'hasar', kaynak: 'Uydu, SOS, kamera ve metin noktaları; ızgara sunucuda', bagli: true },
+  analizGoruntusu: {
+    grup: 'hasar',
+    kaynak: 'Soldan seçilen görüntü kaynağı: Google, Esri Wayback ya da OpenAerialMap',
+    bagli: true,
+  },
   analizSonucu: { grup: 'hasar', kaynak: 'Bu oturumda biten uydu analizi (Hasar analizi modu)', bagli: true },
-  hasarliYollar: { grup: 'hasar', kaynak: 'Kayıtlı yol kapanmaları; haritaya henüz bağlanmadı', bagli: false },
+  hasarliYollar: {
+    grup: 'hasar',
+    kaynak: 'Uydu analizinin yazdığı kapanmalar; kapalı yol parçasının orta noktası',
+    bagli: true,
+  },
   depremler: {
     grup: 'hasar',
-    kaynak: 'Deprem kataloğu; Deprem riski modunda liste olarak var, harita katmanı yok',
-    bagli: false,
+    kaynak: 'Deprem kataloğu (Kandilli, USGS); M ≥ 4, geçmiş kayıt',
+    bagli: true,
   },
   faylar: {
     grup: 'hasar',
-    kaynak: 'Fay hatları; Deprem riski modunda liste olarak var, harita katmanı yok',
-    bagli: false,
+    kaynak: 'GEM etkin fay hatları; veri setinde ad alanı boş',
+    bagli: true,
   },
   yapilar: { grup: 'altlik', kaynak: 'OpenStreetMap, yerel kopya; yakınlaşınca çizilir', bagli: true },
   yollar: { grup: 'altlik', kaynak: 'OpenStreetMap, yerel kopya', bagli: true },
   toplanma: {
     grup: 'altlik',
-    kaynak: 'AFAD listesi; afetzede ekranında var, konsol haritasına bağlanmadı',
-    bagli: false,
+    kaynak: 'AFAD toplanma alanları listesi; şehir ölçeğine yakınlaşınca çizilir',
+    bagli: true,
+  },
+  // Tatbikat katmanları: gerçek olan ne, üretilen ne — her satır kendi yazıyor
+  // (SIMULASYON_SOZLESMESI.md §6).
+  simHasar: {
+    grup: 'tatbikat',
+    kaynak: 'Kendi modelimizin çıktısı; gerçek, tarihli uydu/drone görüntüsü üzerinde',
+    bagli: true,
+  },
+  simKapanma: {
+    grup: 'tatbikat',
+    kaynak: 'Hasar maskesinden türetildi; yol ağı OpenStreetMap',
+    bagli: true,
+  },
+  simRota: {
+    grup: 'tatbikat',
+    kaynak: 'Dijkstra ve A* ile OSM yol ağında hesaplandı; üç varyant',
+    bagli: true,
+  },
+  simGorev: {
+    grup: 'tatbikat',
+    kaynak: 'Ekip üssü gerçek OSM tesisi; afetzede konumu ÜRETİLEN senaryo',
+    bagli: true,
   },
 }
 
-export const KATMAN_GRUBU = { olay: 'Olaylar ve ekipler', hasar: 'Hasar', altlik: 'Altlık' } as const
+export const KATMAN_GRUBU = {
+  olay: 'Olaylar ve ekipler',
+  hasar: 'Hasar',
+  altlik: 'Altlık',
+  tatbikat: 'Tatbikat (simülasyon)',
+} as const
 
 /** Isı haritasının dört kanalı (MIMARI §5). */
 export const KANALLAR = ['sat', 'sos', 'cam', 'nlp'] as const
@@ -122,9 +177,12 @@ type KonsolDurumu = {
   komutPaleti: (acik: boolean) => void
   sosSuzgeciSec: (s: SosSuzgeci) => void
   ekipSuzgeciSec: (s: EkipSuzgeci) => void
+  analizKarosu: AnalizKarosu
+  analizKarosuYaz: (k: AnalizKarosu) => void
 }
 
 const BASLANGIC: Record<KatmanId, boolean> = {
+  analizGoruntusu: true,
   analizSonucu: true,
   yapilar: true,
   yollar: true,
@@ -135,6 +193,12 @@ const BASLANGIC: Record<KatmanId, boolean> = {
   ekipler: true,
   faylar: false,
   ihbarlar: true,
+  // Tatbikat katmanları yalnız simülasyon modunda önerilir; koşu yoksa zaten
+  // hiçbir şey çizmezler.
+  simHasar: false,
+  simKapanma: false,
+  simRota: false,
+  simGorev: false,
 }
 
 export const useKonsol = create<KonsolDurumu>((set) => ({
@@ -168,4 +232,9 @@ export const useKonsol = create<KonsolDurumu>((set) => ({
   komutPaleti: (acik) => set({ komutPaletiAcik: acik }),
   sosSuzgeciSec: (sosSuzgeci) => set({ sosSuzgeci }),
   ekipSuzgeciSec: (ekipSuzgeci) => set({ ekipSuzgeci }),
+  analizKarosu: null,
+  // Aynı adres ikinci kez yazılmaz: karo nesnesi her çizimde yeniden kurulduğu
+  // için kıyas adres üzerinden yapılır, yoksa sonsuz güncelleme olur.
+  analizKarosuYaz: (k) =>
+    set((d) => (d.analizKarosu?.url === k?.url ? d : { analizKarosu: k })),
 }))

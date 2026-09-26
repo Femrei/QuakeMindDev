@@ -8,11 +8,12 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "kontrol:token": "node scripts/token-kontrol.mjs",
-    "kontrol": "tsc -b --noEmit false --emitDeclarationOnly false && node scripts/token-kontrol.mjs"
+    "kontrol": "tsc -b && node scripts/token-kontrol.mjs"
   },
   "dependencies": {
     "@deck.gl/core": "^9.1.14",
     "@deck.gl/extensions": "^9.4.0",
+    "@deck.gl/geo-layers": "^9.4.0",
     "@deck.gl/layers": "^9.1.14",
     "@deck.gl/mapbox": "^9.1.14",
     "@fontsource/ibm-plex-mono": "^5.1.1",

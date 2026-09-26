@@ -86,6 +86,13 @@
   --color-ihbar-metin: #b08cff;
   --color-ihbar-ihtiyac: #f28dbd;
 
+  /* --- jeolojik başvuru katmanları (J-56): fay hatları ve deprem kataloğu.
+     Bunlar bugünün hasarı değil, arka plan bilgisidir; bu yüzden aciliyet
+     renklerinin (kırmızı, turuncu, sarı) ve kanal renklerinin dışında, sönük
+     iki ton. Fay kesik çizgi, deprem içi boş halka olarak çizilir. --- */
+  --color-fay: #9b7f6b;
+  --color-deprem: #7f8fb3;
+
   /* --- yazı tipi aileleri --- */
   --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
   --font-cond: 'IBM Plex Sans Condensed', 'IBM Plex Sans', ui-sans-serif, sans-serif;

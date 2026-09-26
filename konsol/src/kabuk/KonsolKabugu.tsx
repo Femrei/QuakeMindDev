@@ -1,13 +1,17 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { HaritaKabugu, useHarita } from '@/harita/HaritaKabugu'
 import { AlanSecici } from '@/harita/AlanSecici'
 import { katmanlariKur } from '@/harita/katmanlar'
+import { karoAdresi } from '@/harita/goruntuKatmani'
 import { useKonsol } from '@/durum/konsolDurumu'
 import { useSecim, type Kutu } from '@/durum/secimDurumu'
 import { useSorguAraligi } from '@/durum/zamanDurumu'
 import { useEkipler, useHasarNoktalari, useIsiIzgarasi, useSosCagrilari } from '@/veri/sorgular'
 import { useIhbarlar, type IhbarTuru } from '@/veri/ihbar'
+import { useDepremler, useFaylar, useKapanmalar, useToplanmaAlanlari } from '@/veri/katman'
+import { useSimAlanlar, useSimMaske, useSimSonuc } from '@/veri/simulasyon'
+import { useSimulasyon } from '@/durum/simulasyonDurumu'
 import { isiDokusuKur } from '@/harita/isiDokusu'
 import { KANALLAR } from '@/durum/konsolDurumu'
 import { useAnalizSegmentleri } from '@/veri/analiz'
@@ -16,6 +20,7 @@ import { gunMetni } from '@/lib/bicim'
 import { Chip } from './parcalar'
 import {
   ALTLIK_EN_AZ_ZOOM,
+  TOPLANMA_EN_AZ_ZOOM,
   kisaAd,
   kutuMerkezi,
   useAltlikGirdisi,
@@ -30,6 +35,8 @@ import { ZamanSeridi } from './ZamanSeridi'
 import { KomutPaleti } from './KomutPaleti'
 import { YeniOlaylar } from './YeniOlaylar'
 import { KatmanDugmesi } from './KatmanDugmesi'
+import { HaritaGostergesi } from './HaritaGostergesi'
+import { TatbikatSeridi } from './TatbikatSeridi'
 
 /* ---------------------------------------------------------------------------
    Konsol kabuğu: üst çubuk · sol mod paneli · harita (köşesinde katmanlar
@@ -48,6 +55,12 @@ export function KonsolKabugu() {
   return (
     <div className="flex h-full flex-col">
       <UstCubuk />
+
+      {/* Tatbikat şeridi kabukta durur: mod değişse de görünür, kapatılamaz
+          (SIMULASYON_SOZLESMESI.md §5 madde 1). Koşu yoksa hiç çizilmez. */}
+      <div className="px-gutter pt-gutter empty:hidden">
+        <TatbikatSeridi />
+      </div>
 
       <div className="relative flex min-h-0 flex-1 flex-col overflow-auto genis:block genis:overflow-hidden">
         <HaritaKabugu>
@@ -69,9 +82,11 @@ export function KonsolKabugu() {
                 <div className="genis:pointer-events-auto">
                   <SehirDugmeleri />
                 </div>
-                {/* Solda katmanlar (J-56), sağda yeni SOS ve ihbar kartı (ARAYUZ §10, J-51). */}
+                {/* Solda katmanlar (J-56) ve tatbikat göstergesi (J-95),
+                    sağda yeni SOS ve ihbar kartı (ARAYUZ §10, J-51). */}
                 <div className="flex w-full items-end justify-between gap-gutter">
-                  <div className="genis:pointer-events-auto">
+                  <div className="genis:pointer-events-auto flex flex-col items-start gap-2">
+                    <HaritaGostergesi />
                     <KatmanDugmesi />
                   </div>
                   <div className="genis:pointer-events-auto">
@@ -190,8 +205,9 @@ function HaritaKunyesi() {
 function KatmanKopru() {
   const { mod } = useParams()
   const tanim = modBul(mod) ?? MODLAR[0]
-  const { hazir, katmanlariYaz, ucus, tiklamaYaz, haritaAl } = useHarita()
+  const { hazir, katmanlariYaz, ucus, kutuyaUc, tiklamaYaz, haritaAl } = useHarita()
   const katmanlar = useKonsol((d) => d.katmanlar)
+  const analizKarosu = useKonsol((d) => d.analizKarosu)
   const seciliKayit = useKonsol((d) => d.seciliKayit)
   const katmanlariAyarla = useKonsol((d) => d.katmanlariAyarla)
   const kayitSec = useKonsol((d) => d.kayitSec)
@@ -204,6 +220,86 @@ function KatmanKopru() {
   const sos = useSosCagrilari(aralik)
   const ihbar = useIhbarlar(aralik)
   const ekipler = useEkipler()
+
+  // Başvuru katmanları (J-56): yalnız katman açıkken istenir, sonra önbellekte
+  // kalır. Bölgeye göre değişmediği için zaman penceresine bağlı değiller.
+  const kapanmalar = useKapanmalar(katmanlar.hasarliYollar)
+  const depremler = useDepremler(katmanlar.depremler)
+  const faylar = useFaylar(katmanlar.faylar)
+  const toplanma = useToplanmaAlanlari(katmanlar.toplanma)
+
+  // Tatbikat koşusu (SIMULASYON_SOZLESMESI.md): sonuç canlı akış mesajıyla
+  // tazelenir, maske jetonla indirilip ImageBitmap'e çevrilir.
+  const simIsId = useSimulasyon((d) => d.isId)
+  const simVaryantlar = useSimulasyon((d) => d.varyantlar)
+  const simSonuc = useSimSonuc(simIsId)
+  const simMaske = useSimMaske(katmanlar.simHasar ? simSonuc.data?.hasar?.maskeUrl : undefined)
+  // Tatbikat zemini: MODELİN BAKTIĞI görüntü. Bu alanların çoğunda üretilmiş
+  // altlık paketi yok (Nurdağı'nda zemin bomboş siyahtı) ve doğru zemin zaten
+  // enkazın kendisidir. Yalnız koşu varken serilir.
+  const simSecim = useSimulasyon((d) => d.secim)
+  const simAlanlar = useSimAlanlar()
+  const simGoruntu = useMemo(() => {
+    if (!simIsId) return null
+    // Alan KOŞUNUN kendisinden okunur, panel seçiminden değil: sayfa
+    // yenilenince koşu kimliği sessionStorage'dan geri geliyor (J-74) ama
+    // panel seçimi boş kalıyordu ve zemin görüntüsü kayboluyordu.
+    const alanId = simSonuc.data?.alan?.id ?? simSecim.alanId
+    const alan = simAlanlar.data?.find((a) => a.id === alanId)
+    const kat = alan?.katmanlar.find((k) => k.id === simSecim.katmanId) ?? alan?.katmanlar[0]
+    if (!kat) return null
+    const kaynak = kat.kaynak === 'esri' || kat.kaynak === 'google' ? kat.kaynak : 'oam'
+    const adres = karoAdresi({
+      kaynak,
+      oamTmsUrl: kat.oamTmsUrl ?? null,
+      oamBasligi: kat.oamBasligi ?? null,
+      oamTarihi: kat.cekimTarihi ?? null,
+      waybackId: kat.waybackId ?? null,
+      waybackTarihi: kat.cekimTarihi ?? null,
+    })
+    // Kapsam: alanın kendi kutusu. Dışında karo istenmez (bkz. goruntuKatmani).
+    return adres ? { ...adres, kapsam: kat.bbox ?? null } : null
+  }, [simIsId, simAlanlar.data, simSecim, simSonuc.data?.alan?.id])
+  const simGirdi = useMemo(
+    () => ({
+      katmanlar,
+      sonuc: simSonuc.data ?? null,
+      maske: simMaske.data ?? null,
+      varyantlar: simVaryantlar,
+      goruntu: simGoruntu,
+      izlenenYollar: simSonuc.data?.izlenenYollar ?? null,
+    }),
+    [katmanlar, simSonuc.data, simMaske.data, simVaryantlar, simGoruntu],
+  )
+
+  // TATBİKAT BAŞLAYINCA HARİTA ORAYA UÇAR. Önce uçmuyordu: koşu Nurdağı'nda
+  // biterken harita Antakya'da kalıyor, kullanıcı hiçbir katmanı göremiyordu
+  // (ölçüldü, 26 Eylül — şehir sekmesi de merkeze götürdüğü için yetmiyor,
+  // tatbikat alanı merkeze 15 km uzakta). Koşu başına BİR KEZ uçulur; sonra
+  // kullanıcının kendi kaydırması bozulmaz.
+  const ucurulanKosu = useRef<string | null>(null)
+  const oncekiGorunum = useRef<{ lon: number; lat: number; zoom: number } | null>(null)
+  const simKutu = simSonuc.data?.alan?.bbox ?? simSonuc.data?.hasar?.bbox ?? null
+  useEffect(() => {
+    if (!hazir || !simIsId || !simKutu) return
+    if (ucurulanKosu.current === simIsId) return
+    const h = haritaAl()
+    if (h) {
+      const c = h.getCenter()
+      oncekiGorunum.current = { lon: c.lng, lat: c.lat, zoom: h.getZoom() }
+    }
+    ucurulanKosu.current = simIsId
+    kutuyaUc(simKutu)
+  }, [hazir, simIsId, simKutu, kutuyaUc, haritaAl])
+  // Tatbikat bitince görünüm geri alınır: tatbikat alanlarının çoğunda üretilmiş
+  // altlık paketi yok, bitirince kullanıcı kapkara bir haritayla kalıyordu.
+  useEffect(() => {
+    if (simIsId) return
+    ucurulanKosu.current = null
+    const g = oncekiGorunum.current
+    oncekiGorunum.current = null
+    if (hazir && g) ucus(g.lon, g.lat, g.zoom)
+  }, [simIsId, hazir, ucus])
 
   // Altlık: yalnız görünen bölgelerin paketleri iner (harita durunca), bir kez.
   const { altlik, altlikYapiGorunur, bolgeAdlari, adSeviyesi, gorunum } = useAltlikGirdisi()
@@ -279,8 +375,15 @@ function KatmanKopru() {
         ihbarTurleri: MOD_IHBARLARI[tanim.id],
         seciliIhbar: seciliKayit?.tip === 'ihbar' ? seciliKayit.id : null,
         secim: { kutu: secimKutusu, cokgen: secimCokgeni, taslak: secimTaslagi },
+        goruntu: analizKarosu,
         analiz: segmentler.data ?? null,
         isi: isiDokusu,
+        toplanmaGorunur: (gorunum?.zoom ?? 0) >= TOPLANMA_EN_AZ_ZOOM,
+        simulasyon: simGirdi,
+        kapanmalar: kapanmalar.data?.kayitlar,
+        depremler: depremler.data?.kayitlar,
+        faylar: faylar.data?.kayitlar,
+        toplanma: toplanma.data?.kayitlar,
       }),
     [
       katmanlar,
@@ -299,7 +402,14 @@ function KatmanKopru() {
       secimCokgeni,
       secimTaslagi,
       segmentler.data,
+      analizKarosu,
       isiDokusu,
+      gorunum?.zoom,
+      kapanmalar.data,
+      depremler.data,
+      faylar.data,
+      toplanma.data,
+      simGirdi,
     ],
   )
 

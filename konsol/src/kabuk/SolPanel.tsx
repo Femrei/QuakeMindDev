@@ -1,4 +1,5 @@
 import { Panel } from './Panel'
+import { PanelSiniri } from './PanelSiniri'
 import { GenelSol } from '@/modlar/genel'
 import { SosSol } from '@/modlar/sos'
 import { EkiplerSol } from '@/modlar/ekipler'
@@ -9,6 +10,7 @@ import { KameraSol } from '@/modlar/kamera'
 import { MetinSol } from '@/modlar/metin'
 import { RiskSol } from '@/modlar/risk'
 import { YolSol } from '@/modlar/yol'
+import { SimulasyonSol } from '@/modlar/simulasyon'
 import { modBul, type ModId } from '@/modlar/modlar'
 
 /* Sol panel: seçili modun paneli (J-56). Başlıkta modun adı yazar; üst
@@ -27,13 +29,16 @@ const MOD_PANELI: Record<ModId, () => React.JSX.Element> = {
   metin: MetinSol,
   risk: RiskSol,
   yol: YolSol,
+  simulasyon: SimulasyonSol,
 }
 
 export function SolPanel({ mod }: { mod: ModId }) {
   const ModPaneli = MOD_PANELI[mod]
   return (
     <Panel baslik={modBul(mod)?.ad ?? 'Mod'}>
-      <ModPaneli />
+      <PanelSiniri baslik={modBul(mod)?.ad ?? 'Mod'}>
+        <ModPaneli />
+      </PanelSiniri>
     </Panel>
   )
 }

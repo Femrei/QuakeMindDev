@@ -234,6 +234,32 @@ export function useUyduModeli() {
   })
 }
 
+/** Analizde seçilebilecek bütün modeller (modeller/uydu/*.json). */
+export type AnalizModeli = {
+  ad: string
+  etiket: string
+  mimari: string
+  sinamaIoU: number | null
+  esik: number
+  guclendirme: number
+  sonIsleme: number
+  egitimGsdM: [number, number]
+  ileriGecis512Sn: number | null
+  agirlikSha256: string
+  hazir: boolean
+  etkin: boolean
+}
+
+export function useAnalizModelleri() {
+  return useQuery({
+    queryKey: ['analiz-modeller'],
+    queryFn: () => apiGet<{ modeller: AnalizModeli[] }>('/api/road_damage/modeller'),
+    select: (d) => d.modeller,
+    staleTime: 5 * 60_000,
+  })
+}
+
+
 export type AnalizIstegi = {
   city: string
   latitude: number
@@ -246,6 +272,8 @@ export type AnalizIstegi = {
   radiusKm: number
   /** source === 'esri' ise hangi tarihli Wayback sürümü kullanılacak. */
   waybackId?: string
+  /** Hangi model koşsun (modeller/uydu/<ad>). Verilmezse sunucunun etkin modeli. */
+  modelAdi?: string
   /** source === 'oam' ise seçilen görüntünün karo adresi. */
   oamTileUrl?: string
   /** Haritada alan seçildiyse merkez+yarıçap yerine bu kutu analiz edilir. */

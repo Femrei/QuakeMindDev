@@ -1,4 +1,5 @@
 import { Panel } from './Panel'
+import { PanelSiniri } from './PanelSiniri'
 import { Micro } from './parcalar'
 import { GenelSag } from '@/modlar/genel'
 import { SosSag } from '@/modlar/sos'
@@ -10,6 +11,7 @@ import { KameraSag } from '@/modlar/kamera'
 import { MetinSag } from '@/modlar/metin'
 import { RiskSag } from '@/modlar/risk'
 import { YolSag } from '@/modlar/yol'
+import { SimulasyonSag } from '@/modlar/simulasyon'
 import type { ModId } from '@/modlar/modlar'
 import { useAralik } from '@/durum/zamanDurumu'
 import { tarih } from '@/lib/bicim'
@@ -25,6 +27,7 @@ const MOD_PANELI: Record<ModId, () => React.JSX.Element> = {
   metin: MetinSag,
   risk: RiskSag,
   yol: YolSag,
+  simulasyon: SimulasyonSag,
 }
 
 export function SagPanel({ mod }: { mod: ModId }) {
@@ -40,7 +43,9 @@ export function SagPanel({ mod }: { mod: ModId }) {
         </Micro>
       }
     >
-      <ModPaneli />
+      <PanelSiniri baslik={'Durum paneli'}>
+        <ModPaneli />
+      </PanelSiniri>
     </Panel>
   )
 }
