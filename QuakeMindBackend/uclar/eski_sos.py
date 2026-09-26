@@ -33,13 +33,15 @@ from utils.postgis_manager import postgis_engine
 from apps.road_damage.utils.serialization import compact_segment_coords as _compact_segment_coords, serialize_segments as _serialize_segments, haversine_m as _haversine_m
 from apps.road_damage.utils.imaging import image_array_to_b64 as _image_array_to_b64, build_damage_overlay as _build_damage_overlay, build_segmentation_overlay as _build_segmentation_overlay
 from apps.road_damage.utils.tiling import zoom_for_radius as _zoom_for_radius
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+
+import kimlik
 
 yonlendirici = APIRouter()
 
 
 @yonlendirici.post("/api/sos/alert")
-def create_sos_alert(req: ck.SOSAlertRequest):
+def create_sos_alert(req: ck.SOSAlertRequest, _eski: None = Depends(kimlik.eski_uc)):
     if not (-90.0 <= req.latitude <= 90.0) or not (-180.0 <= req.longitude <= 180.0):
         raise HTTPException(status_code=422, detail="Gecersiz koordinat.")
 
@@ -85,14 +87,14 @@ def create_sos_alert(req: ck.SOSAlertRequest):
 
 
 @yonlendirici.get("/api/sos/alerts")
-def list_sos_alerts():
+def list_sos_alerts(_eski: None = Depends(kimlik.eski_uc)):
     with ck.sos_lock:
         alerts = list(ck.sos_alerts)
     return {"alerts": alerts, "totalAlerts": len(alerts)}
 
 
 @yonlendirici.post("/api/sos/alert/{alert_id}/status")
-def update_sos_status(alert_id: str, req: ck.SOSStatusUpdateRequest):
+def update_sos_status(alert_id: str, req: ck.SOSStatusUpdateRequest, _eski: None = Depends(kimlik.eski_uc)):
     with ck.sos_lock:
         for alert in ck.sos_alerts:
             if alert["id"] == alert_id:

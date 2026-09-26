@@ -34,7 +34,9 @@ from utils.postgis_manager import postgis_engine
 from apps.road_damage.utils.serialization import compact_segment_coords as _compact_segment_coords, serialize_segments as _serialize_segments, haversine_m as _haversine_m
 from apps.road_damage.utils.imaging import image_array_to_b64 as _image_array_to_b64, build_damage_overlay as _build_damage_overlay, build_segmentation_overlay as _build_segmentation_overlay
 from apps.road_damage.utils.tiling import zoom_for_radius as _zoom_for_radius
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+
+import kimlik
 
 yonlendirici = APIRouter()
 
@@ -340,7 +342,7 @@ def calculate_custom_route(req: ck.CustomRouteRequest):
 
 
 @yonlendirici.post("/api/road_damage/report_blockage")
-def report_road_blockage(req: ck.RoadBlockageRequest):
+def report_road_blockage(req: ck.RoadBlockageRequest, _eski: None = Depends(kimlik.eski_uc)):
     import uuid
     from utils.postgis_manager import postgis_engine
 

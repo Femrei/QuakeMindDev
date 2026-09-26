@@ -33,13 +33,15 @@ from utils.postgis_manager import postgis_engine
 from apps.road_damage.utils.serialization import compact_segment_coords as _compact_segment_coords, serialize_segments as _serialize_segments, haversine_m as _haversine_m
 from apps.road_damage.utils.imaging import image_array_to_b64 as _image_array_to_b64, build_damage_overlay as _build_damage_overlay, build_segmentation_overlay as _build_segmentation_overlay
 from apps.road_damage.utils.tiling import zoom_for_radius as _zoom_for_radius
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+
+import kimlik
 
 yonlendirici = APIRouter()
 
 
 @yonlendirici.get("/api/camera/reports")
-def list_debris_reports():
+def list_debris_reports(_eski: None = Depends(kimlik.eski_uc)):
     with ck.debris_lock:
         reports = list(ck.debris_reports)
     return {"reports": reports, "totalReports": len(reports)}
@@ -127,7 +129,7 @@ def yolo_tespit(img, model_type: str) -> tuple[list, list, bool]:
 
 
 @yonlendirici.post("/api/camera/analyze")
-def analyze_camera_frame(req: ck.CameraAnalysisRequest):
+def analyze_camera_frame(req: ck.CameraAnalysisRequest, _kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici"))):
     import base64
     import cv2
 

@@ -23,3 +23,29 @@ def zoom_for_radius(radius_km, target_tiles=6, min_zoom=13, max_zoom=18):
             break
         z -= 1
     return z
+
+
+def zoom_for_gsd(hedef_gsd_m, lat, min_zoom=13, max_zoom=20):
+    """Modelin egitim cozunurlugune EN YAKIN karo yakinlastirmasi.
+
+    Analiz her zaman ayni standartta kossun diye yakinlastirma alan
+    buyuklugunden degil MODELIN egitildigi metre/piksel degerinden secilir.
+    Onceki kuralda (`zoom_for_radius`) genis alan secmek cozunurlugu dusuruyor,
+    model de egitildigi olcegin disina cikip hicbir sey bulamiyordu (J-76).
+
+    Web Mercator'da bir karo pikselinin yer olcusu enlemle degisir:
+        gsd = 156543,03392 * cos(enlem) / 2^z
+    """
+    import math
+
+    if not hedef_gsd_m or hedef_gsd_m <= 0:
+        return max_zoom
+    tam = math.log2(156543.03392 * math.cos(math.radians(lat)) / hedef_gsd_m)
+    return max(min_zoom, min(max_zoom, int(round(tam))))
+
+
+def gsd_of_zoom(z, lat):
+    """Verilen yakinlastirmada metre/piksel."""
+    import math
+
+    return 156543.03392 * math.cos(math.radians(lat)) / (2 ** z)

@@ -33,13 +33,15 @@ from utils.postgis_manager import postgis_engine
 from apps.road_damage.utils.serialization import compact_segment_coords as _compact_segment_coords, serialize_segments as _serialize_segments, haversine_m as _haversine_m
 from apps.road_damage.utils.imaging import image_array_to_b64 as _image_array_to_b64, build_damage_overlay as _build_damage_overlay, build_segmentation_overlay as _build_segmentation_overlay
 from apps.road_damage.utils.tiling import zoom_for_radius as _zoom_for_radius
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+
+import kimlik
 
 yonlendirici = APIRouter()
 
 
 @yonlendirici.post("/api/nlp/analyze")
-def analyze_nlp(req: ck.NLPRequest):
+def analyze_nlp(req: ck.NLPRequest, _kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici"))):
     pipeline = ck._get_nlp_pipeline()
     if not pipeline:
         raise HTTPException(status_code=503, detail="NLP model is not loaded.")
@@ -85,7 +87,7 @@ def analyze_nlp(req: ck.NLPRequest):
 
 
 @yonlendirici.get("/api/nlp/locations")
-def list_nlp_locations():
+def list_nlp_locations(_eski: None = Depends(kimlik.eski_uc)):
     with ck.nlp_locations_lock:
         locations = list(ck.nlp_locations)
     return {"locations": locations, "totalLocations": len(locations)}

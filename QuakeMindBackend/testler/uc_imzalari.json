@@ -206,7 +206,30 @@
   "istek": "GET /api/gorevler +jeton",
   "durum": 200,
   "liste": true,
-  "ogeAnahtarlari": null
+  "ogeAnahtarlari": [
+   "adimlar",
+   "atandi",
+   "atayanAd",
+   "bitti",
+   "cikis",
+   "durum",
+   "ekDestek",
+   "ekip",
+   "ekipKonumu",
+   "hedef",
+   "hedefId",
+   "hedefTur",
+   "id",
+   "kalanM",
+   "kisiSayisi",
+   "not",
+   "olaySuruyor",
+   "rota",
+   "sonuc",
+   "vardi",
+   "yol",
+   "yolaCikti"
+  ]
  },
  {
   "istek": "GET /api/gorevler",
@@ -279,31 +302,16 @@
  },
  {
   "istek": "GET /api/sos/alerts",
-  "durum": 200,
+  "durum": 404,
   "anahtarlar": [
-   "alerts",
-   "totalAlerts"
+   "detail"
   ]
  },
  {
   "istek": "POST /api/sos/alert",
-  "durum": 200,
+  "durum": 404,
   "anahtarlar": [
-   "accuracy",
-   "batteryPercent",
-   "channel",
-   "commsStatus",
-   "gpsPollingSec",
-   "id",
-   "latitude",
-   "longitude",
-   "message",
-   "payloadBytes",
-   "powerMode",
-   "receivedAt",
-   "sirenActive",
-   "totalAlerts",
-   "userId"
+   "detail"
   ]
  },
  {
@@ -373,36 +381,28 @@
  },
  {
   "istek": "GET /api/camera/reports",
-  "durum": 200,
+  "durum": 404,
   "anahtarlar": [
-   "reports",
-   "totalReports"
+   "detail"
   ]
  },
  {
   "istek": "POST /api/camera/analyze",
-  "durum": 200,
+  "durum": 401,
   "anahtarlar": [
-   "activeModels",
-   "advice",
-   "annotatedImage",
-   "detections",
-   "modelType",
-   "status",
-   "timestamp"
+   "detail"
   ]
  },
  {
   "istek": "GET /api/nlp/locations",
-  "durum": 200,
+  "durum": 404,
   "anahtarlar": [
-   "locations",
-   "totalLocations"
+   "detail"
   ]
  },
  {
   "istek": "POST /api/nlp/analyze",
-  "durum": 422,
+  "durum": 401,
   "anahtarlar": [
    "detail"
   ]
@@ -454,21 +454,21 @@
  },
  {
   "istek": "POST /api/road_damage/analyze",
-  "durum": 422,
+  "durum": 401,
   "anahtarlar": [
    "detail"
   ]
  },
  {
   "istek": "GET /api/road_damage/status/yok",
-  "durum": 404,
+  "durum": 401,
   "anahtarlar": [
    "detail"
   ]
  },
  {
   "istek": "GET /api/road_damage/segments/yok",
-  "durum": 404,
+  "durum": 401,
   "anahtarlar": [
    "detail"
   ]
@@ -552,16 +552,16 @@
  },
  {
   "istek": "POST /api/road_damage/report_blockage",
-  "durum": 422,
+  "durum": 404,
   "anahtarlar": [
    "detail"
   ]
  },
  {
   "istek": "GET /api/road_damage/recent?minutes=5",
-  "durum": 200,
+  "durum": 401,
   "anahtarlar": [
-   "analyses"
+   "detail"
   ]
  },
  {
@@ -576,14 +576,9 @@
  },
  {
   "istek": "GET /api/road_damage/heatmap?latitude=36.202&longitude=36.161&radiusKm=5",
-  "durum": 200,
+  "durum": 401,
   "anahtarlar": [
-   "bounds",
-   "generatedFrom",
-   "izgara",
-   "kaynak",
-   "olcek",
-   "points"
+   "detail"
   ]
  },
  {
@@ -801,6 +796,63 @@
    "uyari",
    "uzunlukM",
    "yuruyusDk"
+  ]
+ },
+ {
+  "istek": "GET /api/katman/kapanmalar +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "kayitlar",
+   "kaynak",
+   "kutu",
+   "sayi"
+  ]
+ },
+ {
+  "istek": "GET /api/katman/kapanmalar",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/katman/depremler?enAz=6 +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "enAz",
+   "kayitlar",
+   "kaynak",
+   "kutu",
+   "kutudakiToplam",
+   "sayi"
+  ]
+ },
+ {
+  "istek": "GET /api/katman/faylar?kutu=36.0,36.0,37.0,37.0 +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "kayitlar",
+   "kaynak",
+   "kutu",
+   "sayi"
+  ]
+ },
+ {
+  "istek": "GET /api/katman/faylar?kutu=0,0,90,90 +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/katman/toplanma?kutu=36.1,36.15,36.25,36.25 +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "kayitlar",
+   "kaynak",
+   "kutu",
+   "kutudakiToplam",
+   "sayi"
   ]
  }
 ]

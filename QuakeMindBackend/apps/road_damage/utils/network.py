@@ -19,6 +19,17 @@ from shapely.geometry import LineString
 # bilinen konumlar icin pickle'lanip cache'leniyor; canli cagrida sadece
 # cache'ten hizli yukleme yapiliyor (build DEGIL) -- worker.py'nin 45sn'lik
 # dis timeout'unu asmamak icin.
+# Kapanmaya varan ekibin kaybettigi sure, iki ayrisik bilesen (dakika).
+# BEYAN EDILEN tasarim parametreleridir (olcum degil); duyarliligi tatbikat
+# raporunda ayrica verilir. Manevra suresi donus.py'deki U donusu maliyetiyle
+# ayni olsun diye oradan okunur.
+DEGERLENDIRME_DK = 1.0
+try:
+    from apps.road_damage.utils.donus import DONUS_SN as _DONUS_SN
+    MANEVRA_DK = _DONUS_SN["u"] / 60.0
+except Exception:  # donus.py yoksa makul bir taban
+    MANEVRA_DK = 25.0 / 60.0
+
 LOCAL_PBF_PATH = os.environ.get("QUAKEMIND_LOCAL_OSM_PBF", "D:/quakemind_osm_data/turkey-latest.osm.pbf")
 LOCAL_GRAPH_CACHE_DIR = Path(__file__).resolve().parents[1] / "data" / "osm_graph_cache"
 
@@ -347,6 +358,21 @@ def fetch_osm_road_graph(bounds, network_type='drive'):
         print(f"OSMnx: yerel PBF cache'inden yuklendi ({G.number_of_nodes()} dugum), Overpass'a hic gidilmedi.")
         return G, None
 
+    # Bolge dosyasi (araclar_yerel_osm_kur.py). Onbellek anahtari kutunun TAM
+    # esitligine bagli oldugu icin tatbikatin her kosusunda isabet etmiyor --
+    # kutu ekip/afetzede konumlarindan turedigi icin biraz oynuyor. Bolge
+    # dosyasi herhangi bir kutuyu karsilayabilir ve Overpass'a hic gitmez.
+    if network_type == "drive":
+        try:
+            from apps.road_damage.utils import yerel_yol
+            if yerel_yol.veri_var():
+                Gy = yerel_yol.graf(bounds)
+                if Gy.number_of_edges() > 0:
+                    print(f"Yol agi yerel bolge dosyasindan ({Gy.number_of_nodes()} dugum).")
+                    return Gy, None
+        except Exception as e:
+            print(f"Yerel bolge dosyasi okunamadi: {type(e).__name__}: {e}")
+
     last_error = None
     original_timeout = ox.settings.requests_timeout
     ox.settings.requests_timeout = 10
@@ -637,7 +663,11 @@ def _shortest_path_avoiding(G, source, target, hidden: set, penalized: set | Non
 
 def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: float = 0.0,
                              share: bool = False, speed_kmh: float = 15.0,
-                             u_turn_penalty_min: float = 20.0,
+                             u_turn_penalty_min: float | None = None,
+                             assessment_min: float = DEGERLENDIRME_DK,
+                             manoeuvre_min: float = MANEVRA_DK,
+                             turn_costs: bool = False,
+                             edge_speeds: bool = False,
                              max_iterations: int = MAX_NAIVE_ITERATIONS,
                              pathfinder: str = "weight",
                              simultaneous_known: bool = True,
@@ -692,8 +722,42 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
     """
     import heapq
 
+    # KAPANMAYA VARMANIN BEDELI. Eskiden tek bir sabitti (`u_turn_penalty_min`
+    # = 20 dk) ve sonucu TEK BASINA belirliyordu: kapanma bilgisi olan ve
+    # olmayan ekip arasindaki farkin %97,4'u bu sabitten geliyordu, yani olcum
+    # aslinda sabitin kendisini olcuyordu. Simdi iki ayrisik ve beyan edilmis
+    # sure var; asil bedel, ekibin fiilen fazladan surdugu yoldan gelir ve onu
+    # cizge hesaplar.
+    #   degerlendirme  ekip durur, kapanmayi gorur, telsizle bildirir
+    #   manevra        donus manevrasinin kendisi (donus.py ile ayni deger)
+    # Geriye donuk uyumluluk: eski betikler `u_turn_penalty_min` gonderirse o
+    # deger aynen kullanilir (eski tablolar yeniden uretilebilsin diye).
+    if u_turn_penalty_min is not None:
+        kapanma_cezasi_dk = float(u_turn_penalty_min)
+    else:
+        kapanma_cezasi_dk = float(assessment_min) + float(manoeuvre_min)
+
+    # DONUS MALIYETI. Dugum tabanli arama kavsaga nasil girildigini bilmez ve
+    # sola donusu saga donusle ayni fiyata alir; Turkiye'de trafik SAGDAN
+    # aktigi icin bu yanlistir. `turn_costs=True` iken planlama kenar tabanli
+    # aramaya (donus.en_kisa_yol) gecer ve saat de donus suresini isler.
+    _donus = _yonler = None
+    if turn_costs:
+        from apps.road_damage.utils import donus as _donus
+        _yonler = _donus.kenar_yonleri(G)
+
     per_stop = sight_m > 0
     min_per_m = 60.0 / (speed_kmh * 1000.0)
+
+    def _kenar_dk(d):
+        """Kenari gecme suresi (dk). `edge_speeds` ile kenarin kendi hizi
+        kullanilir (maxspeed / yol sinifi); yoksa filo icin tek hiz."""
+        uz = d.get("length", 0.0)
+        if edge_speeds:
+            v = d.get("hizKmh")
+            if v:
+                return uz * (60.0 / (float(v) * 1000.0))
+        return uz * min_per_m
     fleet_time: dict = {}   # kenar -> filoya ilk bildirildigi an (dk)
 
     prior = set()
@@ -709,6 +773,17 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
             "clock": 0.0, "length": 0.0, "own": set(), "prior": prior, "fallback": False,
             "discoveries": 0, "stops": 0, "radioReplans": 0, "iterations": 0,
             "path": None, "keys": None, "idx": 0, "pathEdges": set(), "status": "moving",
+            # Ekip kavsaga HANGI kenarla girdi: sagdan trafikte donus maliyetini
+            # belirleyen budur. Baslangicta yok (us onunde, yonu serbest).
+            "gelen": None,
+            "donus": {"duz": 0, "sag": 0, "sol": 0, "u": 0},
+            "donusDk": 0.0,
+            # FIILEN SURULEN yol: planlanan degil, gercekten gecilen kenarlar.
+            # Kapanmayi bilmeyen ekip cikmaza girip geri donuyor; manset sayi
+            # (4,4 -> 1,6 dk) bu yoldan geliyor ama harita onu cizmiyordu,
+            # yalniz uc planlama varyantini gosteriyordu -- kullanici hangi
+            # cizginin "bilmeseydik" oldugunu soramaz hale geliyordu (27 Eylul).
+            "izlenen": [],
         })
 
     soft = prior_penalty_factor is not None
@@ -747,6 +822,17 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
             elif soft:
                 path, keys = _shortest_path_avoiding(G, agent["node"], agent["goal"], hidden,
                                                      agent["prior"], prior_penalty_factor)
+            elif turn_costs:
+                def _sure(u, v, k, d, _h=hidden):
+                    if (u, v, k) in _h:
+                        return float("inf")
+                    return _kenar_dk(d) * 60.0
+                _sn, path, kenarlar, _say = _donus.en_kisa_yol(
+                    G, agent["node"], agent["goal"], _sure, yonler=_yonler,
+                    gelen_kenar=agent["gelen"])
+                if path is None:
+                    raise nx.NetworkXNoPath("donus maliyetli yol yok")
+                keys = [e[2] for e in kenarlar]
             else:
                 path, keys = _shortest_path_avoiding(G, agent["node"], agent["goal"], hidden)
         except (nx.NetworkXNoPath, nx.NodeNotFound):
@@ -802,9 +888,9 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
             agent["discoveries"] += len(seen)
             if per_stop:
                 if not stopped:
-                    agent["clock"] += u_turn_penalty_min
+                    agent["clock"] += kapanma_cezasi_dk
             else:
-                agent["clock"] += u_turn_penalty_min
+                agent["clock"] += kapanma_cezasi_dk
             stopped = True
             if not plan(agent):
                 return
@@ -814,9 +900,19 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
             return
         j = agent["idx"]
         u, v, k = agent["path"][j], agent["path"][j + 1], agent["keys"][j]
-        w = G[u][v][k].get("length", 0.0)
+        d = G[u][v][k]
+        w = d.get("length", 0.0)
         agent["length"] += w
-        agent["clock"] += w * min_per_m
+        if turn_costs and agent["gelen"] is not None:
+            t = _donus.donus_tipi(_yonler[agent["gelen"]][1], _yonler[(u, v, k)][0],
+                                  geri_mi=(v == agent["gelen"][0]))
+            agent["donus"][t] += 1
+            ek = _donus.DONUS_SN.get(t, 0.0) / 60.0
+            agent["donusDk"] += ek
+            agent["clock"] += ek
+        agent["clock"] += _kenar_dk(d)
+        agent["izlenen"].append((u, v, k))
+        agent["gelen"] = (u, v, k)
         agent["node"] = v
         agent["idx"] = j + 1
 
@@ -846,6 +942,12 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
             "arrivalMin": round(agent["clock"], 2),
             "pathComputations": agent["iterations"],
             "fallback": agent["fallback"],
+            "kapanmaCezasiDk": round(kapanma_cezasi_dk, 3),
+            "donusler": dict(agent["donus"]),
+            "donusSuresiDk": round(agent["donusDk"], 2),
+            "izlenenKenar": list(agent["izlenen"]),
+            "cezadanGelenDk": round(
+                (agent["stops"] if per_stop else agent["discoveries"]) * kapanma_cezasi_dk, 2),
         })
     return out
 

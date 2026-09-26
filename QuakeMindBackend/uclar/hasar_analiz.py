@@ -41,7 +41,7 @@ yonlendirici = APIRouter()
 
 
 @yonlendirici.get("/api/road_damage/wayback_versions")
-def road_damage_wayback_versions():
+def road_damage_wayback_versions(_kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici"))):
     try:
         runtime = ck._get_road_runtime()
     except Exception:
@@ -77,6 +77,41 @@ def road_damage_wayback_goruntuler(
         raise HTTPException(status_code=503, detail=f"Wayback arsivi okunamadi: {e}")
 
 
+@yonlendirici.get("/api/road_damage/modeller")
+def road_damage_modeller(_kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici"))):
+    """Analizde seçilebilecek BÜTÜN modeller (modeller/uydu/*.json).
+
+    Her satır kendi künyesini taşır: mimari, eğitim protokolü, sınama IoU,
+    ağırlık izi ve karar ayarı. Ağırlığı bulunmayan model `hazir: false` döner
+    ve arayüzde seçilemez — uydurma seçenek gösterilmez (kural 1)."""
+    from apps.road_damage.utils import model_kunyesi
+
+    liste = []
+    for yol in sorted(model_kunyesi.KUNYE_DIZINI.glob("*.json")):
+        try:
+            k = model_kunyesi.kunye_oku(yol.stem)
+        except Exception as e:
+            liste.append({"ad": yol.stem, "hazir": False, "hata": str(e)})
+            continue
+        olcum = k.get("olcum") or {}
+        agirlik = model_kunyesi.BACKEND / k["agirlik"]["dosya"]
+        liste.append({
+            "ad": k["ad"],
+            "etiket": k.get("etiket") or k["ad"],
+            "mimari": f"{k['mimari']['sinif']} ({k['mimari']['kodlayici']})",
+            "sinamaIoU": olcum.get("sinamaIoU"),
+            "esik": k["karar"]["esik"],
+            "guclendirme": k["karar"]["guclendirme"],
+            "sonIsleme": k["karar"]["sonIsleme"],
+            "egitimGsdM": k["girdi"]["egitimGsdM"],
+            "ileriGecis512Sn": olcum.get("ileriGecis512Sn"),
+            "agirlikSha256": k["agirlik"]["sha256"][:12],
+            "hazir": agirlik.exists(),
+            "etkin": k["ad"] == model_kunyesi.etkin_model_adi(),
+        })
+    return {"modeller": liste}
+
+
 @yonlendirici.get("/api/road_damage/model")
 def road_damage_model(_kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici"))):
     """Etkin uydu modelinin kunye ozeti (J-36): konsol karar ayarlarinin
@@ -99,6 +134,7 @@ def road_damage_oam_search(
     bboxSouth: Optional[float] = None,
     bboxEast: Optional[float] = None,
     bboxNorth: Optional[float] = None,
+    _kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici")),
 ):
     try:
         runtime = ck._get_road_runtime()
@@ -119,7 +155,7 @@ def road_damage_oam_search(
 
 
 @yonlendirici.post("/api/road_damage/analyze", status_code=202)
-def analyze_road_damage(req: ck.RoadDamageRequest):
+def analyze_road_damage(req: ck.RoadDamageRequest, _kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici"))):
     """Kicks off a road-damage analysis on the dedicated ProcessPoolExecutor
     and returns immediately with a job id -- the actual Segformer inference
     (CPU-bound, can take minutes) used to run inline here and freeze every
@@ -176,7 +212,12 @@ def road_damage_gorsel(analysis_id: str, ad: str):
 
 
 @yonlendirici.get("/api/road_damage/status/{analysis_id}")
-def get_road_damage_status(analysis_id: str, gorseller: bool = True, segmentler: bool = True):
+def get_road_damage_status(
+    analysis_id: str,
+    gorseller: bool = True,
+    segmentler: bool = True,
+    _kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici")),
+):
     """Analiz durumu ve bitmisse sonucu.
 
     Tam sonuc ~17 MB'dir ve bunun ~16 MB'i tani gorselleridir (base64). Yalnizca
@@ -218,6 +259,7 @@ def road_damage_heatmap(
     bitis: float = None,
     referans: float = 3.0,
     kaynak: str = None,
+    _kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici")),
 ):
     """Rapor 2.4.3'teki Gaussian kernel yoğunluk ısı haritası: bir konumdan
     kaç "bildirim" geldiğini gösterir -- Twitter/NLP (geocoded tweet), kamera
@@ -286,7 +328,7 @@ def road_damage_heatmap(
 
 
 @yonlendirici.get("/api/road_damage/recent")
-def recent_road_damage_analyses(minutes: float = 60.0):
+def recent_road_damage_analyses(minutes: float = 60.0, _kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici"))):
     """Canli simulasyon icin: son N dakikada tamamlanmis analizleri listeler
     -- frontend'in hangi analysisId'lerin haritada 'canli' gosterilecegini
     ayrica bir mekanizma icat etmeden bilmesini saglar.
@@ -319,7 +361,7 @@ def recent_road_damage_analyses(minutes: float = 60.0):
 
 
 @yonlendirici.get("/api/road_damage/segments/{analysis_id}")
-def road_damage_segments(analysis_id: str, response: Response):
+def road_damage_segments(analysis_id: str, response: Response, _kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici"))):
     """Tek bir analizin agir safe/blocked segment dizileri. /recent'ten
     ayrilmistir (bkz. oradaki not): bu veri analiz uretildikten sonra ASLA
     degismez, bu yuzden istemci analiz basina bir kez ceker ve tarayici

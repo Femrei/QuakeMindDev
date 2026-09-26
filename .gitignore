@@ -36,3 +36,14 @@ QuakeMindBackend/benchmark/runs/*/
 
 # Office kilit dosyalari
 ~$*
+
+# Gecici indirme onbellegi (osmnx / karo istekleri). Icerigi her kosuda degisir.
+cache/
+
+# Tanitim sitesi (Astro): kaynagi izlenir, kurulum ve cikti izlenmez.
+tanitim/node_modules/
+tanitim/dist/
+tanitim/.astro/
+
+# Derleme artigi; icerigi makineye gore degisir, diff'i anlamsiz.
+quakemind-web/tsconfig.tsbuildinfo
