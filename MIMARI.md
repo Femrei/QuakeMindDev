@@ -86,6 +86,25 @@ Ekip ve olay farklı şehirlerdeyse bölgeler arası ağ kullanılır. Bu ağda 
 aralarındaki ana yollar birliktedir (513 bin düğüm, arama medyan 111 ms). Şehir dışında ayrı
 bir hız varsayımı vardır. Beş şehri kapsayan kutunun dışındaki ekip için kuş uçuşu yazılır.
 
+API iki ara katmanla sarılıdır (25 Eylül 2026). **CORS** en dışta ve adres listesiyle
+çalışır (J-60); yıldız değil, çünkü kimlik bilgisiyle birlikte yıldız her siteye kapı açar.
+**Gzip** onun içindedir ve 500 bayttan büyük yanıtları 6. seviyede sıkıştırır (J-61); canlı
+akış bunun dışındadır, çünkü akışlı yanıtta sıkıştırma olayları tamponlar ve kural 4'ü
+çiğner. Ölçüm: konsolun açılışta istediği 16 ucun toplamı 660 KB → 134 KB.
+
+Yetki durumu (24 Eylül 2026, J-53): 91 ucun 51'i rol ya da kimlik ister, 6'sı yalnız eski
+webin kullandığı uçlardır ve varsayılanı kapalı bir bayrağın arkasındadır
+(`QUAKEMIND_ESKI_UCLAR`), 34'ü hâlâ açıktır (dökümü J-59'da). Model koşturan uçlar —
+kamera, metin ve uydu analizi — kimliksiz çalıştırılamaz.
+
+Haritanın başvuru katmanları (24 Eylül 2026, J-56) tek bir modülden gelir
+(`uclar/katmanlar.py`): yol kapanmaları depodan, depremler `query.csv` katalogundan
+(Kandilli + USGS), fay hatları GEM etkin fay veri setinden, toplanma alanları AFAD
+listesinden. Hepsi kutuyla sorulur, kimlik ister ve yanıtında kendi kaynağını taşır; arayüz
+kaynağı koda gömmez. Dosyalar açılışta bir kez belleğe alınır, istek yolunda ayrıştırma
+yoktur (kural 3). Bu katmanlar bölgeye göre değişmediği için istemci bir kez ister ve
+önbellekte tutar; yalnız kapanmalar, analiz bitince gelen canlı mesajla tazelenir.
+
 Ekibin görevde olup olmadığı saklanmaz, görevlerden okunur. Eskiden ekip üç çağrıya atanmış
 iken "müsait" görünüyordu. `ekipler` tablosu kurum, tür ve kişi sayısı alanlarını kazandı.
 `kullanicilar.ekip_id` saha hesabını ekibe bağlar. Eski veritabanı açılışta tamamlanır

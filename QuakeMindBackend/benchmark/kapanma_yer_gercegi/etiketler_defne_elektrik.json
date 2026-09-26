@@ -1,0 +1,20 @@
+{
+ "etiketleyen": "Claude (tek etiketleyici), kor - model tahmini gorulmeden",
+ "tarih": "2026-09-26",
+ "olcut": {
+  "kapali": "parcanin belirgin bir bolumunu moloz/enkaz kutlesi ortuyor",
+  "acik": "boyunca surekli ve gecilebilir bir koridor goruluyor (asfalt/toprak, arac)",
+  "kararsiz": "golge, cozunurluk ya da GEOMETRI: cizgi gorunur bir sokagi takip etmiyor"
+ },
+ "etiket": {
+  "P001": "kararsiz", "P002": "kapali",   "P003": "kapali",   "P004": "acik",
+  "P005": "acik",     "P006": "acik",     "P007": "kapali",   "P008": "kapali",
+  "P009": "kapali",   "P010": "acik",     "P011": "kararsiz", "P012": "kapali",
+  "P013": "acik",     "P014": "kararsiz", "P015": "kapali",   "P016": "acik",
+  "P017": "acik",     "P018": "acik",     "P019": "kararsiz", "P020": "kararsiz",
+  "P021": "kararsiz", "P022": "acik",     "P023": "kararsiz", "P024": "acik",
+  "P025": "acik",     "P026": "kapali",   "P027": "kapali",   "P028": "acik",
+  "P029": "kararsiz", "P030": "acik",     "P031": "kararsiz", "P032": "acik",
+  "P033": "kararsiz"
+ }
+}

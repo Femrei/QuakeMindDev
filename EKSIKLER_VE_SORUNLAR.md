@@ -1166,8 +1166,251 @@ toplandığı ve R0'ın öğrenmeyen ajan olduğu açıkça yazılmalı.
 
 ---
 
+## J-62 🟠 Simülasyon (tatbikat) modu konsolda kuruldu; sözleşmeyle üç uyuşmazlık çıktı
+**Durum:** KAPALI (25 Eylül 2026) — arayüz iskeleti gerçek uçlarla uçtan uca koşturuldu; uç sözleşmeden sapıyor, sapmalar aşağıda · **Bulundu:** 25 Eylül 2026 (SIMULASYON_SOZLESMESI.md'ye göre kurulurken) · **İlgili:** J-56, kural 2, kural 4
+
+**Yapıldı.** Sözleşmenin §5'indeki dokuz madde konsola kuruldu; katman ve alan adları §4
+ile birebir. Backend'e (`QuakeMindBackend/`) dokunulmadı, orayı öbür oturum yazıyor.
+
+| Sözleşme maddesi | Nerede | Durum |
+|---|---|---|
+| 1. TATBİKAT şeridi kalıcı | `kabuk/TatbikatSeridi.tsx`, kabukta | SOS ve Ekipler modlarında da görünüyor (ölçüldü) |
+| 2. Seçim paneli (amaç → hazır seçenek → ince ayar) | `modlar/simulasyon.tsx` | Alan, görüntü katmanı, model; altında eşik, yarıçap, yumuşak maliyet, ekip/afetzede, tohum |
+| 3. Kaynak paneli | sağ panel | Sağlayıcı, çekim tarihi, GSD; `gercek: false` için "senaryo" rozeti |
+| 4. Katmanlar | `harita/simKatmanlari.ts` | Maske (raster), kapalı (kırmızı) ve cezalı (turuncu) kenar, üç rota, görev uçları |
+| 5. Dijkstra / A* kartı | sağ panel | İki süre yan yana, `ayniYol` yazılıyor |
+| 6. İlerleme SSE'den | `CanliSaglayici` + `islerDurumu` | `is-durumu` mesajı; yoklama yok |
+| 7. Harita tek örnek | mevcut kabuk | Mod değişince tuval aynı örnek (ölçüldü); geçiş süresi ÖLÇÜLMEDİ |
+| 8. Keyfi değer yok | token denetimi | Geçiyor (denetim bir `transition-[width]` yakaladı, düzeltildi) |
+| 9. Ana iş parçacığı | maske `createImageBitmap` ile çözülüyor | Uzun iş ÖLÇÜLMEDİ (pencere arkada, ölçüm güvenilmez) |
+
+Mesaj tipleri (§3) `konsol/src/canli/mesajlar.ts`'ye eklendi: `simulasyon-katman` yeni;
+`is-durumu` zaten vardı, `isTipi: 'simulasyon'` ile kullanılıyor. Katman mesajı yalnız o
+koşunun sonucunu tazeliyor.
+
+**Gerçek koşu (25 Eylül 2026, 15:02).** Uçlar yayına girince tatbikat gerçek veriyle
+koşturuldu: `POST /api/simulasyon/kos` → **202**, iş kuyruğa girdi, ilerleme canlı akıştan
+geldi, şerit başka moda geçilince de koşuyu gösterdi.
+- Alan: Hatay / Defne — Elektrik Mah., drone ortofoto (Help.NGO OAM, çekim 2023-02-09,
+  0,482 m/piksel). Model: Unet (mit_b4), eşik 0,5.
+- Sonuç: %0,6 hasarlı piksel, 32 kapalı kenar (330 açık), 5 ekip × 3 afetzede = 15 çift.
+- Sunucunun aşama süreleri: uydu 10,5 sn · yol ağı 1,0 sn · **model çıkarımı 20,5 sn** ·
+  lojistik 8,4 sn · toplam 40,4 sn.
+- Ölçüm: ortalama uzama 93,6 m (%9,9), en çok 454,6 m, ulaşılamayan çift yok; son adım
+  ortalama 57 m yürüme. Süreler 15 km/sa varsayımıyla.
+- Ekip üsleri gerçek OSM tesisleri: Özel Mozaik Kadın Hastalıkları ve Doğum Merkezi, Özel
+  Antakya Göz Hastanesi, Antakya Devlet Hastanesi.
+
+**Uç ile sözleşme arasındaki sapmalar (25 Eylül, ölçülen gerçek yanıtlar).** Sözleşme
+"alanlar bu belgede sabittir, değişirse burası önce güncellenir" diyor; uygulama
+sözleşmeyi güncellemeden ayrılmış. Arayüz bugün ikisini de kabul ediyor
+(`veri/simulasyon.ts` içindeki çeviriler), ama **tek biçimde buluşulmalı**:
+
+| Sözleşme (§2, §4) | Uç (bugün) | Arayüz ne yapıyor |
+|---|---|---|
+| `alanlar` / `modeller` düz dizi | `{alanlar: […]}` / `{modeller: […]}` | İkisini de kabul ediyor |
+| `bbox: [batı, güney, doğu, kuzey]` | `{west, south, east, north}` | Diziye çeviriyor |
+| `agirlikSha1`, `tahminiSureSn` | `agirlikSha256`, `ileriGecis512Sn` (+ `olcumNotu`, `hazir`) | Ölçülen süreyi yazıyor |
+| `katman.gsdM`, `kapsamKm2` | yok; `kaynak`, `oamBasligi`, `yaricapKm`, `gercek`, `not` var | Yoksa yazmıyor |
+| `hasar.maskeUrl = /api/simulasyon/kosu/{id}/maske.png` | `/api/road_damage/gorsel/{id}/imageDamageMask` | Adres neyse onu kullanıyor |
+| `hasar.noktaSayisi`, `hasar.oncesiKontrol` | yok | Satırı hiç yazmıyor |
+| `kapanma.kapaliKenarlar = [{id, cizgi}]` | doğrudan `[[lat,lon], …]` çoklu çizgi dizisi | İkisini de kabul ediyor |
+| `kapanma.cezaliKenarSayisi` / `cezaliKenarlar` | yok; `acikKenarSayisi`, `kural` var | Cezalı satırı yazmıyor |
+| `rotalar: [...]` ayrı dizi | yok; rota alanları **görevin içinde** | Görevlerden rota listesi kuruyor |
+| `varyantlar.riskli` | `{cizgi: null, …}` (hesaplanmamış) | O katmanı kurmuyor |
+| `arama.ayniYol: true/false` | `null` | "Uç aynı yol mu demiyor; uzunluklar aynı çıktı" yazıyor |
+| `referansAjanlar` | yok | Bölüm çıkmıyor |
+| — | `sureler`, `gunluk`, `olcum.hizKmh`, `olcum.enBuyukUzamaM`, `sonAdimYurumeM` | Hepsi ekranda gösteriliyor |
+
+**Bir ölçüm sorusu:** aynı koşuda **A\* 158 ms, Dijkstra 5 ms** çıktı (rota başına
+ortalama, üç rota). A\* normalde daha az düğüm açar ve daha hızlıdır; sezgisel ölçeği
+yanlışsa (ör. metre–derece karışması) A\* hem yavaşlar hem en kısa yolu garanti etmez.
+Backend oturumu bakmalı.
+
+**Sözleşmenin kendi içindeki üç uyuşmazlık.**
+1. **İlerleme ölçeği.** §3 `ilerleme` için 0..1 diyor; bugünkü backend hasar analizinde
+   YÜZDE gönderiyor (`cekirdek.py:668`, `percent`). Arayüz ikisini de kabul ediyor
+   (1'den küçük değer oran sayılıyor) ama tek ölçek seçilmeli.
+2. **Koordinat sırası.** §4'te çizgiler `[[lat, lon], …]`; haritada (deck.gl) `[lon, lat]`
+   gerekiyor. Çevirme tek yerde yapılıyor (`simKatmanlari.cevir`, denetlendi). Sözleşme
+   böyle kalacaksa sorun yok; ama öbür uçlarımız (`/api/katman/*`, `/api/sos`) `lon`/`lat`
+   alanlarıyla dönüyor, tutarsızlık kalıyor.
+3. **Kısmi sonuç.** §3 "arayüz her mesajda yalnız o katmanı ister" diyor ama §2'de tek
+   sonuç ucu var. Arayüz sonucun bölümlerini isteğe bağlı sayıyor ve eldekini çiziyor;
+   sunucunun bitmemiş bölümleri boş bırakması (ya da hiç göndermemesi) yeterli.
+
+Ayrıca: maske PNG ucu yetki istiyor, bu yüzden `<img src>` ile çekilemiyor — jetonla
+indirilip `createImageBitmap` ile çözülüyor (`veri/simulasyon.ts`).
+
+**Denetlendi (25 Eylül, geçici önizleme koşumuyla; sahte veri ürüne girmez).**
+- Sol panel: alan, görüntü katmanı ve model seçilebiliyor; ince ayar altta.
+- Koşu başlatılınca şerit çıkıyor: "gerçek olay değildir", alan adı, 4/4 katman.
+- Sağ panel: kaynak (Help.NGO, 2023-02-09, 0,48 m), hasar %11,4 (kontrol koşusu %0,8),
+  41 kapalı / 96 cezalı kenar, arama kartı, ölçüm (25 çift), referans ajanlar, 5 görev.
+- Katman kurulumu doğrudan çağrılarak denetlendi: 8 katman kuruluyor, kapalı kenar 6,
+  rota 5, görev ucu 10; varyant kapatılınca yalnız o katman düşüyor; maske yoksa zemin
+  katmanı kurulmuyor; maske 256×256 ImageBitmap, sınırlar sözleşmedeki bbox.
+- **Koordinat çevrimi doğrulandı:** sözleşmedeki `[36,1965, 36,1472]` haritaya
+  `[36,1472, 36,1965]` olarak gidiyor.
+- Şerit SOS ve Ekipler modlarına geçince duruyor; harita tuvali aynı örnek kalıyor.
+
+**Yan çıktı: panel hata sınırı (J-63).** Gerçek uçla ilk denemede sol panel `alanlar.data.find
+is not a function` ile çöktü ve **bütün konsol bembeyaz kaldı** — tek panelin hatası haritayı
+ve öbür panelleri de götürüyordu. `kabuk/PanelSiniri.tsx` eklendi: hata veren panel kendi
+yerinde "Bu panel açılamadı" yazıyor, harita ve öteki paneller ayakta kalıyor. İkinci bir
+hatada (eksik `noktaSayisi`) sınır iş başında görüldü: konsol ayakta kaldı, yalnız sağ panel
+hata gösterdi.
+
+**Açık kalanlar.**
+- Madde 7'nin süresi (< 200 ms) ve madde 9'un uzun iş ölçümü YAPILMADI: tarayıcı paneli
+  gizliyken tarayıcı boyamayı durduruyor, `requestAnimationFrame` hiç çalışmıyor; ölçüm
+  yanıltıcı olurdu. Harita örneğinin mod değişince aynı kaldığı ölçüldü.
+- `riskli` varyantı sunucuda hesaplanmıyor (`cizgi: null`); tanımı da sözleşmede yazmıyor.
+- `arama.ayniYol` sunucuda hesaplanmıyor.
+- Sapma tablosundaki alanlar için sözleşme mi uygulama mı değişecek, kararlaşmalı.
+
+---
+
+## J-61 🟠 Yanıtlar sıkıştırılmıyordu: konsol açılışında 660 KB ham JSON iniyordu
+**Durum:** KAPALI (25 Eylül 2026) — ölçüldü · **Bulundu:** 25 Eylül 2026 (kullanıcının performans sorusu üzerine yapılan incelemede) · **İlgili:** J-56, J-60, kural 8
+
+**Sorun.** `fastapi_app.py`'de yalnız CORS ara katmanı vardı; gzip yoktu. Harita altlığı
+diskte gzip'li durduğu için sıkıştırılmış gidiyordu (J-40), ama **bütün JSON yanıtları ham**
+gidiyordu. JSON çok tekrarlı bir metin olduğu için bu, tel üzerinde birkaç kat fazla bayt
+demek. Yerelde fark edilmez; sahada tablet 4G ile bağlandığında doğrudan bekleme süresi olur.
+
+**Yapıldı.** `SecmeliGzip` ara katmanı (`fastapi_app.py`).
+- 500 bayttan küçük yanıtlar sıkıştırılmıyor (Starlette varsayılanı).
+- **Canlı akış (`/api/live`) gzip'e girmiyor.** Starlette 0.38.6'nın gzip katmanı akışlı
+  yanıtta parçaları tamponda biriktirip yalnız akış kapanınca boşaltıyor (kaynakta parça
+  başına flush yok). SSE böyle sıkıştırılsaydı olaylar tarayıcıya akış bitene kadar
+  ulaşmazdı — kural 4'ün tersi. Yeni bir akış ucu eklenirse `HARIC` listesine yazılmalı.
+- Sıkıştırma seviyesi 9 değil **6**: 462 KB'lik toplanma yanıtında ikisi de 4,9 kat
+  sıkıştırıyor ama seviye 9 sıkıştırma 55,9 ms, seviye 6 13,5 ms sürüyor (ölçüldü). 1 KB
+  için 4 kat CPU.
+
+**Ölçüm (25 Eylül 2026, 16 uç, her biri 5 kez; ısınma isteği sayılmadı).**
+
+| Uç | Önce | Sonra | Kat |
+|---|---|---|---|
+| `/api/katman/toplanma` | 462,8 KB | 95,0 KB | 4,9 |
+| `/api/katman/depremler?enAz=4` | 93,1 KB | 15,4 KB | 6,0 |
+| `/api/altlik/yerler` | 51,4 KB | 7,9 KB | 6,5 |
+| `/api/sos` | 9,2 KB | 2,6 KB | 3,5 |
+| `/api/road_damage/heatmap` (sos kanalı) | 7,9 KB | 1,8 KB | 4,5 |
+| `/api/katman/kapanmalar` | 6,3 KB | 1,1 KB | 5,6 |
+| **16 ucun toplamı** | **660 KB** | **134 KB** | **4,9** |
+
+**Dürüst not: yerelde süre azalmadı, arttı.** Aynı 16 ucun medyan sürelerinin toplamı
+562 ms → 651 ms. Sebebi açık: localhost'ta taşınacak bayt zaten bedava, sıkıştırma ise CPU
+harcıyor. Kazanç ağ üzerinden görünür — 526 KB'lik fark 10 Mbit/sn bağlantıda ~0,4 sn,
+1 Mbit/sn'de ~4 sn eder. Saha bağlantısında ölçülmedi.
+
+**Denetlendi (11 denetim, hepsi geçti).**
+- Canlı akış: 200, `Content-Encoding` yok, `text/event-stream`, ilk parça 6 ms'de geldi.
+- Büyük yanıt gzip (95 KB), 224 baytlık yanıt ham.
+- Konsol tarayıcıda: bütün istekler 200, üst çubukta "Canlı akış bağlı".
+- Duman testi 99 istek, **0 fark** (urllib `Accept-Encoding` göndermediği için imzalar
+  sıkıştırmadan etkilenmiyor; sözleşme değişmedi).
+
+**Açık kalan.** Toplanma yanıtı sıkıştırılmış hâlde bile 95 KB; yükün yarısı adres alanı.
+Harita için ad ve konum yetiyor, adres tıklayınca getirilebilir. Bir de değişmeyen katmanlara
+(`faylar`, `depremler`, `toplanma`) `ETag` ve `Cache-Control` konmadı: sayfa yenilenince
+hepsi yeniden iniyor.
+
+---
+
+## J-60 🔴 CORS herkese açıktı: her site kimlik bilgisiyle API'ye istek atabiliyordu
+**Durum:** KAPALI (25 Eylül 2026) · **Bulundu:** 25 Eylül 2026 (kullanıcı "CORS ne demek" diye sorunca ayara bakılırken) · **İlgili:** J-53, kural 5
+
+**Sorun.** `fastapi_app.py`'de ayar şöyleydi:
+
+```python
+allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
+```
+
+Starlette bu ikiliyi (yıldız + kimlik bilgisi) gördüğünde `Access-Control-Allow-Origin`
+başlığına isteği atan origin'i **olduğu gibi yansıtır**. Yani herhangi bir web sitesi,
+ziyaretçisinin tarayıcısından bizim API'ye çerezli istek atıp yanıtı okuyabilirdi.
+
+**Zararı sınırlayan şey** yenileme çerezinin `SameSite=lax` olmasıydı: tarayıcı başka
+siteden gelen XHR'a o çerezi eklemiyor. Yani bilinen bir sömürü yolu yoktu; ama koruma
+tek bir ayara bağlı kalıyordu ve erişim jetonuyla yapılan istekler için de kapı açıktı.
+
+**Yapıldı.** Yıldız yerine adres listesi: `127.0.0.1` ve `localhost` üzerinde 3200 (konsol),
+3201 (ikinci konsol), 3100 (eski web), 4173 ve 5173 (Vite önizleme). Üretimde alan adı
+`QUAKEMIND_CORS` ortam değişkeniyle eklenir. Yöntemler ve başlıklar da yıldızdan çıkarıldı
+(`GET, POST, PUT, DELETE, OPTIONS`; `authorization`, `content-type`).
+
+**Not.** CORS bir koruma değil, tarayıcıya verilen bir izindir: `curl` ya da bir betik onu
+hiç umursamaz. API'yi koruyan şey kimlik ve rol kontrolüdür (J-53).
+
+**Denetlendi.**
+- İzinli origin (`http://127.0.0.1:3200`, `http://localhost:3100`): başlık dönüyor,
+  `allow-credentials: true`.
+- İzinsiz origin (`https://kotu.example`): `Access-Control-Allow-Origin` başlığı yok;
+  ön kontrol (OPTIONS) 400 alıyor.
+- Konsol tarayıcıda çalışmaya devam ediyor (Vite vekili üzerinden aynı origin).
+
+---
+
+## J-59 🟠 Uçların üçte biri hâlâ kimlik istemiyor (kural 5)
+**Durum:** AÇIK · **Bulundu:** 24 Eylül 2026 (J-53 çalışması sırasında sayıldı) · **İlgili:** J-53, J-45, CLAUDE.md kural 5
+
+Sayım (24 Eylül 2026, `uclar/*.py`): **91 uç** — 51'i rol ya da kimlik istiyor, 6'sı J-53
+bayrağının arkasında, **34'ü açık**. CLAUDE.md §5'teki "43 uçtan yalnız 3'ünde var" cümlesi
+artık bayat.
+
+Açık olan 34 ucun dökümü:
+- **Açık kalması gereken (8):** `/`, `/api/status`, `/api/postgis/status`, oturum uçları
+  (`/kayit`, `/giris`, `/yenile`, `/cikis`) ve `/api/live` (akış kendi içinde jeton
+  doğruluyor; kimliksiz 401 döndüğü duman testinde kayıtlı).
+- **Eski demo kimliği (3):** `/api/auth/register`, `/api/auth/login`, `/api/auth/me`.
+  J-45 madde 2'nin kararına bağlı.
+- **Eski bildirim ve sohbet (4):** `/api/notifications/send_emergency`,
+  `/api/notifications/active`, `/api/chat/send`, `/api/chat/messages`. İlk ikisi J-45'te,
+  sohbeti yeni konsol kullanmıyor.
+- **Eski ekip üstlenme (4):** `/api/team/claim`, `/api/team/claims`,
+  `/api/team/claim/{id}/route`, `/api/team/claim/{id}/release`. J-54'ün görev kaydı bunların
+  yerine geçti; muhtemelen silinmeli.
+- **Risk (4):** `/api/risk/predict`, `/api/risk/fault_lines`, `/api/risk/all_quakes`,
+  `/api/risk/refresh_live_data`. İlk üçü kamuya açık başvuru verisi ama model koşturuyor;
+  sonuncusu dış servise istek atıyor — en azından o kimlik istemeli.
+- **Eski rota (5):** `/api/road_damage/route`, `…/safe_route`, `…/assembly`,
+  `…/calculate_custom_route`, `…/nearest_debris`. Afetzede artık `/api/afetzede/rota`
+  kullanıyor; `assembly` kamuya açık AFAD verisi.
+- **Kıyas ve kapanma üretimi (5):** `…/simulate_closures`, `…/closures_from_mask`,
+  `…/closures_from_emsr`, `…/naive_compare`, `…/reference_compare`. Ağır iş koşturuyorlar;
+  benchmark betikleri kullanıyor, kimlik eklenirse betikler de giriş yapmalı.
+- **Analiz görselleri (1):** `/api/road_damage/gorsel/{id}/{ad}`. `<img>` ile çekilirse
+  başlık gönderilemez; kısa ömürlü imzalı bağlantı gerekir.
+
+**Sıra önerisi:** eski ekip üstlenme uçlarını sil → risk `refresh_live_data`'ya kimlik →
+kıyas uçlarını bayrak arkasına → görseller için imzalı bağlantı.
+
+---
+
+## J-58 🟠 Yol kapanması kaydı: şiddet derecesi ölçülmüyor, kapalı parçanın geometrisi atılıyor
+**Durum:** AÇIK · **Bulundu:** 24 Eylül 2026 (J-56 katmanı bağlanırken) · **İlgili:** J-56, J-44, J-34
+
+`cekirdek._kapanmalari_depoya_yaz` uydu analizinin kapalı yol parçalarını depoya yazarken
+iki bilgi kaybediyor:
+1. **Derece sabit.** Her kayda `derece=3` yazılıyor (`cekirdek.py:632`); depodaki 39 kaydın
+   hepsi 3. Alan "şiddet" gibi duruyor ama ölçülmüş bir şey değil. Bu yüzden konsol
+   katmanında ve ipucunda derece **gösterilmiyor**; gösterilseydi uydurma bilgi olurdu.
+2. **Geometri atılıyor.** Kapalı parçanın çizgisi yerine yalnız orta noktası saklanıyor
+   (`orta = yol[len(yol) // 2]`). Harita bu yüzden kapanmayı nokta olarak çiziyor; "şu yol
+   şu kadar kapalı" denemiyor. Rota motoru da noktanın 25 m çevresindeki kenarları
+   cezalandırıyor, gerçek parçayı değil.
+
+**Öneri.** Depoya parçanın iki ucunu (ya da sadeleştirilmiş çizgisini) ve modelin hasar
+skorunu yazmak; derece alanını ya skordan türetmek ya da kaldırmak. Geriye dönük kayıtlar
+nokta olarak kalır, yeni kayıtlar çizgi olur.
+
+---
+
 ## J-57 🟠 `npm run kontrol` konsol kaynaklarının yanına `.js` yazıyor; Vite bu kopyaları `.tsx`'ten önce yükler
-**Durum:** AÇIK — yazılan dosyalar silindi; betik değiştirilmedi, öneri aşağıda · **Bulundu:** 22 Eylül 2026 (commit öncesi denetimde) · **İlgili:** kural 6 (token denetimi), J-56
+**Durum:** KAPALI (24 Eylül 2026) — betik düzeltildi, denendi · **Bulundu:** 22 Eylül 2026 (commit öncesi denetimde) · **İlgili:** kural 6 (token denetimi), J-56
 
 **Ne oldu.** Commit öncesi `npm run kontrol` koşuldu. Tip ve token denetimi geçti. Ama betik
 `konsol/src` içinde her `.ts`/`.tsx` dosyasının yanına derlenmiş bir `.js` yazdı. Toplam 82
@@ -1183,15 +1426,17 @@ dosya: kaynak kopyaları ve `konsol/vite.config.js`.
   var ve hepsi o koşuda oluşmuş. Sonra silindi. Çalışan geliştirme sunucusunun günlüğünde o
   saatten sonra kayıt yok; sunucu etkilenmedi.
 
-**Öneri.** Betik `tsc -b && node scripts/token-kontrol.mjs` olmalı. `build` betiği de `tsc -b`
-kullanıyor ve iki tsconfig'deki `noEmit: true` ile çıktı yazmıyor. Değişiklikten sonra iki
-şey denenmeli: bilerek bozulmuş bir tip hatası yakalanıyor mu, `git status`'ta yeni dosya
-çıkıyor mu.
+**Yapıldı (24 Eylül 2026).** Betik `tsc -b && node scripts/token-kontrol.mjs` oldu; iki
+tsconfig'deki `noEmit: true` artık ezilmiyor. `build` betiği de aynı `tsc -b`'yi kullanıyor.
+- Denetim geçiyor ve `git status` temiz kalıyor: `package.json` dışında değişen dosya yok.
+- Tip denetimi hâlâ çalışıyor: bilerek bozulmuş bir dosyada (`const x: number = "yazi"`)
+  `error TS2322` verip 2 ile çıkıyor. Deneme dosyası silindi.
+- Token denetimi yerinde: "Keyfi değer yok" diyor.
 
 ---
 
 ## J-56 🟠 Konsol düzeni: sol panel her modda "Katmanlar", 10 katman anahtarının 4'ü hiçbir şey çizmiyordu
-**Durum:** KAPALI (22 Eylül 2026) — önizlemede denetlendi; dört katman hâlâ bağlı değil (aşağıda) · **Bulundu:** 22 Eylül 2026 (kullanıcı, sol panelin görüntüsüyle: "bu katmanlar ve veri kaynakları kısmı her yerde var, aşağı kaydırınca geliyor, tasarım olarak sevmedim, kullanışsız; üst menüde bir sürü alan var, birini seçince soldaki katmanlar kısmı değişiyor gibi, anlamadım") · **İlgili:** ARAYUZ §8, J-54, kural 1
+**Durum:** KAPALI (24 Eylül 2026) — dört katman da bağlandı (aşağıdaki ek); 22 Eylül'de düzen değişmişti · **Bulundu:** 22 Eylül 2026 (kullanıcı, sol panelin görüntüsüyle: "bu katmanlar ve veri kaynakları kısmı her yerde var, aşağı kaydırınca geliyor, tasarım olarak sevmedim, kullanışsız; üst menüde bir sürü alan var, birini seçince soldaki katmanlar kısmı değişiyor gibi, anlamadım") · **İlgili:** ARAYUZ §8, J-54, kural 1
 
 **Sorunlar.**
 1. **Sol panelin başlığı yanlıştı.** Başlık her modda "Katmanlar" ve "7 katman açık"tı. Oysa
@@ -1235,9 +1480,64 @@ kullanıyor ve iki tsconfig'deki `noEmit: true` ile çıktı yazmıyor. Değişi
 - SOS modunda sol panel 323 px (kaydırma yok); genel ve Ekipler'de sütun boyunda
   kaydırılıyor.
 
-**Açık kalanlar.** "Hasarlı yollar" (kayıtlı kapanmalar), "Depremler", "Fay hatları"
-(Deprem riski modunda liste olarak var) ve "Toplanma alanları" (afetzede ekranında var)
-konsol haritasına bağlanmalı. Bağlanana kadar "bağlanmadı" yazıyor.
+**Ek (24 Eylül 2026): dört katman da bağlandı.** Anahtarı olup hiçbir şey çizmeyen
+katman kalmadı; "bağlanmadı" satırı da kalktı.
+
+**Sebep.** Veri üçünde de vardı ama konsolun kullanabileceği bir uçtan açılmamıştı:
+kapanmalar yalnız rota motorunun okuduğu tabloda (`yol_kapanmalari`), depremler ve faylar
+eski risk uçlarında (kimlik istemeden), toplanma alanları ise yalnız afetzedenin konum
+merkezli ucunda (`/api/yakin-yerler`, en çok 25 km yarıçap).
+
+**Yapıldı.** Dört katman için kutu (bbox) ile sorulan yeni uçlar: `uclar/katmanlar.py`.
+- `GET /api/katman/kapanmalar` · `…/depremler` · `…/faylar` · `…/toplanma`.
+- Hepsi `Depends(rol_gerektir("saha", "koordinator", "yonetici"))`; kimliksiz 401 (ölçüldü).
+- Kutu verilmezse altlık kataloğundaki beş bölgeyi kapsayan kutu kullanılır; en geniş kenar
+  8 derece (kazara ülke çapında sorgu olmasın). Bozuk kutu ve geçersiz büyüklük 422 döner.
+- Her yanıt kendi kaynağını taşır (kural 1): katman listesindeki açıklama ve sayı buradan
+  gelir, koda gömülü değil.
+
+| Katman | Kaynak | Bölgede | Yanıt | İlk istek | Sonraki |
+|---|---|---|---|---|---|
+| Yol kapanmaları | Depo `yol_kapanmalari` (uydu analizi) | 39 nokta | 7 KB | 9 ms | 18 ms |
+| Depremler (M ≥ 4) | `query.csv` katalogu, Kandilli + USGS | 603 / 20.387 | 103 KB | 362 ms | 42 ms |
+| Fay hatları | GEM Global Active Faults (13.696 çizgi) | 24 çizgi, 272 nokta | 7 KB | 892 ms | 11 ms |
+| Toplanma alanları | AFAD listesi (72.232 kayıt) | 3.682 alan | 499 KB | 115 ms | 118 ms |
+
+İlk istekteki dosya okuması açılışa alındı (`katmanlar._onyukle`, arka plan iş parçacığı).
+
+**Haritada.**
+- **Yol kapanmaları** turuncu nokta. Çizgi değil, çünkü depoya kapalı yol parçasının yalnız
+  orta noktası yazılıyor (J-58). Katmanın adı "Hasarlı yollar"dan "Yol kapanmaları"na döndü.
+- **Depremler** içi boş halka, çapı büyüklüğe göre. Dolu nokta değil: geçmiş katalog kaydı
+  bugünün hasarıyla karışmasın. Kırmızı, turuncu ve sarı aciliyete ayrı olduğu için kendi
+  token'ı var (`--color-deprem`).
+- **Fay hatları** kesik ve sönük çizgi, altlığın hemen üstünde (`--color-fay`). GEM veri
+  setinde ad alanı boş olduğu için etiket yazılmıyor; ipucu bunu söylüyor.
+- **Toplanma alanları** afetzede ekranıyla aynı yeşil. Bölge ölçeğinde 3.682 nokta haritayı
+  kapattığı için yalnız şehir ölçeğinde (z ≥ 11) çiziliyor; katman listesi bunu yazıyor.
+- İpuçları kaynağı da söylüyor: "Katalog kaydı (Kandilli, USGS); bugünün hasarı değil",
+  "AFAD listesi; alanın şu an açık olduğunu göstermez".
+
+**Denetlendi (gerçek sunucu, koordinatör oturumu, 1366 × 768).**
+- Katman listesinde dördü de anahtarlı: "39 kapanma", "603 deprem · M ≥ 4", "24 hat",
+  "3.682 alan". "Bağlanmadı" yazan satır kalmadı.
+- Bölge görünümünde 603 deprem halkası Doğu Anadolu Fayı boyunca diziliyor, fay çizgileri
+  üstünde geçiyor — koordinatlar yerine oturuyor.
+- Deprem ipucu: "M 4,5 deprem · 21 km SSW of Kahramanmaraş · Derinlik 12 km · 6 Şub 2023 05:31".
+- Antakya'da toplanma alanları z ≥ 11'de çıkıyor, altında çizilmiyor.
+- Konsolda hata yok (yalnız oturum açılmadan önceki 401).
+- Duman testi: 99 istek (6'sı yeni). Önceki 93 isteğin tek farkı görev listesinin dolu
+  gelmesi (veriye bağlı, koda değil). Referans imza yenilendi.
+
+**Denetimde çıkan iki düzeltme.**
+- Deprem ipucunda yıl yazmıyordu: 2023'teki kayıt "6 Şub 05:31" diye görünüyor, bu yıl
+  olmuş gibi okunuyordu. `tarihSaatYilli` eklendi: kayıt başka yıldaysa yıl da yazılıyor.
+- Deprem halkaları koyu zeminde 1,2 px kenarla kayboluyordu; kenar 1,5 px ve içi çok sönük
+  dolu oldu.
+
+**Açık kalan.** Kapanmalar yalnız uydu analizinden geliyor. Sahadan bildirilen kapanma
+(`/report_blockage`, PostGIS) ve EMSR648 katmanı bu depoya yazılmıyor; ne rota motoru ne de
+bu katman onları görüyor (J-55'in açık maddesiyle aynı).
 
 ---
 
@@ -1471,7 +1771,7 @@ Kod ve çalışan veritabanı okunarak doğrulandı:
 ---
 
 ## J-53 🔴 Eski uçlar oturumsuz yanıt veriyor: vatandaş ihbarlarının metni ve konumu açık
-**Durum:** AÇIK — KARAR BEKLİYOR (eski web bu uçlara oturumsuz bağlı) · **Bulundu:** 22 Eylül 2026 (J-51'in duman testi imzalarında) · **İlgili:** CLAUDE.md kural 5, J-45, J-51
+**Durum:** KAPALI (24 Eylül 2026) — konsolun kullandığı uçlar kimlik ister, eski webe özel uçlar varsayılanı kapalı bayrağın arkasında · **Bulundu:** 22 Eylül 2026 (J-51'in duman testi imzalarında) · **İlgili:** CLAUDE.md kural 5, J-45, J-51
 
 **Sorun.** Duman testinin referans imzasında (`testler/uc_imzalari.json`) jetonsuz istekler
 200 dönüyor:
@@ -1486,11 +1786,42 @@ Kod ve çalışan veritabanı okunarak doğrulandı:
 J-51'in yeni kayıtları bu listelere yazılmıyor; yeni uçlar kimlik ister. Ama ihbarın ısı
 noktası, oturumsuz ısı ucundan yoğunluk olarak görünür.
 
-**Öneri.**
-- Isı ucu hemen kimliğe bağlanabilir: konsol onu zaten jetonla çağırıyor.
-- Ötekileri yeni konsol kullanmıyor. Eski web onaydan sonra kalkacağı için bu uçlar bayrak
-  arkasına alınabilir ya da `Depends(kimlik.kullanici)` alabilir. Her ikisi de eski webi
-  bozar. Karar kullanıcıda (CLAUDE.md §7: eski webde yalnız kritik düzeltme).
+**Yapıldı (24 Eylül 2026).** Kullanıcı kararı bana bıraktı ("ben anlamadım bu işi, sence ne
+olsun"); önerilen orta yol uygulandı.
+
+**1. Konsolun kullandığı uçlar kimlik istiyor** — `Depends(rol_gerektir("saha",
+"koordinator", "yonetici"))`. Konsol bunları zaten jetonla çağırdığı için kaybı yok:
+`/api/road_damage/heatmap`, `…/segments/{id}`, `…/status/{id}`, `…/recent`, `…/analyze`,
+`…/oam_search`, `…/wayback_versions`, `/api/camera/analyze`, `/api/nlp/analyze`.
+Model koşturan üç uç (kamera, metin, uydu analizi) da böylece kimliksiz çalıştırılamıyor.
+
+**2. Yalnız eski webin kullandığı uçlar bayrağın arkasında** — `Depends(kimlik.eski_uc)`,
+varsayılan **kapalı**; kapalıyken 404 döner (ucun varlığı da sızmasın):
+`/api/nlp/locations`, `/api/camera/reports`, `/api/sos/alerts`, `POST /api/sos/alert`,
+`POST /api/sos/alert/{id}/status`, `POST /api/road_damage/report_blockage`.
+Açmak için `QUAKEMIND_ESKI_UCLAR=1`. Bayrak her istekte okunuyor, kodda sabit değil.
+
+`report_blockage` bu listeye ayrıca yazma ucu olduğu için girdi: kimliksiz herkes kapanma
+ihbarı yazabiliyordu.
+
+**Denetlendi (gerçek sunucu, 21 denetim, hepsi geçti).**
+- Bayraklı uçlar kimliksiz de jetonla da 404.
+- Konsolun uçları kimliksiz 401, koordinatör jetonuyla 200.
+- Yeni katman uçları ve afetzedenin kullandığı `/api/road_damage/assembly` etkilenmedi.
+- Bayrak işlevi ayrıca doğrudan denendi: `QUAKEMIND_ESKI_UCLAR=1` iken istisna atmıyor,
+  0 ya da tanımsızken 404 atıyor.
+- Duman testi: 99 istekten 12'si değişti — 5'i 404 (bayrak), 7'si 401 (kimlik). Referans
+  imza yenilendi.
+- Konsol tarayıcıda denendi: hasar modunda ısı (4 kanal), wayback ve model uçları 200;
+  401 yok.
+
+**Eski webde ne bozuldu.** Eski webin SOS listesi, kamera raporları, metin konumları ve
+kapanma ihbarı ekranları artık 404 alıyor. Bu bilinçli (CLAUDE.md §7: eski webde yalnız
+kritik düzeltme yapılır; burada kritik olan veri sızıntısıydı). Göstermek gerekirse sunucu
+`QUAKEMIND_ESKI_UCLAR=1` ile açılır.
+
+**Kalan.** Isı ucu artık kimlik istiyor ama hâlâ eski uçtur; konsolun ısı verisi zamanla yeni
+sözleşme uçlarına taşınmalı. Kimlik istemeyen öbür uçlar J-59'da toplandı.
 
 ---
 
@@ -3824,6 +4155,446 @@ tavana varmadan tetikleniyor.
 
 ---
 
+## J-63 🟠 Tatbikat rota grafiği görüntü kutusuyla sınırlıydı — 25 OD çiftinin 25'i "ulaşılamaz"
+**Durum:** KAPALI (25 Eylül 2026) · **Bulundu:** 25 Eylül 2026 (simülasyon backend'i uçtan uca koşulurken) · **İlgili:** J-62, SIMULASYON_SOZLESMESI.md §4
+
+**Sorun.** Simülasyonun ilk uçtan uca koşusunda rota aşaması, hasar analizinin kendi
+grafiğini (`road_damage_sessions`) kullanıyordu. O grafik yalnız **görüntü kutusunu**
+kapsar: yakın katmanda 120 düğüm / 340 kenar, yaklaşık 500 m. Ekip üsleri ise gerçek
+tesisler ve 1,31–3,80 km uzakta. Sonuç: bütün ekipler kutunun dışında kaldı,
+`nearest_node` hepsini kutunun kenarına yapıştırdı, 25 çiftin **25'i** "ulaşılamadı"
+döndü — rota özelliği aslında hiç çalışmamış oluyordu.
+
+**Düzeltme.** `apps/road_damage/utils/tatbikat.py: tatbikat_grafigi()` grafiği ayrı çeker:
+ekipleri ve afetzedeleri kapsayan kutu + 600 m pay. Kapanmalar maskeden
+`closures_from_damage_mask` ile türetilir (canlı `/analyze` ile aynı kural ve aynı
+örnekleme). Ölçüldü (Maxar geniş katman): 4 410 düğüm, 12 108 kenar, 87 kenar kapalı,
+**ulaşılamayan çift 0**.
+
+---
+
+## J-64 🟠 Araç giremeyince "ulaşılamaz" deniyordu; gerçekte son adım yaya yürünür
+**Durum:** KAPALI (25 Eylül 2026) · **Bulundu:** 25 Eylül 2026 · **İlgili:** J-63
+
+**Sorun.** J-63 düzeltildikten sonra bile 25 çiftin 15'i "ulaşılamadı" dönüyordu: afetzedenin
+en yakın düğümüne giden kenarlar kapandığında `safe_G` üzerinde yol kalmıyor. Bu, sahadaki
+gerçeği yansıtmıyor — ekip aracıyla enkazın kenarına kadar gider, kalanı yürür.
+
+**Düzeltme.** `son_adim_yurume()`: ekipten ulaşılabilir bütün düğümler tek kaynaklı
+Dijkstra ile bulunur, afetzedeye kuş uçuşu en yakın olanına rota çizilir, kalan mesafe
+`sonAdimYurumeM` olarak (yaya 5 km/sa) yazılır. Ölçüldü: 15 çiftte gerekti, **ortalama
+56,4 m**. Ulaşılamayan çift 15 → 0; ortalama uzama 121,4 m → 69,2 m (%6,8).
+
+---
+
+## J-65 🟠 Model drone ortofotosunda yıkıntıların yalnız en belirginlerini buluyor (duyarlılık düşük)
+**Durum:** AÇIK · **Bulundu:** 25 Eylül 2026 (ölçüldü) · **Düzeltildi:** 25 Eylül 2026, ilk yazım fazla sertti — aşağıya bakın · **İlgili:** J-20, A-15
+
+**İlk yazılan (YANLIŞ çerçeve).** "Model drone ortofotosunda hasarı görmüyor (%0,26–0,58)."
+İki hata vardı: (1) oran KARE üzerinden hesaplanmıştı, oysa ortofotoda karenin **%61'i siyah**
+(uçuş izi dışı) — doğru payda ile oran **%1,70**; (2) çıktıya bakılmamıştı: model yıkık yapıları
+**doğru** işaretliyor, sadece azını buluyor.
+
+**Kontrol edildi — boru hattında hata yok.** Ürünün kendi çıkarım yolu (`run_inference`, künyedeki
+karar ayarıyla) etiketli QQB karolarında defterin ölçtüğünü birebir veriyor:
+IoU **0,2941** · defter 0,2946 · fark −0,0006 (tolerans 0,02). Kesinlik 0,3593, duyarlılık 0,6182.
+
+**Ölçüm — aynı ortofoto, farklı model ve karar ayarı** (Hatay/Defne — Elektrik, Help.NGO
+2023-02-09, z18, 0,482 m/px, GSD uyarısı yok). Kare üzerinden:
+
+| Model / ayar | Hasar | Blob |
+|---|---|---|
+| Eski ürün modeli (mitb4_dice30, kendi ayarı: eşik 0,40 · güç 3,5 · son işleme 2) | %0,55 | 5 |
+| Yeni U-Net B4 (defter ayarı: eşik 0,50 · güç 1,0 · son işleme 0) | %0,58 | 3 |
+| Yeni U-Net B4, eski ayarla | %0,67 | 4 |
+| Yeni SegFormer-B2, eski ayarla | %0,81 | 7 |
+| Yeni U-Net B4, eşik 0,20 | %0,64 | 4 |
+| Yeni U-Net B4, eşik 0,10 | %0,68 | 4 |
+
+Üç sonuç: (a) **eski model de aynı bantta** — yeni ağırlıklarda gerileme yok; (b) karar ayarı
+belirleyici değil; (c) eşiği 0,10'a indirmek oranı değiştirmiyor — model çoğu molozda düşük
+olasılık üretiyor, bu bir eşik sorunu değil.
+
+**Göze bakınca.** İşaretlenen lekeler gerçekten çökmüş yapılar (kesinlik iyi görünüyor); ama
+aynı karede gözle onlarca yıkık yapı daha var ve model onları kaçırıyor. Yani **duyarlılık
+düşük**, yanlış alarm değil. Maxar uydu katmanında (2023-02-08, aynı z18) %0,69 ve 11 blob —
+eğitim verisiyle aynı görüntü tipi olduğu için orada daha fazla yapı yakalanıyor.
+
+**Yapılacak.** (1) Maxar ve drone katmanlarında 20–30 bina elle işaretlenip kesinlik/duyarlılık
+ölçülsün — "düşük duyarlılık" sayıyla yazılsın. (2) Tatbikatın ana katmanı bu ölçüme göre
+seçilsin. (3) Makalede ürünün hangi görüntü tipinde ne kadar yakaladığı açıkça yazılsın; drone
+ortofotosu eğitim alanının dışında. (4) İyileştirme seçeneği: drone görüntüleriyle ince ayar —
+ayrı iş, bu tatbikatın önkoşulu değil.
+
+**Yan düzeltme (yapıldı).** `damageRate` kare üzerinden hesaplanmaya devam ediyor (eski
+istemciler), sonuca `damageRateValid` (boş olmayan alana göre) ve `validPixelRatio` eklendi;
+simülasyon sonucunda `hasar.hasarliPikselOraniGecerli` ve `hasar.gecerliAlanOrani`.
+
+---
+
+## J-66 🟠 Çıkarım iş parçacığı sınırsızdı: aynı iş 26,6 sn ile 243,1 sn arasında oynuyordu
+**Durum:** KAPALI (25 Eylül 2026) · **Bulundu:** 25 Eylül 2026 · **İlgili:** J-15
+
+**Ölçüm.** Aynı görüntü (Maxar, 2048×2048, 25 yama), aynı model (U-Net MiT-B4), üç koşu:
+AI süresi 52,1 / 243,1 / 26,6 sn. torch varsayılan olarak 14 iş parçacığı açıyor
+(20 çekirdekli makinede) ve başka süreçlerle yarışınca süre savruluyor. Yama başına ölçüm:
+14 parçacık 0,52 sn · 10 → 0,58 · 8 → 0,66 · **6 → 0,48** · 4 → 0,63 · 2 → 1,02.
+
+**Düzeltme.** `worker._is_parcacigi_sinirla()` işçi sürecini `min(6, çekirdek/2)` ile
+sınırlar (`QM_CIKARIM_IS_PARCACIGI` ile değiştirilebilir). Hız bedeli yok, üstelik ölçüm
+kararlı hâle geldi (243 → 26,6 sn) ve kalan 14 çekirdek API sürecine ve tarayıcıya kalıyor
+— "arka iş koşarken ön taraf yavaşlamasın" kuralının çalışma şartı bu.
+
+---
+
+## J-67 🟡 İki venv var; ürünün hangisi olduğu belgeli değil, aralarında 6 kat hız farkı
+**Durum:** AÇIK · **Bulundu:** 25 Eylül 2026
+
+Depoda iki sanal ortam var: kök `venv` (torch 2.11.0, jwt var → API bunu kullanıyor) ve
+`QuakeMindBackend/venv` (torch 2.13.0, jwt YOK → API başlatılamaz). Aynı modelin 512×512
+ileri geçişi kök venv'de 0,61 sn, backend venv'de 4,39 sn — **6 kat**. Model künyelerindeki
+ölçüm notu hangi ortamda alındığını yazıyor, ama depoda hangi venv'in ürün olduğu ve
+diğerinin niye durduğu yazılı değil. Yanlış venv ile alınan bir ölçüm makaleye girerse
+hatalı olur.
+
+---
+
+## J-68 🟠 Overpass düşünce yol katmanı sessizce boş geliyor, analiz "0 kapalı yol" diyordu
+**Durum:** KAPALI (25 Eylül 2026) · **Bulundu:** 25 Eylül 2026 (üç ayrı koşuda) · **İlgili:** J-64
+
+`get_osm_roads_overpass` bütün aynalar düştüğünde **boş maske** dönüyor; analiz bunu "bu
+alanda yol yok" gibi işleyip devam ediyordu. Sonuç: `2/4 OSM yol agi cikarildi (0 piksel)`,
+kesişim 0, "kapalı yol 0". Sıfır yol, yol olmadığı anlamına gelmez — katmanın alınamadığı
+anlamına gelir. Bir ölçümde bu fark, "model hiçbir yolu kapatmıyor" gibi yanlış bir sonuca
+götürür (bu oturumda bir kez götürdü).
+
+**Düzeltme.** `worker.py` yol maskesi boşsa günlüğe uyarı yazıyor ve sonuca
+`roadLayerMissing: true` koyuyor; simülasyon sonucunda `kapanma.yolKatmaniYok`. Arayüz bu
+durumda sayı göstermez, "yol katmanı alınamadı" yazar.
+
+**Ölçüm (katman geldiğinde, aynı görüntü).** 14,08 km yol; modelin hasarı **doğrudan yol
+pikseline düşen** kısmı 1 303 px ≈ **105 m**; r_h = 25 m ile yayıldığında 14 055 px ≈
+**1 129 m** (yolun %8'i). Yedi blobun dördü yola doğrudan değiyor.
+
+**Açık soru (J-19'a bağlı).** r_h = 25 m, 105 metrelik gerçek taşmayı 1 129 metreye çeviriyor
+(11 kat). Bu bir tasarım kararı; tatbikat sonucunda yarıçap yazılı ama duyarlılık ölçülmedi —
+r_h = 10 / 15 / 25 m için kapanan yol uzunluğu ve rota uzaması ölçülmeli.
+
+---
+
+## J-69 🟠 r_h (sert kapanma yarıçapı) duyarlılığı ölçüldü — araca erişimi belirleyen ayar
+**Durum:** ÖLÇÜLDÜ, karar bekliyor · **Bulundu:** 25 Eylül 2026 · **İlgili:** J-19, J-64, J-68, J-26
+
+**Neden.** Kapanma bina hasarından türetiliyor: bir yol, hasarlı noktaya r_h metreden yakınsa
+kapalı sayılır. r_h = 0 iken yalnız yolun tam üstündeki hasar sayılır (uygulamanın eski kuralı)
+ve sokağa dökülen moloz görünmez; büyüdükçe açık sokaklar da kapalı sayılır.
+
+**Ölçüm.** Hatay/Defne — Elektrik, geniş katman (Maxar 2023-02-08), U-Net MiT-B4, eşik 0,5,
+tohum 42; graf 4 164 düğüm / 11 491 kenar / **831,6 km**; 5 gerçek ekip üssü × 5 senaryo
+afetzedesi = 25 çift. Çıkarım bir kez koştu, dört yarıçap aynı maske ve aynı graf üzerinde
+denendi. Betik `QuakeMindBackend/benchmark/rh_duyarlilik.py`, kayıt
+`benchmark/reports/rh_duyarlilik_hatay_elektrik.json`.
+
+| r_h | Kapanan kenar | Kapanan yol | Yolun payı | Tam araç rotası kalan çift | Ort. uzama (o çiftlerde) | Araç giremeyen çift | Ort. yürüme |
+|---|---|---|---|---|---|---|---|
+| 0 m | 29 | 2 217 m | %0,27 | **20/25** | 23,2 m (%1,5) | 5/25 | 17,1 m |
+| 10 m | 72 | 4 740 m | %0,57 | **5/25** | 44,9 m (%1,4) | 20/25 | 47,1 m |
+| 15 m | 104 | 7 277 m | %0,87 | **0/25** | — | 25/25 | 47,6 m |
+| 25 m | 148 | 11 674 m | %1,40 | **0/25** | — | 25/25 | 55,0 m |
+
+**Bulgu — beklediğimiz gibi değil.** r_h "rotayı ne kadar uzatıyor" sorusunu değil, **"araç
+hedefe girebiliyor mu"** sorusunu belirliyor. Tam araç rotası kalan çift 20 → 5 → 0 → 0. r_h ≥ 15 m
+olduğunda hiçbir afetzedeye araçla ulaşılamıyor; uzama ortalaması tanımsız hâle geliyor. Buna
+karşılık yürüme mesafesi küçük kalıyor (17 → 55 m): araç her hâlükârda ~55 m yakınına kadar
+gidiyor. Hiçbir ayarda tamamen ulaşılamayan çift yok.
+
+**Uyarı (kendi kurgumuzdan gelen yanlılık).** Afetzedeler modelin hasarlı bulduğu blobların
+üzerinde seçiliyor, yani tanım gereği molozun içindeler. Yarıçap büyüdükçe tam etraflarındaki
+yollar kapanıyor — "araç giremiyor" sonucunun bir kısmı bu seçimden geliyor. Gerçek çağrı
+konumlarıyla (bina girişleri, sokak adresleri) sonuç farklı çıkabilir.
+
+**Ölçüm hatası düzeltildi (aynı gün).** İlk tabloda uzama ortalaması, yürüme yedeği devreye
+giren çiftleri de içeriyordu; oralarda `kapanmaliM` hedefe değil aracın gidebildiği en yakın
+noktaya olan KISMİ mesafe. Bu yüzden r_h = 0'da %8,7, r_h = 10'da %3,4 gibi ters bir eğilim
+çıkmıştı. Uzama artık yalnız **tam araç rotası olan** çiftlerden hesaplanıyor
+(`olcum.uzamaHesabindakiCift` kaç çift olduğunu yazar). İlk yayımlanan "%0,6 → %24,2, 40 kat"
+tablosu geçersizdir.
+
+**Karar ve açık iş.** Bu ölçüm duyarlılığı gösterir, doğruyu değil: hangi r_h'nin gerçeğe yakın
+olduğunu söylemek için "bu sokaklar gerçekten kapalıydı" diyen bir yer gerçeği gerekir; bu alanda
+yok. Tek aday **EMSR648** (makaledeki gerçek koşuda dünya olarak zaten kullanılıyor) — r_h orada
+kalibre edilip buraya taşınmalı. **Varsayılan düzeltildi (25 → 0 m).** Ürünün kuralı zaten r_h = 0: `worker.py`'de
+`blockageRadiusM` varsayılanı 0 ve yarıçap kuralı yalnız açıkça istenince devreye giriyor (J-26).
+Simülasyon modülü isteğe 25 yazarak bu varsayılanı sessizce değiştiriyordu — tam olarak J-19'un
+yasakladığı şey. Tatbikat artık ürünün kuralıyla koşar; yarıçap farkı kıyas kutusunda görünür. Makaleye tek değer değil
+bu tablo konmalı. Ölçüm tek alan, tek model, tek tohum.
+
+**Arayüz.** Kıyas kutusu eklendi: istekte `karsilastirYaricaplar` (varsayılan [0, 10, 25]),
+sonuçta `yaricapKiyasi`. Model bir kez koşar, her yarıçap yalnız kapanma + rota hesabı ekler
+(ölçüldü: yarıçap başına ~16 sn).
+
+---
+
+## J-70 🔴 Model kapanmaları EMSR648 yer gerçeğiyle zayıf uyuşuyor — r_h bunu kurtarmıyor
+**Durum:** AÇIK · **Bulundu:** 25 Eylül 2026 (kayıtlı koşudan çıkarıldı) · **İlgili:** J-30, J-65, J-69, Tablo 18
+
+**Soru.** r_h hangi değerde gerçeğe en yakın kapanma kümesini üretir?
+
+**Veri.** `benchmark/runs/model_gercek_dunya/summary.json` (J-30 koşusu) her (zoom, r_h) için
+modelin kapanmalarını EMSR648 Grading'den çıkarılan gerçek kapanmalarla karşılaştırıyor:
+3 bölge, 609 segment, **48'i gerçekten kapalı**; kural "loose", 8 m tampon. Maskeler **eski
+üretim modeliyle** (`optimized_mitb4_focal_dice30`) üretilmiş.
+
+| zoom | r_h | Model kapalı | TP | FP | FN | Kesinlik | Duyarlılık | F1 |
+|---|---|---|---|---|---|---|---|---|
+| 18 | 0 | 6 | 1 | 5 | 47 | 0,167 | 0,021 | 0,037 |
+| 18 | 10 | 44 | 3 | 41 | 45 | 0,068 | 0,062 | 0,065 |
+| 18 | 25 | 95 | 6 | 89 | 42 | 0,063 | 0,125 | 0,084 |
+| **19** | **10** | 108 | 16 | 92 | 32 | 0,148 | 0,333 | **0,205** |
+| 19 | 25 | 246 | 29 | 217 | 19 | 0,118 | 0,604 | 0,197 |
+| 20 | 15 | 305 | 35 | 270 | 13 | 0,115 | 0,729 | 0,198 |
+| 20 | 25 | 434 | 44 | 390 | 4 | 0,101 | 0,917 | 0,183 |
+
+**Bulgular.**
+1. En iyi F1 **0,205** (z19, r_h = 10 m). Kesinlik 0,148 → modelin "kapalı" dediği her 7 yoldan
+   biri gerçekten kapalı.
+2. r_h bir denge düğmesi: duyarlılık 0,02 → 0,92'ye çıkıyor ama kesinlik 0,10–0,18'de çakılı.
+   **Hiçbir r_h değeri sonucu kurtarmıyor.**
+3. Asıl kaldıraç **zoom**: z18'de en iyi F1 0,084, z19'da 0,205 (2,4 kat). Tatbikat bugün z18
+   kullanıyor. Drone sahnesinin doğal çözünürlüğü 0,034 m; z18'e indirmek bilgiyi atıyor.
+4. Gerilim: z19 = 0,24 m/px, modelin eğitim aralığının (0,3–0,5 m) DIŞINDA — ama orada daha iyi.
+   "Eğitim GSD'sine sadık kal" kuralı (J-20) bu veride tutmuyor.
+
+**Kararlar.** (a) r_h arayüzden kaldırıldı — operatöre sonucu düzeltmeyen düğme sunulmaz;
+`kapanmaYaricapiM` (varsayılan 0) ve `karsilastirYaricaplar` (varsayılan boş) araştırma alanı
+olarak API'de kaldı. (b) Tatbikatın zoom'u yeniden değerlendirilmeli.
+
+**Yeni modelle tekrarlandı (25 Eylül akşamı).** 9 maske yeniden üretildi
+(`benchmark/data/model_masks_unet_mitb4/`, `make_model_masks.py --kunye unet_mitb4_p2_t42`);
+kalibrasyon `benchmark/rh_kalibrasyon.py` ile koşuldu (betik önce ESKİ maskelerde doğrulandı:
+kayıtlı J-30 tablosunu birebir üretti). Kayıtlar `benchmark/reports/rh_kalibrasyon_*.json`.
+
+| | Eski (mitb4_dice30) | Yeni (U-Net MiT-B4) |
+|---|---|---|
+| En iyi F1 | **0,205** (z19, r_h 10 m) | **0,098** (z18, r_h 25 m) |
+| Kesinlik / duyarlılık | 0,148 / 0,333 | 0,118 / 0,083 |
+| z19 · r_h 10 m'de kapatılan kenar | 108 | 56 |
+
+**Ama bu iki modelin değil, iki AYARIN kıyası.** Eski maskeler eşik 0,40 + güçlendirme 3,5 +
+son işleme 2 ile üretilmiş (ham olasılıkta etkin eşik 0,114; morfolojik işlem lekeleri büyütüp
+birleştiriyor). Yeni maskeler defterin ölçüm ayarıyla: eşik 0,50, güçlendirme yok, son işleme
+yok — 4,4 kat daha katı. Kapatılan kenarın yarıya düşmesi (108 → 56) bunu gösteriyor.
+**"Yeni model daha kötü" sonucu bu tablodan ÇIKARILAMAZ.**
+
+**Açık iş.** Yeni modeli (a) eski karar ayarıyla ve (b) eşik taramasıyla yeniden koş; adil kıyas
+ancak o zaman olur (~40 dk maske üretimi). Makaleye girecek sayı odur.
+
+---
+
+## J-71 🟢 Simülasyon uçtan uca çalıştı (konsol + backend), dört hata düzeltildi
+**Durum:** KAPALI (26 Eylül 2026) · **İlgili:** J-62, J-70, `DEMO_CALISTIRMA.md`
+
+İlk kez arayüzden başlatılan tatbikat baştan sona koştu: Hatay/Elektrik geniş katman
+(Maxar 2023-02-08), U-Net MiT-B4, 5 gerçek ekip üssü → 5 senaryo afetzedesi. Toplam 78 sn
+(görüntü 7,5 · yol 0,8 · çıkarım 63,7 · lojistik 6,2). SSE ile dört katman sırayla geldi
+(hasar → kapanma → rota → görev), TATBİKAT şeridi koşu boyunca durdu.
+
+**Düzeltilen dört hata:**
+1. **Durum yanlış görünüyordu.** Analiz iş deposunun durumu işin sonuna kadar "queued"
+   kaldığı için sonuç ucu %47 ilerlemede bile "kuyrukta" diyordu. İlerleme > 0 ise
+   "calisiyor" döner.
+2. **Haritadaki kırmızı katman yanlış kümeydi.** Kapalı kenar çizgileri analizin (görüntü
+   kutusuyla sınırlı) sonucundan geliyordu; artık tatbikatın kendi grafiğinden geliyor
+   (`kapanma.kapaliKenarlar`), analizinki `analizKapaliKenarlar` olarak ayrı duruyor.
+3. **"NaN sa" satırları.** `referansAjanlar` sözlüğüne konan metin ve görüş mesafesi
+   alanları arayüzde varyant sanılıp NaN olarak çiziliyordu; ikisi ayrı alana taşındı
+   (`referansNotu`, `referansGorusMesafesiM`).
+4. **Panel hâlâ r_h gönderiyordu.** Kapanma yarıçapı kaydırıcısı ve yumuşak maliyet
+   anahtarı panelden kaldırıldı, konsol varsayılanı 25 → 0 (J-70). Bu düzeltilmeden önce
+   koşu %157 rota uzaması üretiyordu; sonrasında %1,2.
+
+Sunum hesabı `demo@quakemind.local` (koordinatör) açıldı; çalıştırma sırası
+`DEMO_CALISTIRMA.md`'de.
+
+---
+
+## J-72 🟠 Analizin bulduğu hasar hiçbir yere kaydedilmiyordu (PostGIS yokken sessiz düşüyordu)
+**Durum:** KAPALI (26 Eylül 2026) · **Bulundu:** 26 Eylül 2026 (uçtan uca bütünleşme denetiminde) · **İlgili:** J-71, kural 2
+
+**Sorun.** `worker.py` hasar bloblarının ağırlık merkezlerini `damage_points` olarak
+**yalnız PostGIS'e** yazmayı deniyordu. Yerel geliştirmede PostGIS kapalı
+(`check_connection()` False, depo SQLite) ve yazma `except` içinde sessizce düşüyordu.
+Sonuç: analiz ve tatbikat gerçek hasar buluyor ama ısı haritası, risk motoru ve genel
+durum ekranı bundan hiç haberdar olmuyordu — ölçüldü, `hasar_noktalari` tablosunda
+`kaynak='uydu'` **sıfır** kayıt vardı.
+
+**Düzeltme.** PostGIS yoksa yerel depoya yazılır (`aktif_depo().hasar_ekle`,
+`kaynak="uydu"` — konsolun uydu kanalının sorguladığı değer). Doğrulandı: tatbikat
+koşusundan sonra `/api/hasar-noktalari` 14 kayıt döndü (12 SOS + 1 kamera + **1 uydu**),
+nokta genel haritada görünüyor. Böylece simülasyonun çıktısı sistemin geri kalanına
+gerçekten bağlanmış oldu (kural 2: her model aynı sözleşmeye iner).
+
+---
+
+## J-73 🟠 Tatbikat başlatılabiliyordu ama bitirilemiyordu; verisi gerçek veriyle karışıyordu
+**Durum:** KAPALI (26 Eylül 2026) · **Bulundu:** 26 Eylül 2026 (kullanıcı isteği) · **İlgili:** J-71, J-72
+
+**Sorun.** Simülasyon bir sayfaydı, mod değildi: "Tatbikatı başlat" vardı, bitirme yoktu.
+Koşu başlayınca TATBİKAT şeridi kalıcı oluyordu (doğru) ama çıkmanın yolu yoktu. Dahası
+J-72 ile hasar noktaları veritabanına yazılmaya başlandığı için **tatbikat verisi gerçek
+olay verisiyle karışıyordu** — koşu bitse de noktalar canlı kümede kalıyordu.
+
+**Yapılan.**
+- `POST /api/simulasyon/bitir` eklendi: koşunun yazdığı hasar noktalarını siler
+  (`depo.hasar_sil_tatbikat`, `ek.tatbikat` işaretinden önek eşlemesiyle — kontrol
+  koşusunun `<isId>_kontrol` kimliği de kapsanır) ve canlı akışa `durum: "iptal"` yayınlar.
+- Konsola **"Tatbikatı bitir"** düğmesi eklendi; başlatma düğmesi koşu varken
+  "Yeniden koştur" olur. Şeritte kapatma yok (uyarı susturulamaz), bitirme panelde.
+- `durum: "iptal"` canlı akıştan gelince AÇIK olan bütün istemciler tatbikat modundan
+  çıkar — bitiren sekmeyi temizlemek yetmez.
+- Hasar noktaları "Tatbikat — uydu hasar bölütlemesi" diye etiketlenir ve `ek.tatbikat`
+  taşır; hangisinin tatbikattan geldiği veride de bellidir (kural 1).
+- **Kontrol koşusu artık hasar noktası yazmıyor:** deprem öncesi görüntüde bulunan şey
+  yanlış alarm tabanıdır, olay değildir.
+
+**Doğrulandı.** Başlat → şerit açıldı, 1 nokta yazıldı (kontrol koşusundan sıfır); bitir →
+şerit kalktı, düğme başa döndü, tatbikat noktaları silindi, 13 gerçek nokta yerinde kaldı.
+
+---
+
+## J-74 🟠 Tatbikat modu sayfa yenilenince kayboluyordu (koşu sunucuda sürerken)
+**Durum:** KAPALI (26 Eylül 2026) · **Bulundu:** 26 Eylül 2026 (arayüz turunda) · **İlgili:** J-73
+
+**Sorun.** Koşunun kimliği yalnız bellekteki durumda (zustand) duruyordu. Sayfa yenilenince
+— ya da tam sayfa yüklenen bir adrese gidilince — TATBİKAT şeridi kalkıyor, katmanlar
+düşüyor, ekran normal akışa dönüyordu. Oysa **koşu sunucuda sürüyor** ve hasar noktaları
+duruyordu: kullanıcı tatbikatın bittiğini sanıp gerçek veriye bakıyor sanıyordu. Sunumda
+yanlışlıkla F5'e basmak tatbikatı "bitirmiş" gibi görünürdü.
+
+**Düzeltme.** Koşu kimliği sekmenin `sessionStorage`'ında tutuluyor: yenilemeyi aşar, sekme
+kapanınca biter, başka sekmeye ya da kullanıcıya sızmaz. Okuma/yazma try/catch içinde —
+özel pencerede ya da depolama kapalıyken uygulama yine çalışır, yalnız mod yenilemeyi aşmaz.
+
+**İkinci hata (aynı kökten).** Yenileme sonrası iş kaydı da sıfırlandığı için biten koşu
+şeritte "%0", panelde "katman bekleniyor" görünüyordu. Durum artık sonucun kendi
+`durum`/`ilerleme` alanlarından da okunuyor; yenileme sonrası "4/4 katman · bütün katmanlar
+hazır" yazıyor. Doğrulandı.
+
+---
+
+## J-75 🟠 Seçilen görüntü haritada görünmüyordu — model neye baktığı ekranda yoktu
+**Durum:** KAPALI (26 Eylül 2026) · **Bulundu:** 26 Eylül 2026 (kullanıcı isteği) · **İlgili:** J-35, kural 1
+
+**Sorun.** Hasar analizi modunda soldan görüntü kaynağı (Google / Esri Wayback / OpenAerialMap)
+ve tarih aralığı seçiliyor, hatta OAM görüntüsü tek tek seçilebiliyordu; ama harita yalnız OSM
+altlığını çiziyordu. Kullanıcı **modelin neye baktığını göremiyordu**; analiz bitince de kapalı
+yol çizgileri boşlukta duruyordu.
+
+**Yapılan.** Seçilen kaynağın karoları haritaya katman olarak bindi: altlığın ÜSTÜNDE, olay ve
+analiz katmanlarının ALTINDA. "Katmanlar" menüsüne **"Analiz görüntüsü (modelin gördüğü)"**
+anahtarı eklendi (hasar modunda varsayılan açık, kapatılınca altlığa dönülüyor). Kaynak künyesi
+katmanın yanında yazılı.
+
+**Yol boyunca çıkan üç engel.**
+1. **Adres çiftlenmesi.** OAM'in `tms` adresi `{z}/{x}/{y}` yer tutucularını zaten taşıyor;
+   körlemesine eklemek adresi `.../{z}/{x}/{y}/{z}/{x}/{y}.png` yapıyordu.
+2. **Maplibre katmanı görünmüyor.** Bağımlılık eklememek için önce maplibre raster kaynağı
+   denendi: karolar iniyor, katman stile giriyor, ekranda hiçbir şey çıkmıyordu — altlık ve
+   analiz deck.gl ile çizildiği için maplibre katmanı onların altında kalıyor. Çözüm: görüntü de
+   deck ile çiziliyor (`@deck.gl/geo-layers` TileLayer, mevcut deck sürümüyle aynı hat).
+3. **CORS.** deck karoyu `fetch` ile indiriyor; OpenAerialMap ve Esri `Access-Control-Allow-Origin`
+   göndermiyor, tarayıcı hepsini engelliyordu (12 istek gidiyor, sıfırı çiziliyordu). Çözüm:
+   karolar kendi API'mizden geçiyor — **`GET /api/goruntu/karo/{z}/{x}/{y}`**. Uç bir açık vekil
+   DEĞİL: yalnız bilinen dört karo konağına gidiyor (SSRF'e kapalı), yetki istiyor ve 24 saat
+   önbellek başlığı veriyor. Yetkili olduğu için jeton katmana `loadOptions` ile geçiriliyor.
+
+**Doğrulandı (tarayıcıda).** Maxar 2023-02-08 görüntüsü haritaya oturdu, hasar noktaları üstünde
+kaldı; katman anahtarı kapatılınca görüntü kalkıp altlık geri geldi, açılınca döndü.
+
+---
+
+## J-76 🔴 Analiz yakınlaştırmayı çizilen alandan değil istekteki yarıçaptan seçiyordu — model hiçbir şey bulamıyordu
+**Durum:** KAPALI (26 Eylül 2026) · **Bulundu:** 26 Eylül 2026 (kullanıcı bildirdi) · **İlgili:** J-20, J-58, J-26
+
+**Belirti.** Haritada 0,4 × 0,3 km'lik alan seçilip analiz koşuluyor; sonuç
+**"Kapalı yol 0 segment · %0,0, Hasar oranı %0,0"** diyor. Aynı bölge daha önce doğru analiz
+edilmişti. Ekranda künye "2,5 km yarıçap · z15 · ~3,86 m/piksel" yazıyor ve panelin kendi
+uyarısı "model 0,3–0,5 m/piksel ile eğitildi" diyor.
+
+**Kök sebep.** Yakınlaştırma `zoom_for_radius(radiusKm)` ile seçiliyordu. Konsol alan çizilse
+bile hazır ayarın yarıçapını (Standart analiz = 2,5 km) gönderiyor; sunucu da kutuya değil o
+sayıya bakıyordu. Sonuç: 0,4 km'lik alan z15'te (~3,86 m/piksel) indiriliyor, görüntü ~100
+piksel kalıyor, çöken bina 1–2 piksele düşüyor ve model hiçbir şey bulamıyor.
+
+**Düzeltme.**
+1. **Sunucu:** yakınlaştırma artık ANALİZ KUTUSUNUN kendi büyüklüğünden hesaplanıyor
+   (`worker.py`); kutu verilmediğinde eski davranış aynen kalıyor.
+2. **Sunucu:** OpenAerialMap sahnesi, kullanıcının çizdiği kutuyu artık EZMİYOR. Önceden
+   sahne seçilince `bbox` sahnenin kutusuyla değiştiriliyordu — Maxar sahnesi 31×40 km'dir,
+   0,4 km'lik seçim bir anda bütün sahneye dönüşüyordu.
+3. **Konsol:** isteğe giden `radiusKm` analiz kutusundan hesaplanıyor; ekrandaki yazı da doğru.
+
+**Ölçüldü (aynı istek, aynı alan).**
+
+| | Önce | Sonra |
+|---|---|---|
+| Yakınlaştırma | z15 · 3,86 m/px | **z18 · 0,482 m/px** |
+| GSD uyarısı | var | **yok** |
+| Hasar oranı | %0,0 | **%0,58** (geçerli alanda %1,49) |
+| Kapalı yol | 0 | **8** |
+
+**Aynı koşuda kapatılan iki eksik daha.**
+- **Model seçimi (kullanıcı isteği).** `/api/road_damage/analyze` artık `modelAdi` alıyor ve yeni
+  `GET /api/road_damage/modeller` ucu eğitilen bütün künyeleri (mimari, sınama IoU, eşik, eğitim
+  GSD'si, ağırlık izi, hazır mı) listeliyor. Konsolun hasar panelinde model seçici var; seçilmezse
+  sunucunun etkin modeli koşar. Dört model de listede ve seçilebilir durumda.
+- **J-58 kapandı: kapanmalar artık çizgi.** `yol_kapanmalari` kaydına parçanın kendi çizgisi
+  eklendi ve konsol kapanmayı **kırmızı çizgi** olarak çiziyor. Önceden yalnız orta nokta
+  saklandığı için harita kapanmaları turuncu nokta tarlası gibi gösteriyordu — kullanıcının
+  "her taraf nokta oldu" dediği şey buydu. Eski kayıtlarda çizgi yok; onlar nokta kalır.
+
+**Açık kalan.** Eski (çizgisiz) 280 kapanma kaydı hâlâ nokta olarak çiziliyor; bunlar yanlış
+yakınlaştırmayla koşmuş analizlerden geliyor. Silinmesi kullanıcı kararı.
+
+---
+
+## J-77 🟠 Analiz artık sabit standartta koşuyor; öncesi / sonrası / etiketli üçlüsü üretiliyor
+**Durum:** KAPALI (26 Eylül 2026) · **Kullanıcı isteği** · **İlgili:** J-76, J-20, J-35
+
+**İstenen.** "Analiz için görüntüler hep aynı standartta olsun, hep doğru sonuç alalım; analiz
+bitince bana öncesi, sonrası ve etiketli hâlini ver."
+
+**1. Standart çözünürlük.** Yakınlaştırma artık alan büyüklüğünden değil **modelin eğitildiği
+metre/piksel** değerinden seçiliyor (`tiling.zoom_for_gsd`). Künyedeki eğitim bandının ortası
+hedeftir: 0,3–0,5 m → hedef 0,4 m → **z18 = 0,482 m/piksel**, bandın içinde. Böylece hangi alan
+seçilirse seçilsin analiz aynı ölçekte koşar; J-76'daki "geniş alan seçince çözünürlük düşüyor,
+model hiçbir şey bulamıyor" durumu bir daha oluşamaz.
+
+**Alan tavanı sessiz değil.** Bu çözünürlükte seçim karo tavanına sığmazsa `fetch_satellite_area`
+merkezden kırpıyor; sonuç artık `analizAlaniKm2` ve `istenenAlaniKm2` alanlarını ve künyeye
+"seçilen alan X km², tek koşuya Y km² sığdı, merkezden kırpıldı" notunu yazıyor.
+
+**2. Öncesi / sonrası / etiketli.** Analiz, deprem ÖNCESİ görüntüyü de çekiyor
+(`oncesiGoruntusu`, varsayılan açık): Esri Wayback sürümleri **çekim tarihine** göre taranıp
+olaydan önceki ilk çekim seçiliyor (J-35; bu alanda sürüm 44873, çekim 2021-09-27). Görüntü
+`imageOncesi` adıyla diğer görsellerle aynı uçtan iniyor:
+
+| Görsel | Ne |
+|---|---|
+| `imageOncesi` | Deprem öncesi (Esri Wayback, gerçek çekim tarihi künyede) |
+| `imageOriginal` | Analiz edilen deprem sonrası görüntü |
+| `imageSegmentationOverlay` | Aynı görüntü + modelin hasar maskesi |
+| `imageDamageOverlay` | Hasar + yol ağı + kesişim |
+
+**Hizalama düzeltildi.** İlk denemede öncesi 1536×1536, sonrası 1280×1280 çıktı: karo ızgarası
+farklı oturuyor. Öncesi görüntüsü artık sonrasının kutusuna kırpılıp aynı piksel ölçüsüne
+getiriliyor — üçü birebir hizalı (doğrulandı: 1280×1280 · 1280×1280 · 1280×1280).
+
+**Ölçüldü (Hatay/Defne — Elektrik, U-Net MiT-B4, r_h 15 m).** z18 · 0,482 m/px · GSD uyarısı yok ·
+hasar %0,58 (geçerli alanda %1,49) · açık yol 333 / **kapalı 30** · öncesi çekim 2021-09-27.
+
+---
+
 # DEĞİŞİKLİK GÜNLÜĞÜ
 
 | Tarih | Değişiklik |
@@ -3900,3 +4671,63 @@ tavana varmadan tetikleniyor.
 | 22 Eylül 2026 | **J-57 eklendi:** `npm run kontrol` konsol kaynaklarının yanına 82 `.js` dosyası yazıyor (`vite.config.js` dahil). Vite bu kopyaları `.tsx`'ten önce yükler. Yazılanlar silindi; betik düzeltmesi önerildi. |
 | 22 Eylül 2026 | **Tarif denemeleri ölçüldü (A-19), varsayılan korundu:** Kaggle oturum 2 — focal α 0,5 ve 0,75 doğrulamayı 0,435/0,457'den 0,475 ve 0,470'e çıkardı ama sınamayı 0,426'dan 0,400 ve 0,419'a düşürdü; örnekleyici fark etmedi (0,450 / 0,423). Sabit eşik 0,5 kalibrasyonu karıştırdığı için çelişki; 10 model varsayılan tarifle (α 0,25, örnekleyici kapalı) koşulacak. |
 | 23 Eylül 2026 | **10 model koşuldu (A-15 kapanmaya hazır) ve A-23 eklendi:** Kaggle oturum 3–4, hepsi P2 + aynı tarif + tohum 42 + tohumlu artırım. Sınama IoU: unet_mitb4 0,433 · upernet_mitb4 0,425 · deeplabv3plus_mitb4 0,412 · segformer_mitb2 0,409 · segformer_mitb4 0,407 · fpn_mitb4 0,397 · segformer_mitb0 0,382 · unet_resnet18 0,339 · deeplabv3plus_resnet101 0,339 · upernet_convnext_small 0,327. Kodlayıcı belirleyici (MiT-B4 ailesi önde), kod çözücü farkları tohum bandında. **A-23:** öncesi+sonrası girdi (KATE-CD çiftleri) kazanç vermedi (0,449 / 0,448). Yedek: özel Kaggle veri seti `quakemind-sonuclar` (17,8 MB, 192 dosya). |
+| 24 Eylül 2026 | **J-57 kapandı:** konsolun `kontrol` betiği artık `tsc -b` koşuyor; kaynakların yanına `.js` yazmıyor. Bilerek bozulan tip yakalanıyor, token denetimi geçiyor. |
+| 24 Eylül 2026 | **J-56 eki kapandı:** konsol haritasındaki dört boş katman bağlandı. Yol kapanmaları (39, uydu analizi), depremler (603, M ≥ 4, Kandilli + USGS katalogu), fay hatları (24 çizgi, GEM) ve toplanma alanları (3.682, AFAD) kutuyla sorulan yeni uçlardan geliyor (`/api/katman/*`, kimlik gerekli). Toplanma alanları şehir ölçeğinde çiziliyor; deprem ipucunda artık yıl da yazıyor. |
+| 24 Eylül 2026 | **J-58 eklendi:** yol kapanması kaydında şiddet derecesi ölçülmüyor (hepsine 3 yazılıyor) ve kapalı parçanın çizgisi atılıp yalnız orta noktası saklanıyor. Arayüz bu yüzden derece göstermiyor. |
+| 24 Eylül 2026 | **J-53 kapandı:** vatandaş ihbarının metnini ve konumunu oturumsuz veren eski uçlar kapandı. Konsolun kullandığı dokuz uç (ısı, analiz, kamera ve metin modelleri) artık rol istiyor; yalnız eski webin kullandığı altı uç varsayılanı kapalı bayrağın arkasında (`QUAKEMIND_ESKI_UCLAR=1` ile açılır). 21 denetim geçti; duman testinde 12 uç durum değiştirdi. |
+| 24 Eylül 2026 | **J-59 eklendi:** uç sayımı — 91 uçtan 51'i kimlik istiyor, 6'sı bayrak arkasında, 34'ü açık. Açık olanların hangisinin neden açık kaldığı ve sıra önerisi kayıtta. |
+| 25 Eylül 2026 | **J-61 kapandı:** API yanıtları artık gzip'li. 16 ucun toplamı 660 KB → 134 KB (4,9 kat); toplanma katmanı 463 → 95 KB. Canlı akış sıkıştırmanın dışında (Starlette akışlı yanıtı tamponluyor, olaylar gecikirdi). Seviye 6 seçildi: seviye 9 aynı boyut için 4 kat CPU. Yerelde süre 562 → 651 ms arttı; kazanç ağ üzerinde. |
+| 25 Eylül 2026 | **J-60 kapandı:** CORS ayarı `allow_origins=["*"]` + `allow_credentials=True` idi; Starlette bu ikilide isteği atan origin'i yansıttığı için her site kimlikli istek atabiliyordu (zararı SameSite=lax sınırlıyordu). Yıldız yerine adres listesi geldi, üretim alan adı `QUAKEMIND_CORS` ile ekleniyor. |
+| 25 Eylül 2026 | **J-62 eklendi:** simülasyon (tatbikat) modu konsolda kuruldu — SIMULASYON_SOZLESMESI.md §5'teki dokuz madde, §4'teki alan adlarıyla birebir. Kalıcı TATBİKAT şeridi, seçim ve kaynak panelleri, hasar maskesi + kapanan yollar + üç rota + görev katmanları, Dijkstra/A* kartı. Sözleşmeyle üç uyuşmazlık kayda geçti (ilerleme ölçeği, koordinat sırası, kısmi sonuç). Gerçek uçlar henüz yayında değil. |
+| 25 Eylül 2026 | **J-63…J-67 eklendi (simülasyon backend'i).** Simülasyon uçları (`uclar/simulasyon.py`), tatbikat çekirdeği (`apps/road_damage/utils/tatbikat.py`) ve çoklu model desteği yazıldı; üç model künyesi üretildi (B0/B2/U-Net MiT-B4, SHA-256 doğrulandı). Zincir gerçek veriyle uçtan uca koştu: Maxar 2023-02-08, U-Net MiT-B4, 87 kenar kapalı, 25 çift, ulaşılamayan 0, ortalama uzama %6,8. **J-63 ve J-64 kapandı** (rota grafiği kapsamı, son adım yaya), **J-66 kapandı** (iş parçacığı sınırı: 243 → 26,6 sn). **J-65 açık:** modeller drone ortofotosunda hasar bulmuyor (%0,26–0,58), Maxar'da %0,69 — alan farkı ölçülüp makaleye yazılmalı. **J-67 açık:** iki venv, 6 kat hız farkı. J-62'nin üç uyuşmazlığı sözleşmede kapatıldı (ilerleme yüzde, koordinat `[lat, lon]`, kısmi sonuç) ve sözleşmedeki örnek sayılar gerçek koşuyla değiştirildi. |
+| 25 Eylül 2026 | **J-65 düzeltildi (çerçeve yanlıştı).** Kullanıcı eski modelin aynı NGO görüntüsünde yıkık alanları ve yol kapanmalarını gösterdiğini söyledi; kontrol edildi ve haklı çıktı. Ürünün çıkarım yolu etiketli QQB karolarında defterle birebir aynı (IoU 0,2941 ↔ 0,2946). Eski ürün modeli de aynı ortofotoda %0,55 — yeni ağırlıklarda gerileme yok; eşiği 0,10'a indirmek de değiştirmiyor. Asıl hata paydadaydı: ortofotonun karesi %61 siyah, doğru payda ile oran %1,70. Model yıkıntıları DOĞRU işaretliyor, azını buluyor (duyarlılık düşük). `damageRateValid` ve `validPixelRatio` eklendi. |
+| 25 Eylül 2026 | **J-62 kapandı:** tatbikat gerçek uçlarla uçtan uca koşturuldu (Defne / Elektrik Mah., Unet mit_b4): 202 + kuyruk + canlı ilerleme, %0,6 hasarlı piksel, 32 kapalı kenar, 15 çift, ortalama uzama 93,6 m. Uç sözleşmeden 12 yerde ayrılıyor (tablo kayıtta); arayüz ikisini de kabul ediyor ama tek biçimde buluşulmalı. A* (158 ms) Dijkstra'dan (5 ms) yavaş çıktı — backend bakmalı. |
+| 25 Eylül 2026 | **J-63 kapandı:** tek panelin hatası bütün konsolu karartıyordu; panel hata sınırı eklendi. Hata veren panel kendi yerinde yazıyor, harita ve öbür paneller çalışmaya devam ediyor. |
+| 25 Eylül 2026 | **Simülasyon backend'i tamamlandı (R0–R3, kontrol koşusu, kapsama).** Referans ajanlar tatbikata bağlandı: ortak görev üzerinden R0/R1/R2 38,5 dk · 4 621 m, R3 (= bizim sistem) 15,7 dk · 3 931 m. **Ölçüm hatası düzeltildi:** varyantlar farklı sayıda görevi tamamlıyor (R0 1/5, R3 2/5), ortalamalar artık yalnız ortak görevler üzerinden. Tatbikatta dünya = modelin kapanmaları olduğu için bizim sistemin R3'e eşit olduğu sonuca ve sözleşmeye yazıldı — bu tablo modelin doğruluğunu ölçmez. Deprem öncesi kontrol koşusu (yanlış alarm tabanı) kuyruğa arkadan giriyor (`kontrolKosusu`). Kapanma kapsaması artık hesaplanıyor (geçerli maske ile): modelin baktığı kenar oranı yazılıyor. |
+| 25 Eylül 2026 | **J-68 eklendi ve kapandı.** Overpass bütün aynalarda düşünce yol maskesi boş geliyor ve analiz "0 kapalı yol" diye sessizce devam ediyordu (üç koşuda görüldü, bir ölçümü geçersiz kıldı). Sonuca `roadLayerMissing` eklendi. Katman geldiğinde ölçüldü: 14,08 km yolun 105 m'sine hasar doğrudan taşıyor, r_h = 25 m ile 1 129 m kapanıyor (%8); 7 blobun 4'ü yola doğrudan değiyor. r_h duyarlılığı ölçülmedi (J-19). |
+| 25 Eylül 2026 | **J-69 eklendi: r_h duyarlılığı ölçüldü** (0/10/15/25 m, Hatay/Elektrik geniş katman, 831,6 km yol, 25 çift). Kapanan yol 6 kat artarken rota uzaması 40 kat artıyor (%0,6 → %24,2); kırılma 10–15 m arasında, araç giremeyen çift 10/25 → 20/25. Varsayılan 25 m değiştirilmedi. Doğruluk için yer gerçeği (EMSR648) ile kalibrasyon gerekiyor. Betik ve kayıt depoda. |
+| 25 Eylül 2026 | **J-69 düzeltildi + kıyas kutusu eklendi.** Uzama ortalaması yürüme yedeği devreye giren çiftleri de sayıyordu (kısmi mesafe tam rotalarla karışıyordu); artık yalnız tam araç rotası olan çiftlerden hesaplanıyor. Düzeltilmiş tablo bambaşka bir şey söylüyor: r_h uzamayı değil ARACIN GİREBİLMESİNİ belirliyor — tam araç rotası kalan çift 20/25 → 5/25 → 0/25 → 0/25, yürüme 17 → 55 m. Ölçüm betiğinin kutusu tatbikatla eşitlendi (worker yarıçapı max(0,5, istenen) ile tabanlıyor). Kıyas kutusu: `karsilastirYaricaplar` → `yaricapKiyasi`, yarıçap başına ~16 sn. |
+| 25 Eylül 2026 | **Simülasyonun r_h varsayılanı 25 → 0 düzeltildi (J-19).** Ürünün kuralı zaten r_h = 0 (`worker.py`, yarıçap kuralı J-26 deneyi olarak açıkça isteniyor); simülasyon modülü isteğe 25 yazarak varsayılanı sessizce değiştiriyordu. Tatbikat artık ürün kuralıyla koşuyor, yarıçapın etkisi `yaricapKiyasi` kutusunda görünüyor. |
+| 25 Eylül 2026 | **J-70 eklendi: r_h EMSR648 ile kalibre edildi, arayüzden kaldırıldı.** Kayıtlı J-30 koşusundan çıkarıldı (3 bölge, 609 segment, 48 gerçek kapanma): en iyi F1 0,205 (z19, r_h = 10 m), kesinlik 0,148. r_h duyarlılığı 0,02 → 0,92 çıkarıyor ama kesinliği 0,10–0,18 bandından çıkarmıyor — hiçbir yarıçap sonucu kurtarmıyor, o yüzden arayüzde gösterilmiyor (API'de araştırma alanı olarak kaldı, kıyas listesi varsayılanı boş). Asıl kaldıraç zoom: z18 F1 0,084 → z19 0,205. Tablo eski modele ait; yeni U-Net MiT-B4 ile yenilenmeli. |
+| 25 Eylül 2026 | **J-70 yeni modelle tekrarlandı.** 9 maske U-Net MiT-B4 ile yeniden üretildi (`make_model_masks.py --kunye`), kalibrasyon `benchmark/rh_kalibrasyon.py` ile koşuldu (betik eski maskelerde J-30 tablosunu birebir üreterek doğrulandı). Yeni modelin en iyi F1'i 0,098 (z18, r_h 25 m), eskisinin 0,205 (z19, r_h 10 m). Fakat iki koşunun KARAR AYARI farklı (eski: eşik 0,40/güç 3,5/son işleme 2; yeni: 0,50/1,0/0) — kapatılan kenar 108 → 56. Bu tablodan "yeni model daha kötü" sonucu çıkarılamaz; adil kıyas için yeni model eski ayarla ve eşik taramasıyla yeniden koşulmalı. |
+| 26 Eylül 2026 | **J-71: simülasyon uçtan uca çalıştı.** Arayüzden başlatılan tatbikat 78 sn'de tamamlandı (Maxar geniş katman, U-Net MiT-B4, 5 ekip × 5 afetzede); dört katman SSE ile sırayla geldi, Dijkstra 59 ms / A* 34 ms aynı yolu buldu, 25 çiftte ortalama uzama %1,2, referans ajanlar R0 22 dk ↔ bizim 10 dk. Dört hata düzeltildi: durum "kuyrukta" takılması, haritadaki kapalı kenar kümesinin yanlış kaynaktan gelmesi, referans panelindeki NaN satırları, panelin hâlâ r_h=25 göndermesi (%157 → %1,2 uzama). Çalıştırma belgesi `DEMO_CALISTIRMA.md`. |
+| 26 Eylül 2026 | **Bütünleşme denetimi + J-72.** İki oturumun işi zaten tek çalışma ağacında; birleştirme gerekmedi. Denetim: konsol `tsc -b` temiz, token denetimi temiz, `npm run build` başarılı; backend uç duman testi **99 uçtan 99'u temel imzayla aynı**; on mod ve afetzede ekranı gezildi, sunucu tarafında hata yok; SQLite deposunda 10 kullanıcı, 12 SOS, 3 görev, 5 bildirim. **J-72 bulundu ve kapandı:** analizin bulduğu hasar noktaları yalnız PostGIS'e yazılmaya çalışılıyordu ve o kapalı olduğu için hiçbir yere düşmüyordu; artık yerel depoya yazılıyor ve tatbikatın çıktısı genel haritada görünüyor. |
+| 26 Eylül 2026 | **J-73: tatbikat artık açılıp kapanan bir mod.** `POST /api/simulasyon/bitir` eklendi (koşunun hasar noktalarını siler, canlı akışa `durum: "iptal"` yayınlar), konsola "Tatbikatı bitir" düğmesi kondu, `iptal` mesajı gelince açık bütün istemciler normal akışa dönüyor. Tatbikat noktaları veride "Tatbikat" etiketi ve `ek.tatbikat` işaretiyle ayrışıyor; kontrol koşusu (deprem öncesi) artık nokta yazmıyor. Doğrulandı: başlat → şerit + 1 nokta, bitir → şerit kalktı, noktalar silindi, 13 gerçek nokta korundu. |
+| 26 Eylül 2026 | **J-74: tatbikat modu yenilemeyi aşıyor.** Koşu kimliği sekmenin sessionStorage'ında tutuluyor; sayfa yenilenince şerit, katmanlar ve bitirme düğmesi yerinde kalıyor (önceden mod kapanıyordu ama koşu sunucuda sürüyordu). Yenileme sonrası "%0 · katman bekleniyor" yazan metinler de düzeltildi: durum sonucun kendi alanlarından okunuyor. |
+| 26 Eylül 2026 | **J-75: seçilen görüntü artık haritada.** Hasar analizi modunda soldan seçilen kaynak (Google / Esri Wayback / OAM) karo katmanı olarak altlığın üstüne, analizin altına çiziliyor; "Analiz görüntüsü" anahtarı Katmanlar menüsünde. Üç engel aşıldı: OAM adresinin çiftlenmesi, maplibre katmanının deck'in altında kalması (görüntü de deck TileLayer'a taşındı, `@deck.gl/geo-layers` eklendi) ve CORS (yeni `GET /api/goruntu/karo/{z}/{x}/{y}` vekili; açık vekil değil, dört konakla sınırlı, yetkili, 24 sa önbellekli). Tarayıcıda doğrulandı. |
+| 26 Eylül 2026 | **J-76 (🔴) bulundu ve kapandı: analiz yanlış çözünürlükte koşuyordu.** Yakınlaştırma çizilen alandan değil istekteki `radiusKm`'den seçiliyordu; 0,4 km'lik seçim z15'te (3,86 m/px) analiz edilip hasar %0,0 / kapalı yol 0 çıkıyordu. Artık kutunun kendi büyüklüğünden hesaplanıyor (z18 · 0,482 m/px → hasar %0,58, kapalı yol 8). OAM sahnesi kullanıcının çizdiği kutuyu artık ezmiyor. Ayrıca **model seçimi eklendi** (`modelAdi` + `GET /api/road_damage/modeller`, dört künye de seçilebilir) ve **J-58 kapandı**: kapanmalar çizgi olarak saklanıp kırmızı çizgi çiziliyor (turuncu nokta tarlasının sebebi buydu). |
+| 26 Eylül 2026 | **J-77: analiz sabit standartta + öncesi/sonrası/etiketli.** Yakınlaştırma artık modelin eğitim çözünürlüğünden seçiliyor (z18 · 0,482 m/px), alan büyüklüğünden değil; kırpma olursa künyeye yazılıyor (`analizAlaniKm2` / `istenenAlaniKm2`). Analiz deprem öncesi görüntüyü de çekiyor (Esri Wayback, gerçek çekim tarihine göre; bu alanda 2021-09-27) ve `imageOncesi` olarak veriyor. Üç görsel birebir hizalı (1280×1280); ilk denemedeki 1536↔1280 farkı kırpma+ölçekleme ile giderildi. Ayrıca `yol_kapanmalari` tablosu temizlendi (476 kayıt: 460 noktasal, 16 çizgili) ve yeni koşuda 30/30 kapanma çizgili geldi. |
+| 26 Eylül 2026 | **J-78 (🔴) bulundu ve kapandı: otomatik hizalama kendisi hataydı, geri alındı.** "Yol binanın içinden geçiyor" şikâyeti üzerine analize çalışma anında faz korelasyonuyla otomatik ortak-kayıt (co-registration) eklenmişti ve son koşuda görüntüyü 8,7 m kaydırıyordu. Kaydırma **ölçümle yanlış çıktı.** Maxar'dan bağımsız bir ölçüt kuruldu (OSM yol maskesi altındaki çatı kırmızılığı R−B; maske gerçek yola oturunca en düşük olur): ölçek 5,52 (en iyi) – 16,75 (en kötü), kaydırmasız 6,43, **uygulanan 8,7 m ise 10,73 — yani düzeltme işi bozuyordu.** Doğru değer 2,4 m (5 px kuzey), ki bu OSM eksen doğruluğunun (~3–5 m) altında. Sonuçta: hasar %0,97 → **%0,55**, kapalı yol 23 → **6**. Otomatik hizalamanın güvenilmez olmasının sebebi de ölçüldü: referanslar birbirini tutmuyor (Esri 2021: 4,0 m · Maxar 02-08: 10,2 m · Maxar 02-11: 96,9 m), çünkü Maxar karoları **eğik bakışlı** — binalar yatıyor, çatılar sokağı örtüyor. Yerine **ölçülmüş, künyeli, deterministik tablo** kondu (`apps/road_damage/utils/hizalama.py`): kayma sahne başına bir kez `araclar_hizalama_olc.py` ile ölçülüp künyesiyle yazılıyor, çalışma anında yalnız okunuyor. Eşik 5,0 m — altındaki kayma raporlanır, uygulanmaz. Analiz başına 3 ek görüntü indirme kalktı (CLAUDE.md 3). Ayrıca yol bandı genişliği metreye bağlandı (sabit 6 px, z18'de 2,9 m ama z15'te 23 m demekti; artık `3,0 m / GSD`, standart zoom'da değer aynı). Doğrulandı: 31,2 sn, z18 · 0,482 m/px, hasar %0,55 kare / %1,42 geçerli, 342 açık / 6 kapalı yol. |
+| 26 Eylül 2026 | **J-79 açıldı: simülasyon kendi mantığıyla yeniden kuruluyor (EMSR/HAZUS/sentetik dışarıda).** Karar: tatbikat yalnız **gerçek açık drone görüntüsü → kendi hasar modelimiz → OSM kesişimi → kapalı yol → ekip erişimi** zinciriyle kurulacak; Copernicus EMS/EMSR648, HAZUS eşlemesi, sentetik kapanma üreteci ve R0–R3 adlandırması kullanılmayacak. Bu oturumda yapılanlar: **(1)** Açık görüntü envanteri ölçüldü — bölge kutusunda **67 sahne**, bunların **gerçek drone (Help.NGO) olanı 14**; hedeflenen 11 sahneden 8'i ölçülebildi, ölçülen alan kataloğu aracı yazıldı (`araclar_alan_katalogu.py`: uçuş izinin en dolu ~500 m penceresini arar, elle bbox yazılmaz) 3'ü mozaik dar olduğu için (500 m pencere sığmadı) atlandı. **(2) Sağdan trafik dönüş maliyeti eklendi** (`utils/donus.py`): arama kenar tabanlı (line graph) yapıldı, çünkü düğüm tabanlı Dijkstra/A* kavşağa nasıl girildiğini bilmez ve sola dönüşü sağa dönüşle aynı fiyata alır. Sınıflar düz/sağ/sol/U, maliyetler beyan edilen tasarım parametresi (0/3/10/25 sn), duyarlılığı ölçülecek. **(3)** Overpass'ın dört aynası da ulaşılamaz durumda ölçüldü (000, 21–30 sn); simülasyon dış servise bağlı kalmasın diye yerel Türkiye PBF'inden tek geçişle bölge çıkarımı (`araclar_yerel_osm_kur.py`) ve yerel yol kaynağı (`utils/yerel_yol.py`) yazıldı — graf ve maske **aynı** dosyadan gelir, graf yönlüdür ve `oneway`a uyar, hız `maxspeed`/yol sınıfından gelir (eskiden düz 15 km/sa idi). pyrosm yalnız `venv/` ortamında (J-67). **AÇIK:** PBF çıkarımı tamamlanmadı (kullanıcı durdurdu); uydurma 20 dk'lık "yeniden yönlenme cezası" (`simulate_reference_fleet` `u_turn_penalty_min=20.0`) hâlâ duruyor ve kaldırılacak; R0–R3 adları kendi kıyas kollarımızla değişecek; **hangi bölgelerin kullanılacağı kullanıcıyla konuşulacak.** |
+| 26 Eylül 2026 | **J-80 (🔴) bulundu ve kapandı: tatbikat hiçbir şey ölçmüyordu — dünya yanlış ölçekteydi.** İlk uçtan uca koşuda üç kıyas kolu da **birebir aynı** sonucu verdi (4,4 dk, aynı dönüş sayıları, keşif 0). Sebep ölçüldü: ekipler gerçek tesisler olduğu için (1,3–3,8 km uzakta) rota grafiği 25.323 kenara çıkıyor, model ise bunların **yalnız %0,64'ünü** görüyordu (162 kenar, 16'sı kapalı). 500 m'lik bir drone enkaz haritası 3 km'lik rotayı değiştiremez; kapanma hiçbir rotaya denk gelmiyordu. **Çözüm:** dünya görüntülenen mahalleye daraltıldı (`tatbikat.mahalle_grafigi`, +150 m marj) ve ekipler mahallenin **gerçek giriş ağızlarında** konuşlanıyor (`tatbikat.giris_noktalari`: yolların kareyi kestiği düğümler, ana yol sınıfı önce, ağızlar arası en az 120 m). Verinin desteklediği soru buydu: *mahalleye giren ekip içerideki enkaza ne kadar sürede ulaşıyor?* Aynı alan, aynı model, aynı maske ile kapsama %0,64 → **%15,2** ve kollar ayrıştı: kapanmayı bilmeyen 2,9 dk (2 U dönüşü), telsizle paylaşan 2,4 dk (1), QuakeMind 1,3 dk (0). Hem araç (`araclar_tatbikat_kos.py --kapsam mahalle`) hem uç (`uclar/simulasyon.py`) aynı kurguyu kullanıyor; eski geniş kurgu `--kapsam genis` ile duruyor. |
+| 26 Eylül 2026 | **J-79 ilerleme: uydurma 20 dk cezası kaldırıldı, sağdan trafik rotaya girdi, Overpass bağımlılığı bitti.** **(1)** `simulate_reference_fleet`'teki `u_turn_penalty_min=20.0` sabiti ayrıştırıldı: değerlendirme (1,0 dk) + manevra (25 sn) = **1,42 dk**; asıl bedel artık ekibin fiilen fazladan sürdüğü yoldan geliyor ve onu çizge hesaplıyor. Eski betikler `u_turn_penalty_min` göndererek eski tabloları yeniden üretebilir. Etkisi ölçüldü (rastgele kapanma kümesiyle mekanizma sınaması): cezanın süredeki payı **%97,4 → %30**; eski kurulumda bilgisiz ekip hiç varamıyordu. **(2)** Dönüş maliyeti aramanın içine girdi (`utils/donus.py`, kenar tabanlı A*/Dijkstra): düz 0 / sağ 3 / sol 10 / U 25 sn, beyan edilen tasarım parametresi. Dört sınama geçti (`testler/test_donus.py`): sol > sağ > düz, eşit uzunlukta sağ dönüşlü yol seçiliyor, U en pahalı, tek yönlü kenara ters girilemiyor. Kenar hızları da düz 15 km/sa yerine `maxspeed`/yol sınıfından (20–70 km/sa). **(3)** Yerel PBF'ten bölge çıkarımı tamamlandı: **756.623 yol kenarı, 718.564 düğüm, 205 tesis** (18 dk, tek geçiş). Maske 1,13 sn, graf 2,7 sn, 3.083 tek yönlü kenar. Graf ve maske artık **aynı** kaynaktan; Overpass'ın dördü de düşükken tatbikat çalışıyor. 164 MB'lık `roads.gpkg` depoya girmiyor — `apps/road_damage/.gitignore` zaten `data/osm/` dizinini dışlıyor (CLAUDE.md 9); komutla yeniden üretilir. **(4)** Alan kataloğu artık elle yazılmıyor: `data/tatbikat_alanlari.json` ölçülerek üretiliyor (11 alan, hepsinin doluluk ve OSM yol oranı ölçülü), `uclar/simulasyon.py` onu okuyor. Kod adları R0–R3 bırakıldı; kollar "Kapanmayı bilmeyen ekip", "Telsizle paylaşan filo", "QuakeMind". |
+| 26 Eylül 2026 | **J-81 (🔴) bulundu ve kapandı: afetzede örneklemesi ön ek kararlı değildi — aynı tohum aynı tatbikatı vermiyordu.** `afetzedeler()` adayları `random.sample(aday, sayi)` ile seçiyordu; bu yüzden **15 afetzede isteyip ilk 5'ini almak, doğrudan 5 istemekten bambaşka bir küme** veriyordu. Yolun ulaşamadığı noktaları elemek için fazladan aday istemek gerekince bu, sonucu sessizce değiştirdi: İslahiye'de QuakeMind kazancı %44 → %0 göründü, oysa model, maske ve kapanmalar aynıydı. Artık aday listesi tohumla **bir kez karılıp** baştan `sayi` kadarı alınıyor: N büyüdükçe liste yalnız uzar, baştaki seçim değişmez. Sentetik 60 bloblu maskede doğrulandı (5 isteği ile 15 isteğinin ilk 5'i birebir aynı). |
+| 26 Eylül 2026 | **J-82 (🔴) bulundu ve kapandı: tatbikat koşu aracı maskeyi yanlış kutuya oturtuyordu.** Analiz sonucundaki `bounds` bir **sözlük** döner (`{west, south, east, north}`), liste değil; araç `isinstance(bounds, (list, tuple))` sınıyordu, sınama hep başarısız olup **istenen** kutuya düşüyordu. Analiz karo sınırına oturduğu için iki kutu aynı değil — Şubat Stadyumu alanında batıda **102 m kayma**, genişlikte **%21 fark** ölçüldü. Yani hasar maskesi, kapanmalar ve afetzede konumları yanlış yere coğrafi oturuyordu; J-78'de düzelttiğimiz hizalama sorununun aynısı, bu kez kendi aracımızda. Uç katmanı (`uclar/simulasyon.py`) sözlüğü zaten doğru okuyordu, yalnız araç hatalıydı. Düzeltildi, gerçek sınırlar sonuca da yazılıyor (`gercekBounds`) ve 11 alan yeniden koşuldu. |
+| 26 Eylül 2026 | **J-79 kapandı: simülasyon kendi mantığıyla uçtan uca koşuyor.** Konsolun kullandığı uçlardan doğrulandı (Nurdağı, En iyi model): `POST /api/simulasyon/kos` → 202 + iş kimliği, canlı durum, **35 saniyede** bitti. Graf 296 düğüm / 715 kenar, 26 kapalı kenar, **kapsama %44,1**; ekipler mahallenin gerçek giriş ağızları ("tertiary girişi 1" … "residential girişi 5"), 5 afetzede, ekranda 5 görev, ölçüm **25 çiftten**. Kollar: kapanmayı bilmeyen 4,4 dk (6 U dönüşü) · telsizle paylaşan 3,8 dk (6) · **QuakeMind 1,6 dk (0)** — %64. `donusMaliyetli: true`. 11 alan da uçtan listeleniyor. **Duyarlılık ölçüldü** (üç alan × beş koşu): dönüş maliyeti mutlak süreyi ~%30 artırıyor ama göreli kazancı değiştirmiyor (%28↔%29, %58↔%56); değerlendirme süresi 0,5–2,0 dk bandında kazanç %13–67 arası oynuyor ama **alanların sıralaması değişmiyor**. Eski 20 dk'lık sabitle aynı veri "Nurdağı %94 iyileşme" diye okunuyor — eski taslaktaki "184,9 dk → 12,8 dk" mertebesindeki iddiaların kaynağı budur ve kullanılmamalı. Yöntem ve bütün sayılar `SIMULASYON_OLCUM_KAYDI.md`'de; Word belgesine dokunulmadı. |
+| 26 Eylül 2026 | **J-83 açıldı (🟡): araç ile uç aynı alanda birebir aynı sayıyı vermiyor.** Nurdağı'nda koşu aracı 24 kapalı kenar / 3,3 → 1,4 dk (%58), uç 26 kapalı kenar / 4,4 → 1,6 dk (%64) verdi. Kutu aynı (uç, katalogdaki `bbox`'ı kullanıyor; rota kutusu +150 m marjla birebir örtüşüyor), model ve tohum aynı. Fark küçük ve sonucu değiştirmiyor ama **aynı girdi aynı çıktıyı vermeli** (CLAUDE.md 8). Muhtemel kaynak: geçerli piksel maskesinin araçta sonuçtaki B64'ten, uçta diske yazılan PNG'den okunması. Makaleye sayı taşınmadan önce kapatılmalı; hangi yolun kullanıldığı raporda yazılmalı. |
+| 26 Eylül 2026 | **J-83 kapandı — hata yoktu, kıyas yanlıştı.** Araçla ucun aynı alanda farklı sayı vermesinin sebebi bulundu: araç **etkin modeli** (`segformer_mitb4_dice30`), uç ise "En iyi" seçeneğini (`unet_mitb4_p2_t42`) koşuyordu. İki analiz yükü aynı modelle yan yana koşuldu ve sonuç **birebir aynı** çıktı: aynı sınırlar, aynı karar ayarı, aynı hasar oranı (%3,550), aynı kapalı yol (26) ve hasar maskesinin **1.638.400 pikselinin tamamı** aynı (yalnız araçta 0, yalnız uçta 0). Yani `oamTileUrl` ile başlıktan sahne bulma, `radiusKm` farkı (2,5 ↔ 0,25) ve karar ayarının açıkça gönderilmesi sonucu değiştirmiyor — bbox verildiğinde `radiusKm` etkisiz (J-76 düzeltmesi tutuyor) ve `None` gönderilen karar ayarları künyeden aynı değerlerle doluyor. Analiz yolu tekrar üretilebilir. **Ders:** kıyas tablosuna model adı yazılmadan sayı konulmamalı. |
+| 26 Eylül 2026 | **Kapsam kararı: makaleye üç alan giriyor (kullanıcı onayı).** Defne / Elektrik Mah., İslahiye, Nurdağı — 11 ölçülen alan içinde kolların ayrıştığı üçü. **Seçimin kendisi makalede yazılmalı:** kalan 8 alanda kollar ayrışmadı, çünkü ya model kapanma bulmadı ya da bulduğu kapanmalar 25 rotanın hiçbirinin üzerine düşmedi. Bu cümle olmadan üç alan raporlamak kiraz toplamaktır. Üç alan artık üç model (`segformer_mitb0/mitb2_p2_t42`, `unet_mitb4_p2_t42`) ve beş tohumla koşuluyor; çıkarım tohumdan bağımsız olduğu için analiz alan-model başına bir kez koşar, tatbikat tohum başına tekrarlanır. |
+| 26 Eylül 2026 | **J-84 (🔴) bulundu ve kapandı: ulaşılabilirlik elemesi filonun kullandığı düğüme bakmıyordu.** `ulasilabilir_afetzedeler` başlangıç düğümünü ekibin kayıtlı `dugum` alanından alıyor, `simulate_reference_fleet` ise koordinattan `nearest_node` ile kendi düğümünü buluyordu; ikisi farklı düğüme düştüğünde eleme "ulaşılabilir" diyor ama filo yol bulamıyordu. Ölçüldü: Defne/Elektrik + Hızlı modelde tek afetzede elemeden geçiyor, üç kolun üçü de **0/1** ile bitiyor ve alan beş tohumun beşinde de sonuç vermiyordu. Eleme artık filonun kullandığı `nearest_node`'u kullanıyor. **Bu yetmedi, asıl sebep daha inceydi:** eleme "**herhangi bir** ekipten ulaşılabilir mi" diye bakıyordu, oysa tatbikat turları her ekibi her afetzedeyle eşliyor — afetzede 3 numaralı ekipten ulaşılabilip 1 numaradan ulaşılamayınca o tur boş dönüyor ve ortak görev sıfıra düşüyordu. Ölçüt "**bütün** ekiplerden ulaşılabilir" yapıldı (erişim kümelerinin kesişimi) ve hiçbir afetzedeye ulaşamayan **giriş ağzı da eleniyor**. Fonksiyon artık üçlü dönüyor (kalan afetzedeler, elenenler, kalan ekipler); araç ve uç ikisi de güncellendi. |
+| 26 Eylül 2026 | **J-85 (🟡) eklendi: "beş tohum" her zaman beş farklı tatbikat demek değil.** Hasar blobu sayısı istenen afetzede sayısından azsa her tohum aynı kümeyi seçiyor — ölçüldü: İslahiye'de beş tohumun beşi de birebir aynı sonucu verdi (1,40 → 1,30, yayılım 0,00), Nurdağı'nda ise gerçekten değişti (2,7–4,2). Sonuca `farkliAfetzedeKumesi` alanı eklendi; makalede "n tohum" yazarken kaç **farklı** kurulum olduğu belirtilmeli, yoksa sıfır yayılım sağlamlık gibi okunur. |
+| 26 Eylül 2026 | **Üç alan × üç model × beş tohum ölçüldü; iki bulgu makaleye değer.** Defne/Elektrik, İslahiye, Nurdağı; Hızlı (MiT-B0), Dengeli (MiT-B2), En iyi (U-Net MiT-B4); tohum 42–46. **(1) Daha çok hasar bulmak daha çok operasyonel fayda demek değil:** İslahiye'de Dengeli model %2,06 hasar / 16 kapalı kenarla **%40,9 ± 4,6** kazandırıyor, En iyi model %1,34 / 12 kapalı kenarla yalnız **%9,9 ± 3,1**. Belirleyici olan hasarın miktarı değil, kapanmaların ekip rotalarına düşüp düşmediği (keşif 9,8 ↔ 1,8). Bölütleme başarımı ile operasyonel sonuç doğru orantılı değil — ölçüldü. **(2) Zayıf model mahalleyi kâğıt üzerinde ulaşılamaz kılabiliyor:** Defne'de Hızlı model %0,67 hasar buluyor, tek afetzede çıkıyor ve çıkardığı 4 kapanma o afetzedeyi araç yolundan tamamen kesiyor (kapanmasız çizgede aynı hedefe 92 sn'de varılıyor); üç kolun üçü de 0/1. Bu satır rapordan gizlenmiyor, "araç rotası yok" diye yazılıyor. **En sağlam alan Nurdağı:** üç modelin üçü de beş farklı tohum kümesiyle koştu, kazanç %59–66 bandında kaldı (± 3,6–5,7). Defne'de blob sayısı az olduğu için beş tohum tek kurulum veriyor (küme 1/5) — yayılım 0,00 sağlamlık değil, tek örneklem demektir ve makalede böyle yazılmalı. Bütün tablolar `SIMULASYON_OLCUM_KAYDI.md` §8'de. |
+| 26 Eylül 2026 | **J-86 (🔴) bulundu ve kapandı: tatbikat koşuyordu ama EKRANDA GÖRÜNMÜYORDU.** Tarayıcıda uçtan uca denendi ve üç ayrı kusur çıktı. **(1) Harita tatbikat alanına gitmiyordu:** koşu Nurdağı'nda biterken harita Antakya'da kalıyor, kullanıcı hiçbir katmanı göremiyordu; şehir sekmesi de merkeze götürdüğü için yetmiyordu (tatbikat alanı merkeze ~15 km). `kutuyaUc` API'si vardı ama hiç kullanılmamış — koşu başına bir kez alana uçuluyor, bitince önceki görünüm geri alınıyor (alanların çoğunda üretilmiş altlık paketi yok, bitirince kullanıcı kapkara haritayla kalıyordu). **(2) Zemin bomboş siyahtı:** tatbikat alanlarının çoğu üretilmiş altlık bölgelerinin dışında. Doğru zemin zaten altlık değil, **modelin baktığı görüntü**: drone ortofotosu tatbikat zeminine serildi (`simZeminKatmanlari`, J-75'teki karo vekiliyle). Alan koşunun kendisinden okunuyor, panel seçiminden değil — sayfa yeninlenince seçim boşalıyor ama koşu sürüyordu (J-74). **(3) Hasar maskesi görüntüyü örtüyordu:** uçtan gelen maske siyah zemin + beyaz hasar; %72 opaklıkla koca bir koyu dikdörtgen oluyordu. Maske artık istemcide saydam alfaya çevriliyor (parlaklık → alfa, renk hasar tokenı) — enkaz altından okunuyor. Doğrulandı: başlat → sarı şerit + drone görüntüsü + kırmızı hasar + camgöbeği yol ağı + turuncu kapalı yollar + giriş ağızları ve afetzede etiketleri; **bitir → şerit kalktı, katmanlar silindi, harita önceki görünüme döndü**, sağ panel "henüz tatbikat başlatılmadı"a geçti. |
+| 26 Eylül 2026 | **Kapsam denetimi: simülasyon makaledekilerin yerini KISMEN tutuyor.** Taslaktaki simülasyon kaynaklı her bölüm tek tek karşılaştırıldı (makaleye dokunulmadı). **Yerini tutanlar:** §3.8.1 sentetik kapanma üreteci (artık kapanmalar gerçek görüntüden kendi modelimizle), §4.6 R0–R3 + 20 dk sabiti (üç kol + ayrışık 1,42 dk ceza), §4.9 parametre duyarlılığı. **Kısmen:** §4.5 uçtan uca senaryo — veri artık gerçek ama 8 sentetik bölge/10 tohum yerine 3 gerçek mahalle/5 tohum var. **Kapsamıyor:** §4.7 görev ataması (tatbikat tur döndürmeyle eşliyor; atama algoritması `benchmark/full_scenario.py`'de kaldı, tatbikata bağlı değil), §4.5'teki YOLOv8/BERTurk gecikme tabloları ve toplanma alanı yönlendirmesi (tatbikat tek kanallı: uydu → hasar → kapanma → rota). **🔴 KRİTİK BOŞLUK — §4.3:** kapanma katmanının yer gerçeğine göre değerlendirilmesi EMSR648'e dayanıyordu; EMSR bırakılınca yerine hiçbir şey konmadı. Tatbikatta dünya = modelin kendi çıktısı olduğu için **makalede kapanma katmanının doğruluğuna dair hiçbir iddia kalamaz**. İki yol: (a) sınırlılık olarak beyan et, §4.3 kalksın; (b) üç alanın drone görüntüsünde kapalı yolları elle işaretleyip kendi yer gerçeğimizi üret (~1–2 sa/mahalle). Karar kullanıcıda. Ayrıntı `SIMULASYON_OLCUM_KAYDI.md` §11. |
+| 26 Eylül 2026 | **J-87 kapandı (karar): EMSR648 kullanılmayacak — gerekçesi ölçüldü.** EMSR'ın ne verdiği incelendi: yalnız bina değil, `transportationL` (yollar, hasar dereceli), `builtUpA` (binalar), `facilitiesA`, `hydrographyL/A`, `ancillaryCrisisInfoP` katmanları var. Kâğıt üzerinde yol hasarı da veriyor. **Pratikte bize bir şey vermiyor:** Defne / Elektrik Mah. kutusunda EMSR izleme ürünü (MONIT01) **62 yolun 62'sine "görünür hasar yok"** diyor ve 74 binanın 72'sini sağlam sayıyor (1 hasarlı, 1 yıkık); aynı kutuda bizim modelimiz 9.474 hasar pikseli ve 12 kapalı kenar buluyor, drone fotoğrafında mahalle dümdüz. Antakya'nın tamamında (AOI11) EMSR yalnız **39 yolu "yıkık" + 31 "hasarlı"** işaretlemiş (4.613 yolun %1,5'i). **Sebep tanım farkı:** EMSR uzmanı UYDUDAN, şehir ölçeğinde yorumlamış ve "yol hasarlı" derken **yolun kendisinin bozulmasını** (köprü çökmesi, asfalt yarılması) kastediyor; bizim sorumuz ise **yanındaki bina çöküp yolu molozla kapatması**. Bu, J-70'teki kötü kalibrasyonu da açıklıyor (F1 0,098–0,205): model başarısızlığı değil, **farklı bir soruyu ölçen cetvele göre not almak**. EMSR'ı cetvel yapmak sistemi yanlış sebepten kötü gösterirdi. **Karar (kullanıcı, 26 Eylül): EMSR hiçbir rolde kullanılmayacak** — ne simülasyonun motoru, ne doğrulama cetveli. Kapanma katmanının doğruluğu için ya sınırlılık beyan edilecek ya da kendi etiketimiz üretilecek (J-88). Veri depoda duruyor (`benchmark/data/copernicus/`), silinmedi. |
+| 26 Eylül 2026 | **J-88 açıldı (🔴): kapanma katmanının doğruluğu ölçülmemiş durumda.** EMSR bırakıldığına göre (J-87) yerine bir cetvel yok. Bugün elimizde olan: **hasar bölütlemesi** doğruluğu ölçülü (U-Net MiT-B4 sınama IoU 0,433 · F1 0,604 · kesinlik 0,635 · duyarlılık 0,577; SegFormer MiT-B2 IoU 0,409; MiT-B0 IoU 0,382 — ayrılmış KATE sınama kümesi). Ölçülmemiş olan: **"hasar ∩ yol = kapalı yol" kuralının** çıkardığı kapanmalar gerçekten kapalı mıydı. Tatbikatta dünya modelin kendi çıktısı olduğu için bu soru tatbikatla cevaplanamaz. İki yol: **(a)** sınırlılık olarak beyan et — makalede kapanma katmanının doğruluğuna dair iddia olmaz; **(b)** üç alanın drone görüntüsünde kapalı yolları elle işaretleyip kesinlik/duyarlılık ölç (~1–2 sa/mahalle), sınırı da yazılır (tek etiketleyici, yalnız yukarıdan görünen moloz). Karar bekliyor. |
+| 26 Eylül 2026 | **J-88 ilerleme: kendi yer gerçeğimiz üretildi (deneme, 1 mahalle).** Kullanıcı onayıyla kapanma katmanı elle etiketlendi. Yöntem: yol parçaları modelin ne dediği **görülmeden** (kör), gerçek drone ortofotosunun kesitleri üzerinden işaretlendi; modelin kapalı dediklerinin tamamı + açık dediklerinden %24,8 rastgele örnek. Araç `araclar_kapanma_etiketle.py` (tohumla yeniden üretilebilir), veri `benchmark/kapanma_yer_gercegi/`. Alan Defne / Elektrik Mah., U-Net MiT-B4, 118 etiketlenebilir parça, 33 kesit. **Sonuç:** model KAPALI dediği 5 parçadan 3'ü gerçekten kapalı, **0'ı açık**, 2'si kararsız → **kesinlik %100** (kararsız hariç; %95 Wilson **%44–100**, n=3) ya da %60 (kararsız hata sayılırsa). Model AÇIK dediği 28 örnekte **6 gerçek kapanma** bulundu → 113 parçaya ölçeklenince ~24 kaçırılmış; gerçek kapanma kestirimi ~27/118 (%23), **duyarlılık ≈ %11**. Yani **yüksek kesinlik, düşük duyarlılık** — J-65'teki etiketli karo bulgusuyla tutarlı. Operasyonel anlamı: tatbikattaki kazanç sayıları iyimser değil (gerçekte daha çok kapanma var), ama sistem tek başına güvenilecek bir kapanma haritası vermiyor; ikisi de makalede yazılmalı. **Sınırlar:** tek etiketleyici (ikinci görüş ve etiketleyiciler arası uyum yok), parçaların **%30'u yargılanamadı** (gölge / çözünürlük / çizginin görünür sokağı takip etmemesi), modelin 12 kapanmasından yalnız 5'i uçuş izinin dolu yerine düşüyor, kesinlik 3 karar verilebilir parçaya dayanıyor, yalnız yukarıdan görünen moloz yakalanıyor, görüntü depremden 3 gün sonrasına ait. **Açık kalan:** ikinci etiketleyici ve diğer iki alan. |
+| 26 Eylül 2026 | **J-89 (🔴) bulundu ve kapandı: eksik inen görüntü sessizce zayıf sonuç üretiyordu.** Şekil üretirken aynı alan (Nurdağı) aynı modelle arka arkaya koşuldu ve bir koşuda kapsama **%44,1 yerine %13,9**, kapalı kenar **26 yerine 6** çıktı. Sebep geçici karo indirme hatası: görüntünün bir bölümü boş geldi, hasar ve kapanma onunla birlikte düştü. **Koşu hata vermedi**, sessizce daha zayıf bir sonuç üretti — ölçümü bozan tam olarak bu, ve makaleye yanlış sayı taşınmasının en olası yolu. Sonraki iki koşuda %44,1 / 26 kenar birebir tekrarlandı, yani sapma geçiciydi. **Koruma:** `tatbikat.goruntu_eksik_mi()` — alan kataloğu her alanın uçuş izi doluluğunu ölçerek sakladığı için, koşudaki `validPixelRatio` beklenenin %70'inin altına düşerse koşu **hata verir** ("görüntü eksik indi, koşu tekrarlanmalı"). Hem koşu aracına hem uca bağlandı. **İlk sürümü YANLIŞ ALARM verdi ve düzeltildi:** referans olarak alan kataloğundaki `doluluk` alınmıştı, ama o **tarama zoom'unda** (z16) ölçülüyor, analiz ise z18'de koşuyor ve oran farklı çıkıyor — Defne'de z16 %56, z18'de kararlı %43; sağlam bir koşu reddedildi. Katalog artık analiz zoom'undaki oranı da ölçüp saklıyor (`gecerliPikselOraniZ18`) ve kontrol onu referans alıyor; alan için o ölçüm yoksa kontrol atlanır — yanlış alarm, kaçırılan uyarıdan kötüdür. Üç alanın üçü de yeniden koştu, yanlış alarm yok. |
+| 26 Eylül 2026 | **Başarım çalışması tamamlandı (ölçüldü, üç deneme birden bırakıldı).** Taban: toplam **15,0 sn**, model çıkarımı **9,12 sn (%61)**, lojistik 1,63, kıyas kolları 0,49, rota 0,38, graf 0,32 (20 çekirdek CPU, 6 iş parçacığı, GPU yok). Soğuk koşu 35 sn. **Denenip bırakılanlar:** (1) *Parçaları toplu koşturmak* — çıktı birebir aynı (maske özdeş, ham olasılıkta fark 6·10⁻⁶) ama **%18 yavaş** (8,49→10,02 sn); varsayılan 1'de bırakıldı, knob `QM_CIKARIM_YIGINI` duruyor (GPU'da tersi beklenir). (2) *İş parçacığı sayısı 2–20 tarandı* — 6 en hızlı (9,87 sn), 8'de 14,0'a çıkıyor; mevcut sınır zaten doğruymuş (J-66 teyit edildi). (3) *Parça örtüşmesini azaltmak* (adım 256→384) — süre **%40 düşüyor** ama maske değişiyor (taban maskeyle IoU 0,84 / 0,87); **doğruluk bedeli kabul edilmedi**, knob `QM_CIKARIM_ADIMI` duruyor. **Sonuç: çıkarım bu kurulumda pratik optimumunda; kalan tek kaldıraç model seçimi.** Üç model ölçüldü: MiT-B0 3,7 M / IoU 0,382 / **1,91 sn**, MiT-B2 24,7 M / 0,409 / **4,71 sn**, U-Net MiT-B4 64,1 M / 0,433 / **10,50 sn**. **Makaleye değer bulgu:** 5,5 kat süre yalnız +0,051 IoU veriyor ve operasyonel kazancı tek yönlü artırmıyor — orta boy model İslahiye'de %40,9, en büyük model %9,9. Saniye başına operasyonel değer en yüksek olan **orta boy** modeldir. |
+| 26 Eylül 2026 | **Makale şekilleri üretildi (Word'e dokunulmadan).** `QuakeMindBackend/benchmark/makale_sekilleri/`: kıyas kolları, duyarlılık (eski 20 dk sabitinin etkisi gölgeli), model seçimi (süre/IoU/kazanç), süre dağılımı; ayrıca üç alanın tatbikat haritası (drone görüntüsü + hasar + kapalı yol + güzergâh + giriş ağızları, **göstergeli**, künyesinde kapsama ve kare dışında kalan giriş sayısı yazılı) ve öncesi/sonrası/etiketli üçlüsü. Üreticiler `araclar_makale_sekilleri.py` ve `araclar_makale_haritalari.py`; bütün sayılar `SIMULASYON_OLCUM_KAYDI.md`den gelir, şekilde hiçbir şey uydurulmaz. |
+| 26 Eylül 2026 | **J-90 (🔴) bulundu ve kapandı: tatbikat zemin görüntüsü hiç gelmiyordu — karo adresi çiftleniyordu.** Konsolda tatbikat koşuldu, bütün katmanlar geldi ama zemin **bomboş siyahtı** ve tarayıcı 180 karo isteğinin hepsine 404 alıyordu. Sebep: `uclar/simulasyon.py` alan yükleyicisi `oamTmsUrl` kurarken `a["tmsUrl"] + "/{z}/{x}/{y}.png"` yapıyordu, oysa katalogdaki adres **zaten** `{z}/{x}/{y}` ile bitiyor → `.../{z}/{x}/{y}/{z}/{x}/{y}.png`. Vekil yer tutucuların hepsini doldurunca OAM 404 döndürüyordu. **J-75'te aynı hata bir kez düzeltilmişti**, yeni yazdığım alan yükleyicisinde geri gelmiş — aynı tuzağa iki kez düştük, bu yüzden düzeltme koşullu yapıldı (`"{z}" in tmsUrl` ise olduğu gibi kullan). Doğrulandı: karo 16/39455/25468 ve 17/78910/50937 → **200**, konsolda Nurdağı tatbikatında drone ortofotosu zeminde görünüyor. **Teşhis sorunu da kapatıldı (aynı gün):** uç "kapsama dışı karo" ile "yanlış adres"i aynı 404'te birleştirdiği için hata sessiz kalıyordu. `uclar/goruntu.py` artık adres şablonunda `{z}`/`{x}`/`{y}` **birden çok kez** geçiyorsa isteği **422** ile ne yapılacağını söyleyen bir mesajla reddediyor; kapsama dışı karo ise "Karo yok (kapsama dışı)" diye 404 dönmeye devam ediyor (harita onu boş bırakır, doğru davranış). Üç durum da doğrulandı: sağlam adres + kapsam içi karo → **200** (24.990 bayt), sağlam adres + kapsam dışı karo → **404**, çiftlenmiş adres → **422**. Bu kontrol olsaydı J-90 ilk istekte yakalanırdı. |
+| 26 Eylül 2026 | **J-91 (🟠) bulundu ve kapandı: backend yeniden başlayınca konsol ölü tatbikatla asılı kalıyordu.** Koşu kimliği sekmenin sessionStorage'ında tutuluyor (J-74, bilerek — sayfa yenilemeyi aşsın diye). Ama backend yeniden başladığında iş kaydı bellekte olduğu için kayboluyor; uç `404 "Bilinmeyen ya da süresi dolmuş iş kimliği"` dönüyor, konsol ise bunu sıradan bir hata sayıp **"%0 · sonuç bekleniyor" diye sonsuza kadar asılı kalıyordu** — tatbikat şeridi de üstte duruyor, kullanıcı ne başlatabiliyor ne de anlıyor. Üç kez üst üste görüldü (sunucu her yeniden başlatıldığında). `useSimSonuc` artık 404'ü **tekrar denemiyor** ve tatbikat modunu temizliyor; kullanıcı doğrudan "Tatbikatı başlat"a dönüyor. Doğrulandı: sunucu yeniden başlatıldı, sayfa açıldı, ölü koşu kendiliğinden temizlendi ve yeni tatbikat sorunsuz koştu (4/4 katman, 26 kapalı kenar, drone görüntüsü zeminde). |
+| 27 Eylül 2026 | **J-92 (🟠) bulundu ve kapandı: kapsama dışı karolar konsolu boğuyordu, gerçek hata görünmüyordu.** Tatbikat görüntü katmanı tek koşuda **342 karo isteği** yapıyor, çoğu drone uçuş izinin dışına düştüğü için 404 dönüyor ve deck.gl her birini yığın izli bir hata olarak konsola basıyordu. Sonuç: gerçek hata bu gürültünün içinde görünmez oluyordu — **J-90 tam da böyle gözden kaçtı**. İki düzeltme: **(1)** Katman artık kendi `getTileData`'sını kullanıyor; kapsama dışı karo (404) sessizce `null` döner, başka her durum gerçek hata olarak yükselir. Doğrulandı: sahte yığın izleri gitti, yerine gerçek bir aksama göründü ("Karo alınamadı: HTTP 502", OAM'de geçici). **(2)** Katmana sahnenin kutusu `extent` olarak verildi; dışında karo **hiç istenmiyor**. İstek sayısı **342 → 92** (%73 az), çoğu 200. Kalan 404'ler kutunun köşeleri: uçuş izi dikdörtgen değil, bunun için sahne çokgeni gerekir (yapılmadı). |
+| 27 Eylül 2026 | **J-93 (🔴) bulundu ve kapandı: karo indirmede yeniden deneme yoktu — J-89'un KÖK SEBEBİ.** `fetch_satellite_area._fetch_tile` her karo için **tek deneme** yapıp bütün hataları sessizce yutuyordu; başarısız karo 256×256'lık **siyah bir blok** bırakıyor, analiz orayı "görüntü yok" sayıyor, hasar ve kapanma düşüyordu. Koşu hata vermeden zayıflıyordu. Ölçüldü: aynı alan arka arkaya koşulduğunda geçerli piksel %100 yerine **%68** ve **%39** geldi, kapanma 26 yerine 22 ve kapsama %44 yerine %14 çıktı. J-89'daki koruma bunu *yakalıyordu* ama sebebi düzeltmiyordu. Artık geçici hatalar (bağlantı, zaman aşımı, 5xx) **üç kez** kısa geri çekilmeyle deneniyor; **404 yeniden denenmiyor** çünkü o "kapsama dışı karo" demek ve tekrar denemek yalnız zaman kaybettirir. Doğrulandı: üç ardışık koşu birebir aynı (%3,55 hasar, 26 kapalı kenar, kapsama %44,1). Bu aynı zamanda `SIMULASYON_OLCUM_KAYDI.md` §8'deki sayıların doğru koşudan geldiğini teyit ediyor. |
+| 27 Eylül 2026 | **J-94 (🟠) bulundu ve kapandı: aynı yolculuk için iki farklı süre hesaplanıyordu.** Kıyas kolları (`kiyas_kollari`) kenar hızlarını (`maxspeed` / yol sınıfı, 20–70 km/sa) ve dönüş sürelerini kullanıyor; ekranda görünen görev ETA'sı ve rota varyant süreleri (`rota_kosusu`) ise uzunluğu **düz 15 km/sa**'ya bölüyordu. Aynı 472 m'lik rota bir yerde 1,2 dk, başka yerde 1,9 dk görünüyordu — makaleye giren sayı ile arayüzdeki sayı tutmuyordu. Süre artık dönüş maliyetli aramanın **kendi maliyetinden** geliyor (`_varyant_suresi`); dönüş maliyeti kapalıyken eski davranış sürüyor. Ölçüm künyesine `kenarHizlari` alanı eklendi ki ekran hangi varsayımın kullanıldığını yazabilsin (kural 1). Doğrulandı: ETA 1,0 dk ↔ kıyas kolu 1,2 dk (aynı mertebe); eskiden ~2 kat ayrışıyordu. |
+| 27 Eylül 2026 | **Mantık denetimi: altı kontrolün altısı geçti.** (1) *Kapanma simetrisi* — 22 kapalı kenarın hiçbiri tek yönlü değil; moloz iki yönü de kapatıyor. (2) *Tek yön* — 27 tek yönlü kenarın hiçbirinin ters yönü grafta yok; tek yönlü sokağa ters girilemiyor. (3) *Güvenli graf = dünya* — kapalı kenarlardan hiçbiri güvenli grafta durmuyor. (4) *Kol anlamları* — sıralama bilmeyen ≥ telsiz ≥ QuakeMind (2,9 ≥ 2,5 ≥ 1,2 dk) ve QuakeMind keşfi 0 (baştan biliyor, tanım gereği doğru). (5) *Rota ↔ kol aynı süre modeli* — J-94 düzeltmesinden sonra aynı mertebede. (6) *Dönüş maliyeti rotaya giriyor* — aynı çift için dönüşlü 96 sn, dönüşsüz 83 sn. |
+| 27 Eylül 2026 | **r_h duyarlılığı üç gerçek alanda koşuldu (makale §4.8'in yerini tutar).** Dört yarıçap (0/10/15/25 m), U-Net MiT-B4. **Buradaki tuzak görünür kazancın ARTMASI:** r_h büyüdükçe kazanç yükseliyor (Defne %41→%56, İslahiye %9→%59, Nurdağı %64→%81) ama bu iyileşme değil — **ortak görev sayısı çöküyor** (6→3, 20→5, 25→7) ve Defne ile İslahiye'de r_h = 25'te **sıfıra** düşüyor, yani mahalle tamamen kopuyor. Yüzde giderek daralan ve yanlı bir örneklemden geliyor. Bu, J-69'da başka bir kurulumda ölçüleni doğruluyor: r_h uzamayı değil **aracın girebilmesini** belirliyor. Varsayılan r_h = 0 değiştirilmedi; makaledeki bütün sayılar bu değerle üretildi. Tablo `SIMULASYON_OLCUM_KAYDI.md` §10'da. |
+| 27 Eylül 2026 | **Makale değişim listesi yazıldı: `MAKALE_DEGISIM_LISTESI.md`.** Makaleye dokunulmadı; belge yalnız neyin nereye gideceğini söylüyor. Taslakta **30 bölüm** etkileniyor (EMSR/Copernicus 159 geçiş, R0–R3 148, "8 bölge / 48 çift" 157, t_u / 20 dk 79, sentetik 41, "10 tohum" 34, HAZUS 7). Belge dört parçadan oluşuyor: **(A)** ÖZ ve ABSTRACT'taki yedi manşet iddiasının tek tek karşılığı — "184,9 → 12,8 dk, farkın %97,4'ü" yerine "%13–66, en sağlam alanda %59–66"; **(B)** bölüm bölüm ne çıkacak, ne girecek (Tablo 4, Tablo 18, §3.8.1 ve §4.3 tamamen kalkıyor; sağdan trafik ve model seçimi yeni bölüm olarak giriyor); **(C)** hiçbir şey yapılmadan kullanılabilecek hazır tablolar ve on şekil; **(D)** karar bekleyen üç madde (Tablo 8'in HAZUS eşlemesi, görev ataması, çok kanallı senaryo). |
+| 27 Eylül 2026 | **J-95 (🔴) bulundu ve kapandı: haritada ne olduğunu söyleyen hiçbir şey yoktu.** Kullanıcı: "kırmızı nokta ne belirsiz, kırmızı çizgi ne belirsiz, sarı yol ne olduğu belirsiz, bu primary secondary kısımlar ne belirsiz". Üç ayrı sorun çıktı. **(1) Üç ayrı şey aynı kırmızıyı kullanıyor:** hasar kütlesi (alan), kapalı yol (kalın çizgi) ve afetzede (içi boş halka) — hepsi `--color-crit`. Sarı ise "riskli kenar cezalı" rota varyantı, turuncu "cezalı yol". Renk kuralı (ARAYUZ §6) doğru uygulanmış ama **ayrım anlaşılmıyor**. **(2) Haritada gösterge yoktu** — hiçbir yerde. **(3) Ekip adlarına OSM jargonu sızmış:** "tertiary girişi 1", "residential girişi 4"; kullanıcının gördüğü "primary secondary" bunlardı. **Düzeltmeler:** yeni `HaritaGostergesi` bileşeni (`konsol/src/kabuk/HaritaGostergesi.tsx`) haritanın sol altında, yalnız tatbikat koşarken görünüyor, katlanabiliyor; sekiz satırın her biri renk + **biçim** ile ayrılıyor (alan / kalın çizgi / ince çizgi / kesik çizgi / dolu daire / içi boş halka) ve yanında ne olduğu yazıyor ("Kapalı yol — hasar yola taşıyor", "Güzergâh — deprem öncesi"). Ekip adı artık **"Ekip 1 · mahalle girişi"**; OSM yol sınıfı ekrandan çıkıp ayrı bir alana (`yolSinifi`) taşındı. Doğrulandı: gösterge ekranda, beş ekip adı da yeni biçimde, sayfa metninde **kalan jargon yok** (primary/secondary/tertiary/residential/highway/oneway/maxspeed/tms taraması boş döndü). Token denetimi temiz, `tsc` temiz. |
+| 27 Eylül 2026 | **J-96 (🟠) bulundu ve kapandı: uzama metreden ölçülüyordu, oysa rota süreye göre seçiliyor.** Kullanıcı üç rota varyantının ne olduğunu sorunca tablo çıkarıldı ve bir tutarsızlık göründü: Ekip 1'de "kapanmalı" rota "deprem öncesi" rotadan **kısa** çıkıyordu (462,1 m ↔ 466,6 m). Güvenli çizge tam çizgenin alt kümesi olduğu için bu imkânsız görünüyor — ama değil: J-94'ten sonra rotalar **süreye** göre seçiliyor, uzunluğa göre değil; kısa olan yol daha yavaş. Ölçüt ise hâlâ metreden hesaplanıyordu. Aynı çiftte süre 0,9 → **1,0 dk** yani gerçekte uzuyor. Artık uzama **hem metre hem süre** cinsinden veriliyor (`ortalamaUzamaDk`, `ortalamaUzamaSureYuzde`, `enBuyukUzamaDk`) ve satır kayıtlarına `oncesiDk`/`kapanmaliDk` eklendi. **Fark büyük:** Nurdağı'da metreyle %32,8, süreyle **%61,6** — yalnız metreye bakmak operasyonel bedeli neredeyse yarı yarıya küçük gösteriyor. Makalede süre cinsinden uzama asıl ölçüt olmalı; metre yanında verilebilir ama tek başına okunmamalı. |
+| 27 Eylül 2026 | **J-97 (🔴) bulundu ve kapandı: manşet sayının geldiği yol haritada hiç çizilmiyordu.** Kullanıcı "hangisi kapanma bilgisi olmasa gidilecek ve zaman kaybına yol açacak yol, hangisi bizim sayemizde bulunan yol" diye sordu ve haritada bunun cevabı **yoktu**. Sebep: üç renkli çizgi **PLANLANAN** güzergâhlar (kapanma yok sayılarak / kapalılar çıkarılarak / hasara yakın kenarlar pahalanarak), oysa manşet sayı (4,4 → 1,6 dk) **fiilen sürülen** yoldan geliyor — kapanmayı bilmeyen ekip yola çıkıyor, kapalı sokağa varınca öğreniyor, geri dönüyor. O yol çizilmiyordu, dolayısıyla kullanıcının sorusu haritadan cevaplanamıyordu. **Düzeltme:** `simulate_reference_fleet` artık her ajanın **gerçekten geçtiği** kenarları biriktiriyor (`izlenenKenar`); `kiyas_kollari` ilk turun yollarını `izlenenYollar` olarak veriyor, uç onu yayınlıyor, harita sönük kalın kırmızıyla çiziyor (çıkmazlar ve U dönüşleri dahil, planlanan güzergâhların altında). Ölçüldü: bilmeyen ekip 5 yolda 90 nokta / 859,7 m sürüyor, QuakeMind 67 nokta / 681,9 m — fark gözle görünüyor. **Adlandırma da düzeltildi:** "Deprem öncesi / Kapanmalara göre / Riskli kenar cezalı" → **"Kapanma olmasaydı" (kıyas çizgisi) / "QuakeMind güzergâhı" (kapalılar çıkarılmış) / "Enkazdan uzak" (hasara yakın kenar pahalı)**, her birinin altında kuralı anlatan tek cümle. Panelde ayrıca "Fiilen sürülen yol" bölümü var ve üç varyantın PLANLANAN yol olduğu açıkça yazıyor. Gösterge dokuz satıra çıktı. `tsc` ve token denetimi temiz. |
+| 27 Eylül 2026 | **J-98 (🔴) bulundu ve kapandı: rota çizgisi binaların üstünden geçiyordu — düğümler düz birleştiriliyordu.** Kullanıcı ekranda yakaladı: "yolların doğru olduğuna emin değilim, binanın üstünden geçmiş yol". Hizalama değil (o alanda kalıntı kayma 2,4 m ölçülmüştü, OSM eksen doğruluğunun altında); sebep benim J-94'te yazdığım `_rota_olc_donuslu`: çizgiyi **yalnız kavşak düğümleri arasına düz çekiyordu** (`[G.nodes[n]["y"], G.nodes[n]["x"]] for n in dugumler`) ve kenarın kendi `geometry`sini atıyordu. OSM'de iki kavşak arası sokak çoğu zaman kıvrımlı bir çok-noktalı çizgidir; uçlarını düz birleştirmek köşeyi kesiyor ve rota blokların içinden geçiyor. Yeni `_kenarlardan_cizgi` kenarın gerçek geometrisini kullanıyor, yoksa düğümlere düşüyor; geometri yönü garanti olmadığı için ilk noktanın `u`ya mı `v`ye mi yakın olduğuna bakıp gerekirse ters çeviriyor (yoksa rota ileri geri zikzak yapar). **Aynı hata `izlenenYollar`da da vardı** (J-97'de yeni yazılmıştı), o da düzeltildi. Doğrulandı: 472 m'lik rota 6 yerine **15 noktayla** çiziliyor; aynı görüntü üzerinde eski/yeni yan yana konunca eski çizginin blokları kestiği, yeninin sokak koridorunu izlediği görülüyor. **Kalan sınır:** yoğun mahallede OSM ara sokak geometrisi yine de yaklaşıktır ve ortofotoda ~2,4 m kalıntı kayma var; bu, çizginin sokağın tam ortasından geçmesini garanti etmez. |
+| 27 Eylül 2026 | **Soruşturma: "yol binanın içinden geçiyor" — ne OSM hatası ne örtüştürme hatası, MOLOZ.** Kullanıcı J-98 düzeltmesinden sonra da rotanın yapıların üstünden geçtiğini gösterdi ve doğru soruyu sordu: veri mi yanlış, örtüştürme mi? Üç aşamada ayrıştırıldı. **(1) Projeksiyon:** piksel↔koordinat dönüşümü enlemde doğrusal varsayılıyor, karolar ise Mercator'da. Ölçüldü: 617 m'lik kutuda en büyük fark **0,01 piksel = 1 cm** — ihmal edilebilir, sebep bu değil. **(2) Rota mı ağ mı:** bütün OSM ağı rotayla birlikte çizildi; yeşil rota camgöbeği kenarın **tam üstünde** — rota ağı birebir izliyor, çizim doğru. **(3) Kesin test:** aynı OSM ağı hem deprem **öncesi** (Esri Wayback 2021-09-27, WV02) hem **sonrası** (Help.NGO drone) görüntüye çizildi. **Öncesinde yollar sokaklara temiz oturuyor**; sonrasında "binanın içinden geçiyor" gibi görünen şey **çökmüş yapı ve yolun üstünü kaplayan molozdur** — yani sistemin tespit etmeye çalıştığı şeyin ta kendisi. Sonuç: OSM verisi doğru, örtüştürme doğru, görüntüdeki durum gerçek. Bu, kapanma tespitinin öncülünün görsel kanıtı olduğu için makaleye şekil olarak konabilir. Kalan sınır değişmedi: ortofotoda ~2,4 m kalıntı kayma var (bir yol genişliğinin altında) ve yoğun mahallede OSM ara sokak geometrisi yaklaşıktır. |

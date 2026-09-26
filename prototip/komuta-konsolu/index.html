@@ -1,0 +1,868 @@
+<meta charset="utf-8">
+<title>QuakeMind Komuta Konsolu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="fontlink" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#080A0E; --panel:#0F131A; --raised:#151A23; --hover:#1C222D; --sunken:#0B0E14;
+  --line:#1E2430; --line-2:#2A3241;
+  --ink:#E8ECF4; --ink-2:#A6B0C4; --ink-3:#7E8AA0;
+  --accent:#45C8E0; --accent-deep:#1B6C7E; --accent-soft:rgba(69,200,224,.12);
+  --crit:#FF5C5C; --high:#FF9152; --mid:#F2C14E; --ok:#4ED08B; --nlp:#B08CFF;
+  --f-sans:'IBM Plex Sans',ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --f-cond:'IBM Plex Sans Condensed','IBM Plex Sans',ui-sans-serif,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',monospace;
+  --r:10px; --r-s:6px; --r-xs:4px;
+  --sp:14px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 13px/1.5 var(--f-sans);-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input[type=range]{accent-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-xs)}
+.micro{font:600 10.5px/1.35 var(--f-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.num{font-family:var(--f-cond);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+
+/* ---------- shell ---------- */
+.app{height:100%;display:flex;flex-direction:column}
+.topbar{flex:0 0 52px;display:flex;align-items:center;gap:var(--sp);padding:0 14px;background:var(--panel);border-bottom:1px solid var(--line);position:relative;z-index:6}
+.brand{display:flex;align-items:center;gap:9px;padding-right:2px}
+.brand svg{display:block}
+.brand b{font-family:var(--f-cond);font-weight:600;font-size:15px;letter-spacing:.13em;text-transform:uppercase}
+.vr{width:1px;height:22px;background:var(--line-2)}
+.tabs{display:flex;gap:2px}
+.tab{padding:7px 11px;border-radius:var(--r-s);color:var(--ink-2);font-size:13px;position:relative;white-space:nowrap}
+.tab:hover{background:var(--hover);color:var(--ink)}
+.tab[aria-selected=true]{color:var(--ink);background:var(--raised)}
+.tab[aria-selected=true]::after{content:"";position:absolute;left:11px;right:11px;bottom:-15px;height:2px;background:var(--accent)}
+.tab[disabled]{color:var(--ink-3);cursor:not-allowed}
+.tab[disabled]:hover{background:none;color:var(--ink-3)}
+.spacer{flex:1}
+.tbtn{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line-2);border-radius:var(--r-s);color:var(--ink-2);font-size:12px}
+.tbtn:hover{background:var(--hover);color:var(--ink);border-color:#384254}
+kbd{font:500 10px/1 var(--f-mono);border:1px solid var(--line-2);border-radius:3px;padding:3px 4px;color:var(--ink-3);background:var(--sunken)}
+.live{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(78,208,139,.16)}
+.dot.off{background:var(--ink-3);box-shadow:none}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--accent-deep);color:#D8F6FD;display:grid;place-items:center;font:600 11px/1 var(--f-sans)}
+
+/* ---------- stage ---------- */
+.stage{position:relative;flex:1;min-height:0;background:var(--ground)}
+#map{position:absolute;inset:0}
+#map canvas{outline:none!important}
+.panel{position:absolute;z-index:3;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.p-left{left:var(--sp);top:var(--sp);width:292px;bottom:172px}
+.p-right{right:var(--sp);top:var(--sp);width:336px;bottom:172px}
+.p-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 13px 9px;border-bottom:1px solid var(--line)}
+.p-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.p-body::-webkit-scrollbar{width:9px}
+.p-body::-webkit-scrollbar-thumb{background:#242C3A;border:3px solid var(--panel);border-radius:6px}
+.sect{padding:12px 13px;border-bottom:1px solid var(--line)}
+.sect:last-child{border-bottom:0}
+.sect-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+
+/* presets */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+.chip{padding:6px 9px;border:1px solid var(--line-2);border-radius:999px;font-size:11.5px;color:var(--ink-2)}
+.chip:hover{background:var(--hover);color:var(--ink)}
+.chip[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+
+/* channels */
+.ch{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:9px 0}
+.ch+.ch{border-top:1px solid #161C26}
+.sw{width:9px;height:9px;border-radius:2px}
+.ch-name{font-size:12.5px}
+.ch-src{font:400 10.5px/1.35 var(--f-sans);color:var(--ink-3)}
+.ch-n{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ch-n small{font-family:var(--f-sans);font-size:10px;color:var(--ink-3);margin-left:2px}
+.ch-ctl{grid-column:1/-1;display:grid;grid-template-columns:1fr 46px;align-items:center;gap:9px;margin-top:7px}
+.ch-w{font-family:var(--f-mono);font-size:11px;font-weight:500;color:var(--ink-2);text-align:right;font-variant-numeric:tabular-nums}
+.ch input[type=range]{width:100%;height:2px;margin:0;-webkit-appearance:none;background:var(--line-2);border-radius:2px}
+.ch input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--ink);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line-2);cursor:grab}
+.ch.off{opacity:.45}
+.ch.off input{pointer-events:none}
+
+/* switches */
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;font-size:12.5px;color:var(--ink-2)}
+.row b{font-weight:400;color:var(--ink)}
+.switch{width:30px;height:17px;border-radius:9px;background:#242C3A;position:relative;flex:0 0 auto;transition:background .16s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#8D97AB;transition:transform .16s,background .16s}
+.sw-on{background:var(--accent-deep)}
+.sw-on::after{transform:translateX(13px);background:#CFF3FB}
+
+/* heat legend */
+.ramp{height:8px;border-radius:2px;background:linear-gradient(90deg,#10131A 0%,#2B0B4D 18%,#7B2382 42%,#C43F66 63%,#F0733F 82%,#FCD968 100%)}
+.ramp-x{display:flex;justify-content:space-between;margin-top:5px}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+.kpi{background:var(--panel);padding:13px 14px 14px}
+.kpi .v{font-size:30px;line-height:1.05;letter-spacing:0;color:var(--ink)}
+.kpi .l{margin-top:5px;color:var(--ink-2)}
+.kpi .s{font:400 11px/1.45 var(--f-sans);color:var(--ink-3);margin-top:4px}
+
+/* sos list */
+.sos{display:block;width:100%;text-align:left;padding:9px 13px 10px;border-left:2px solid transparent;border-bottom:1px solid #141A24;position:relative}
+.sos:hover{background:var(--raised)}
+.sos.on{background:var(--raised);border-left-color:var(--accent)}
+.sos-t{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.sos-id{font:500 11px/1.4 var(--f-mono);color:var(--ink-2);font-variant-numeric:tabular-nums}
+.sos-m{font-size:12.5px;color:var(--ink);margin-top:1px}
+.sos-x{font-size:11.5px;color:var(--ink-3);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pill{font:600 9.5px/1 var(--f-sans);letter-spacing:.06em;text-transform:uppercase;padding:4px 6px;border-radius:3px;border:1px solid}
+.p-crit{color:#FFC9C9;border-color:#5A2626;background:rgba(255,92,92,.14)}
+.p-high{color:#FFD9BE;border-color:#5A3A22;background:rgba(255,145,82,.13)}
+.p-mid{color:#F7E3AE;border-color:#534627;background:rgba(242,193,78,.12)}
+.p-ok{color:#BFEFD5;border-color:#22523A;background:rgba(78,208,139,.12)}
+
+/* detail */
+.kv{display:grid;grid-template-columns:96px 1fr;gap:6px 10px;font-size:12.5px}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;color:var(--ink)}
+.act{display:flex;gap:8px;margin-top:12px}
+.btn{flex:1;padding:9px 12px;border-radius:var(--r-s);background:var(--accent);color:#04222A;font-weight:600;font-size:12.5px;text-align:center;transition:filter .15s}
+.btn:hover{filter:brightness(1.08)}
+.btn.sec{background:transparent;border:1px solid var(--line-2);color:var(--ink-2);font-weight:500}
+.btn.sec:hover{background:var(--hover);color:var(--ink)}
+.btn[disabled]{opacity:.5;pointer-events:none}
+
+/* damage rows */
+.drow{display:grid;grid-template-columns:64px 1fr 46px;align-items:center;gap:10px;padding:5px 0}
+.drow+.drow{border-top:1px solid #161C26}
+.dlab{font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:6px}
+.dtrack{height:7px;border-radius:2px;background:#1A202B;overflow:hidden}
+.dtrack i{display:block;height:100%;border-radius:2px}
+.dval{font-family:var(--f-mono);font-size:12px;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* scrubber */
+.scrub{position:absolute;z-index:3;left:var(--sp);right:var(--sp);bottom:var(--sp);height:144px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:11px 13px 10px;display:flex;flex-direction:column;gap:8px}
+.scrub-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.scrub-h .chips{margin:0}
+.mark{position:absolute;top:0;bottom:0;width:1px;background:#4B5568;pointer-events:none}
+.mark b{position:absolute;top:0;left:5px;white-space:nowrap;font:500 10px/1.2 var(--f-sans);color:var(--ink-3);letter-spacing:.02em}
+.mark.big{background:#7B6FA8}
+.mark.big b{color:#B2A6DC}
+.play{width:28px;height:28px;border-radius:var(--r-s);border:1px solid var(--line-2);display:grid;place-items:center;color:var(--ink-2)}
+.play:hover{background:var(--hover);color:var(--ink)}
+.range{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.hist{position:relative;flex:1;min-height:0;cursor:ew-resize;touch-action:none}
+.hist canvas{position:absolute;inset:0;width:100%;height:100%}
+.win{position:absolute;top:0;bottom:0;border-left:1px solid var(--accent);border-right:1px solid var(--accent);background:var(--accent-soft);pointer-events:none}
+.axis{display:flex;justify-content:space-between}
+
+/* map tools */
+.tools{position:absolute;z-index:3;right:calc(336px + var(--sp) + 10px);top:var(--sp);display:flex;flex-direction:column;gap:6px}
+.tool{width:30px;height:30px;border-radius:var(--r-s);background:var(--panel);border:1px solid var(--line);color:var(--ink-2);display:grid;place-items:center;font-size:14px}
+.tool:hover{background:var(--hover);color:var(--ink)}
+.viewtog{position:absolute;z-index:3;left:calc(292px + var(--sp) + 10px);top:var(--sp);display:flex;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-s);overflow:hidden}
+.viewtog button{padding:6px 11px;font-size:12px;color:var(--ink-2)}
+.viewtog button[aria-pressed=true]{background:var(--raised);color:var(--ink)}
+.cred{position:absolute;z-index:3;left:calc(292px + var(--sp) + 10px);bottom:calc(144px + var(--sp) + 10px);max-width:min(520px,calc(100% - 700px));margin:0;padding:7px 10px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-s);font:400 10.5px/1.5 var(--f-sans);color:var(--ink-3)}
+.cred b{font-weight:500;color:var(--ink-2)}
+.scalebar{position:absolute;z-index:3;right:calc(336px + var(--sp) + 10px);bottom:calc(144px + var(--sp) + 10px);display:flex;align-items:center;gap:7px;font:500 10px/1 var(--f-mono);color:var(--ink-3)}
+.scalebar i{display:block;height:5px;border:1px solid #444E60;border-top:0;width:82px}
+
+/* command palette */
+.cmdk{position:fixed;inset:0;z-index:20;background:rgba(4,6,10,.62);display:grid;place-items:start center;padding-top:14vh}
+.cmdk[hidden]{display:none}
+.cmdbox{width:min(560px,calc(100% - 32px));background:var(--panel);border:1px solid var(--line-2);border-radius:12px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.cmdbox input{width:100%;padding:15px 16px;background:transparent;border:0;border-bottom:1px solid var(--line);color:var(--ink);font:400 15px var(--f-sans)}
+.cmdbox input::placeholder{color:var(--ink-3)}
+.cmdbox input:focus{outline:none}
+.cmdlist{max-height:46vh;overflow:auto;padding:6px}
+.cmdgroup{padding:9px 10px 4px}
+.cmditem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;border-radius:var(--r-s);font-size:13px;color:var(--ink-2)}
+.cmditem .t{color:var(--ink)}
+.cmditem .h{margin-left:auto;font:500 10.5px/1 var(--f-mono);color:var(--ink-3)}
+.cmditem[aria-selected=true]{background:var(--raised);color:var(--ink)}
+
+/* appearance popover */
+.pop{position:absolute;top:46px;right:14px;z-index:9;width:250px;background:var(--panel);border:1px solid var(--line-2);border-radius:var(--r);padding:12px;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+.pop[hidden]{display:none}
+.opts{display:flex;gap:6px;margin:8px 0 2px}
+.opt{flex:1;padding:8px 6px;border:1px solid var(--line-2);border-radius:var(--r-s);font-size:11.5px;color:var(--ink-2);text-align:center}
+.opt[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.opt small{display:block;font-size:9.5px;color:var(--ink-3);margin-top:2px}
+
+/* toast */
+.toasts{position:absolute;z-index:8;left:50%;transform:translateX(-50%);bottom:calc(144px + var(--sp) + 16px);display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--raised);border:1px solid var(--line-2);border-left:2px solid var(--crit);border-radius:var(--r-s);box-shadow:0 12px 30px rgba(0,0,0,.45);animation:rise .22s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.toast .tx{font-size:12.5px}
+.toast .tx small{display:block;color:var(--ink-3);font-size:11px;margin-top:2px}
+.toast button{color:var(--accent);font-size:12px;font-weight:500;white-space:nowrap}
+
+.hint{font-size:11.5px;color:var(--ink-3);line-height:1.55}
+.tt{padding:9px 11px!important;background:var(--raised)!important;border:1px solid var(--line-2)!important;border-radius:var(--r-s)!important;color:var(--ink)!important;font:400 12px/1.5 var(--f-sans)!important;box-shadow:0 10px 26px rgba(0,0,0,.5)!important;max-width:260px!important}
+
+@media (max-width:1180px){
+  .cred{max-width:calc(100% - 660px)}
+}
+@media (max-width:980px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100%}
+  .stage{display:flex;flex-direction:column;gap:var(--sp);padding:var(--sp);min-height:0}
+  #map{position:relative;inset:auto;height:54vh;min-height:320px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .panel,.scrub{position:relative;left:auto;right:auto;top:auto;bottom:auto;width:auto;height:auto}
+  .p-left,.p-right{max-height:none}
+  .p-body{overflow:visible}
+  .tools,.viewtog,.scalebar{display:none}
+  .cred{position:relative;left:auto;bottom:auto;max-width:none}
+  .toasts{position:fixed;bottom:16px}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" fill="none">
+        <circle cx="10" cy="10" r="2" fill="#45C8E0"/>
+        <path d="M14.2 5.8a6 6 0 0 1 0 8.4" stroke="#45C8E0" stroke-width="1.4" stroke-linecap="round" opacity=".85"/>
+        <path d="M5.8 14.2a6 6 0 0 1 0-8.4" stroke="#45C8E0" stroke-width="1.4" stroke-linecap="round" opacity=".85"/>
+        <path d="M17 3a9.9 9.9 0 0 1 0 14" stroke="#45C8E0" stroke-width="1.2" stroke-linecap="round" opacity=".38"/>
+        <path d="M3 17A9.9 9.9 0 0 1 3 3" stroke="#45C8E0" stroke-width="1.2" stroke-linecap="round" opacity=".38"/>
+      </svg>
+      <b>QuakeMind</b>
+    </div>
+    <div class="vr"></div>
+    <nav class="tabs" role="tablist" aria-label="Çalışma modu">
+      <button class="tab" role="tab" aria-selected="true">Genel durum</button>
+      <button class="tab" role="tab" aria-selected="false">SOS kuyruğu</button>
+      <button class="tab" role="tab" aria-selected="false" disabled title="Prototipte kapalı">Yol ve rota</button>
+      <button class="tab" role="tab" aria-selected="false" disabled title="Prototipte kapalı">Hasar analizi</button>
+    </nav>
+    <div class="spacer"></div>
+    <button class="tbtn" id="openCmd">Ara veya komut ver <kbd>Ctrl K</kbd></button>
+    <div class="live" id="liveBox"><span class="dot" id="liveDot"></span><span id="liveTxt">Canlı</span><span class="mono" id="clock" title="Senaryo saati">--:--</span></div>
+    <button class="tbtn" id="toLive" hidden>Canlıya dön</button>
+    <button class="tbtn" id="openPop" aria-haspopup="true" aria-expanded="false">Görünüm</button>
+    <div class="avatar" title="Saha koordinatörü">FE</div>
+  </header>
+
+  <div class="pop" id="pop" hidden>
+    <div class="micro">Yazı tipi</div>
+    <div class="opts" id="fontOpts">
+      <button class="opt" data-font="plex" aria-pressed="true">Plex<small>IBM Plex</small></button>
+      <button class="opt" data-font="instrument" aria-pressed="false">Instrument<small>+ JetBrains</small></button>
+      <button class="opt" data-font="geist" aria-pressed="false">Geist<small>+ Geist Mono</small></button>
+    </div>
+    <div class="micro" style="margin-top:12px">Vurgu rengi</div>
+    <div class="opts" id="accentOpts">
+      <button class="opt" data-accent="cyan" aria-pressed="true">Camgöbeği</button>
+      <button class="opt" data-accent="indigo" aria-pressed="false">Çivit</button>
+      <button class="opt" data-accent="neutral" aria-pressed="false">Nötr</button>
+    </div>
+    <p class="hint" style="margin:12px 0 0">Kararı vermeden önce karşılaştırmak için. Seçilen değerler tek bir token dosyasında durur, uygulamanın tamamı oradan beslenir.</p>
+  </div>
+
+  <div class="stage">
+    <div id="map"></div>
+
+    <div class="viewtog" role="group" aria-label="Harita ölçeği">
+      <button id="vCity" aria-pressed="true">Antakya</button>
+      <button id="vRegion" aria-pressed="false">Bölge</button>
+    </div>
+
+    <div class="tools">
+      <button class="tool" id="zIn" aria-label="Yakınlaştır">+</button>
+      <button class="tool" id="zOut" aria-label="Uzaklaştır">−</button>
+      <button class="tool" id="zReset" aria-label="Görünümü sıfırla">⤿</button>
+    </div>
+
+    <aside class="panel p-left" aria-label="Katmanlar">
+      <div class="p-head"><span class="micro">Katmanlar</span><span class="micro" id="heatState">ısı: 2 kanal</span></div>
+      <div class="p-body">
+        <div class="sect">
+          <div class="sect-h"><span class="micro">Birleşik ısı haritası</span></div>
+          <p class="hint">Dört kaynaktan gelen hasar bilgisini tek haritada toplar. Kaynakların ağırlığını değiştirerek haritaya farklı sorular sorarsın.</p>
+          <div class="chips" id="presets" role="group" aria-label="Hazır karışımlar"></div>
+          <div id="channels"></div>
+          <div class="ramp" style="margin-top:12px" role="img" aria-label="Isı ölçeği: düşükten yükseğe"></div>
+          <div class="ramp-x"><span class="micro">yok</span><span class="micro">yoğun</span></div>
+          <p class="hint" id="mixNote" style="margin:9px 0 0;color:var(--ink-2)"></p>
+          <p class="hint" style="margin:8px 0 0">Teknik: ağırlık değişince sunucuya istek gitmez. Her kaynağın yoğunluk ızgarası bir kez hesaplanır, karışım ekran kartında yapılır.</p>
+        </div>
+        <div class="sect">
+          <div class="sect-h"><span class="micro">Harita katmanları</span></div>
+          <div id="toggles"></div>
+        </div>
+        <div class="sect">
+          <div class="sect-h"><span class="micro">Veri kaynakları</span></div>
+          <dl class="kv" style="grid-template-columns:auto 1fr;font-size:11.5px;gap:5px 10px">
+            <dt>Yapı, yol</dt><dd>Copernicus EMS EMSR648, Antakya (Şubat 2023)</dd>
+            <dt>Depremler</dt><dd>QuakeMind kataloğu, 6 Şub – 28 Şub 2023</dd>
+            <dt>Faylar</dt><dd>GEM aktif fay veri tabanı</dd>
+            <dt>Toplanma</dt><dd>AFAD toplanma alanları</dd>
+            <dt>SOS, ekip</dt><dd>QuakeMind senaryo dosyası — gerçek çağrı değil; çağrı saatleri gösterim için ana sarsıntıdan itibaren dağıtıldı</dd>
+          </dl>
+        </div>
+      </div>
+    </aside>
+
+    <aside class="panel p-right" aria-label="Durum">
+      <div class="p-head"><span class="micro">Antakya · durum</span><span class="micro" id="winLabel" title="Seçili zaman aralığı">6–9 Şub</span></div>
+      <div class="p-body">
+        <div class="kpis" id="kpis"></div>
+        <div class="sect">
+          <div class="sect-h"><span class="micro">Hasarlı yapılar</span><span class="micro">Copernicus EMSR648</span></div>
+          <div id="dmgRows"></div>
+          <p class="hint" id="dmgSum" style="margin:10px 0 0"></p>
+        </div>
+        <div class="sect" id="detailSect" hidden></div>
+        <div class="sect" style="padding:0">
+          <div class="sect-h" style="padding:12px 13px 9px;margin:0"><span class="micro">SOS kuyruğu</span><span class="micro">senaryo verisi</span></div>
+          <div id="sosList"></div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="scrub">
+      <div class="scrub-h">
+        <button class="play" id="play" aria-label="Zamanı oynat" title="Aralığı ileri sar">▶</button>
+        <span class="micro">Zaman aralığı</span>
+        <span class="range" id="rangeLabel">—</span>
+        <div class="chips" id="tPresets" role="group" aria-label="Hazır aralıklar"></div>
+        <span class="spacer"></span>
+        <span class="hint" id="qCount">—</span>
+      </div>
+      <div class="hist" id="hist" title="Çubuklar: saat başına deprem sayısı. Sürükleyerek aralığı kaydır.">
+        <canvas id="histC"></canvas><div class="win" id="win"></div><div id="marks"></div>
+      </div>
+      <div class="axis" id="axis"></div>
+    </div>
+
+    <div class="scalebar"><i></i><span id="scaleLbl">—</span></div>
+
+    <p class="cred">
+      <b>Veri:</b> Copernicus EMS EMSR648 · AFAD toplanma alanları · GEM fay hatları · QuakeMind deprem kataloğu ·
+      SOS ve ekipler <b>senaryo verisi</b> (gerçek çağrı değil)
+    </p>
+
+    <div class="toasts" id="toasts"></div>
+  </div>
+</div>
+
+<div class="cmdk" id="cmdk" hidden>
+  <div class="cmdbox" role="dialog" aria-modal="true" aria-label="Komut paleti">
+    <input id="cmdInput" placeholder="Mahalle, SOS numarası veya komut…" autocomplete="off">
+    <div class="cmdlist" id="cmdList"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/deck.gl@9.1.14/dist.min.js"></script>
+<script src="qm-data.js"></script>
+<script>
+(function(){
+"use strict";
+const D = window.QM, S_ = D.scale;
+const R = (v,n)=>v.toFixed(n);
+const TR = new Intl.DateTimeFormat('tr-TR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Istanbul'});
+const TRd = new Intl.DateTimeFormat('tr-TR',{day:'numeric',month:'short',timeZone:'Europe/Istanbul'});
+const fmt = n => n.toLocaleString('tr-TR');
+
+/* ---------- decode packed geometry ---------- */
+function dec(flat){const out=new Array(flat.length>>1);let x=0,y=0;for(let i=0,j=0;i<flat.length;i+=2,j++){x+=flat[i];y+=flat[i+1];out[j]=[x/S_,y/S_];}return out;}
+const roads=[]; Object.keys(D.roads).forEach(c=>{const cls=+c;D.roads[c].forEach(f=>roads.push({cls,path:dec(f)}));});
+const blds=[];  Object.keys(D.blds ).forEach(g=>{const gr=+g;D.blds[g].forEach(f=>blds.push({g:gr,polygon:dec(f)}));});
+const droads=D.droads.map(([g,f])=>({g,path:dec(f)}));
+const water=D.water.map(dec), lakes=D.lakes.map(dec), faults=D.faults.map(dec);
+const quakes=D.quakes.map(q=>({lon:q[0],lat:q[1],mag:q[2],depth:q[3],t:q[4],place:q[5]}));
+const asm=D.asm.map(a=>({lon:a[0],lat:a[1],name:a[2],mah:a[3]}));
+const camps=D.camps, barriers=D.barriers, sat=D.sat, teams=D.teams;
+
+/* SOS: scenario victims -> queue */
+const PRIO={kritik:{k:'crit',l:'Kritik',w:1.0},mahsur:{k:'crit',l:'Kritik',w:1.0},yarali:{k:'high',l:'Yüksek',w:.75},hafif:{k:'mid',l:'Orta',w:.45}};
+const T0Q = Date.UTC(2023,1,6,1,17)/1000;          // ana sarsıntı (06.02.2023 04:17 TRT)
+const sosAll = D.sos.map((s,i)=>({...s, prio:PRIO[s.durum]||PRIO.hafif, t:T0Q+(i+1)*1380, team:null}));
+
+/* ---------- state ---------- */
+const WIN_LEN=6*3600, SIM_RATE=60;   /* canlı mod: 1 saniye = 1 dakika senaryo zamanı */
+const st = {
+  preset:'genel',
+  w:{sat:1, sos:1, cam:1, nlp:1},
+  on:{blds:true, roads:true, droads:true, heat:true, quakes:true, asm:true, camps:true, faults:false, teams:true},
+  live:true, now:T0Q+50*60,
+  t:[T0Q+50*60-WIN_LEN, T0Q+50*60],
+  sel:null, playing:false, view:'city'
+};
+const CH=[
+  {id:'sat', name:'Uydu hasar tespiti', src:'Copernicus EMSR648 · yıkık ve hasarlı yapılar', color:'#45C8E0', n:sat.length, data:sat.map(p=>[p[0],p[1],[0,.4,.7,1][p[2]]])},
+  {id:'sos', name:'SOS çağrıları',      src:'senaryo verisi · vatandaş çağrıları',           color:'#FF5C5C', n:sosAll.length, data:sosAll.map(s=>[s.lon,s.lat,s.prio.w])},
+  {id:'cam', name:'Kamera tespiti',     src:'veri yok · saha fotoğrafları buraya düşer',     color:'#F2C14E', n:0, data:[]},
+  {id:'nlp', name:'Metin ihbarı',       src:'veri yok · metin analizi buraya düşer',         color:'#B08CFF', n:0, data:[]}
+];
+const PRESETS=[
+  {id:'genel', label:'Genel durum', w:{sat:1,sos:1,cam:1,nlp:1},
+   note:'Bütün kaynaklar birlikte: nerede hasar yoğun?'},
+  {id:'cagri', label:'Yalnız çağrılar', w:{sat:0,sos:1,cam:0,nlp:1},
+   note:'Yalnızca vatandaştan gelen çağrılar: ekip talebi olan yerler.'},
+  {id:'sessiz', label:'Sessiz bölgeler', w:{sat:1,sos:-1,cam:-0.6,nlp:-0.6},
+   note:'Uydu yıkık gösteriyor ama oradan tek bir çağrı gelmemiş. Kimsenin haber veremediği yerler — önce buralar taranır.'}
+];
+
+/* ---------- heat grid (binning + separable gaussian, once per channel) ---------- */
+const BB=D.bbox, GW=176, GH=248;
+const cellW=(BB[2]-BB[0])/GW, cellH=(BB[3]-BB[1])/GH;
+const mPerDegLat=111320, mPerDegLon=111320*Math.cos(BB[1]*Math.PI/180);
+const sigX=(260/(cellW*mPerDegLon)), sigY=(260/(cellH*mPerDegLat));
+function blur1(src,w,h,sig,horiz){
+  const rad=Math.max(1,Math.ceil(sig*3)), k=new Float32Array(rad*2+1);let s=0;
+  for(let i=-rad;i<=rad;i++){const v=Math.exp(-(i*i)/(2*sig*sig));k[i+rad]=v;s+=v;}
+  for(let i=0;i<k.length;i++)k[i]/=s;
+  const out=new Float32Array(src.length);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    let a=0;
+    for(let i=-rad;i<=rad;i++){
+      const xx=horiz?Math.min(w-1,Math.max(0,x+i)):x, yy=horiz?y:Math.min(h-1,Math.max(0,y+i));
+      a+=src[yy*w+xx]*k[i+rad];
+    }
+    out[y*w+x]=a;
+  }
+  return out;
+}
+function gridOf(points){
+  const g=new Float32Array(GW*GH);
+  for(const [lon,lat,w] of points){
+    const gx=Math.floor((lon-BB[0])/cellW), gy=Math.floor((BB[3]-lat)/cellH);
+    if(gx<0||gy<0||gx>=GW||gy>=GH) continue;
+    g[gy*GW+gx]+=w;
+  }
+  return blur1(blur1(g,GW,GH,sigX,true),GW,GH,sigY,false);
+}
+const grids={}; CH.forEach(c=>grids[c.id]=c.data.length?gridOf(c.data):new Float32Array(GW*GH));
+/* mutlak ölçek: referans bir kez donuyor, ağırlık değişse de renk kayması olmuyor */
+let HEAT_REF=(function(){
+  const a=[];for(let i=0;i<GW*GH;i++){const v=grids.sat[i]+grids.sos[i];if(v>0)a.push(v);}
+  a.sort((x,y)=>x-y);return a.length?a[Math.floor(a.length*0.98)]:1;
+})();
+const RAMP=[[0,[16,19,26,0]],[.12,[43,11,77,150]],[.34,[123,35,130,196]],[.56,[196,63,102,220]],[.78,[240,115,63,235]],[1,[252,217,104,245]]];
+function ramp(t){
+  for(let i=1;i<RAMP.length;i++){ if(t<=RAMP[i][0]){const a=RAMP[i-1],b=RAMP[i],f=(t-a[0])/(b[0]-a[0]);
+    return [0,1,2,3].map(j=>a[1][j]+(b[1][j]-a[1][j])*f);} }
+  return RAMP[RAMP.length-1][1];
+}
+const heatCv=document.createElement('canvas'); heatCv.width=GW; heatCv.height=GH;
+const heatCtx=heatCv.getContext('2d');
+function heatImage(){
+  const img=heatCtx.createImageData(GW,GH), p=img.data;
+  for(let i=0;i<GW*GH;i++){
+    const v=st.w.sat*grids.sat[i]+st.w.sos*grids.sos[i]+st.w.cam*grids.cam[i]+st.w.nlp*grids.nlp[i];
+    const t=Math.max(0,Math.min(1,v/HEAT_REF));
+    if(t<=0.03){p[i*4+3]=0;continue;}
+    const c=ramp(t); p[i*4]=c[0];p[i*4+1]=c[1];p[i*4+2]=c[2];p[i*4+3]=c[3];
+  }
+  return img;
+}
+
+/* ---------- deck.gl ---------- */
+const CITY={longitude:(BB[0]+BB[2])/2, latitude:(BB[1]+BB[3])/2, zoom:12.4, pitch:0, bearing:0};
+const REGION={longitude:37.25, latitude:37.5, zoom:6.6, pitch:0, bearing:0};
+const ROAD_COLOR=[[92,104,126],[70,81,101],[52,62,78],[40,48,61],[34,41,52]];
+const ROAD_W=[7,5,3.4,2,1.4];
+const GRADE=[[42,50,64],[242,193,78],[255,145,82],[255,92,92]];
+let view={...CITY, transitionDuration:0};
+const deckgl=new deck.DeckGL({
+  container:document.getElementById('map'),
+  initialViewState:view,
+  controller:{dragRotate:false, touchRotate:false, inertia:250},
+  layers:[],
+  getTooltip:({object,layer})=>{
+    if(!object) return null;
+    const style={background:'transparent',boxShadow:'none',padding:'0',margin:'0'};
+    const box=h=>({html:`<div class="tt">${h}</div>`, style});
+    if(layer.id==='quakes')  return box(`<b>M ${object.mag.toFixed(1)}</b> · ${object.depth.toFixed(0)} km derinlik<br><span style="color:#98A2B6">${TR.format(object.t*1000)} · ${object.place||''}</span>`);
+    if(layer.id==='sos')     return box(`<b>${object.id}</b> · ${object.prio.l}<br><span style="color:#98A2B6">${object.text}</span>`);
+    if(layer.id==='asm')     return box(`<b>${object.name||'Toplanma alanı'}</b><br><span style="color:#98A2B6">${object.mah} · AFAD</span>`);
+    if(layer.id==='droads')  return box(`<b>${['','Şüpheli hasar','Hasarlı','Yıkık'][object.g]} yol</b><br><span style="color:#98A2B6">Copernicus EMSR648</span>`);
+    if(layer.id==='blds' && object.g>0) return box(`<b>${['','Şüpheli hasarlı','Hasarlı','Yıkık'][object.g]} yapı</b><br><span style="color:#98A2B6">Copernicus EMSR648</span>`);
+    if(layer.id==='teams')   return box(`<b>${object.unit}</b><br><span style="color:#98A2B6">${object.role}</span>`);
+    return null;
+  },
+  onClick:({object,layer})=>{ if(layer&&layer.id==='sos'&&object) selectSos(object.id); }
+});
+let pulse=null;
+function sosVisible(){ return sosAll.filter(s=>s.t<=(st.live?st.now:st.t[1])); }
+function sosWin(){ return sosVisible().filter(s=>s.t>=st.t[0]&&s.t<=st.t[1]); }
+function layers(){
+  const [t0,t1]=st.t;
+  const qv=quakes.filter(q=>q.t>=t0&&q.t<=t1);
+  const L=[];
+  L.push(new deck.SolidPolygonLayer({id:'lakes',data:lakes,getPolygon:d=>d,getFillColor:[18,54,65],visible:st.on.roads}));
+  L.push(new deck.PathLayer({id:'water',data:water,getPath:d=>d,getColor:[20,60,72],widthMinPixels:1.4,getWidth:8,visible:st.on.roads}));
+  L.push(new deck.SolidPolygonLayer({id:'blds',data:blds,getPolygon:d=>d.polygon,pickable:true,
+    getFillColor:d=>d.g?[...GRADE[d.g],205]:[26,32,42,255],visible:st.on.blds}));
+  L.push(new deck.PathLayer({id:'roads',data:roads,getPath:d=>d.path,getColor:d=>ROAD_COLOR[d.cls],
+    getWidth:d=>ROAD_W[d.cls],widthUnits:'meters',widthMinPixels:0.7,widthMaxPixels:14,visible:st.on.roads,capRounded:true,jointRounded:true}));
+  if(st.on.heat) L.push(new deck.BitmapLayer({id:'heat',image:heatImage(),bounds:[BB[0],BB[1],BB[2],BB[3]],opacity:0.72,
+    textureParameters:{minFilter:'linear',magFilter:'linear'}}));
+  L.push(new deck.PathLayer({id:'droads',data:droads,getPath:d=>d.path,pickable:true,getColor:d=>[...GRADE[d.g],255],
+    getWidth:4,widthUnits:'pixels',widthMinPixels:2.5,visible:st.on.droads,capRounded:true}));
+  L.push(new deck.PathLayer({id:'faults',data:faults,getPath:d=>d,getColor:[150,120,220,150],widthMinPixels:1.2,getWidth:2,visible:st.on.faults}));
+  L.push(new deck.ScatterplotLayer({id:'quakes',data:qv,pickable:true,getPosition:d=>[d.lon,d.lat],
+    getRadius:d=>2.4+Math.max(0,d.mag-2)*2.3,radiusUnits:'pixels',radiusMinPixels:2.4,radiusMaxPixels:20,
+    getFillColor:d=>d.mag>=5?[255,206,120,70]:[255,170,112,38],
+    stroked:true,lineWidthMinPixels:1.1,getLineColor:d=>d.mag>=5?[255,224,150,225]:[255,178,124,120],visible:st.on.quakes}));
+  L.push(new deck.ScatterplotLayer({id:'asm',data:asm,pickable:true,getPosition:d=>[d.lon,d.lat],getRadius:26,
+    radiusMinPixels:3.5,radiusMaxPixels:9,getFillColor:[16,22,30,220],stroked:true,lineWidthMinPixels:1.6,
+    getLineColor:[78,208,139,235],visible:st.on.asm}));
+  L.push(new deck.ScatterplotLayer({id:'camps',data:camps,getPosition:d=>d,getRadius:22,radiusMinPixels:2.6,radiusMaxPixels:7,
+    getFillColor:[78,208,139,110],visible:st.on.camps}));
+  L.push(new deck.ScatterplotLayer({id:'barriers',data:barriers,getPosition:d=>d,getRadius:20,radiusMinPixels:2.6,radiusMaxPixels:7,
+    getFillColor:[255,145,82,190],visible:st.on.droads}));
+  const sw=sosWin(), dispatched=sw.filter(s=>s.team);
+  L.push(new deck.ArcLayer({id:'arcs',data:dispatched,getSourcePosition:d=>[d.team.lon,d.team.lat],getTargetPosition:d=>[d.lon,d.lat],
+    getSourceColor:[69,200,224,210],getTargetColor:[255,92,92,220],getWidth:1.6,getHeight:0.28}));
+  L.push(new deck.ScatterplotLayer({id:'teams',data:teams,pickable:true,getPosition:d=>[d.lon,d.lat],getRadius:30,
+    radiusMinPixels:4,radiusMaxPixels:10,getFillColor:[69,200,224,235],stroked:true,lineWidthMinPixels:1.4,
+    getLineColor:[8,12,18,255],visible:st.on.teams}));
+  L.push(new deck.ScatterplotLayer({id:'sos',data:sw,pickable:true,getPosition:d=>[d.lon,d.lat],
+    getRadius:d=>st.sel===d.id?52:34,radiusUnits:'meters',radiusMinPixels:4.5,radiusMaxPixels:14,
+    getFillColor:d=>d.prio.k==='crit'?[255,92,92,240]:d.prio.k==='high'?[255,145,82,235]:[242,193,78,225],
+    stroked:true,lineWidthMinPixels:1.6,getLineColor:d=>st.sel===d.id?[232,236,244,255]:[10,14,20,220],
+    updateTriggers:{getRadius:st.sel,getLineColor:st.sel}}));
+  if(st.view==='city') L.push(new deck.TextLayer({id:'labels',data:(D.mah||[]),
+    getPosition:d=>[d[1],d[2]],getText:d=>d[0],getSize:11,getColor:[176,186,205,235],
+    fontFamily:"'IBM Plex Sans',sans-serif",fontWeight:600,characterSet:'auto',
+    outlineWidth:3,outlineColor:[8,10,14,230],fontSettings:{sdf:true},getPixelOffset:[0,-12]}));
+  if(pulse) L.push(new deck.ScatterplotLayer({id:'pulse',data:[pulse.s],getPosition:d=>[d.lon,d.lat],
+    getRadius:pulse.r,radiusUnits:'meters',stroked:true,filled:false,lineWidthMinPixels:2,
+    getLineColor:[255,92,92,Math.round(200*(1-pulse.k))]}));
+  return L;
+}
+function draw(){ deckgl.setProps({layers:layers()}); }
+function flyTo(v,ms=900){
+  view={...v,transitionDuration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:ms,transitionInterpolator:new deck.FlyToInterpolator({speed:1.6})};
+  deckgl.setProps({initialViewState:view});
+}
+
+/* ---------- left panel ---------- */
+const chBox=document.getElementById('channels');
+CH.forEach(c=>{
+  const off=c.n===0;
+  const el=document.createElement('div');
+  el.className='ch'+(off?' off':'');
+  el.innerHTML=`<span class="sw" style="background:${c.color}"></span>
+    <span><span class="ch-name">${c.name}</span><br><span class="ch-src">${c.src}</span></span>
+    <span class="ch-n">${off?'—':fmt(c.n)+' <small>nokta</small>'}</span>
+    <span class="ch-ctl"><input type="range" id="w-${c.id}" min="-100" max="150" step="10" value="${st.w[c.id]*100}" aria-label="${c.name} ağırlığı"><b class="ch-w" id="wv-${c.id}"></b></span>`;
+  chBox.appendChild(el);
+  el.querySelector('input').addEventListener('input',e=>{ st.w[c.id]=+e.target.value/100; st.preset=null; draw(); heatState(); });
+});
+const preBox=document.getElementById('presets');
+PRESETS.forEach(p=>{
+  const b=document.createElement('button');
+  b.className='chip'; b.textContent=p.label; b.dataset.id=p.id; b.setAttribute('aria-pressed',String(st.preset===p.id));
+  b.addEventListener('click',()=>{ st.preset=p.id; Object.assign(st.w,p.w);
+    CH.forEach(c=>{ const s=document.getElementById('w-'+c.id); if(s) s.value=st.w[c.id]*100; });
+    draw(); heatState(); });
+  preBox.appendChild(b);
+});
+function wLabel(v,off){ if(off) return '—'; if(Math.abs(v)<0.05) return 'kapalı';
+  return (v<0?'−':'×')+Math.abs(v).toFixed(1).replace('.',','); }
+function heatState(){
+  CH.forEach(c=>{ const el=document.getElementById('wv-'+c.id); if(el) el.textContent=wLabel(st.w[c.id],c.n===0); });
+  preBox.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.id===st.preset)));
+  const active=CH.filter(c=>c.n&&Math.abs(st.w[c.id])>0.05);
+  const p=PRESETS.find(x=>x.id===st.preset);
+  document.getElementById('heatState').textContent = p?('ısı: '+p.label.toLocaleLowerCase('tr')):'ısı: özel karışım';
+  let note;
+  if(p) note=p.note;
+  else if(!active.length) note='Hiçbir kaynak seçili değil, ısı haritası boş.';
+  else {
+    const art=active.filter(c=>st.w[c.id]>0).map(c=>c.name.toLocaleLowerCase('tr'));
+    const eksi=active.filter(c=>st.w[c.id]<0).map(c=>c.name.toLocaleLowerCase('tr'));
+    note=(art.length?`Haritayı ${art.join(' ve ')} oluşturuyor.`:'')+(eksi.length?` ${eksi.join(' ve ')} olan yerler sönükleşiyor.`:'');
+  }
+  document.getElementById('mixNote').textContent=note;
+}
+const TOG=[['blds','Yapılar'],['roads','Yol ağı'],['droads','Hasarlı yollar'],['heat','Birleşik ısı'],['quakes','Depremler'],['asm','Toplanma alanları'],['camps','Çadır alanları'],['teams','Saha ekipleri'],['faults','Fay hatları']];
+const tgBox=document.getElementById('toggles');
+TOG.forEach(([k,label])=>{
+  const b=document.createElement('button');
+  b.className='row'; b.style.width='100%'; b.setAttribute('aria-pressed',String(st.on[k]));
+  b.innerHTML=`<b>${label}</b><span class="sw-el switch ${st.on[k]?'sw-on':''}"></span>`;
+  b.addEventListener('click',()=>{ st.on[k]=!st.on[k]; b.setAttribute('aria-pressed',String(st.on[k]));
+    b.querySelector('.sw-el').className='sw-el switch '+(st.on[k]?'sw-on':''); draw(); });
+  tgBox.appendChild(b);
+});
+
+/* ---------- right panel ---------- */
+const dmg={dest:0,dam:0,pos:0}; blds.forEach(b=>{ if(b.g===3)dmg.dest++; else if(b.g===2)dmg.dam++; else if(b.g===1)dmg.pos++; });
+const rdDmg={3:0,2:0,1:0}; droads.forEach(r=>rdDmg[r.g]++);
+function kpis(){
+  const [t0,t1]=st.t, qv=quakes.filter(q=>q.t>=t0&&q.t<=t1), sw=sosWin();
+  const big=qv.reduce((m,q)=>Math.max(m,q.mag),0);
+  const open=sw.filter(s=>!s.team).length;
+  document.getElementById('kpis').innerHTML=[
+    ['Yıkık yapı', fmt(dmg.dest), `${fmt(dmg.dam)} yapı da hasarlı`],
+    ['Hasarlı yol', fmt(droads.length), `${rdDmg[3]} yıkık · ${rdDmg[2]} hasarlı · ${rdDmg[1]} şüpheli`],
+    ['Bekleyen SOS', fmt(open), `${fmt(sw.length-open)} çağrı ekibe atandı`],
+    ['Aralıktaki deprem', fmt(qv.length), big?`en büyüğü M ${big.toFixed(1)}`:'seçili aralıkta kayıt yok']
+  ].map(([l,v,s])=>`<div class="kpi"><div class="v num">${v}</div><div class="l micro">${l}</div><div class="s">${s}</div></div>`).join('');
+  document.getElementById('qCount').textContent=
+    `Bu aralıkta ${fmt(qv.length)} deprem, ${fmt(sw.length)} SOS çağrısı var${big?` · en büyük deprem M ${big.toFixed(1)}`:''}`;
+}
+(function dmgChart(){
+  const parts=[['Yıkık',dmg.dest,'#FF5C5C'],['Hasarlı',dmg.dam,'#FF9152'],['Şüpheli',dmg.pos,'#F2C14E']];
+  const max=Math.max(...parts.map(p=>p[1]));
+  document.getElementById('dmgRows').innerHTML=parts.map(([n,v,c])=>
+    `<div class="drow"><span class="dlab"><span class="sw" style="background:${c}"></span>${n}</span>
+     <span class="dtrack"><i style="width:${(v/max*100).toFixed(1)}%;background:${c}"></i></span>
+     <span class="dval">${fmt(v)}</span></div>`).join('');
+  const dsum=dmg.dest+dmg.dam+dmg.pos;
+  document.getElementById('dmgSum').textContent=
+    `${fmt(blds.length)} yapıdan ${fmt(dsum)} tanesi hasarlı (%${(dsum/blds.length*100).toFixed(1).replace('.',',')}). Kalan ${fmt(blds.length-dsum)} yapıda görünür hasar yok.`;
+})();
+const sosBox=document.getElementById('sosList');
+function renderSos(){
+  const sw=sosWin(), hidden=sosVisible().length-sw.length;
+  sosBox.innerHTML=sw.map(s=>`<button class="sos ${st.sel===s.id?'on':''}" data-id="${s.id}" style="border-left-color:${st.sel===s.id?'var(--accent)':'transparent'}">
+    <span class="sos-t"><span class="sos-id">${s.id}</span><span class="pill p-${s.prio.k}">${s.team?'Atandı':s.prio.l}</span></span>
+    <span class="sos-m">${s.mahalle} mah. · ${TR.format(s.t*1000)}</span>
+    <span class="sos-x">${s.text}</span></button>`).join('')
+    + (hidden?`<p class="hint" style="padding:10px 13px 12px;margin:0">Seçili zaman aralığının dışında ${hidden} çağrı daha var.</p>`:'');
+  sosBox.querySelectorAll('.sos').forEach(b=>b.addEventListener('click',()=>selectSos(b.dataset.id)));
+}
+function dist(a,b){const dx=(a.lon-b.lon)*mPerDegLon, dy=(a.lat-b.lat)*mPerDegLat;return Math.sqrt(dx*dx+dy*dy);}
+function selectSos(id){
+  st.sel=id; const s=sosAll.find(x=>x.id===id); if(!s) return;
+  const near=teams.map(t=>({t,d:dist(s,t)})).sort((a,b)=>a.d-b.d)[0];
+  const sec=document.getElementById('detailSect'); sec.hidden=false;
+  sec.innerHTML=`<div class="sect-h"><span class="micro">Seçili çağrı</span><span class="micro">${s.id}</span></div>
+    <dl class="kv">
+      <dt>Durum</dt><dd>${s.durum}</dd>
+      <dt>Mahalle</dt><dd>${s.mahalle}</dd>
+      <dt>Konum</dt><dd class="mono">${R(s.lat,5)}, ${R(s.lon,5)}</dd>
+      <dt>İhbar</dt><dd>${s.text}</dd>
+      <dt>En yakın ekip</dt><dd>${near.t.unit} · <span class="mono">${(near.d/1000).toFixed(1)} km</span></dd>
+    </dl>
+    <div class="act">
+      <button class="btn" id="dispatch" ${s.team?'disabled':''}>${s.team?'Ekip yolda':'Ekip gönder'}</button>
+      <button class="btn sec" id="zoomTo">Haritada göster</button>
+    </div>`;
+  document.getElementById('zoomTo').onclick=()=>flyTo({longitude:s.lon,latitude:s.lat,zoom:15.2,pitch:0,bearing:0},800);
+  const dp=document.getElementById('dispatch');
+  if(dp) dp.onclick=()=>{ s.team=near.t; toast(`${near.t.unit} ${s.id} çağrısına yönlendirildi`,`${(near.d/1000).toFixed(1)} km · tahmini varış ${Math.max(4,Math.round(near.d/1000*3.2))} dk`); selectSos(id); renderSos(); kpis(); draw(); };
+  renderSos(); draw();
+  const b=sosBox.querySelector(`[data-id="${id}"]`); if(b) b.scrollIntoView({block:'nearest'});
+}
+
+/* ---------- time scrubber ---------- */
+const histEl=document.getElementById('hist'), histC=document.getElementById('histC'), winEl=document.getElementById('win');
+const SPAN=[T0Q-6*3600, T0Q+22*24*3600], BINS=132, binMs=(SPAN[1]-SPAN[0])/BINS;
+const hist=new Array(BINS).fill(0);
+quakes.forEach(q=>{ const i=Math.floor((q.t-SPAN[0])/binMs); if(i>=0&&i<BINS) hist[i]++; });
+const hmax=Math.max(...hist);
+function drawHist(){
+  const r=histEl.getBoundingClientRect(), dpr=Math.min(2,devicePixelRatio||1);
+  histC.width=r.width*dpr; histC.height=r.height*dpr;
+  const c=histC.getContext('2d'); c.scale(dpr,dpr); c.clearRect(0,0,r.width,r.height);
+  const bw=r.width/BINS;
+  for(let i=0;i<BINS;i++){
+    const t=SPAN[0]+i*binMs, inWin=t>=st.t[0]&&t<=st.t[1];
+    const h=Math.max(hist[i]?1.5:0,(hist[i]/hmax)*(r.height-6));
+    c.fillStyle=inWin?'#45C8E0':'#28303E';
+    c.fillRect(i*bw+0.5, r.height-h, Math.max(1,bw-1.4), h);
+  }
+  const x0=((st.t[0]-SPAN[0])/(SPAN[1]-SPAN[0]))*r.width, x1=((st.t[1]-SPAN[0])/(SPAN[1]-SPAN[0]))*r.width;
+  winEl.style.left=Math.max(0,x0)+'px'; winEl.style.width=Math.max(6,x1-x0)+'px';
+  document.getElementById('rangeLabel').textContent=`${TR.format(st.t[0]*1000)} — ${TR.format(st.t[1]*1000)}`;
+  document.getElementById('winLabel').textContent=`${TRd.format(st.t[0]*1000)} – ${TRd.format(st.t[1]*1000)}`;
+}
+document.getElementById('axis').innerHTML=[0,.25,.5,.75,1].map(f=>`<span class="micro">${TRd.format((SPAN[0]+f*(SPAN[1]-SPAN[0]))*1000)}</span>`).join('');
+
+/* hazır aralıklar */
+const TP=[
+  {id:'canli',label:'Canlı',     live:true},
+  {id:'6s',  label:'İlk 6 saat', a:T0Q-1800, b:T0Q+6*3600},
+  {id:'24s', label:'İlk gün',    a:T0Q-1800, b:T0Q+24*3600},
+  {id:'3g',  label:'İlk 3 gün',  a:T0Q-3600, b:T0Q+72*3600},
+  {id:'tum', label:'Tümü',       a:SPAN[0],  b:SPAN[1]}
+];
+const tpBox=document.getElementById('tPresets');
+TP.forEach(p=>{
+  const b=document.createElement('button');
+  b.className='chip'; b.textContent=p.label; b.dataset.id=p.id;
+  b.addEventListener('click',()=>{ if(p.live) setLive(true); else { st.live=false; st.t=[p.a,p.b]; sync(); } });
+  tpBox.appendChild(b);
+});
+function syncTP(){ tpBox.querySelectorAll('.chip').forEach(b=>{ const p=TP.find(x=>x.id===b.dataset.id);
+  b.setAttribute('aria-pressed',String(p.live?st.live:(!st.live&&Math.abs(st.t[0]-p.a)<60&&Math.abs(st.t[1]-p.b)<60))); }); }
+
+/* canlı mod: pencere "şimdi"ye kilitli, senaryo saati gerçek zamanda akıyor */
+function setLive(on){ st.live=on; if(on) st.t=[st.now-WIN_LEN, st.now]; sync(); }
+function liveUI(){
+  document.getElementById('toLive').hidden=st.live;
+  document.getElementById('liveTxt').textContent=st.live?'Canlı':'Geçmiş';
+  document.getElementById('liveDot').className='dot'+(st.live?'':' off');
+  document.getElementById('clock').textContent=TR.format((st.live?st.now:st.t[1])*1000);
+  document.getElementById('play').disabled=st.live;
+  document.getElementById('play').style.opacity=st.live?.4:1;
+}
+document.getElementById('toLive').onclick=()=>setLive(true);
+let lastNow=st.now;
+setInterval(()=>{
+  if(!st.live||st.now>=SPAN[1]) return;
+  st.now=Math.min(SPAN[1], st.now+SIM_RATE);
+  const arrived=sosAll.filter(s=>s.t>lastNow&&s.t<=st.now);
+  lastNow=st.now; st.t=[st.now-WIN_LEN, st.now];
+  sync();
+  arrived.forEach(s=>{ pulseAt(s);
+    toast('Yeni SOS çağrısı · '+s.mahalle, s.text.slice(0,58)+'… · senaryo verisi',
+      {label:'Aç',run:()=>{selectSos(s.id);flyTo({longitude:s.lon,latitude:s.lat,zoom:15,pitch:0,bearing:0},700);}}); });
+},1000);
+
+/* katalogdan çıkan iki dönüm noktası */
+const mainQ=quakes.reduce((m,q)=>q.mag>m.mag?q:m,quakes[0]);
+const lateQ=quakes.filter(q=>q.t>T0Q+8*86400).reduce((m,q)=>(!m||q.mag>m.mag)?q:m,null);
+document.getElementById('marks').innerHTML=[mainQ,lateQ].filter(Boolean).map((q,i)=>{
+  const x=((q.t-SPAN[0])/(SPAN[1]-SPAN[0]))*100;
+  return `<span class="mark${i===0?' big':''}" style="left:${x.toFixed(2)}%"><b>M ${q.mag.toFixed(1)} · ${TR.format(q.t*1000)}</b></span>`;
+}).join('');
+let drag=null;
+function tAt(clientX){ const r=histEl.getBoundingClientRect(); return SPAN[0]+Math.min(1,Math.max(0,(clientX-r.left)/r.width))*(SPAN[1]-SPAN[0]); }
+histEl.addEventListener('pointerdown',e=>{ histEl.setPointerCapture(e.pointerId); const t=tAt(e.clientX), len=st.t[1]-st.t[0];
+  drag={anchor:t}; st.live=false; st.t=[t-len/2, t+len/2]; sync(); });
+histEl.addEventListener('pointermove',e=>{ if(!drag) return; const t=tAt(e.clientX), len=st.t[1]-st.t[0]; st.t=[t-len/2,t+len/2]; sync(); });
+addEventListener('pointerup',()=>drag=null);
+document.getElementById('play').addEventListener('click',togglePlay);
+function togglePlay(){
+  if(st.live) return;
+  st.playing=!st.playing;
+  document.getElementById('play').textContent=st.playing?'❚❚':'▶';
+  if(st.playing) tick();
+}
+function tick(){
+  if(!st.playing) return;
+  const len=st.t[1]-st.t[0], step=len*0.012;
+  let a=st.t[0]+step, b=st.t[1]+step;
+  if(b>SPAN[1]){ a=SPAN[0]; b=SPAN[0]+len; }
+  st.t=[a,b]; sync();
+  setTimeout(()=>requestAnimationFrame(tick),60);
+}
+function sync(){
+  grids.sos=gridOf(sosWin().map(s=>[s.lon,s.lat,s.prio.w]));   /* ısı da aralığı izler */
+  drawHist(); syncTP(); liveUI(); renderSos(); kpis(); heatState(); draw();
+}
+
+/* ---------- map tools ---------- */
+function zoomBy(d){ const v=deckgl.viewManager?deckgl.viewManager.getViewState('default-view'):view; flyTo({...view,zoom:(view.zoom||CITY.zoom)+d},350); view.zoom=(view.zoom||CITY.zoom)+d; }
+document.getElementById('zIn').onclick=()=>zoomBy(0.8);
+document.getElementById('zOut').onclick=()=>zoomBy(-0.8);
+document.getElementById('zReset').onclick=()=>{ setView('city'); };
+function setView(which){
+  st.view=which;
+  document.getElementById('vCity').setAttribute('aria-pressed',String(which==='city'));
+  document.getElementById('vRegion').setAttribute('aria-pressed',String(which==='region'));
+  if(which==='region'){ st.on.faults=true; st.on.blds=false; } else { st.on.faults=false; st.on.blds=true; }
+  tgBox.querySelectorAll('button').forEach((b,i)=>{ const k=TOG[i][0];
+    b.setAttribute('aria-pressed',String(st.on[k])); b.querySelector('.sw-el').className='sw-el switch '+(st.on[k]?'sw-on':''); });
+  flyTo(which==='region'?REGION:CITY, 1100);
+  draw();
+}
+document.getElementById('vCity').onclick=()=>setView('city');
+document.getElementById('vRegion').onclick=()=>setView('region');
+
+/* ---------- command palette ---------- */
+const cmdk=document.getElementById('cmdk'), cmdInput=document.getElementById('cmdInput'), cmdList=document.getElementById('cmdList');
+const COMMANDS=[
+  {g:'Komut',t:'Birleşik ısı haritasını aç/kapat',h:'H',run:()=>{st.on.heat=!st.on.heat;tgBox.querySelectorAll('button')[3].click?0:0;draw();}},
+  {g:'Komut',t:'Bölge görünümüne geç',h:'B',run:()=>setView('region')},
+  {g:'Komut',t:'Antakya görünümüne dön',h:'A',run:()=>setView('city')},
+  {g:'Komut',t:'Zamanı oynat / durdur',h:'Space',run:togglePlay}
+];
+let cmdIdx=0, cmdItems=[];
+function cmdRender(){
+  const q=cmdInput.value.trim().toLocaleLowerCase('tr');
+  const hits=[];
+  COMMANDS.filter(c=>!q||c.t.toLocaleLowerCase('tr').includes(q)).forEach(c=>hits.push(c));
+  sosVisible().filter(s=>!q||s.id.toLocaleLowerCase('tr').includes(q)||s.mahalle.toLocaleLowerCase('tr').includes(q)||s.text.toLocaleLowerCase('tr').includes(q))
+    .slice(0,5).forEach(s=>hits.push({g:'SOS çağrısı',t:`${s.id} · ${s.mahalle}`,h:s.prio.l,run:()=>{selectSos(s.id);flyTo({longitude:s.lon,latitude:s.lat,zoom:15,pitch:0,bearing:0},700);}}));
+  asm.filter(a=>q&&((a.name||'').toLocaleLowerCase('tr').includes(q)||(a.mah||'').toLocaleLowerCase('tr').includes(q))).slice(0,4)
+    .forEach(a=>hits.push({g:'Toplanma alanı',t:`${a.name} · ${a.mah}`,h:'AFAD',run:()=>flyTo({longitude:a.lon,latitude:a.lat,zoom:15.5,pitch:0,bearing:0},700)}));
+  cmdItems=hits; cmdIdx=Math.min(cmdIdx,Math.max(0,hits.length-1));
+  let html='', lastG=null;
+  hits.forEach((h,i)=>{ if(h.g!==lastG){ html+=`<div class="cmdgroup micro">${h.g}</div>`; lastG=h.g; }
+    html+=`<button class="cmditem" data-i="${i}" aria-selected="${i===cmdIdx}"><span class="t">${h.t}</span><span class="h">${h.h||''}</span></button>`; });
+  cmdList.innerHTML=html||`<div class="cmdgroup hint">Sonuç yok.</div>`;
+  cmdList.querySelectorAll('.cmditem').forEach(b=>b.addEventListener('click',()=>{ cmdItems[+b.dataset.i].run(); closeCmd(); }));
+}
+function openCmd(){ cmdk.hidden=false; cmdInput.value=''; cmdIdx=0; cmdRender(); cmdInput.focus(); }
+function closeCmd(){ cmdk.hidden=true; }
+document.getElementById('openCmd').onclick=openCmd;
+cmdk.addEventListener('click',e=>{ if(e.target===cmdk) closeCmd(); });
+cmdInput.addEventListener('input',cmdRender);
+addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); cmdk.hidden?openCmd():closeCmd(); return; }
+  if(cmdk.hidden){ if(e.key===' '&&e.target===document.body){e.preventDefault();togglePlay();} return; }
+  if(e.key==='Escape') closeCmd();
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); cmdIdx=Math.max(0,Math.min(cmdItems.length-1,cmdIdx+(e.key==='ArrowDown'?1:-1))); cmdRender(); }
+  if(e.key==='Enter'&&cmdItems[cmdIdx]){ cmdItems[cmdIdx].run(); closeCmd(); }
+});
+
+/* ---------- appearance ---------- */
+const FONTS={
+  plex:{href:'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap',
+        sans:"'IBM Plex Sans'",cond:"'IBM Plex Sans Condensed'",mono:"'IBM Plex Mono'"},
+  instrument:{href:'https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap',
+        sans:"'Instrument Sans'",cond:"'Instrument Sans'",mono:"'JetBrains Mono'"},
+  geist:{href:'https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Geist:wght@400;500;600&display=swap',
+        sans:"'Geist'",cond:"'Geist'",mono:"'Geist Mono'"}
+};
+const ACCENTS={cyan:['#45C8E0','#1B6C7E','rgba(69,200,224,.12)'],indigo:['#8C93FF','#3B3F8C','rgba(140,147,255,.13)'],neutral:['#DCE3F0','#3A4152','rgba(220,227,240,.10)']};
+document.getElementById('fontOpts').addEventListener('click',e=>{
+  const b=e.target.closest('.opt'); if(!b) return;
+  document.querySelectorAll('#fontOpts .opt').forEach(o=>o.setAttribute('aria-pressed',String(o===b)));
+  const f=FONTS[b.dataset.font];
+  document.getElementById('fontlink').href=f.href;
+  const r=document.documentElement.style;
+  r.setProperty('--f-sans',`${f.sans},ui-sans-serif,system-ui,sans-serif`);
+  r.setProperty('--f-cond',`${f.cond},ui-sans-serif,sans-serif`);
+  r.setProperty('--f-mono',`${f.mono},ui-monospace,monospace`);
+});
+document.getElementById('accentOpts').addEventListener('click',e=>{
+  const b=e.target.closest('.opt'); if(!b) return;
+  document.querySelectorAll('#accentOpts .opt').forEach(o=>o.setAttribute('aria-pressed',String(o===b)));
+  const [a,d,s]=ACCENTS[b.dataset.accent], r=document.documentElement.style;
+  r.setProperty('--accent',a); r.setProperty('--accent-deep',d); r.setProperty('--accent-soft',s);
+});
+const pop=document.getElementById('pop'), popBtn=document.getElementById('openPop');
+popBtn.onclick=()=>{ pop.hidden=!pop.hidden; popBtn.setAttribute('aria-expanded',String(!pop.hidden)); };
+addEventListener('click',e=>{ if(!pop.hidden&&!pop.contains(e.target)&&e.target!==popBtn){ pop.hidden=true; popBtn.setAttribute('aria-expanded','false'); } });
+
+/* ---------- toasts + live event ---------- */
+function toast(title,sub,action){
+  const el=document.createElement('div'); el.className='toast';
+  el.innerHTML=`<span class="tx">${title}<small>${sub}</small></span>`;
+  if(action){ const b=document.createElement('button'); b.textContent=action.label; b.onclick=()=>{action.run();el.remove();}; el.appendChild(b); }
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),9000);
+}
+function pulseAt(s){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){ pulse={s,r:420,k:.4}; draw(); setTimeout(()=>{pulse=null;draw();},2500); return; }
+  const t0=performance.now();
+  (function step(now){
+    const k=Math.min(1,(now-t0)/1900);
+    pulse={s,r:90+k*700,k};
+    draw();
+    if(k<1) requestAnimationFrame(step); else { pulse=null; draw(); }
+  })(t0);
+}
+/* ---------- ölçek ---------- */
+function scaleLabel(){
+  const z=view.zoom||CITY.zoom, mpp=156543.03*Math.cos(CITY.latitude*Math.PI/180)/Math.pow(2,z);
+  const m=mpp*82; document.getElementById('scaleLbl').textContent = m>1200?`${(m/1000).toFixed(1)} km`:`${Math.round(m/10)*10} m`;
+}
+
+/* ---------- boot ---------- */
+scaleLabel(); sync();
+addEventListener('resize',()=>{ drawHist(); });
+deckgl.setProps({onViewStateChange:({viewState})=>{ view={...viewState}; scaleLabel(); }});
+})();
+</script>

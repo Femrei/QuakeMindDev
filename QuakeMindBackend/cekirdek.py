@@ -631,6 +631,9 @@ def _kapanmalari_depoya_yaz(analysis_id, result):
                 derece=3,
                 kaynak="uydu",
                 analiz_id=analysis_id,
+                # Parçanın kendi çizgisi de saklanır (J-58): harita kapanmayı
+                # nokta olarak değil kırmızı çizgi olarak gösterir.
+                cizgi=[[float(n[0]), float(n[1])] for n in yol],
             )
     except Exception as e:
         print(f"kapanmalari depoya yazma hatasi: {e}", flush=True)
@@ -827,6 +830,11 @@ class RoadDamageRequest(BaseModel):
     bboxEast: Optional[float] = None
     bboxNorth: Optional[float] = None
     oamPreferredTitle: Optional[str] = None
+    # Hangi model koşsun (modeller/uydu/<ad>.json). Verilmezse havuzun etkin
+    # modeli kullanılır — eski davranış değişmez.
+    modelAdi: Optional[str] = None
+    # Deprem ÖNCESİ görüntü de çekilsin mi (öncesi / sonrası / etiketli üçlüsü).
+    oncesiGoruntusu: bool = True
     waybackId: Optional[str] = None
     oamTileUrl: Optional[str] = None
     networkType: Optional[str] = None

@@ -1,0 +1,70 @@
+{
+  "maskId": "H-D1-z18",
+  "zoneId": "H-D1",
+  "zoneLabel": "Defne - Elektrik Mah.",
+  "city": "hatay",
+  "center": {
+    "lat": 36.197694,
+    "lon": 36.149321
+  },
+  "radiusKm": 0.33,
+  "zoneBbox": {
+    "west": 36.146753,
+    "south": 36.195466,
+    "east": 36.15189,
+    "north": 36.199922
+  },
+  "bounds": {
+    "west": 36.146392822265625,
+    "south": 36.194416903538226,
+    "east": 36.15325927734375,
+    "north": 36.199958059328935
+  },
+  "width": 1280,
+  "height": 1280,
+  "zoom": 18,
+  "metresPerPixel": 0.4819,
+  "sceneNativeGsdM": 0.0341,
+  "projectionNote": "Web Mercator karolari; yerel boru hatti enlemi dogrusal izdusumler (canli /analyze ile ayni). 6 km'lik bolgede en kotu sapma ~0,5 m (~1 piksel).",
+  "eventDate": "2023-02-06",
+  "postEventWindowEnd": "2023-06-30",
+  "scenes": [
+    {
+      "id": "63eb78a0ca43600005f4d920",
+      "title": "Hatay - Defne - Elektrik Mah. ",
+      "provider": "Help.NGO",
+      "date": "2023-02-09",
+      "tilesUsed": 17
+    }
+  ],
+  "validPixelFraction": 0.38955,
+  "damagePixelFraction": 0.005782,
+  "damagePixelFractionOfObserved": 0.014844,
+  "model": {
+    "repo": "Utbird/dispath_optimized_mitb4_focal_dice30",
+    "file": "optimized_mitb4_focal_dice30.pth",
+    "sha256": "2ddcc7d24981f7a2d97fd207b3f5836f3b09ca98c6d74d7d06e63bd53a8b5f13",
+    "architecture": "smp.Segformer(mit_b4, classes=1)"
+  },
+  "damageBooster": 3.5,
+  "threshold": 0.4,
+  "useImagenetNorm": true,
+  "postProcessLevel": 2,
+  "invalidPixelsZeroed": true,
+  "inferenceDevice": "cpu",
+  "libraries": {
+    "python": "3.10.11",
+    "torch": "2.11.0",
+    "segmentation-models-pytorch": "0.5.0",
+    "timm": "1.0.26",
+    "numpy": "2.2.6",
+    "opencv-python": "4.13.0.92",
+    "opencv-python-headless": "4.13.0.92",
+    "Pillow": "12.2.0"
+  },
+  "timingsSec": {
+    "fetch": 2.2,
+    "inference": 111.5
+  },
+  "createdAt": "2026-09-25T19:44:34.127904+00:00"
+}

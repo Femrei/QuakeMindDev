@@ -1,0 +1,1050 @@
+{
+ "maskeKoku": "benchmark\\data\\model_masks_unet_mitb4",
+ "etiket": "yeni_unet_mitb4",
+ "emsrKural": "loose",
+ "emsrTamponM": 8.0,
+ "bolgeler": [
+  "H-D1",
+  "H-D2",
+  "K-D1"
+ ],
+ "zoomlar": [
+  18,
+  19,
+  20
+ ],
+ "yaricaplarM": [
+  0.0,
+  5.0,
+  10.0,
+  15.0,
+  25.0
+ ],
+ "enIyi": {
+  "zoom": 18,
+  "yaricapM": 25,
+  "f1": 0.0975609756097561
+ },
+ "satirlar": [
+  {
+   "ad": "z18-r0",
+   "zoom": 18,
+   "yaricapM": 0,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 8,
+    "worldClosed": 48,
+    "tp": 0,
+    "fp": 8,
+    "fn": 48,
+    "tn": 553
+   },
+   "precision": 0.0,
+   "recall": 0.0,
+   "iou": 0.0,
+   "f1": 0.0,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 6,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 6,
+      "fn": 0,
+      "tn": 185
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 1,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 1,
+      "fn": 0,
+      "tn": 220
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 1,
+      "worldClosed": 48,
+      "tp": 0,
+      "fp": 1,
+      "fn": 48,
+      "tn": 148
+     },
+     "edgesObservedFraction": 0.8782
+    }
+   }
+  },
+  {
+   "ad": "z18-r5",
+   "zoom": 18,
+   "yaricapM": 5,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 17,
+    "worldClosed": 48,
+    "tp": 0,
+    "fp": 17,
+    "fn": 48,
+    "tn": 544
+   },
+   "precision": 0.0,
+   "recall": 0.0,
+   "iou": 0.0,
+   "f1": 0.0,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 13,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 13,
+      "fn": 0,
+      "tn": 178
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 3,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 3,
+      "fn": 0,
+      "tn": 218
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 1,
+      "worldClosed": 48,
+      "tp": 0,
+      "fp": 1,
+      "fn": 48,
+      "tn": 148
+     },
+     "edgesObservedFraction": 0.8782
+    }
+   }
+  },
+  {
+   "ad": "z18-r10",
+   "zoom": 18,
+   "yaricapM": 10,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 21,
+    "worldClosed": 48,
+    "tp": 2,
+    "fp": 19,
+    "fn": 46,
+    "tn": 542
+   },
+   "precision": 0.09523809523809523,
+   "recall": 0.041666666666666664,
+   "iou": 0.029850746268656716,
+   "f1": 0.057971014492753624,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 15,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 15,
+      "fn": 0,
+      "tn": 176
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 3,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 3,
+      "fn": 0,
+      "tn": 218
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.6666666666666666,
+     "recall": 0.041666666666666664,
+     "iou": 0.04081632653061224,
+     "f1": 0.0784313725490196,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 3,
+      "worldClosed": 48,
+      "tp": 2,
+      "fp": 1,
+      "fn": 46,
+      "tn": 148
+     },
+     "edgesObservedFraction": 0.8782
+    }
+   }
+  },
+  {
+   "ad": "z18-r15",
+   "zoom": 18,
+   "yaricapM": 15,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 23,
+    "worldClosed": 48,
+    "tp": 2,
+    "fp": 21,
+    "fn": 46,
+    "tn": 540
+   },
+   "precision": 0.08695652173913043,
+   "recall": 0.041666666666666664,
+   "iou": 0.028985507246376812,
+   "f1": 0.056338028169014086,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 16,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 16,
+      "fn": 0,
+      "tn": 175
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 4,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 4,
+      "fn": 0,
+      "tn": 217
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.6666666666666666,
+     "recall": 0.041666666666666664,
+     "iou": 0.04081632653061224,
+     "f1": 0.0784313725490196,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 3,
+      "worldClosed": 48,
+      "tp": 2,
+      "fp": 1,
+      "fn": 46,
+      "tn": 148
+     },
+     "edgesObservedFraction": 0.8782
+    }
+   }
+  },
+  {
+   "ad": "z18-r25",
+   "zoom": 18,
+   "yaricapM": 25,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 34,
+    "worldClosed": 48,
+    "tp": 4,
+    "fp": 30,
+    "fn": 44,
+    "tn": 531
+   },
+   "precision": 0.11764705882352941,
+   "recall": 0.08333333333333333,
+   "iou": 0.05128205128205128,
+   "f1": 0.0975609756097561,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 19,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 19,
+      "fn": 0,
+      "tn": 172
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 8,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 8,
+      "fn": 0,
+      "tn": 213
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.5714285714285714,
+     "recall": 0.08333333333333333,
+     "iou": 0.0784313725490196,
+     "f1": 0.14545454545454545,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 7,
+      "worldClosed": 48,
+      "tp": 4,
+      "fp": 3,
+      "fn": 44,
+      "tn": 146
+     },
+     "edgesObservedFraction": 0.8782
+    }
+   }
+  },
+  {
+   "ad": "z19-r0",
+   "zoom": 19,
+   "yaricapM": 0,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 18,
+    "worldClosed": 48,
+    "tp": 0,
+    "fp": 18,
+    "fn": 48,
+    "tn": 543
+   },
+   "precision": 0.0,
+   "recall": 0.0,
+   "iou": 0.0,
+   "f1": 0.0,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 15,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 15,
+      "fn": 0,
+      "tn": 176
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": null,
+     "recall": null,
+     "iou": null,
+     "f1": null,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 0,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 221
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 3,
+      "worldClosed": 48,
+      "tp": 0,
+      "fp": 3,
+      "fn": 48,
+      "tn": 146
+     },
+     "edgesObservedFraction": 0.8731
+    }
+   }
+  },
+  {
+   "ad": "z19-r5",
+   "zoom": 19,
+   "yaricapM": 5,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 39,
+    "worldClosed": 48,
+    "tp": 1,
+    "fp": 38,
+    "fn": 47,
+    "tn": 523
+   },
+   "precision": 0.02564102564102564,
+   "recall": 0.020833333333333332,
+   "iou": 0.011627906976744186,
+   "f1": 0.022988505747126436,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 25,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 25,
+      "fn": 0,
+      "tn": 166
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 5,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 5,
+      "fn": 0,
+      "tn": 216
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.1111111111111111,
+     "recall": 0.020833333333333332,
+     "iou": 0.017857142857142856,
+     "f1": 0.03508771929824561,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 9,
+      "worldClosed": 48,
+      "tp": 1,
+      "fp": 8,
+      "fn": 47,
+      "tn": 141
+     },
+     "edgesObservedFraction": 0.8731
+    }
+   }
+  },
+  {
+   "ad": "z19-r10",
+   "zoom": 19,
+   "yaricapM": 10,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 56,
+    "worldClosed": 48,
+    "tp": 1,
+    "fp": 55,
+    "fn": 47,
+    "tn": 506
+   },
+   "precision": 0.017857142857142856,
+   "recall": 0.020833333333333332,
+   "iou": 0.009708737864077669,
+   "f1": 0.019230769230769232,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 34,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 34,
+      "fn": 0,
+      "tn": 157
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 10,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 10,
+      "fn": 0,
+      "tn": 211
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.08333333333333333,
+     "recall": 0.020833333333333332,
+     "iou": 0.01694915254237288,
+     "f1": 0.03333333333333333,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 12,
+      "worldClosed": 48,
+      "tp": 1,
+      "fp": 11,
+      "fn": 47,
+      "tn": 138
+     },
+     "edgesObservedFraction": 0.8731
+    }
+   }
+  },
+  {
+   "ad": "z19-r15",
+   "zoom": 19,
+   "yaricapM": 15,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 84,
+    "worldClosed": 48,
+    "tp": 3,
+    "fp": 81,
+    "fn": 45,
+    "tn": 480
+   },
+   "precision": 0.03571428571428571,
+   "recall": 0.0625,
+   "iou": 0.023255813953488372,
+   "f1": 0.045454545454545456,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 39,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 39,
+      "fn": 0,
+      "tn": 152
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 24,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 24,
+      "fn": 0,
+      "tn": 197
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.14285714285714285,
+     "recall": 0.0625,
+     "iou": 0.045454545454545456,
+     "f1": 0.08695652173913043,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 21,
+      "worldClosed": 48,
+      "tp": 3,
+      "fp": 18,
+      "fn": 45,
+      "tn": 131
+     },
+     "edgesObservedFraction": 0.8731
+    }
+   }
+  },
+  {
+   "ad": "z19-r25",
+   "zoom": 19,
+   "yaricapM": 25,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 136,
+    "worldClosed": 48,
+    "tp": 6,
+    "fp": 130,
+    "fn": 42,
+    "tn": 431
+   },
+   "precision": 0.04411764705882353,
+   "recall": 0.125,
+   "iou": 0.033707865168539325,
+   "f1": 0.06521739130434782,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 55,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 55,
+      "fn": 0,
+      "tn": 136
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 45,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 45,
+      "fn": 0,
+      "tn": 176
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.16666666666666666,
+     "recall": 0.125,
+     "iou": 0.07692307692307693,
+     "f1": 0.14285714285714285,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 36,
+      "worldClosed": 48,
+      "tp": 6,
+      "fp": 30,
+      "fn": 42,
+      "tn": 119
+     },
+     "edgesObservedFraction": 0.8731
+    }
+   }
+  },
+  {
+   "ad": "z20-r0",
+   "zoom": 20,
+   "yaricapM": 0,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 38,
+    "worldClosed": 48,
+    "tp": 1,
+    "fp": 37,
+    "fn": 47,
+    "tn": 524
+   },
+   "precision": 0.02631578947368421,
+   "recall": 0.020833333333333332,
+   "iou": 0.011764705882352941,
+   "f1": 0.023255813953488372,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 28,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 28,
+      "fn": 0,
+      "tn": 163
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 4,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 4,
+      "fn": 0,
+      "tn": 217
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.16666666666666666,
+     "recall": 0.020833333333333332,
+     "iou": 0.018867924528301886,
+     "f1": 0.037037037037037035,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 6,
+      "worldClosed": 48,
+      "tp": 1,
+      "fp": 5,
+      "fn": 47,
+      "tn": 144
+     },
+     "edgesObservedFraction": 0.8782
+    }
+   }
+  },
+  {
+   "ad": "z20-r5",
+   "zoom": 20,
+   "yaricapM": 5,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 69,
+    "worldClosed": 48,
+    "tp": 1,
+    "fp": 68,
+    "fn": 47,
+    "tn": 493
+   },
+   "precision": 0.014492753623188406,
+   "recall": 0.020833333333333332,
+   "iou": 0.008620689655172414,
+   "f1": 0.017094017094017096,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 42,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 42,
+      "fn": 0,
+      "tn": 149
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 9,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 9,
+      "fn": 0,
+      "tn": 212
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.05555555555555555,
+     "recall": 0.020833333333333332,
+     "iou": 0.015384615384615385,
+     "f1": 0.030303030303030304,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 18,
+      "worldClosed": 48,
+      "tp": 1,
+      "fp": 17,
+      "fn": 47,
+      "tn": 132
+     },
+     "edgesObservedFraction": 0.8782
+    }
+   }
+  },
+  {
+   "ad": "z20-r10",
+   "zoom": 20,
+   "yaricapM": 10,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 126,
+    "worldClosed": 48,
+    "tp": 3,
+    "fp": 123,
+    "fn": 45,
+    "tn": 438
+   },
+   "precision": 0.023809523809523808,
+   "recall": 0.0625,
+   "iou": 0.017543859649122806,
+   "f1": 0.034482758620689655,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 64,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 64,
+      "fn": 0,
+      "tn": 127
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 29,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 29,
+      "fn": 0,
+      "tn": 192
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.09090909090909091,
+     "recall": 0.0625,
+     "iou": 0.038461538461538464,
+     "f1": 0.07407407407407407,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 33,
+      "worldClosed": 48,
+      "tp": 3,
+      "fp": 30,
+      "fn": 45,
+      "tn": 119
+     },
+     "edgesObservedFraction": 0.8782
+    }
+   }
+  },
+  {
+   "ad": "z20-r15",
+   "zoom": 20,
+   "yaricapM": 15,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 169,
+    "worldClosed": 48,
+    "tp": 6,
+    "fp": 163,
+    "fn": 42,
+    "tn": 398
+   },
+   "precision": 0.03550295857988166,
+   "recall": 0.125,
+   "iou": 0.02843601895734597,
+   "f1": 0.055299539170506916,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 76,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 76,
+      "fn": 0,
+      "tn": 115
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 46,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 46,
+      "fn": 0,
+      "tn": 175
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.1276595744680851,
+     "recall": 0.125,
+     "iou": 0.06741573033707865,
+     "f1": 0.12631578947368421,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 47,
+      "worldClosed": 48,
+      "tp": 6,
+      "fp": 41,
+      "fn": 42,
+      "tn": 108
+     },
+     "edgesObservedFraction": 0.8782
+    }
+   }
+  },
+  {
+   "ad": "z20-r25",
+   "zoom": 20,
+   "yaricapM": 25,
+   "confusion": {
+    "segments": 609,
+    "modelClosed": 264,
+    "worldClosed": 48,
+    "tp": 12,
+    "fp": 252,
+    "fn": 36,
+    "tn": 309
+   },
+   "precision": 0.045454545454545456,
+   "recall": 0.25,
+   "iou": 0.04,
+   "f1": 0.07692307692307693,
+   "perZone": {
+    "H-D1": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 191,
+      "modelClosed": 96,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 96,
+      "fn": 0,
+      "tn": 95
+     },
+     "edgesObservedFraction": 0.6859
+    },
+    "H-D2": {
+     "precision": 0.0,
+     "recall": null,
+     "iou": 0.0,
+     "f1": 0.0,
+     "confusion": {
+      "segments": 221,
+      "modelClosed": 83,
+      "worldClosed": 0,
+      "tp": 0,
+      "fp": 83,
+      "fn": 0,
+      "tn": 138
+     },
+     "edgesObservedFraction": 0.7149
+    },
+    "K-D1": {
+     "precision": 0.1411764705882353,
+     "recall": 0.25,
+     "iou": 0.09917355371900827,
+     "f1": 0.18045112781954886,
+     "confusion": {
+      "segments": 197,
+      "modelClosed": 85,
+      "worldClosed": 48,
+      "tp": 12,
+      "fp": 73,
+      "fn": 36,
+      "tn": 76
+     },
+     "edgesObservedFraction": 0.8782
+    }
+   }
+  }
+ ]
+}

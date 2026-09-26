@@ -1,0 +1,185 @@
+---
+import Temel from '@/duzen/Temel.astro'
+import UstMenu from '@/bilesenler/UstMenu.astro'
+import Bolum from '@/bilesenler/Bolum.astro'
+import Altbilgi from '@/bilesenler/Altbilgi.astro'
+import { tr } from '@/icerik/tr'
+
+const { hero, sorun, nasil, ekranlar, olcumler, durustluk, kimler, proje } = tr
+---
+
+<Temel>
+  <UstMenu />
+
+  <main id="icerik">
+    <!-- Giriş -->
+    <section id="ust" class="kap py-16 genis:py-24">
+      <p
+        class="inline-flex items-center gap-2 rounded-full border border-line-2 px-2.5 py-1.5 text-small text-ink-2"
+      >
+        <span aria-hidden class="h-1.5 w-1.5 rounded-full bg-accent"></span>
+        {hero.rozet}
+      </p>
+
+      <h1 class="mt-5 max-w-olcum text-display text-ink">{hero.baslik}</h1>
+      <p class="mt-4 max-w-olcum text-lead text-ink-2">{hero.altBaslik}</p>
+
+      <div class="mt-7 flex flex-wrap gap-2.5">
+        {
+          hero.dugmeler.map((d) => (
+            <a
+              href={d.hedef}
+              class={
+                d.birincil
+                  ? 'rounded-control bg-accent px-3.5 py-2.5 text-body font-semibold text-accent-ink transition-opacity duration-150 ease-out-qm hover:opacity-90'
+                  : 'rounded-control border border-line-2 px-3.5 py-2.5 text-body text-ink-2 transition-colors duration-150 ease-out-qm hover:bg-hover hover:text-ink'
+              }
+            >
+              {d.ad}
+            </a>
+          ))
+        }
+      </div>
+
+      <p class="mt-6 max-w-olcum text-small text-ink-3">{hero.kaynakNotu}</p>
+    </section>
+
+    <!-- Sorun -->
+    <Bolum kimlik="sorun" etiket="Sorun" baslik={sorun.baslik} giris={sorun.giris} koyu>
+      <div class="grid gap-px bg-line genis:grid-cols-3">
+        {
+          sorun.maddeler.map((m) => (
+            <div class="bg-sunken p-4">
+              <h3 class="text-subtitle text-ink">{m.baslik}</h3>
+              <p class="mt-2 text-body text-ink-2">{m.metin}</p>
+            </div>
+          ))
+        }
+      </div>
+    </Bolum>
+
+    <!-- Nasıl çalışır -->
+    <Bolum kimlik="nasil" etiket="Nasıl çalışır" baslik={nasil.baslik} giris={nasil.giris}>
+      <ol class="grid gap-3 genis:grid-cols-4">
+        {
+          nasil.adimlar.map((a, i) => (
+            <li class="rounded-panel border border-line bg-panel p-4">
+              <span class="font-mono text-small text-accent">{`0${i + 1}`}</span>
+              <h3 class="mt-2 text-subtitle text-ink">{a.baslik}</h3>
+              <p class="mt-2 text-body text-ink-2">{a.metin}</p>
+            </li>
+          ))
+        }
+      </ol>
+
+      <div class="mt-3 grid gap-3 genis:grid-cols-2">
+        {
+          nasil.kanallar.map((k) => (
+            <div class="rounded-panel border border-line bg-panel p-4">
+              <p class="text-micro ls-micro text-ink-3 uppercase">Vatandaş kanalı</p>
+              <h3 class="mt-2 text-subtitle text-ink">{k.baslik}</h3>
+              <p class="mt-2 text-body text-ink-2">{k.metin}</p>
+            </div>
+          ))
+        }
+      </div>
+
+      <p class="mt-6 max-w-olcum text-body text-ink-2">{nasil.sozlesme}</p>
+    </Bolum>
+
+    <!-- Ekranlar -->
+    <Bolum kimlik="ekranlar" etiket="Ekranlar" baslik={ekranlar.baslik} giris={ekranlar.giris} koyu>
+      <div class="grid gap-3 genis:grid-cols-3">
+        {
+          ekranlar.ogeler.map((o) => (
+            <figure class="overflow-hidden rounded-panel border border-line bg-panel">
+              {o.gorsel ? (
+                <img src={o.gorsel} alt={`${o.baslik} ekranı`} width="960" height="600" />
+              ) : (
+                <div class="grid h-44 place-items-center border-b border-line bg-sunken text-small text-ink-3">
+                  {o.etiket}
+                </div>
+              )}
+              <figcaption class="p-4">
+                <h3 class="text-subtitle text-ink">{o.baslik}</h3>
+                <p class="mt-2 text-body text-ink-2">{o.metin}</p>
+              </figcaption>
+            </figure>
+          ))
+        }
+      </div>
+    </Bolum>
+
+    <!-- Ölçülenler -->
+    <Bolum kimlik="olcumler" etiket="Ölçülenler" baslik={olcumler.baslik} giris={olcumler.giris}>
+      <div class="grid gap-px bg-line genis:grid-cols-3">
+        {
+          olcumler.kartlar.map((k) => (
+            <div class="bg-panel p-4">
+              <p class="font-cond text-metric text-ink">{k.deger}</p>
+              <p class="mt-1 text-body text-ink">{k.etiket}</p>
+              <p class="mt-2 text-small text-ink-3">{k.kosul}</p>
+            </div>
+          ))
+        }
+      </div>
+      <p class="mt-6 max-w-olcum text-small text-ink-2">{olcumler.dipnot}</p>
+    </Bolum>
+
+    <!-- Neyi ölçmedik -->
+    <Bolum
+      kimlik="durustluk"
+      etiket="Açık noktalar"
+      baslik={durustluk.baslik}
+      giris={durustluk.giris}
+      koyu
+    >
+      <ul class="max-w-olcum">
+        {
+          durustluk.maddeler.map((m) => (
+            <li class="flex gap-2.5 border-b border-line py-2.5 last:border-b-0 text-body text-ink-2">
+              <span aria-hidden class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-mid" />
+              <span>{m}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </Bolum>
+
+    <!-- Kimler için -->
+    <Bolum kimlik="kimler" etiket="Kullanıcılar" baslik={kimler.baslik} giris={kimler.giris}>
+      <div class="grid gap-3 genis:grid-cols-3">
+        {
+          kimler.roller.map((r) => (
+            <div class="rounded-panel border border-line bg-panel p-4">
+              <h3 class="text-subtitle text-ink">{r.baslik}</h3>
+              <p class="mt-2 text-body text-ink-2">{r.metin}</p>
+              <ul class="mt-3">
+                {r.maddeler.map((m) => (
+                  <li class="border-t border-line py-2 text-body text-ink-2">{m}</li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </Bolum>
+
+    <!-- Proje -->
+    <Bolum kimlik="proje" etiket="Proje" baslik={proje.baslik} giris={proje.giris} koyu>
+      <dl class="kilav-kv max-w-olcum gap-x-6 gap-y-2.5">
+        {
+          proje.kunye.map((k) => (
+            <>
+              <dt class="text-small whitespace-nowrap text-ink-3">{k.etiket}</dt>
+              <dd class="text-body text-ink">{k.deger}</dd>
+            </>
+          ))
+        }
+      </dl>
+      <p class="mt-6 max-w-olcum text-body text-ink-2">{proje.durum}</p>
+    </Bolum>
+  </main>
+
+  <Altbilgi />
+</Temel>

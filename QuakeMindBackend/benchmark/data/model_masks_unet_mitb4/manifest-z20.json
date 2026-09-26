@@ -1,0 +1,35 @@
+[
+  {
+    "zoneId": "H-D1-z20",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_unet_mitb4\\H-D1-z20",
+    "validPixelFraction": 0.57286,
+    "damagePixelFractionOfObserved": 0.018815,
+    "timingsSec": {
+      "fetch": 11.2,
+      "inference": 487.3
+    }
+  },
+  {
+    "zoneId": "H-D2-z20",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_unet_mitb4\\H-D2-z20",
+    "validPixelFraction": 0.616745,
+    "damagePixelFractionOfObserved": 0.008155,
+    "timingsSec": {
+      "fetch": 12.5,
+      "inference": 1097.9
+    }
+  },
+  {
+    "zoneId": "K-D1-z20",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_unet_mitb4\\K-D1-z20",
+    "validPixelFraction": 0.672849,
+    "damagePixelFractionOfObserved": 0.009162,
+    "timingsSec": {
+      "fetch": 17.8,
+      "inference": 1447.9
+    }
+  }
+]

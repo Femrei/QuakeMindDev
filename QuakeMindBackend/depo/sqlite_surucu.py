@@ -401,6 +401,23 @@ class SqliteDepo:
         )
         return kayit
 
+    def hasar_sil_tatbikat(self, is_id: str) -> int:
+        """Bir tatbikat kosusunun yazdigi hasar noktalarini siler.
+
+        Tatbikat gercek goruntude gercek model kosturur, ama sonucu CANLI OLAY
+        degildir: kosu bitirilince bu noktalar gercek veriyle karismamali
+        (CLAUDE.md 1). Noktalar `ek.tatbikat` alaninda kosunun kimligini tasir.
+        Donus: silinen kayit sayisi.
+        """
+        satirlar = self._oku(
+            # Onek eslemesi: kontrol kosusu `<isId>_kontrol` kimligiyle yaziyordu,
+            # tam esleme onu birakiyordu.
+            "SELECT id FROM hasar_noktalari WHERE ek LIKE ?", (f'%"tatbikat": "{is_id}%',)
+        )
+        for satir in satirlar:
+            self._yaz("DELETE FROM hasar_noktalari WHERE id = ?", (satir["id"],))
+        return len(satirlar)
+
     def hasar_listele(
         self,
         baslangic: float | None = None,
@@ -961,7 +978,12 @@ class SqliteDepo:
         kaynak: str,
         analiz_id: str | None = None,
         zaman: float | None = None,
+        cizgi: list | None = None,
     ) -> dict:
+        """Kapali yol parcasi. `cizgi` verilirse [[enlem, boylam], ...] olarak
+        `ek` alaninda saklanir (J-58): arayuz kapanmayi KIRMIZI CIZGI olarak
+        cizebilsin. Onceden yalnizca parcanin orta noktasi tutuluyordu ve
+        harita her kapanmayi tek bir nokta olarak gosteriyordu."""
         kayit = {
             "id": f"kap-{uuid.uuid4().hex[:10]}",
             "lon": float(lon),
@@ -970,7 +992,7 @@ class SqliteDepo:
             "zaman": float(zaman if zaman is not None else time.time()),
             "kaynak": kaynak,
             "analiz_id": analiz_id,
-            "ek": None,
+            "ek": json.dumps({"cizgi": cizgi}, ensure_ascii=False) if cizgi else None,
         }
         self._yaz(
             """INSERT INTO yol_kapanmalari (id, lon, lat, derece, zaman, kaynak, analiz_id, ek)

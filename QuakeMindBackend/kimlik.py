@@ -160,6 +160,32 @@ def istege_bagli_kullanici(authorization: Optional[str] = Header(default=None)) 
         return None
 
 
+# --- eski uclar (J-53) -----------------------------------------------------
+
+ESKI_UC_DEGISKENI = "QUAKEMIND_ESKI_UCLAR"
+
+
+def eski_uclar_acik() -> bool:
+    """Eski webin bagli oldugu uclar acik mi (varsayilan: kapali)."""
+    return os.environ.get(ESKI_UC_DEGISKENI, "0") == "1"
+
+
+def eski_uc():
+    """Yalniz eski webin kullandigi uclarin bagimliligi.
+
+    Bu uclar oturumsuz yanit veriyordu: vatandas ihbarinin metni, konumu ve SOS
+    listesi adresi bilen herkese aciktı (J-53). Yeni konsol hicbirini
+    kullanmiyor. Varsayilan olarak KAPALILAR; eski webi gostermek gerekirse
+    `QUAKEMIND_ESKI_UCLAR=1` ile acilir. Kapaliyken 404 doner: ucun varligi da
+    disariya sizmasin.
+    """
+    if not eski_uclar_acik():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Bu uc kapali (J-53). Acmak icin {ESKI_UC_DEGISKENI}=1.",
+        )
+
+
 # --- oturum islemleri ------------------------------------------------------
 
 def kullanici_kaydet(eposta: str, ad_soyad: str, sifre: str) -> dict:

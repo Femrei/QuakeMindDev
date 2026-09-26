@@ -168,7 +168,18 @@ Tam ekran harita zemindir; üstünde opak paneller durur:
     yeniden uygulandığı yazar.
   - Katmanlar gruplu: olaylar ve ekipler, hasar, altlık. Her satırda kaynak ve sayı
     yazar; ayrı "veri kaynakları" bölümü yoktur (kural 1).
-  - Haritaya bağlanmamış katmanın anahtarı yoktur, "bağlanmadı" yazar.
+  - Haritaya bağlanmamış katmanın anahtarı yoktur, "bağlanmadı" yazar. (24 Eylül 2026:
+    bağlanmamış katman kalmadı; kural yeni katmanlar için duruyor.)
+- **Başvuru katmanları olay katmanı gibi görünmez** (24 Eylül 2026, J-56). Deprem kataloğu
+  ve fay hatları bugünün hasarı değil, arka plan bilgisidir:
+  - deprem kaydı içi boş halka (dolu nokta canlı veriye ayrı), çapı büyüklüğe göre;
+  - fay hattı kesik ve sönük çizgi, altlığın hemen üstünde;
+  - ikisi de aciliyet renklerinin ve kanal renklerinin dışında kendi token'ında
+    (`--color-deprem`, `--color-fay`);
+  - ipucu ne olduğunu ve ne olmadığını yazar ("bugünün hasarı değil").
+- **Kalabalık katman ölçeğe bağlanır.** Toplanma alanları bölge ölçeğinde 3.682 nokta ile
+  haritayı kapatıyordu; yapılar gibi yakınlaşınca çizilir (z ≥ 11) ve katman listesi bunu
+  yazar.
 - Dar ekranda (≤ 980 px) harita üstte, paneller altında dikey sıralanır.
 - Afetzede ekranı ayrıdır ve görev odaklıdır (22 Eylül 2026, kullanıcı kararı; J-50, üçüncü
   tur J-51). Deprem sonrası giren kişi her şeyi tek ekranda, kaydırmadan bulur (≥ 1280 × 640).

@@ -47,3 +47,7 @@ tanitim/.astro/
 
 # Derleme artigi; icerigi makineye gore degisir, diff'i anlamsiz.
 quakemind-web/tsconfig.tsbuildinfo
+
+# Tanılama ekran görüntüleri: hiçbir belge/ölçüm kaydı bunlara atıf yapmıyor,
+# üçü toplam 27 MB. Depoya girmiyor (27 Eylül 2026).
+QuakeMindBackend/benchmark/reports/zoom_test_r*.png

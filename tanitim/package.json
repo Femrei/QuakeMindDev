@@ -1,0 +1,19 @@
+{
+  "name": "quakemind-tanitim",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1 --port 3300",
+    "build": "astro build",
+    "preview": "astro preview --host 127.0.0.1 --port 3300"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.1.1",
+    "@fontsource/ibm-plex-sans": "^5.1.1",
+    "@fontsource/ibm-plex-sans-condensed": "^5.1.1",
+    "astro": "^5.13.0",
+    "tailwindcss": "^4.1.0",
+    "@tailwindcss/vite": "^4.1.0"
+  }
+}

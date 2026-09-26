@@ -190,6 +190,15 @@ def senaryolar(jeton):
         # Ankara: yol agi uretilmedi -> 404 (dis servise gitmez)
         ("POST", "/api/afetzede/rota", {"baslangicLat": 39.92, "baslangicLon": 32.85, "hedefLat": 39.93, "hedefLon": 32.86}, J),
         ("POST", "/api/afetzede/rota", {"baslangicLat": 36.2086, "baslangicLon": 36.1547, "hedefLat": 36.214354, "hedefLon": 36.136576}, J),
+        # --- haritanin basvuru katmanlari (J-56) ---
+        # Kutu verilmezse bes bolgeyi kapsayan kutu; sayilar veriye bagli oldugu
+        # icin imzada yalniz durum ve anahtarlar karsilastirilir.
+        ("GET", "/api/katman/kapanmalar", None, J),
+        ("GET", "/api/katman/kapanmalar", None, None),  # 401
+        ("GET", "/api/katman/depremler?enAz=6", None, J),
+        ("GET", "/api/katman/faylar?kutu=36.0,36.0,37.0,37.0", None, J),
+        ("GET", "/api/katman/faylar?kutu=0,0,90,90", None, J),  # 422: kutu cok genis
+        ("GET", "/api/katman/toplanma?kutu=36.1,36.15,36.25,36.25", None, J),
     ]
 
 

@@ -35,6 +35,8 @@ KUYRUK_SINIRI = 256
 MESAJ_TIPLERI = (
     "yeni-sos", "is-durumu", "yeni-analiz", "isi-surumu", "ekip-konumu", "bildirim", "ihbar",
     "gorev",
+    # Simulasyon modu: bir katman cizilmeye hazir (SIMULASYON_SOZLESMESI.md 3).
+    "simulasyon-katman",
 )
 
 

@@ -220,6 +220,29 @@ def sha256_of(path):
     return h.hexdigest()
 
 
+def load_kunye_model(kunye_adi):
+    """Model kunyesinden (J-36) yukler ve KARAR AYARINI kunyeden alir.
+
+    Eski yol (`load_verified_model`) tek bir agirliga ve INFERENCE_PARAMS'taki
+    sabit ayara bagliydi (esik 0,40 / guclendirme 3,5 / son isleme 2). Kunye
+    yolu, egitim defterinin olctugu ayarla kosar -- maskeler makaledeki
+    olcumle ayni kuralda uretilsin diye.
+    """
+    sys.path.insert(0, str(REPO_BACKEND)) if "REPO_BACKEND" in globals() else None
+    from apps.road_damage.utils import model_kunyesi as mk
+
+    kunye = mk.kunye_oku(kunye_adi)
+    model, device = mk.model_yukle(kunye)
+    karar = kunye["karar"]
+    ayar = {
+        "damage_booster": karar["guclendirme"],
+        "threshold": karar["esik"],
+        "use_imagenet_norm": kunye["girdi"]["normalizasyon"] == "imagenet",
+        "postprocess_level": karar["sonIsleme"],
+    }
+    return model, device, kunye["agirlik"]["sha256"], kunye, ayar
+
+
 def load_verified_model(expected_sha256):
     model, device = load_simple_model(str(LOCAL_MODEL_PATH))
     if model is None:
@@ -270,7 +293,7 @@ def save_preview(base, damage, valid, path):
 # Ana akis
 # --------------------------------------------------------------------------
 def process_zone(zone, out_root, model, device, model_sha, radius_km, session,
-                 zoom=ZOOM, mask_suffix=""):
+                 zoom=ZOOM, mask_suffix="", ayar=None, kunye_adi=None):
     zid = zone["id"]
     mask_id = f"{zid}{mask_suffix}"
     lat, lon = zone["center"]
@@ -322,7 +345,7 @@ def process_zone(zone, out_root, model, device, model_sha, radius_km, session,
     t1 = time.perf_counter()
     _raw, _boosted, pred, _inter, _img = run_inference(
         image, np.zeros((h, w), dtype=np.uint8), model, device,
-        progress_callback=on_patch, **INFERENCE_PARAMS)
+        progress_callback=on_patch, **(ayar or INFERENCE_PARAMS))
     t_inf = time.perf_counter() - t1
     del _raw, _boosted, _inter, _img
 
@@ -391,6 +414,10 @@ def main(argv=None):
                     help="Cikti klasoru soneki; ayni bolgenin farkli zoom'larini yan yana tutmak icin (orn. -z20)")
     ap.add_argument("--out", default="model_masks")
     ap.add_argument("--expected-model-sha256", default=None)
+    ap.add_argument("--kunye", default=None,
+                    help="Model kunyesi adi (modeller/uydu/<ad>.json). Verilirse agirlik ve "
+                         "karar ayari kunyeden gelir; verilmezse eski davranis (varsayilan "
+                         "agirlik + INFERENCE_PARAMS).")
     args = ap.parse_args(argv)
 
     if args.zones_json:
@@ -406,8 +433,14 @@ def main(argv=None):
     if not zones:
         raise RuntimeError("Islenecek bolge yok.")
 
-    model, device, model_sha = load_verified_model(args.expected_model_sha256)
-    print(f"model hazir: {device}, sha256 {model_sha[:16]}...", flush=True)
+    ayar = None
+    if args.kunye:
+        model, device, model_sha, kunye, ayar = load_kunye_model(args.kunye)
+        print(f"model hazir: {kunye['ad']} ({kunye['mimari']['sinif']}/{kunye['mimari']['kodlayici']}), "
+              f"{device}, sha256 {model_sha[:16]}..., ayar {ayar}", flush=True)
+    else:
+        model, device, model_sha = load_verified_model(args.expected_model_sha256)
+        print(f"model hazir: {device}, sha256 {model_sha[:16]}...", flush=True)
 
     session = requests.Session()
     session.headers["User-Agent"] = USER_AGENT
@@ -420,7 +453,7 @@ def main(argv=None):
     for zone in zones:
         try:
             manifest.append(process_zone(zone, out_root, model, device, model_sha, args.radius_km,
-                                         session, args.zoom, args.mask_suffix))
+                                         session, args.zoom, args.mask_suffix, ayar, args.kunye))
         except Exception as e:  # bir bolge patlarsa digerleri yine uretilsin
             print(f"  HATA: {type(e).__name__}: {e}", flush=True)
             manifest.append({"zoneId": f"{zone['id']}{args.mask_suffix}", "status": "error",
