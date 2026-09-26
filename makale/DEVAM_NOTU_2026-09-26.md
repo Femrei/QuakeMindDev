@@ -1,4 +1,4 @@
-# Devam Notu — 2026-09-26 (iş → ev bilgisayarı geçişi)
+# Devam Notu — 2026-09-26 (iş → ev bilgisayarı geçişi, 17:35 güncel)
 
 > Bu dosya, PC yeniden başlatıldıktan sonra Claude Code ile kaldığımız yerden
 > devam edebilmek içindir. Tüm ayrıntılı durum/gerekçe `DURUM.md`'dedir; burası
@@ -50,59 +50,64 @@ birbirini doğrulamıyor. **Dokunulmadı** — yanlış bir sayıyla değiştirm
 olduğu gibi bırakmak daha güvenli. Kaynak scriptin/parametrenin (`rho0` değeri
 dahil) hangi koşumdan geldiği netleşirse düzeltilebilir.
 
-## Kaldığımız yer — Tablo 14 GPU işi (güncelleme: 2026-09-26 ~16:45)
+## Kaldığımız yer — Tablo 14 (güncelleme: 2026-09-26 ~17:35)
 
-Amaç: Tablo 14'ün 5 eksik satırını (U-Net, FPN, DeepLabV3+, LinkNet, PSPNet)
-EMSR648 kapanma değerlendirmesiyle doldurmak. Planın arka planı:
-`analiz_arsivi/FURKAN_GPU_IS_PAKETI_2026-09-25.md`, `analiz_arsivi/OLCUM_ENVANTERI_2026-09-25.md`.
+### Durum özeti
+- ✅ **Kaggle Grup A eğitimi BİTTİ** (utkuceylan, notebook25f72b8fc2, 59 dk, GPU T4):
+  - `linknet_r34` s42: val IoU 0,2861 · **test IoU 0,331** · P 0,4525 · R 0,5522 · F1 0,4974
+  - `pspnet_r34`  s42: val IoU 0,3094 · **test IoU 0,3502** · P 0,5300 · R 0,5078 · F1 0,5187
+- ✅ **7 checkpoint hazır** (iş bilgisayarı `~/Downloads/`, git'te YOK):
+  `unet_mitb4.pth`, `fpn_mitb4.pth`, `deeplabv3plus_mitb4.pth`, `deeplabv3plus_resnet101.pth`,
+  `linknet_r34_s42.pth`, `pspnet_r34_s42.pth` + SegFormer üretim checkpoint'i
+  (`optimized_mitb4_focal_dice30.pth`, yoksa HuggingFace `Utbird/dispath_optimized_mitb4_focal_dice30`'dan kendiliğinden iner).
+- ⛔ **Tablo 14 kapanma değerlendirmesi HENÜZ KOŞULAMADI** — Overpass (OSM) sunucuları
+  iş ağının IP'sini geçici olarak engelledi (TCP "Connection refused", tüm aynalar).
+- Karar (kullanıcı): DeepLabV3+ için **ikisi de** koşulacak (MiT-B4 ve ResNet-101) → Tablo 14'te 7 satır.
+- ⚠️ Hatırlatma: TÜM modeller (SegFormer dahil) **bina hasarı** modelidir; yol kapanması =
+  hasar maskesi ∩ OSM yol maskesi. Tablo 14'e "farklı görev" uyarısı YAZILMAYACAK.
 
-Tarayıcı kontrolü (Claude in Chrome) artık çalışıyor; Kaggle API token'a GEREK KALMADI.
+### Bu oturumda bulunan ve düzeltilen hata (ÖNEMLİ)
+`table14_segformer_closure.py` örnek noktalarının tohumu `abs(hash(code))` idi — Python
+string `hash()`'i her süreçte rastgele (PYTHONHASHSEED) → **her koşu farklı karolar**
+seçiyordu. Sonuçları:
+- 2026-09-25'te docx'e işlenen **SegFormer satırı (6 örnek, 4513 kenar, DP=0) tekrar
+  üretilemez** → yeni deterministik örnek kümesiyle YENİDEN ölçülecek, satır değişecek.
+- Modeller arası karşılaştırma geçersiz olurdu.
+Düzeltmeler (commit'te):
+- tohum `zlib.crc32(code)` (deterministik); örnek lat/lon artık JSON'a yazılıyor
+- `--prefetch` modu: 8 karonun OSM grafı (osmnx `./cache`) + yol maskesi
+  (`cache/table14_roadmask/*.npy`) modelsiz önbelleğe alınır; Overpass reddederse 5 dk
+  arayla ~2 saat dener. Böylece 7 model **birebir aynı karo/maske/graf** üzerinde ölçülür.
+- yol maskesi artık diske önbellekleniyor (eskiden yalnız bellekte → her model Overpass'a
+  yeniden gidiyor, reddedilince "YOL MASKESI BOS" diye karo atlıyordu).
+- İlk U-Net denemesi (2/8 örnek, eski tohum) GEÇERSİZ sayıldı, repoya konmadı.
 
-### 1. Hazır 3 checkpoint — ✅ İNDİRİLDİ (iş bilgisayarı `~/Downloads/`)
-Kaggle `furkanemrence/quakemind-modeller` (CC0, herkese açık ama indirme için giriş
-gerekir). **Gerçek dosya adları** (eski nottaki `*_s42.pth` adları yanlıştı):
-- `unet_mitb4.pth` (257 MB) → `--arch Unet --encoder mit_b4`
-- `fpn_mitb4.pth` (251 MB) → `--arch FPN --encoder mit_b4`
-- `deeplabv3plus_resnet101.pth` (183 MB) → `--arch DeepLabV3Plus --encoder resnet101`
-
-⚠️ Bu dosyalar git'te YOK (boyut). **Ev bilgisayarında yeniden indir:**
-https://www.kaggle.com/datasets/furkanemrence/quakemind-modeller → dosyayı seç → indir simgesi.
-
-### 2. LinkNet + PSPNet (ResNet-34) — ⏳ KAGGLE'DA EĞİTİLİYOR
-- Hesap: **utkuceylan** (telefon doğrulandı; `ktotten` hesabında GPU yok, onu kullanma).
-- Notebook (PRIVATE): https://www.kaggle.com/code/utkuceylan/notebook25f72b8fc2
-  → Version #1, **Save & Run All (Commit)**, GPU T4 ×2, internet açık.
-  Tarayıcı/PC kapansa da Kaggle sunucusunda devam eder.
-- Defter: `makale/olcum_egitim_grupA_kaggle.ipynb` (= `olcum_egitim_colab.ipynb`
-  hücre 0-13 + `/content` klasörü oluşturma düzeltmesi + çıktıyı `/kaggle/working`'e
-  kopyalama; Grup B/C çıkarıldı).
-- Durum (16:42): veri hazır (KATE-CD 486+486, MEDBFS 438+438; train 1506 / val 158 /
-  test 184 karo, sızıntı YOK). 16:25 civarı `linknet_r34 · tohum 42` eğitimi başladı.
-  Epoch başına log YOK — yalnız model bitince `OK {... val_iou, test_iou ...}` satırı.
-- **Tahmini bitiş: 17:30–17:50** (en kötü ~18:00).
-- Bitince: notebook → **Output** sekmesi → `linknet_r34_s42.pth`, `pspnet_r34_s42.pth`
-  (+ `olcum_sonuclar.csv`) indir. Hata olduysa **Logs** sekmesine bak.
-
-### 3. Sonraki adım — 5 mimari için kapanma değerlendirmesi (YEREL, CPU yeter)
-```
-cd model_benchmarks/06_rota/real_run
-python table14_segformer_closure.py --label unet       --arch Unet          --encoder mit_b4    --checkpoint ~/Downloads/unet_mitb4.pth
-python table14_segformer_closure.py --label fpn        --arch FPN           --encoder mit_b4    --checkpoint ~/Downloads/fpn_mitb4.pth
-python table14_segformer_closure.py --label deeplabv3p --arch DeepLabV3Plus --encoder resnet101 --checkpoint ~/Downloads/deeplabv3plus_resnet101.pth
-python table14_segformer_closure.py --label linknet    --arch Linknet       --encoder resnet34  --checkpoint ~/Downloads/linknet_r34_s42.pth
-python table14_segformer_closure.py --label pspnet     --arch PSPNet        --encoder resnet34  --checkpoint ~/Downloads/pspnet_r34_s42.pth
-```
-Her biri `results/table14_closure_{label}.json` yazar → Tablo 14 docx'e işlenir.
-Not: Claude Code'un otomatik izin sistemi dışarıdan inen `.pth` dosyasının
-`torch.load` ile yüklenmesini engelledi — komutları kendin çalıştır (`! python ...`)
-ya da Claude'a açıkça izin ver. (Dosyalar kendi Kaggle veri setimizden, güvenilir.)
-Ön koşul: `segmentation-models-pytorch` + `timm` kurulu olmalı (MiT-B4 için).
-
-### 4. Drive — ❌ YAPILMADI, ELLE YAPILACAK
-Güncel docx Drive'a henüz yüklenmedi (Drive bağlantısı yalnız ad/klasör
-değiştirebiliyor, Chrome yükleme sınırı 10 MB, docx 11 MB). Elle: Drive → dosya
-(ID `1R5steHoLal0QGs2hLLSMxZbY0cwcbpxu`) → sağ tık → Dosya bilgileri → Sürümleri
-yönet → Yeni sürüm yükle. Güncel docx bu commit'le git'te de var.
+### EVDE YAPILACAKLAR (sırayla)
+1. `git checkout makale && git pull`
+2. 6 checkpoint'i indir → `~/Downloads/`:
+   - https://www.kaggle.com/datasets/furkanemrence/quakemind-modeller →
+     `unet_mitb4.pth`, `fpn_mitb4.pth`, `deeplabv3plus_mitb4.pth`, `deeplabv3plus_resnet101.pth`
+   - https://www.kaggle.com/code/utkuceylan/notebook25f72b8fc2 → **Output** →
+     `linknet_r34_s42.pth`, `pspnet_r34_s42.pth` (Kaggle bunları `.zip` uzantısıyla
+     indirir; torch checkpoint'i zaten zip biçiminde → **açma**, sadece `.pth` olarak yeniden adlandır)
+3. Ortam: `QuakeMindBackend/venv` (smp 0.5.0, timm, osmnx 2.x, torch). Evde venv yoksa
+   `pip install -r QuakeMindBackend/requirements.txt` (+ `segmentation-models-pytorch timm osmnx`).
+4. Tek komut (CPU yeter, ~1–1,5 saat; önce Overpass erişimi test et:
+   `curl -s -o /dev/null -w '%{http_code}' https://overpass-api.de/api/status` → 200 olmalı):
+   ```
+   model_benchmarks/06_rota/real_run/run_table14_all.sh
+   ```
+   (`CKPT_DIR`, `LOG_DIR`, `PY` ortam değişkenleriyle yollar değiştirilebilir.)
+   "PREFETCH EKSIK" derse Overpass hâlâ kapalıdır — bekleyip tekrar çalıştır.
+5. Sonuçlar: `model_benchmarks/06_rota/real_run/results/table14_segformer_closure.json` +
+   `table14_closure_{unet,fpn,deeplabv3p_mitb4,deeplabv3p_r101,linknet,pspnet}.json`.
+6. Docx Tablo 14 (P334-P338 civarı): 5 `[ÖLÇÜLECEK]` satırını doldur, **DeepLabV3+ için
+   2 satır** (MiT-B4 / R101), SegFormer satırını YENİ ölçümle güncelle; altındaki iki
+   paragrafı (6 örnek/4513 kenar/"kalan beş mimari ölçülemedi") yeni örneklem ve
+   sonuçlarla yeniden yaz. P510'daki "yalnızca SegFormer için" ifadesini düzelt.
+   Karşılaştırma: aynı τ taraması, orta kural esas.
+7. Docx'i Drive'a "yeni sürüm" olarak elle yükle (11 MB > Chrome 10 MB sınırı;
+   dosya ID `1R5steHoLal0QGs2hLLSMxZbY0cwcbpxu`).
 
 ## Bugün hâlâ sizden bekleyen kararlar
 

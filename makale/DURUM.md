@@ -16,7 +16,7 @@ notları (`SARI_VURGU_TUTARLILIK`, `FURKAN_GPU_IS_PAKETI`, `OLCUM_ENVANTERI`,
 `BOLUM84_ATIF_DENETIM`, `EGITIM_SONRASI_GUNCELLENECEKLER`) `makale/analiz_arsivi/`
 altına taşındı (2026-09-26 klasör temizliği).
 **Makine değiştiriyorsan önce oku:** `makale/DEVAM_NOTU_2026-09-26.md` — en güncel
-oturum özeti ve kaldığımız yer (Tablo 14: 3 checkpoint indirildi, LinkNet/PSPNet Kaggle'da eğitiliyor).
+oturum özeti ve kaldığımız yer (Tablo 14: 7 checkpoint hazır, LinkNet/PSPNet eğitildi; kapanma değerlendirmesi Overpass engeli yüzünden evde koşulacak — `run_table14_all.sh`).
 Ortam kurulum adımları için `makale/arsiv/DEVAM_NOTU_2026-09-24.md`.
 
 **İş bölümü:** Furkan = 9 model eğitim/koşum (GPU/Colab, B-2). Utku = veri

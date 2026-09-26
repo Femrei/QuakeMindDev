@@ -48,6 +48,7 @@ edilemez" sorunu kismen azalir.
 import sys
 import time
 import json
+import zlib
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
@@ -74,6 +75,23 @@ OFFSET_M = 600.0
 TAU_SWEEP = [round(float(x), 2) for x in np.arange(0.10, 0.61, 0.05)]
 RULES = ("strict", "medium", "loose")
 REGIONS = [("H-Z1", "AOI11"), ("K-Z1", "AOI04")]
+
+
+ROADMASK_CACHE = Path(__file__).resolve().parent / "cache" / "table14_roadmask"
+
+
+def cached_road_mask(bounds, w, h):
+    """get_osm_roads_overpass sonucu (thickness=6) diske onbelleklenir; bos maske
+    (Overpass erisilemedi) ONBELLEGE YAZILMAZ. Tum mimariler ayni maskeyi kullanir."""
+    key = zlib.crc32(repr((tuple(round(float(b), 7) for b in bounds), int(w), int(h))).encode())
+    f = ROADMASK_CACHE / f"{key:08x}.npy"
+    if f.exists():
+        return np.load(f)
+    mask = get_osm_roads_overpass(bounds, w, h, thickness=6)
+    if mask.mean() > 0:
+        ROADMASK_CACHE.mkdir(parents=True, exist_ok=True)
+        np.save(f, mask)
+    return mask
 
 
 def bbox_from_point(lat, lon, radius_m):
@@ -178,7 +196,7 @@ def run_sample(name, aoi_code, lat, lon, model, device):
     w, h = img.size
     print(f"  goruntu: {img.size}, bounds={real_bounds} ({time.time()-t0:.1f}s)", flush=True)
 
-    road_mask = get_osm_roads_overpass(real_bounds, w, h, thickness=6)
+    road_mask = cached_road_mask(real_bounds, w, h)
     if road_mask.mean() == 0:
         print(f"  YOL MASKESI BOS ({name}) - atlaniyor", flush=True)
         return None
@@ -222,6 +240,44 @@ def run_sample(name, aoi_code, lat, lon, model, device):
     }
 
 
+def prefetch(max_rounds=24, wait_s=300):
+    """Tum ornek karolarin OSM grafini (osmnx onbellegi, ./cache) modelsiz ceker.
+    Overpass gecici olarak reddederse wait_s bekleyip eksikleri yeniden dener; boylece
+    tum mimariler ayni, eksiksiz ornek kumesi uzerinde (onbellekten) degerlendirilir."""
+    tiles = []
+    for code, aoi in REGIONS:
+        center = ox.geocode(DISTRICTS[code]["query"])
+        seed = zlib.crc32(code.encode("utf-8"))
+        for i, (lat, lon) in enumerate(sample_points_around(center[0], center[1], N_SAMPLES_PER_DISTRICT, OFFSET_M, seed)):
+            img, real_bounds = fetch_satellite_area(lat, lon, bbox=bbox_from_point(lat, lon, RADIUS_M),
+                                                    zoom_level=18, wayback_id=WAYBACK_ID, provider="esri")
+            if img is None:
+                print(f"{code}-{i+1}: GORUNTU ALINAMADI", flush=True)
+                continue
+            tiles.append((f"{code}-{i+1}", real_bounds, img.size))
+    pending = list(tiles)
+    for rnd in range(max_rounds):
+        still = []
+        for name, bounds, (w, h) in pending:
+            west, south, east, north = bounds
+            try:
+                mask = cached_road_mask(bounds, w, h)
+                if mask.mean() == 0:
+                    raise ConnectionError("yol maskesi bos")
+                G = ox.graph_from_bbox(bbox=(west, south, east, north), network_type="drive", simplify=True)
+                print(f"{name}: OK ({G.number_of_edges()} kenar, maske {mask.mean():.4f})", flush=True)
+            except Exception as exc:
+                print(f"{name}: basarisiz ({type(exc).__name__}: {str(exc)[:80]})", flush=True)
+                still.append((name, bounds, (w, h)))
+            time.sleep(5)
+        pending = still
+        print(f"tur {rnd+1}: {len(tiles)-len(pending)}/{len(tiles)} karo onbellekte", flush=True)
+        if not pending:
+            return
+        time.sleep(wait_s)
+    print(f"EKSIK KALDI: {[p[0] for p in pending]}", flush=True)
+
+
 def main():
     import argparse
     ap = argparse.ArgumentParser()
@@ -229,7 +285,12 @@ def main():
     ap.add_argument("--arch", default="Segformer", help="smp mimari sinifi (Segformer/Unet/FPN/DeepLabV3Plus/Linknet/PSPNet)")
     ap.add_argument("--encoder", default="mit_b4", help="kodlayici adi (mit_b4/resnet34/resnet101/...)")
     ap.add_argument("--checkpoint", default=str(MODEL_PATH), help="checkpoint (.pth) yolu")
+    ap.add_argument("--prefetch", action="store_true",
+                    help="model yuklemeden tum orneklerin OSM graflarini osmnx onbellegine al")
     args = ap.parse_args()
+
+    if args.prefetch:
+        return prefetch()
 
     print(f"Model yukleniyor: {args.checkpoint} (arch={args.arch}, encoder={args.encoder})", flush=True)
     model, device = load_simple_model(args.checkpoint, arch=args.arch, encoder=args.encoder)
@@ -244,11 +305,14 @@ def main():
         print(f"\n>>> {code} geocode ediliyor: {cfg['query']}", flush=True)
         center = ox.geocode(cfg["query"])
         print(f"    merkez: {center}", flush=True)
-        seed = abs(hash(code)) % (2 ** 32)
+        # Deterministik tohum: hash(str) PYTHONHASHSEED ile her surecte degisir ve
+        # her kosuda FARKLI ornek noktalari uretirdi (2026-09-26 duzeltmesi).
+        seed = zlib.crc32(code.encode("utf-8"))
         points = sample_points_around(center[0], center[1], N_SAMPLES_PER_DISTRICT, OFFSET_M, seed)
         for i, (lat, lon) in enumerate(points):
             res = run_sample(f"{code}-{i+1}", aoi, lat, lon, model, device)
             if res:
+                res["lat"], res["lon"] = lat, lon
                 all_samples.append(res)
 
     if not all_samples:
@@ -300,7 +364,8 @@ def main():
         "model": f"{args.arch} ({args.encoder}, {Path(args.checkpoint).name})",
         "label": args.label,
         "wayback_id": WAYBACK_ID,
-        "samples": [{"name": s["name"], "aoi": s["aoi"], "n_edges": s["n_edges"]} for s in all_samples],
+        "samples": [{"name": s["name"], "aoi": s["aoi"], "n_edges": s["n_edges"],
+                     "lat": round(s["lat"], 6), "lon": round(s["lon"], 6)} for s in all_samples],
         "total_edges": total_edges,
         "tau_sweep": {f"{t:.2f}": r for t, r in sweep_results.items()},
         "best_tau": best_tau,
