@@ -44,12 +44,13 @@ def sekil_kollar():
         d = [veri[a][i] for a in ALAN]; e = [hata[a][i] for a in ALAN]
         ax.bar(x + (i - 1) * g, d, g * 0.92, yerr=e, capsize=3, label=k,
                color=renk, edgecolor="white", linewidth=0.6)
-        for xi, v in zip(x + (i - 1) * g, d):
-            ax.text(xi, v + 0.12, f"{v:.1f}".replace(".", ","), ha="center", fontsize=7.5)
+        for xi, v, h in zip(x + (i - 1) * g, d, e):
+            # etiket hata cubugunun USTUNE: cubugun ortasina binince okunmuyordu
+            ax.text(xi, v + h + 0.10, f"{v:.1f}".replace(".", ","), ha="center", fontsize=7.5)
     ax.set_xticks(x); ax.set_xticklabels(ALAN)
     ax.set_ylabel("Ortalama erişim süresi (dk)")
     ax.set_title("Kapanmayı önceden bilmenin erişim süresine etkisi\n"
-                 "(U-Net MiT-B4, 25 ekip–afetzede çifti, 5 tohum)", pad=8)
+                 "(U-Net MiT-B4, 5 giriş ağzı × en çok 5 afetzede, 5 tohum)", pad=8)
     ax.legend(frameon=False, fontsize=8, ncol=3, loc="upper center",
               bbox_to_anchor=(0.5, -0.16))
     ax.set_ylim(0, 5.6)
@@ -73,8 +74,11 @@ def sekil_duyarlilik():
     ax.text(3, 99, "kullanılmıyor", ha="center", fontsize=7.5, color=HASAR)
     ax.set_xticks(x); ax.set_xticklabels(kosu, fontsize=8)
     ax.set_ylabel("QuakeMind kolunun kazancı (%)"); ax.set_ylim(0, 105)
+    # Bu kosu Tablo 17'deki modellerle degil isletim modeliyle yapildi
+    # (OLCUM_KAYDI §9); okuyan mutlak sureleri Tablo 17 ile karistirmasin.
     ax.set_title("Sonuç, beyan edilen ceza süresine ne kadar bağlı?\n"
-                 "Eski 20 dk'lık sabit sonucu tek başına üretiyor", pad=8)
+                 "(segformer_mitb4_dice30, tohum 42 — eski 20 dk'lık sabit sonucu tek başına üretiyor)",
+                 pad=8, fontsize=9)
     ax.legend(frameon=False, fontsize=8, loc="center left")
     f.savefig(CIK / "sekil_duyarlilik.png"); plt.close(f)
 
@@ -133,6 +137,48 @@ def sekil_sure():
     f.savefig(CIK / "sekil_sure_dagilimi.png"); plt.close(f)
 
 
-for f in (sekil_kollar, sekil_duyarlilik, sekil_model, sekil_sure):
+# --- Sekil 5: kesif sayisi - kazanc (Tablo 17'nin sekiz satiri) -------------
+def sekil_kesif():
+    # (alan, model, kesif, kazanc %, s.s. %, kume) -- OLCUM_KAYDI §8.2
+    satir = [("Defne / Elektrik", "MiT-B2", 10.0, 40.9, None, "1/5"),
+             ("Defne / Elektrik", "U-Net MiT-B4", 4.0, 40.7, None, "1/5"),
+             ("İslahiye", "MiT-B0", 1.0, 7.1, None, "1/5"),
+             ("İslahiye", "MiT-B2", 9.8, 40.9, 4.6, "5/5"),
+             ("İslahiye", "U-Net MiT-B4", 1.8, 9.9, 3.1, "5/5"),
+             ("Nurdağı", "MiT-B0", 29.4, 59.5, 5.3, "5/5"),
+             ("Nurdağı", "MiT-B2", 33.8, 64.9, 5.7, "5/5"),
+             ("Nurdağı", "U-Net MiT-B4", 44.4, 65.8, 3.6, "5/5")]
+    isaret = {"Defne / Elektrik": "o", "İslahiye": "s", "Nurdağı": "^"}
+    global ETIKET_KESIF
+    ETIKET_KESIF = {
+        ("Defne / Elektrik", "MiT-B2"): ("MiT-B2 (Defne)", (8, 7)),
+        ("Defne / Elektrik", "U-Net MiT-B4"): ("U-Net MiT-B4 (Defne)", (-40, 8)),
+        ("İslahiye", "MiT-B2"): ("MiT-B2 (İslahiye)", (8, -13)),
+        ("İslahiye", "MiT-B0"): ("MiT-B0", (6, -12)),
+        ("İslahiye", "U-Net MiT-B4"): ("U-Net MiT-B4", (7, 5)),
+    }
+    f, ax = plt.subplots(figsize=(6.2, 3.2))
+    for a in ALAN:
+        r = [x for x in satir if x[0] == a]
+        ax.errorbar([x[2] for x in r], [x[3] for x in r],
+                    yerr=[x[4] or 0 for x in r], fmt=isaret[a], ms=6, capsize=3,
+                    color=VURGU if a == "Nurdağı" else GRI, label=a,
+                    mfc="white" if a == "Defne / Elektrik" else None)
+        for x in r:
+            # Defne ve Islahiye MiT-B2 noktalari neredeyse ust uste; etiketler
+            # nokta bazinda kaydirilir.
+            yazi, kay = ETIKET_KESIF.get((a, x[1]), (x[1], (6, 4)))
+            ax.annotate(yazi, (x[2], x[3]), textcoords="offset points", xytext=kay,
+                        fontsize=6.8, color="#374151")
+    ax.set_xlabel("Keşif sayısı (makale Tablo 15)")
+    ax.set_ylabel("QuakeMind kolunun kazancı (%)")
+    ax.set_xlim(-1, 50); ax.set_ylim(0, 80)
+    ax.set_title("Kazanç, kapanmaların ekip rotalarına düşme sıklığını izler\n"
+                 "(boş işaret: Defne, beş tohum tek kurulum veriyor — küme 1/5)", pad=8)
+    ax.legend(frameon=False, fontsize=8, loc="lower right")
+    f.savefig(CIK / "sekil_kesif_kazanc.png"); plt.close(f)
+
+
+for f in (sekil_kollar, sekil_duyarlilik, sekil_model, sekil_sure, sekil_kesif):
     f(); print("uretildi:", f.__name__)
 print("dizin:", CIK)

@@ -22,18 +22,39 @@ def _gorsel(r, alan):
     return Image.open(io.BytesIO(base64.b64decode(str(ham).split(",")[-1]))) if ham else None
 
 
+def _sar(d, metin, font, en):
+    """Metni `en` pikseli asmayacak satirlara boler."""
+    kelimeler, satirlar, suan = metin.split(), [], ""
+    for k in kelimeler:
+        deneme = (suan + " " + k).strip()
+        if d.textlength(deneme, font=font) <= en or not suan:
+            suan = deneme
+        else:
+            satirlar.append(suan); suan = k
+    if suan:
+        satirlar.append(suan)
+    return satirlar
+
+
 def _gosterge(im, satirlar, baslik=""):
-    """Sekle alt gosterge seridi ekler (makalede tek basina okunabilsin)."""
+    """Sekle alt gosterge seridi ekler (makalede tek basina okunabilsin).
+
+    Kunye (baslik) satiri sarmalanir: tek satir cizildiginde sagdan kirpiliyordu
+    ve Sekil 5 kunyesi kesik bir surumle makaleye konmustu."""
     boy = max(15, im.width // 58)
     sat_h = int(boy * 2.0)
-    yuk = sat_h * ((len(satirlar) + 1) // 2) + int(boy * 3.2)
+    f_kunye = _yazitipi(int(boy * 0.92))
+    kunye = _sar(ImageDraw.Draw(Image.new("RGB", (8, 8))), baslik, f_kunye,
+                 im.width - 2 * boy) if baslik else []
+    kunye_h = int(boy * 1.35) * max(1, len(kunye))
+    yuk = sat_h * ((len(satirlar) + 1) // 2) + kunye_h + int(boy * 1.85)
     y = Image.new("RGB", (im.width, im.height + yuk), (255, 255, 255))
     y.paste(im.convert("RGB"), (0, 0))
     d = ImageDraw.Draw(y)
     f = _yazitipi(boy)
-    if baslik:
-        d.text((boy, im.height + int(boy * 0.6)), baslik, fill=(60, 60, 60), font=_yazitipi(int(boy * 0.92)))
-    y0 = im.height + int(boy * 2.4)
+    for i, s in enumerate(kunye):
+        d.text((boy, im.height + int(boy * 0.6) + i * int(boy * 1.35)), s, fill=(60, 60, 60), font=f_kunye)
+    y0 = im.height + int(boy * 1.05) + kunye_h
     sut = im.width // 2
     for i, (renk, bicim, metin) in enumerate(satirlar):
         cx = boy + (i % 2) * sut

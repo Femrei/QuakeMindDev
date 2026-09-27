@@ -323,7 +323,7 @@ def tek_alan(alan_adi, model_adi, tohum=42):
                f"model {model_adi} · kapsama %{kapsama['edgesObservedFraction']*100:.0f} · "
                f"GERÇEK: görüntü, fotoğraflar, bütün model çıktıları — "
                f"ÜRETİLEN: ihbar metinleri ve kamera/metin konumları. "
-               f"Fotoğraflar aynı depremden (Hatay ve Adıyaman); "
+               f"Fotoğraflar aynı depremlerden (dokuzu Hatay/Antakya, dördünün ili belirtilmemiş); "
                f"bu mahallenin fotoğrafı DEĞİLDİR."))
 
     ad = alan["parca"].split()[0].lower().replace("ı", "i")

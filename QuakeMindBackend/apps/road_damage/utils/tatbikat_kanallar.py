@@ -251,7 +251,8 @@ def kamera_kanali(hasar_maskesi, bounds, sayi=4, tohum=42, model_tipi="hybrid",
         "kayitlar": kayitlar,
         "fotoKaynagi": "Wikimedia Commons — 6 Şubat 2023 depremi, Public domain (VOA) ve CC BY-SA 4.0",
         "not": ("Fotoğraflar ve model çıktısı gerçek; haritadaki konumları üretildi. "
-                "Katalogdaki fotoğraflar Hatay ve Adıyaman'dan; başka bir ildeki alana "
+                "Katalogdaki fotoğrafların dokuzu Hatay/Antakya'dan, dördünün ili kaynakta "
+                "belirtilmemiş (KUNYE.json); başka bir ildeki alana "
                 "yerleştirildiklerinde aynı depremin fotoğrafıdırlar ama O MAHALLENİN "
                 "fotoğrafı değildirler."),
         "ilUyarisi": True,
