@@ -84,19 +84,26 @@ def metin_olc():
     for il, liste in havuz["iller"].items():
         for kayit in liste:
             t0 = time.perf_counter()
-            kategori, guven = siniflandirici.classify(clean_text(kayit["metin"], lowercase=False))
+            d = siniflandirici.classify_detay(clean_text(kayit["metin"], lowercase=False))
             ms = (time.perf_counter() - t0) * 1000
             sureler.append(ms)
             satirlar.append({
-                "il": il, "beklenen": kayit["beklenen"], "model": kategori,
-                "ortusuyor": kategori == kayit["beklenen"],
-                "guven": round(float(guven), 3), "ms": round(ms, 1),
+                "il": il, "beklenen": kayit["beklenen"], "model": d["kategori"],
+                "ortusuyor": d["kategori"] == kayit["beklenen"],
+                "guven": round(float(d["guven"]), 3), "ms": round(ms, 1),
+                # J-111: 13 etiketli ham cikti ve karari kimin verdigi ayrica yazilir
+                "hamEtiket": d.get("hamEtiket"), "hamSkor": round(float(d.get("hamSkor") or 0), 3),
+                "kaynak": d.get("kaynak"),
             })
     kaymalar = {}
     for s in satirlar:
         if not s["ortusuyor"]:
             kaymalar[s["model"]] = kaymalar.get(s["model"], 0) + 1
+    kaynaklar = {}
+    for s in satirlar:
+        kaynaklar[s["kaynak"]] = kaynaklar.get(s["kaynak"], 0) + 1
     return {
+        "kararKaynagi": kaynaklar,
         "birim": "ihbar metni",
         "metinSayisi": len(satirlar),
         "ortusen": sum(1 for s in satirlar if s["ortusuyor"]),
@@ -110,23 +117,39 @@ def metin_olc():
 
 
 def main():
-    print("KAMERA kanalı ölçülüyor...")
-    kam = kamera_olc()
-    print(f"  {kam['tespitVeren']}/{kam['fotoSayisi']} fotoğraf tespit verdi · "
-          f"{kam['toplamCatlak']} çatlak · {kam['toplamBina']} bina · "
-          f"medyan {kam['medyanMs']} ms")
+    import argparse
+    import platform
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--yalniz-metin", action="store_true",
+                    help="yalniz metin kanalini olc (kamera olcumune dokunma)")
+    ap.add_argument("--cikti", default=str(RAPOR),
+                    help="rapor yolu (baska makinede olcerken asil raporun ustune yazmayin)")
+    a = ap.parse_args()
+
+    kam = None
+    if not a.yalniz_metin:
+        print("KAMERA kanalı ölçülüyor...")
+        kam = kamera_olc()
+        print(f"  {kam['tespitVeren']}/{kam['fotoSayisi']} fotoğraf tespit verdi · "
+              f"{kam['toplamCatlak']} çatlak · {kam['toplamBina']} bina · "
+              f"medyan {kam['medyanMs']} ms")
     print("METİN kanalı ölçülüyor...")
     met = metin_olc()
     print(f"  {met['ortusen']}/{met['metinSayisi']} metin yazarın niyetiyle örtüştü · "
           f"medyan {met['medyanMs']} ms · en uzun {met['enUzunMs']} ms")
+    print("  kararı veren:", met["kararKaynagi"])
     if met["kaymaDagilimi"]:
         print("  örtüşmeyenlerin gittiği sınıflar:", met["kaymaDagilimi"])
 
-    RAPOR.parent.mkdir(parents=True, exist_ok=True)
-    RAPOR.write_text(json.dumps(
-        {"tarih": time.strftime("%Y-%m-%d"), "kamera": kam, "metin": met},
+    cikti = Path(a.cikti)
+    cikti.parent.mkdir(parents=True, exist_ok=True)
+    cikti.write_text(json.dumps(
+        {"tarih": time.strftime("%Y-%m-%d"),
+         "makine": {"islemci": platform.processor(), "sistem": platform.platform()},
+         "kamera": kam, "metin": met},
         ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"\nrapor: {RAPOR}")
+    print(f"\nrapor: {cikti}")
 
 
 if __name__ == "__main__":

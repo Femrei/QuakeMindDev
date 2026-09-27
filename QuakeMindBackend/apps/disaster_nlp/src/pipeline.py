@@ -5,7 +5,7 @@ from src.ner_extraction import LocationExtractor
 
 class DisasterPipeline:
     def __init__(self):
-        print("Mimariler yükleniyor (Zeyrek, BERTurk Sınıflandırma, BERTurk NER)...")
+        print("Mimariler yükleniyor (BERTurk Sınıflandırma, BERTurk NER)...")  # Zeyrek cagrisi kaldirildi (J-116)
         self.classifier = DisasterClassifier()
         self.ner_extractor = LocationExtractor()
         
