@@ -3,28 +3,16 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import SafeEvacuationMap from "@/components/map/SafeEvacuationMap";
-import { sendSOSAlert } from "@/lib/api";
+import { sendSOSAlert, analyzeNLP, EvacuationAssemblyRecord } from "@/lib/api";
 import { ShieldAlert, MapPin, Navigation, Package, CheckCircle2, AlertCircle, Heart, PhoneCall, Camera } from "lucide-react";
 
 const ANTAKYA_COORDS: [number, number] = [36.202, 36.161];
 
-const SHELTERS = [
-  {
-    id: "sh-1",
-    lat: 36.208,
-    lng: 36.165,
-    title: "Atatürk Parkı Güvenli Toplanma Alanı",
-    type: "shelter",
-    popupText: "Kapasite: 500 Çadır | Aşevi Var",
-  },
-  {
-    id: "sh-2",
-    lat: 36.195,
-    lng: 36.155,
-    title: "Stadyum Acil Sığınak Merkezi",
-    type: "shelter",
-    popupText: "Sağlık Çadırı & İlaç Dağıtımı Aktif",
-  },
+const AID_OPTIONS = [
+  { id: "su", label: "💧 Temiz Su" },
+  { id: "gida", label: "🍞 Gıda / Konserve" },
+  { id: "cadir", label: "⛺ Çadır / Battaniye" },
+  { id: "ilac", label: "💊 İlk Yardım / İlaç" },
 ];
 
 export default function SurvivorPortalPage() {
@@ -39,6 +27,8 @@ export default function SurvivorPortalPage() {
   const [note, setNote] = useState("");
   const [selectedAid, setSelectedAid] = useState<string[]>(["su", "gida"]);
   const [aidRequested, setAidRequested] = useState(false);
+  const [aidSubmitting, setAidSubmitting] = useState(false);
+  const [assemblyRecords, setAssemblyRecords] = useState<EvacuationAssemblyRecord[]>([]);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -76,6 +66,28 @@ export default function SurvivorPortalPage() {
       setSelectedAid(selectedAid.filter((item) => item !== id));
     } else {
       setSelectedAid([...selectedAid, id]);
+    }
+  };
+
+  const handleAidRequest = async () => {
+    setAidSubmitting(true);
+    const aidLabels = AID_OPTIONS.filter((a) => selectedAid.includes(a.id))
+      .map((a) => a.label)
+      .join(", ");
+    const text = `İhtiyaç talebi: ${aidLabels || "Genel yardım"}.${note ? ` Not: ${note}` : ""}`;
+    try {
+      const nlpResult = await analyzeNLP(text);
+      await sendSOSAlert({
+        latitude: userLocation[0],
+        longitude: userLocation[1],
+        message: `[İHTİYAÇ] [Kategori: ${nlpResult.kategori || "belirsiz"}] ${text}`,
+        userId: "survivor-user",
+      });
+    } catch (e) {
+      console.warn("Yardım talebi NLP/SOS akışı başarısız, yalnızca yerel olarak işaretlendi:", e);
+    } finally {
+      setAidSubmitting(false);
+      setAidRequested(true);
     }
   };
 
@@ -245,12 +257,7 @@ export default function SurvivorPortalPage() {
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { id: "su", label: "💧 Temiz Su" },
-                    { id: "gida", label: "🍞 Gıda / Konserve" },
-                    { id: "cadir", label: "⛺ Çadır / Battaniye" },
-                    { id: "ilac", label: "💊 İlk Yardım / İlaç" },
-                  ].map((aid) => (
+                  {AID_OPTIONS.map((aid) => (
                     <button
                       key={aid.id}
                       onClick={() => toggleAid(aid.id)}
@@ -265,10 +272,11 @@ export default function SurvivorPortalPage() {
                   ))}
                 </div>
                 <button
-                  onClick={() => setAidRequested(true)}
-                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition-all"
+                  onClick={handleAidRequest}
+                  disabled={aidSubmitting}
+                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50"
                 >
-                  Yardım Talebini İlet
+                  {aidSubmitting ? "Gönderiliyor..." : "Yardım Talebini İlet"}
                 </button>
               </div>
             )}
@@ -288,23 +296,37 @@ export default function SurvivorPortalPage() {
                 </p>
               </div>
               <div className="flex items-center gap-2 text-xs text-emerald-400 font-bold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                <MapPin className="w-3.5 h-3.5" /> 650 Metre Yakında
+                <MapPin className="w-3.5 h-3.5" />
+                {assemblyRecords[0]?.dist_m != null
+                  ? `${Math.round(assemblyRecords[0].dist_m)} Metre Yakında`
+                  : "Hesaplanıyor..."}
               </div>
             </div>
 
             {/* INTERACTIVE SAFE EVACUATION MAP */}
             <div className="flex-1 min-h-[420px] rounded-2xl overflow-hidden border border-slate-800">
-              <SafeEvacuationMap role="survivor" />
+              <SafeEvacuationMap role="survivor" onAssemblyData={(data) => setAssemblyRecords(data.records)} />
             </div>
 
-            {/* SHELTER DETAILS LIST */}
+            {/* SHELTER DETAILS LIST — gercek /api/road_damage/assembly sonucu, dist_m'e gore sirali */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              {SHELTERS.map((sh) => (
-                <div key={sh.id} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs space-y-1">
+              {assemblyRecords.length === 0 && (
+                <div className="col-span-full text-xs text-slate-500 p-3">
+                  Toplanma alanları hesaplanıyor...
+                </div>
+              )}
+              {assemblyRecords.slice(0, 6).map((sh, idx) => (
+                <div
+                  key={`${sh.toplanma_alani || sh.name}-${idx}`}
+                  className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs space-y-1"
+                >
                   <p className="font-bold text-slate-200 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" /> {sh.title}
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" /> {sh.toplanma_alani || sh.name}
                   </p>
-                  <p className="text-slate-400 text-[11px]">{sh.popupText}</p>
+                  <p className="text-slate-400 text-[11px]">
+                    {sh.status || sh.capacity || sh.category}
+                    {sh.dist_m != null ? ` — ${Math.round(sh.dist_m)} m` : ""}
+                  </p>
                 </div>
               ))}
             </div>

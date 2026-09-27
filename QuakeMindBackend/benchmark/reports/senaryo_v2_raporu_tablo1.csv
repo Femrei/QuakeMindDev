@@ -1,0 +1,19 @@
+﻿Sehir;Bolge;Isim;Konum;Kanal;Pil / Guc Modu;Ag Fallback (olculen);Model Yanit (ms);Model Ham Ciktisi;Pin
+Hatay;Antakya - Defne;Selim Kaya;Antakya, Inonu Cad.;YOLOv8 Hasar Ihbari;%65 / Normal;P2P BLE Mesh (hafif JSON) (85 B);158.3;Bina Ağır Hasarlı (2_VeryHeavyDamage) · guven %78.8 · 2 tespit;turuncu
+Hatay;Antakya - Defne;Ahmet Yilmaz;Defne, Armutlu Mah.;NLP Ihtiyac Ihbari;%55 / Normal;HTTPS/REST API (tam veri) (83 B);11419.4;Lojistik İhtiyaç Bildirimi · aciliyet 2/DUSUK · guven 0.848;sari
+Hatay;Antakya - Defne;Ali Ozturk;Antakya, Cebrail Mah.;NLP Ihtiyac Ihbari;%47 / Normal;P2P BLE Mesh (hafif JSON) (84 B);7976.2;Acil Yardım İhtiyacı · aciliyet 4/YUKSEK · guven 0.467;sari
+Hatay;Iskenderun;Caner Yildiz;Iskenderun, Liman Cad.;YOLOv8 Hasar Ihbari;%75 / Normal;HTTPS/REST API (tam veri) (84 B);171.6;Bina Ağır Hasarlı (2_VeryHeavyDamage) · guven %85.5 · 2 tespit;turuncu
+Hatay;Iskenderun;Burak Sahin;Iskenderun, Cay Mah.;Acil SOS Cagrisi;%14 / Tasarruf (GPS 10sn) + Siren;P2P BLE Mesh (hafif JSON) (83 B);;Enkaz alti, otonom hayatta kalma modu aktif, BLE sinyali;kirmizi flasor
+Hatay;Kirikhan;Elif Demir;Kirikhan, Cumhuriyet Meydani;YOLOv8 Hasar Ihbari;%18 / Tasarruf (GPS 10sn);HTTPS/REST API (tam veri) (84 B);173.3;Bina Ağır Hasarlı (2_VeryHeavyDamage) · guven %78.8 · 2 tespit;turuncu
+Hatay;Kirikhan;Emre Aydin;Kirikhan, Pasali Cad.;Acil SOS Cagrisi;%35 / Normal;P2P BLE Mesh (hafif JSON) (84 B);;Merdiven boslugunda sikisma, Mesh P2P;kirmizi flasor
+Hatay;Samandag;Merve Sen;Samandag, Ataturk Cad.;NLP Ihtiyac Ihbari;%40 / Normal;HTTPS/REST API (tam veri) (84 B);58.0;**ELENDI** — model metni afetle iliskisiz saydi (yanlis negatif);sari
+Hatay;Belen;Sevgi Kaya;Belen, Fatih Mah. (tasindi: Antakya, Harbiye Cad.);Acil SOS Cagrisi;%50 / Normal;HTTPS/REST API (tam veri) (84 B);;Yikinti yani mahsur, AFAD REST API;kirmizi flasor
+Kahramanmaras;Merkez (Onikisubat - Dulkadiroglu);Mustafa Yildiz;Onikisubat, Trabzon Bulvari;YOLOv8 Hasar Ihbari;%82 / Normal;HTTPS/REST API (tam veri) (84 B);168.4;Bina Ağır Hasarlı (2_VeryHeavyDamage) · guven %78.8 · 2 tespit;turuncu
+Kahramanmaras;Merkez (Onikisubat - Dulkadiroglu);Aylin Kurt;Dulkadiroglu, Ismetpasa Mah.;YOLOv8 Hasar Ihbari;%22 / Normal;HTTPS/REST API (tam veri) (85 B);153.6;Bina Ağır Hasarlı (2_VeryHeavyDamage) · guven %85.5 · 2 tespit;turuncu
+Kahramanmaras;Merkez (Onikisubat - Dulkadiroglu);Zeynep Celik;Dulkadiroglu, Azerbaycan Bulvari;NLP Ihtiyac Ihbari;%38 / Normal;HTTPS/REST API (tam veri) (84 B);48.8;**ELENDI** — model metni afetle iliskisiz saydi (yanlis negatif);sari
+Kahramanmaras;Merkez (Onikisubat - Dulkadiroglu);Hakan Koc;Onikisubat, Haydarbey Mah.;NLP Ihtiyac Ihbari;%71 / Normal;HTTPS/REST API (tam veri) (81 B);9765.8;Lojistik İhtiyaç Bildirimi · aciliyet 2/DUSUK · guven 0.763;sari
+Kahramanmaras;Merkez (Onikisubat - Dulkadiroglu);Serkan Tan;Dulkadiroglu, Istasyon Mah. (tasindi: Turkoglu, Istasyon Mah.);Acil SOS Cagrisi;%42 / Normal;P2P BLE Mesh (hafif JSON) (83 B);;Merdiven cokmesi sonucu mahsur, BLE Mesh;kirmizi flasor
+Kahramanmaras;Merkez (Onikisubat - Dulkadiroglu);Derya Uysal;Onikisubat, Binevler Mah.;Acil SOS Cagrisi;%68 / Normal;HTTPS/REST API (tam veri) (83 B);;Kismi gocuk, 4.5G;kirmizi flasor
+Kahramanmaras;Elbistan;Tolga Erdem;Elbistan, Gunesli Mah.;YOLOv8 Hasar Ihbari;%60 / Normal;P2P BLE Mesh (hafif JSON) (85 B);155.9;Bina Ağır Hasarlı (2_VeryHeavyDamage) · guven %78.8 · 2 tespit;turuncu
+Kahramanmaras;Pazarcik;Fatma Dogan;Pazarcik, Merkez Mah.;Acil SOS Cagrisi;%11 / Tasarruf (GPS 10sn) + Siren;P2P BLE Mesh (hafif JSON) (84 B);;Agir enkaz altinda, otonom hayatta kalma modu aktif;kirmizi flasor
+Kahramanmaras;Goksun;Fatma Arslan;Goksun, Ataturk Cad. (tasindi: Afsin, Ataturk Cad.);NLP Ihtiyac Ihbari;%29 / Normal;P2P BLE Mesh (hafif JSON) (84 B);9796.7;Enkaz Bildirimi · aciliyet 5/KRITIK · guven 0.473;sari

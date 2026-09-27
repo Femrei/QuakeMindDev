@@ -1,0 +1,327 @@
+{
+  "region": "kahramanmaras",
+  "label": "Kahramanmaras (merkez)",
+  "bbox": {
+    "west": 36.791792034000004,
+    "south": 37.47242901,
+    "east": 37.030268796,
+    "north": 37.707649943
+  },
+  "toplanmaAlaniCount": 226,
+  "toplanmaAlaniUrbanCoreCount": 111,
+  "mahalleler": [
+    {
+      "name": "AKSU",
+      "ilce": "DULKADİROĞLU",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.936811796,
+        "south": 37.541321073,
+        "east": 36.946811796000006,
+        "north": 37.551321073000004
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "AKSU",
+          "lat": 37.546321073,
+          "lon": 36.941811796
+        }
+      ]
+    },
+    {
+      "name": "ASLAN BEY",
+      "ilce": "DULKADİROĞLU",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.960353162,
+        "south": 37.584667927,
+        "east": 36.970353162,
+        "north": 37.594667927
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "ASLAN BEY",
+          "lat": 37.589667927,
+          "lon": 36.965353162
+        }
+      ]
+    },
+    {
+      "name": "BAĞLARBAŞI",
+      "ilce": "DULKADİROĞLU",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.946634771,
+        "south": 37.572367963999994,
+        "east": 36.956634771000004,
+        "north": 37.582367964
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "BAĞLARBAŞI",
+          "lat": 37.577367964,
+          "lon": 36.951634771
+        }
+      ]
+    },
+    {
+      "name": "BAHÇELİ EVLER",
+      "ilce": "DULKADİROĞLU",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.932852829999995,
+        "south": 37.566655272999995,
+        "east": 36.94285283,
+        "north": 37.576655273
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "BAHÇELİ EVLER",
+          "lat": 37.571655273,
+          "lon": 36.93785283
+        }
+      ]
+    },
+    {
+      "name": "BAYAZITLI",
+      "ilce": "DULKADİROĞLU",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.939338745,
+        "south": 37.599834206,
+        "east": 36.949338745000006,
+        "north": 37.609834206
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "BAYAZITLI",
+          "lat": 37.604834206,
+          "lon": 36.944338745
+        }
+      ]
+    },
+    {
+      "name": "DERELİ",
+      "ilce": "DULKADİROĞLU",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.97681069,
+        "south": 37.603307048999994,
+        "east": 36.986810690000006,
+        "north": 37.613307049
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "DERELİ",
+          "lat": 37.608307049,
+          "lon": 36.98181069
+        }
+      ]
+    },
+    {
+      "name": "DİVANLI",
+      "ilce": "DULKADİROĞLU",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.928927386999995,
+        "south": 37.583944921,
+        "east": 36.938927387,
+        "north": 37.593944921
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "DİVANLI",
+          "lat": 37.588944921,
+          "lon": 36.933927387
+        }
+      ]
+    },
+    {
+      "name": "DOĞU KENT",
+      "ilce": "DULKADİROĞLU",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.979207425,
+        "south": 37.587057810999994,
+        "east": 36.989207425000004,
+        "north": 37.597057811
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "DOĞU KENT",
+          "lat": 37.592057811,
+          "lon": 36.984207425
+        }
+      ]
+    },
+    {
+      "name": "DULKADİROĞLU",
+      "ilce": "DULKADİROĞLU",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.947007439,
+        "south": 37.572374812,
+        "east": 36.957007439,
+        "north": 37.582374812000005
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "DULKADİROĞLU",
+          "lat": 37.577374812,
+          "lon": 36.952007439
+        }
+      ]
+    },
+    {
+      "name": "DURAKLI",
+      "ilce": "DULKADİROĞLU",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.940988816,
+        "south": 37.57845526,
+        "east": 36.950988816000006,
+        "north": 37.58845526
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "DURAKLI",
+          "lat": 37.58345526,
+          "lon": 36.945988816
+        }
+      ]
+    },
+    {
+      "name": "EGEMENLİK",
+      "ilce": "DULKADİROĞLU",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.927737406999995,
+        "south": 37.562825288999996,
+        "east": 36.937737407,
+        "north": 37.572825289
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "EGEMENLİK",
+          "lat": 37.567825289,
+          "lon": 36.932737407
+        }
+      ]
+    },
+    {
+      "name": "EKMEKÇİ",
+      "ilce": "DULKADİROĞLU",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.923225183999996,
+        "south": 37.581551403,
+        "east": 36.933225184,
+        "north": 37.591551403000004
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "EKMEKÇİ",
+          "lat": 37.586551403,
+          "lon": 36.928225184
+        }
+      ]
+    }
+  ],
+  "infra": {
+    "itfaiye": [
+      {
+        "name": "Isimsiz",
+        "lat": 37.5392677,
+        "lon": 36.9651334
+      },
+      {
+        "name": "Isimsiz",
+        "lat": 37.5890774,
+        "lon": 36.942253
+      },
+      {
+        "name": "Isimsiz",
+        "lat": 37.5602557,
+        "lon": 36.9542776
+      }
+    ],
+    "hastane": [
+      {
+        "name": "Hayat Hastanesi",
+        "lat": 37.5775797,
+        "lon": 36.9287658
+      },
+      {
+        "name": "Özel Uğur Göz Hastanesi",
+        "lat": 37.5724298,
+        "lon": 36.9243713
+      },
+      {
+        "name": "Yörük Selim Ek Hizmet Binası",
+        "lat": 37.5938896,
+        "lon": 36.9226498
+      },
+      {
+        "name": "Yenisehir Devlet Hastanesi",
+        "lat": 37.5780606,
+        "lon": 36.9314928
+      },
+      {
+        "name": "Kahramanmaras Devlet Hastanesi",
+        "lat": 37.592457,
+        "lon": 36.9251437
+      },
+      {
+        "name": "Tıp Fakültesi",
+        "lat": 37.5873802,
+        "lon": 36.8259264
+      },
+      {
+        "name": "Kadın Dogum ve Cocuk Hastalıkları Hastanesi",
+        "lat": 37.594031,
+        "lon": 36.8834103
+      },
+      {
+        "name": "Necip Fazıl Kısakürek Kadın Doğum Ve Çocuk Hastanesi",
+        "lat": 37.5940826,
+        "lon": 36.8834339
+      },
+      {
+        "name": "Kahramanmaraş Necip Fazıl Şehir Hastanesi",
+        "lat": 37.5029855,
+        "lon": 37.0043508
+      },
+      {
+        "name": "Necipfazıl Şehir Devlet Hastanesi",
+        "lat": 37.5032469,
+        "lon": 37.0041579
+      },
+      {
+        "name": "Kahramanmaraş Ağız Ve Diş Sağlığı Hastanesi",
+        "lat": 37.5664625,
+        "lon": 36.9510148
+      },
+      {
+        "name": "Özel Markasi Hastanesi",
+        "lat": 37.5702053,
+        "lon": 36.9591583
+      },
+      {
+        "name": "Sütçü İmam Üniversitesi Tıp Fakültesi",
+        "lat": 37.5879402,
+        "lon": 36.8260505
+      },
+      {
+        "name": "Sular Akademi Hastanesi",
+        "lat": 37.5655101,
+        "lon": 36.9296023
+      },
+      {
+        "name": "Isimsiz",
+        "lat": 37.5962422,
+        "lon": 36.8390934
+      }
+    ],
+    "afadUmke": []
+  }
+}

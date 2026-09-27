@@ -1,0 +1,39 @@
+{
+ "ad": "segformer_mitb4_dice30",
+ "etiket": "SegFormer MiT-B4 (focal + dice, 30 dönem)",
+ "gorev": "uydu görüntüsünde hasar bölütleme (ikili: hasar / değil)",
+ "mimari": {
+  "kutuphane": "segmentation_models_pytorch",
+  "sinif": "Segformer",
+  "kodlayici": "mit_b4",
+  "siniflar": 1,
+  "girdiKanal": 3
+ },
+ "girdi": {
+  "karoPx": 512,
+  "normalizasyon": "imagenet",
+  "egitimGsdM": [0.3, 0.5],
+  "gsdKaynagi": "Eğitim kaydı depoda yok; J-26'ya göre KATE-CD (Maxar / Pléiades, 0,3–0,5 m/piksel)."
+ },
+ "karar": {
+  "esik": 0.4,
+  "guclendirme": 3.5,
+  "sonIsleme": 2,
+  "kaynak": "Uygulamanın eski varsayılanları; doğrulama kümesinde seçilmedi. Etkin eşik ham olasılıkta 0,40 / 3,5 = 0,114 (J-36)."
+ },
+ "agirlik": {
+  "dosya": "apps/road_damage/models/optimized_mitb4_focal_dice30.pth",
+  "sha256": "7d7fb8d822aaf241f1be2f002f3bff9e72b66331e941408c4ef77d4e1d2900ce",
+  "hf": {
+   "repo": "Utbird/dispath_optimized_mitb4_focal_dice30",
+   "dosya": "optimized_mitb4_focal_dice30.pth"
+  }
+ },
+ "egitim": {
+  "not": "Eğitim defteri, veri bölmesi ve tohum depoda kayıtlı değil."
+ },
+ "olcum": {
+  "sinamaIoU": null,
+  "not": "Bu ağırlık için ayrılmış sınama kümesinde ölçüm yok (bkz. A-01)."
+ }
+}

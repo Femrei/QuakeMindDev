@@ -1,0 +1,858 @@
+{
+  "perMask": [
+    {
+      "maskId": "H-D1-z18",
+      "zoneId": "H-D1",
+      "zoom": 18,
+      "metresPerPixel": 0.4819,
+      "observedFraction": 0.38955,
+      "damageFractionOfObserved": 0.014151,
+      "buildings": {
+        "n": 41,
+        "tp": 1,
+        "fp": 2,
+        "fn": 1,
+        "tn": 37,
+        "precision": 0.3333333333333333,
+        "recall": 0.5,
+        "f1": 0.4,
+        "accuracy": 0.926829268292683,
+        "truthPositive": 2,
+        "predPositive": 3
+      },
+      "roadsByRadius": {
+        "5": {
+          "n": 40,
+          "tp": 0,
+          "fp": 7,
+          "fn": 0,
+          "tn": 33,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.825,
+          "truthPositive": 0,
+          "predPositive": 7
+        },
+        "10": {
+          "n": 40,
+          "tp": 0,
+          "fp": 9,
+          "fn": 0,
+          "tn": 31,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.775,
+          "truthPositive": 0,
+          "predPositive": 9
+        },
+        "15": {
+          "n": 40,
+          "tp": 0,
+          "fp": 12,
+          "fn": 0,
+          "tn": 28,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.7,
+          "truthPositive": 0,
+          "predPositive": 12
+        },
+        "25": {
+          "n": 40,
+          "tp": 0,
+          "fp": 14,
+          "fn": 0,
+          "tn": 26,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.65,
+          "truthPositive": 0,
+          "predPositive": 14
+        }
+      }
+    },
+    {
+      "maskId": "H-D1-z19",
+      "zoneId": "H-D1",
+      "zoom": 19,
+      "metresPerPixel": 0.241,
+      "observedFraction": 0.480903,
+      "damageFractionOfObserved": 0.018287,
+      "buildings": {
+        "n": 41,
+        "tp": 0,
+        "fp": 9,
+        "fn": 2,
+        "tn": 30,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "accuracy": 0.7317073170731707,
+        "truthPositive": 2,
+        "predPositive": 9
+      },
+      "roadsByRadius": {
+        "5": {
+          "n": 40,
+          "tp": 0,
+          "fp": 15,
+          "fn": 0,
+          "tn": 25,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.625,
+          "truthPositive": 0,
+          "predPositive": 15
+        },
+        "10": {
+          "n": 40,
+          "tp": 0,
+          "fp": 17,
+          "fn": 0,
+          "tn": 23,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.575,
+          "truthPositive": 0,
+          "predPositive": 17
+        },
+        "15": {
+          "n": 40,
+          "tp": 0,
+          "fp": 19,
+          "fn": 0,
+          "tn": 21,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.525,
+          "truthPositive": 0,
+          "predPositive": 19
+        },
+        "25": {
+          "n": 40,
+          "tp": 0,
+          "fp": 28,
+          "fn": 0,
+          "tn": 12,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.3,
+          "truthPositive": 0,
+          "predPositive": 28
+        }
+      }
+    },
+    {
+      "maskId": "H-D1-z20",
+      "zoneId": "H-D1",
+      "zoom": 20,
+      "metresPerPixel": 0.1205,
+      "observedFraction": 0.57286,
+      "damageFractionOfObserved": 0.015429,
+      "buildings": {
+        "n": 40,
+        "tp": 1,
+        "fp": 22,
+        "fn": 1,
+        "tn": 16,
+        "precision": 0.043478260869565216,
+        "recall": 0.5,
+        "f1": 0.08,
+        "accuracy": 0.425,
+        "truthPositive": 2,
+        "predPositive": 23
+      },
+      "roadsByRadius": {
+        "5": {
+          "n": 40,
+          "tp": 0,
+          "fp": 26,
+          "fn": 0,
+          "tn": 14,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.35,
+          "truthPositive": 0,
+          "predPositive": 26
+        },
+        "10": {
+          "n": 40,
+          "tp": 0,
+          "fp": 30,
+          "fn": 0,
+          "tn": 10,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.25,
+          "truthPositive": 0,
+          "predPositive": 30
+        },
+        "15": {
+          "n": 40,
+          "tp": 0,
+          "fp": 34,
+          "fn": 0,
+          "tn": 6,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.15,
+          "truthPositive": 0,
+          "predPositive": 34
+        },
+        "25": {
+          "n": 40,
+          "tp": 0,
+          "fp": 37,
+          "fn": 0,
+          "tn": 3,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.075,
+          "truthPositive": 0,
+          "predPositive": 37
+        }
+      }
+    },
+    {
+      "maskId": "H-D2-z18",
+      "zoneId": "H-D2",
+      "zoom": 18,
+      "metresPerPixel": 0.4819,
+      "observedFraction": 0.504784,
+      "damageFractionOfObserved": 0.009757,
+      "buildings": {
+        "n": 22,
+        "tp": 0,
+        "fp": 5,
+        "fn": 0,
+        "tn": 17,
+        "precision": 0.0,
+        "recall": null,
+        "f1": 0.0,
+        "accuracy": 0.7727272727272727,
+        "truthPositive": 0,
+        "predPositive": 5
+      },
+      "roadsByRadius": {
+        "5": {
+          "n": 47,
+          "tp": 0,
+          "fp": 8,
+          "fn": 0,
+          "tn": 39,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.8297872340425532,
+          "truthPositive": 0,
+          "predPositive": 8
+        },
+        "10": {
+          "n": 47,
+          "tp": 0,
+          "fp": 10,
+          "fn": 0,
+          "tn": 37,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.7872340425531915,
+          "truthPositive": 0,
+          "predPositive": 10
+        },
+        "15": {
+          "n": 47,
+          "tp": 0,
+          "fp": 11,
+          "fn": 0,
+          "tn": 36,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.7659574468085106,
+          "truthPositive": 0,
+          "predPositive": 11
+        },
+        "25": {
+          "n": 47,
+          "tp": 0,
+          "fp": 17,
+          "fn": 0,
+          "tn": 30,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.6382978723404256,
+          "truthPositive": 0,
+          "predPositive": 17
+        }
+      }
+    },
+    {
+      "maskId": "H-D2-z19",
+      "zoneId": "H-D2",
+      "zoom": 19,
+      "metresPerPixel": 0.241,
+      "observedFraction": 0.543603,
+      "damageFractionOfObserved": 0.014669,
+      "buildings": {
+        "n": 22,
+        "tp": 0,
+        "fp": 7,
+        "fn": 0,
+        "tn": 15,
+        "precision": 0.0,
+        "recall": null,
+        "f1": 0.0,
+        "accuracy": 0.6818181818181818,
+        "truthPositive": 0,
+        "predPositive": 7
+      },
+      "roadsByRadius": {
+        "5": {
+          "n": 47,
+          "tp": 0,
+          "fp": 8,
+          "fn": 0,
+          "tn": 39,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.8297872340425532,
+          "truthPositive": 0,
+          "predPositive": 8
+        },
+        "10": {
+          "n": 47,
+          "tp": 0,
+          "fp": 16,
+          "fn": 0,
+          "tn": 31,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.6595744680851063,
+          "truthPositive": 0,
+          "predPositive": 16
+        },
+        "15": {
+          "n": 47,
+          "tp": 0,
+          "fp": 20,
+          "fn": 0,
+          "tn": 27,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.574468085106383,
+          "truthPositive": 0,
+          "predPositive": 20
+        },
+        "25": {
+          "n": 47,
+          "tp": 0,
+          "fp": 23,
+          "fn": 0,
+          "tn": 24,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.5106382978723404,
+          "truthPositive": 0,
+          "predPositive": 23
+        }
+      }
+    },
+    {
+      "maskId": "H-D2-z20",
+      "zoneId": "H-D2",
+      "zoom": 20,
+      "metresPerPixel": 0.1205,
+      "observedFraction": 0.616745,
+      "damageFractionOfObserved": 0.012699,
+      "buildings": {
+        "n": 22,
+        "tp": 0,
+        "fp": 14,
+        "fn": 0,
+        "tn": 8,
+        "precision": 0.0,
+        "recall": null,
+        "f1": 0.0,
+        "accuracy": 0.36363636363636365,
+        "truthPositive": 0,
+        "predPositive": 14
+      },
+      "roadsByRadius": {
+        "5": {
+          "n": 47,
+          "tp": 0,
+          "fp": 23,
+          "fn": 0,
+          "tn": 24,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.5106382978723404,
+          "truthPositive": 0,
+          "predPositive": 23
+        },
+        "10": {
+          "n": 47,
+          "tp": 0,
+          "fp": 30,
+          "fn": 0,
+          "tn": 17,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.3617021276595745,
+          "truthPositive": 0,
+          "predPositive": 30
+        },
+        "15": {
+          "n": 47,
+          "tp": 0,
+          "fp": 38,
+          "fn": 0,
+          "tn": 9,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.19148936170212766,
+          "truthPositive": 0,
+          "predPositive": 38
+        },
+        "25": {
+          "n": 47,
+          "tp": 0,
+          "fp": 43,
+          "fn": 0,
+          "tn": 4,
+          "precision": 0.0,
+          "recall": null,
+          "f1": 0.0,
+          "accuracy": 0.0851063829787234,
+          "truthPositive": 0,
+          "predPositive": 43
+        }
+      }
+    },
+    {
+      "maskId": "K-D1-z18",
+      "zoneId": "K-D1",
+      "zoom": 18,
+      "metresPerPixel": 0.4733,
+      "observedFraction": 0.560723,
+      "damageFractionOfObserved": 0.014009,
+      "buildings": {
+        "n": 85,
+        "tp": 3,
+        "fp": 0,
+        "fn": 79,
+        "tn": 3,
+        "precision": 1.0,
+        "recall": 0.036585365853658534,
+        "f1": 0.07058823529411765,
+        "accuracy": 0.07058823529411765,
+        "truthPositive": 82,
+        "predPositive": 3
+      },
+      "roadsByRadius": {
+        "5": {
+          "n": 65,
+          "tp": 4,
+          "fp": 1,
+          "fn": 18,
+          "tn": 42,
+          "precision": 0.8,
+          "recall": 0.18181818181818182,
+          "f1": 0.2962962962962963,
+          "accuracy": 0.7076923076923077,
+          "truthPositive": 22,
+          "predPositive": 5
+        },
+        "10": {
+          "n": 65,
+          "tp": 5,
+          "fp": 1,
+          "fn": 17,
+          "tn": 42,
+          "precision": 0.8333333333333334,
+          "recall": 0.22727272727272727,
+          "f1": 0.35714285714285715,
+          "accuracy": 0.7230769230769231,
+          "truthPositive": 22,
+          "predPositive": 6
+        },
+        "15": {
+          "n": 65,
+          "tp": 6,
+          "fp": 2,
+          "fn": 16,
+          "tn": 41,
+          "precision": 0.75,
+          "recall": 0.2727272727272727,
+          "f1": 0.39999999999999997,
+          "accuracy": 0.7230769230769231,
+          "truthPositive": 22,
+          "predPositive": 8
+        },
+        "25": {
+          "n": 65,
+          "tp": 9,
+          "fp": 4,
+          "fn": 13,
+          "tn": 39,
+          "precision": 0.6923076923076923,
+          "recall": 0.4090909090909091,
+          "f1": 0.5142857142857142,
+          "accuracy": 0.7384615384615385,
+          "truthPositive": 22,
+          "predPositive": 13
+        }
+      }
+    },
+    {
+      "maskId": "K-D1-z19",
+      "zoneId": "K-D1",
+      "zoom": 19,
+      "metresPerPixel": 0.2366,
+      "observedFraction": 0.611686,
+      "damageFractionOfObserved": 0.025829,
+      "buildings": {
+        "n": 85,
+        "tp": 16,
+        "fp": 0,
+        "fn": 66,
+        "tn": 3,
+        "precision": 1.0,
+        "recall": 0.1951219512195122,
+        "f1": 0.326530612244898,
+        "accuracy": 0.2235294117647059,
+        "truthPositive": 82,
+        "predPositive": 16
+      },
+      "roadsByRadius": {
+        "5": {
+          "n": 65,
+          "tp": 6,
+          "fp": 10,
+          "fn": 16,
+          "tn": 33,
+          "precision": 0.375,
+          "recall": 0.2727272727272727,
+          "f1": 0.3157894736842105,
+          "accuracy": 0.6,
+          "truthPositive": 22,
+          "predPositive": 16
+        },
+        "10": {
+          "n": 65,
+          "tp": 12,
+          "fp": 16,
+          "fn": 10,
+          "tn": 27,
+          "precision": 0.42857142857142855,
+          "recall": 0.5454545454545454,
+          "f1": 0.4799999999999999,
+          "accuracy": 0.6,
+          "truthPositive": 22,
+          "predPositive": 28
+        },
+        "15": {
+          "n": 65,
+          "tp": 14,
+          "fp": 20,
+          "fn": 8,
+          "tn": 23,
+          "precision": 0.4117647058823529,
+          "recall": 0.6363636363636364,
+          "f1": 0.5,
+          "accuracy": 0.5692307692307692,
+          "truthPositive": 22,
+          "predPositive": 34
+        },
+        "25": {
+          "n": 65,
+          "tp": 18,
+          "fp": 33,
+          "fn": 4,
+          "tn": 10,
+          "precision": 0.35294117647058826,
+          "recall": 0.8181818181818182,
+          "f1": 0.49315068493150693,
+          "accuracy": 0.4307692307692308,
+          "truthPositive": 22,
+          "predPositive": 51
+        }
+      }
+    },
+    {
+      "maskId": "K-D1-z20",
+      "zoneId": "K-D1",
+      "zoom": 20,
+      "metresPerPixel": 0.1183,
+      "observedFraction": 0.672849,
+      "damageFractionOfObserved": 0.023203,
+      "buildings": {
+        "n": 84,
+        "tp": 27,
+        "fp": 1,
+        "fn": 54,
+        "tn": 2,
+        "precision": 0.9642857142857143,
+        "recall": 0.3333333333333333,
+        "f1": 0.49541284403669716,
+        "accuracy": 0.34523809523809523,
+        "truthPositive": 81,
+        "predPositive": 28
+      },
+      "roadsByRadius": {
+        "5": {
+          "n": 65,
+          "tp": 13,
+          "fp": 23,
+          "fn": 9,
+          "tn": 20,
+          "precision": 0.3611111111111111,
+          "recall": 0.5909090909090909,
+          "f1": 0.4482758620689656,
+          "accuracy": 0.5076923076923077,
+          "truthPositive": 22,
+          "predPositive": 36
+        },
+        "10": {
+          "n": 65,
+          "tp": 17,
+          "fp": 32,
+          "fn": 5,
+          "tn": 11,
+          "precision": 0.3469387755102041,
+          "recall": 0.7727272727272727,
+          "f1": 0.47887323943661975,
+          "accuracy": 0.4307692307692308,
+          "truthPositive": 22,
+          "predPositive": 49
+        },
+        "15": {
+          "n": 65,
+          "tp": 19,
+          "fp": 38,
+          "fn": 3,
+          "tn": 5,
+          "precision": 0.3333333333333333,
+          "recall": 0.8636363636363636,
+          "f1": 0.481012658227848,
+          "accuracy": 0.36923076923076925,
+          "truthPositive": 22,
+          "predPositive": 57
+        },
+        "25": {
+          "n": 65,
+          "tp": 20,
+          "fp": 42,
+          "fn": 2,
+          "tn": 1,
+          "precision": 0.3225806451612903,
+          "recall": 0.9090909090909091,
+          "f1": 0.4761904761904761,
+          "accuracy": 0.3230769230769231,
+          "truthPositive": 22,
+          "predPositive": 62
+        }
+      }
+    }
+  ],
+  "pooled": {
+    "-z18": {
+      "buildings": {
+        "tp": 4,
+        "fp": 7,
+        "fn": 80,
+        "tn": 57,
+        "precision": 0.36363636363636365,
+        "recall": 0.047619047619047616,
+        "specificity": 0.890625,
+        "f1": 0.08421052631578947,
+        "balancedAccuracy": 0.46912202380952384
+      },
+      "roadsByRadius": {
+        "5": {
+          "tp": 4,
+          "fp": 16,
+          "fn": 18,
+          "tn": 114,
+          "precision": 0.2,
+          "recall": 0.18181818181818182,
+          "specificity": 0.8769230769230769,
+          "f1": 0.1904761904761905,
+          "balancedAccuracy": 0.5293706293706294
+        },
+        "10": {
+          "tp": 5,
+          "fp": 20,
+          "fn": 17,
+          "tn": 110,
+          "precision": 0.2,
+          "recall": 0.22727272727272727,
+          "specificity": 0.8461538461538461,
+          "f1": 0.21276595744680854,
+          "balancedAccuracy": 0.5367132867132867
+        },
+        "15": {
+          "tp": 6,
+          "fp": 25,
+          "fn": 16,
+          "tn": 105,
+          "precision": 0.1935483870967742,
+          "recall": 0.2727272727272727,
+          "specificity": 0.8076923076923077,
+          "f1": 0.22641509433962262,
+          "balancedAccuracy": 0.5402097902097902
+        },
+        "25": {
+          "tp": 9,
+          "fp": 35,
+          "fn": 13,
+          "tn": 95,
+          "precision": 0.20454545454545456,
+          "recall": 0.4090909090909091,
+          "specificity": 0.7307692307692307,
+          "f1": 0.27272727272727276,
+          "balancedAccuracy": 0.5699300699300699
+        }
+      }
+    },
+    "-z19": {
+      "buildings": {
+        "tp": 16,
+        "fp": 16,
+        "fn": 68,
+        "tn": 48,
+        "precision": 0.5,
+        "recall": 0.19047619047619047,
+        "specificity": 0.75,
+        "f1": 0.27586206896551724,
+        "balancedAccuracy": 0.47023809523809523
+      },
+      "roadsByRadius": {
+        "5": {
+          "tp": 6,
+          "fp": 33,
+          "fn": 16,
+          "tn": 97,
+          "precision": 0.15384615384615385,
+          "recall": 0.2727272727272727,
+          "specificity": 0.7461538461538462,
+          "f1": 0.19672131147540986,
+          "balancedAccuracy": 0.5094405594405594
+        },
+        "10": {
+          "tp": 12,
+          "fp": 49,
+          "fn": 10,
+          "tn": 81,
+          "precision": 0.19672131147540983,
+          "recall": 0.5454545454545454,
+          "specificity": 0.6230769230769231,
+          "f1": 0.2891566265060241,
+          "balancedAccuracy": 0.5842657342657342
+        },
+        "15": {
+          "tp": 14,
+          "fp": 59,
+          "fn": 8,
+          "tn": 71,
+          "precision": 0.1917808219178082,
+          "recall": 0.6363636363636364,
+          "specificity": 0.5461538461538461,
+          "f1": 0.29473684210526313,
+          "balancedAccuracy": 0.5912587412587412
+        },
+        "25": {
+          "tp": 18,
+          "fp": 84,
+          "fn": 4,
+          "tn": 46,
+          "precision": 0.17647058823529413,
+          "recall": 0.8181818181818182,
+          "specificity": 0.35384615384615387,
+          "f1": 0.2903225806451613,
+          "balancedAccuracy": 0.586013986013986
+        }
+      }
+    },
+    "-z20": {
+      "buildings": {
+        "tp": 28,
+        "fp": 37,
+        "fn": 55,
+        "tn": 26,
+        "precision": 0.4307692307692308,
+        "recall": 0.3373493975903614,
+        "specificity": 0.4126984126984127,
+        "f1": 0.3783783783783784,
+        "balancedAccuracy": 0.37502390514438705
+      },
+      "roadsByRadius": {
+        "5": {
+          "tp": 13,
+          "fp": 72,
+          "fn": 9,
+          "tn": 58,
+          "precision": 0.15294117647058825,
+          "recall": 0.5909090909090909,
+          "specificity": 0.4461538461538462,
+          "f1": 0.2429906542056075,
+          "balancedAccuracy": 0.5185314685314686
+        },
+        "10": {
+          "tp": 17,
+          "fp": 92,
+          "fn": 5,
+          "tn": 38,
+          "precision": 0.1559633027522936,
+          "recall": 0.7727272727272727,
+          "specificity": 0.2923076923076923,
+          "f1": 0.25954198473282447,
+          "balancedAccuracy": 0.5325174825174825
+        },
+        "15": {
+          "tp": 19,
+          "fp": 110,
+          "fn": 3,
+          "tn": 20,
+          "precision": 0.14728682170542637,
+          "recall": 0.8636363636363636,
+          "specificity": 0.15384615384615385,
+          "f1": 0.25165562913907286,
+          "balancedAccuracy": 0.5087412587412588
+        },
+        "25": {
+          "tp": 20,
+          "fp": 122,
+          "fn": 2,
+          "tn": 8,
+          "precision": 0.14084507042253522,
+          "recall": 0.9090909090909091,
+          "specificity": 0.06153846153846154,
+          "f1": 0.24390243902439027,
+          "balancedAccuracy": 0.4853146853146853
+        }
+      }
+    }
+  }
+}

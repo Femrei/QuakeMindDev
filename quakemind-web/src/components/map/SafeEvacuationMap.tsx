@@ -10,15 +10,24 @@ import {
   analyzeRoadDamage,
   pollRoadDamageStatus,
   getRouteBetweenPoints,
+  getDebrisReports,
   getSafeRoute,
+  getRecentRoadDamage,
+  getRoadDamageSegments,
   EvacuationAssemblyRecord,
   EvacuationAssemblyResponse,
+  DebrisReport,
 } from "@/lib/api";
+
+const DEBRIS_POLL_MS = 6000;
 
 interface SafeEvacuationMapProps {
   role?: "survivor" | "command";
   height?: string;
   onShelterSelect?: (shelterName: string) => void;
+  /** Toplanma alanlari (dist_m'e gore sirali) her guncellendiginde ust
+   * bilesenin de kendi siralı listesini gosterebilmesi icin. */
+  onAssemblyData?: (data: EvacuationAssemblyResponse) => void;
 }
 
 // Fallback Default Location: Antakya Epicenter
@@ -68,7 +77,46 @@ function computeBboxForPair(userLat: number, userLon: number, destLat: number, d
   };
 }
 
-function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
+// Ekip tarafinin (full_scenario.py / rich_simulation.py) ZATEN urettigi bir
+// bolge analizi, baslangic VE hedefin ikisini de kapsiyorsa onu dondurur --
+// afetzede ve ekip AYNI kapali/acik yol setini gorsun diye. GET
+// /api/road_damage/recent zaten "son N dakikada tamamlanmis" analizleri
+// listeler; en yeni eslesen tercih edilir. Eslesen yoksa null (caller kendi
+// canli analizine duser -- senaryo disi/gercek kullanim icin hala calisir).
+async function findSharedRoadDamageAnalysis(
+  originLat: number,
+  originLon: number,
+  destLat: number,
+  destLon: number,
+  marginDeg: number
+): Promise<DamageAnalysisState | null> {
+  try {
+    const { analyses } = await getRecentRoadDamage(180);
+    for (const a of analyses) {
+      if (!a.bounds) continue;
+      if (
+        boundsContainPoint(a.bounds, originLat, originLon, marginDeg) &&
+        boundsContainPoint(a.bounds, destLat, destLon, marginDeg)
+      ) {
+        // /recent yalnizca ozet doner; agir segmentler SADECE gercekten
+        // eslesen tek analiz icin cekilir (eskiden listedeki TUM analizlerin
+        // segmentleri bosuna geliyordu).
+        const seg = await getRoadDamageSegments(a.analysisId);
+        return {
+          analysisId: a.analysisId,
+          bounds: a.bounds,
+          safeRoadSegments: seg.safeRoadSegments,
+          blockedRoadSegments: seg.blockedRoadSegments,
+        };
+      }
+    }
+  } catch (e) {
+    console.warn("Paylaşılan bölge analizi sorgulanamadı, kendi analizine geçiliyor:", e);
+  }
+  return null;
+}
+
+function InnerEvacuationMap({ role, onShelterSelect, onAssemblyData }: SafeEvacuationMapProps) {
   const { MapContainer, TileLayer, Polyline, Marker, Popup, Tooltip, useMapEvents } = require("react-leaflet");
   const L = require("leaflet");
 
@@ -87,13 +135,37 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
 
   const [damageAnalysis, setDamageAnalysis] = useState<DamageAnalysisState | null>(null);
   const [damageAnalysisLoading, setDamageAnalysisLoading] = useState(false);
+  // Gosterilen kapali/acik yol katmani ekip tarafiyla PAYLASILAN bir senaryo
+  // analizinden mi geldi, yoksa bu ekranin kendi yeni (canli goruntu) analizinden
+  // mi -- durustluk icin ayri tutulur, kullaniciya gosterilir (bkz. legend).
+  const [damageAnalysisSource, setDamageAnalysisSource] = useState<"senaryo" | "canli-analiz" | null>(null);
   const [routeMode, setRouteMode] = useState<"idle" | "damage-aware" | "safe-route" | "fallback">("idle");
   const [routeErrorMsg, setRouteErrorMsg] = useState<string | null>(null);
   const routeRequestIdRef = useRef(0);
 
+  const [debrisReports, setDebrisReports] = useState<DebrisReport[]>([]);
+
   // Detect User GPS on Load
   useEffect(() => {
     detectUserGPS();
+  }, []);
+
+  useEffect(() => {
+    if (assemblyData) onAssemblyData?.(assemblyData);
+  }, [assemblyData, onAssemblyData]);
+
+  // Kamera modelleriyle (catlak/bina) tespit edilip haritada "enkaz" olarak
+  // isaretlenen noktalar -- ekip ve afetzede haritalari ayni paylasilan veriyi
+  // gorsun diye periyodik olarak cekilir.
+  useEffect(() => {
+    const poll = () => {
+      getDebrisReports()
+        .then((data) => setDebrisReports(data.reports))
+        .catch(() => {});
+    };
+    poll();
+    const timer = setInterval(poll, DEBRIS_POLL_MS);
+    return () => clearInterval(timer);
   }, []);
 
   const detectUserGPS = () => {
@@ -188,31 +260,49 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
       boundsContainPoint(analysis.bounds, destLat, destLon, marginDeg);
 
     if (!cacheValid) {
-      const bbox = computeBboxForPair(originLat, originLon, destLat, destLon);
-      if (!bbox) return null;
-
-      setDamageAnalysisLoading(true);
-      try {
-        const { analysisId } = await analyzeRoadDamage({
-          city: "Sokak Rotası Bölgesi",
-          latitude: (originLat + destLat) / 2,
-          longitude: (originLon + destLon) / 2,
-          bbox: [bbox.west, bbox.south, bbox.east, bbox.north],
-          networkType: "walk",
-        });
-        const result = await pollRoadDamageStatus(analysisId);
-        analysis = {
-          analysisId: result.analysisId,
-          bounds: result.bounds,
-          safeRoadSegments: result.safeRoadSegments,
-          blockedRoadSegments: result.blockedRoadSegments,
-        };
+      // Once senaryo/ekip tarafinin ZATEN urettigi bir bolge analizi varsa
+      // (full_scenario.py / rich_simulation.py -> simulate_closures), o
+      // analiz KULLANILIR -- yeni bir tane BASLATILMAZ. Bunun nedeni: eski
+      // davranista burasi HER rota tikinda kendi analyzeRoadDamage()'ini
+      // cagiriyordu, bu da BUGUNUN gercek uydu goruntusu (source: "google",
+      // subat 2023 degil) uzerinde YENI bir SegFormer cikarimi baslatiyordu
+      // -- ekibin gordugu (o bolgenin temsili/sabit-seed'li) kapanma seti ile
+      // HICBIR ILGISI olmayan, deprem senaryosuyla tutarsiz ve gorsel olarak
+      // "sacma" duran bir kapanma haritasi uretiyordu. Simdi afetzede ve ekip
+      // AYNI analysisId'yi, dolayisiyla AYNI kapali/acik yol setini goruyor.
+      const shared = await findSharedRoadDamageAnalysis(originLat, originLon, destLat, destLon, marginDeg);
+      if (shared) {
+        analysis = shared;
         setDamageAnalysis(analysis);
-      } catch (e) {
-        console.warn("Hasar analizi başarısız, genel rotaya geçiliyor:", e);
-        return null;
-      } finally {
-        setDamageAnalysisLoading(false);
+        setDamageAnalysisSource("senaryo");
+      } else {
+        const bbox = computeBboxForPair(originLat, originLon, destLat, destLon);
+        if (!bbox) return null;
+
+        setDamageAnalysisLoading(true);
+        try {
+          const { analysisId } = await analyzeRoadDamage({
+            city: "Sokak Rotası Bölgesi",
+            latitude: (originLat + destLat) / 2,
+            longitude: (originLon + destLon) / 2,
+            bbox: [bbox.west, bbox.south, bbox.east, bbox.north],
+            networkType: "walk",
+          });
+          const result = await pollRoadDamageStatus(analysisId);
+          analysis = {
+            analysisId: result.analysisId,
+            bounds: result.bounds,
+            safeRoadSegments: result.safeRoadSegments,
+            blockedRoadSegments: result.blockedRoadSegments,
+          };
+          setDamageAnalysis(analysis);
+          setDamageAnalysisSource("canli-analiz");
+        } catch (e) {
+          console.warn("Hasar analizi başarısız, genel rotaya geçiliyor:", e);
+          return null;
+        } finally {
+          setDamageAnalysisLoading(false);
+        }
       }
     }
 
@@ -229,6 +319,7 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
       if (message.includes("Analiz oturumu")) {
         // Backend session expired/restarted — drop the stale cache so the next attempt re-analyzes.
         setDamageAnalysis(null);
+        setDamageAnalysisSource(null);
       }
       console.warn("Hasar-farkında rota hesaplanamadı:", e);
       return null;
@@ -277,9 +368,19 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
       if (requestId === routeRequestIdRef.current) setRoutingLoading(false);
     }
 
-    // PostGIS-tabanlı, session'sız risk-ağırlıklı rota önce denenir (analyze
-    // önceden çağrılmış olmasını gerektirmez) -- başarısız olursa satellite
-    // damage-analysis tabanlı rotaya (session gerektirir) düşülür.
+    // PostGIS-tabanlı, session'sız risk-ağırlıklı rota (hızlı, analyze
+    // önceden çağrılmış olmasını gerektirmez) VE uydu hasar-analizi (haritada
+    // acik/kapali yol katmanini besleyen tek kaynak) AYNI ANDA baslatilir.
+    // Once ikisi ayri ayri (biri basarisiz olursa digerine dus) calisiyordu
+    // -- bu, getSafeRoute her zaman kazandigi icin runDamageAwareRoute'un
+    // (ve onun icindeki setDamageAnalysis yan etkisinin, yani yesil/kirmizi
+    // yol katmaninin) HICBIR ZAMAN calismamasina yol aciyordu: rota cizgisi
+    // goruluyordu ama hangi yollarin acik/kapali oldugu hic gosterilmiyordu.
+    const damageRoutePromise = runDamageAwareRoute(origin[0], origin[1], destLat, destLon).catch((e) => {
+      console.warn("Hasar-farkında rota hesaplanamadı:", e);
+      return null;
+    });
+
     try {
       const safeRoute = await getSafeRoute(origin[0], origin[1], destLat, destLon);
       if (requestId !== routeRequestIdRef.current) return;
@@ -288,23 +389,20 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
         setCustomDistanceM(safeRoute.distanceMeters);
         setCustomWalkMinutes(Math.max(1, Math.round(safeRoute.distanceMeters / 80)));
         setRouteMode("safe-route");
+        await damageRoutePromise; // yol ortusu (damageAnalysis) dolsun diye bekle, rotasini kullanma
         return;
       }
     } catch (e) {
       console.warn("PostGIS risk-ağırlıklı rota hesaplanamadı, hasar-analiz rotası deneniyor:", e);
     }
 
-    try {
-      const damageRoute = await runDamageAwareRoute(origin[0], origin[1], destLat, destLon);
-      if (requestId !== routeRequestIdRef.current) return;
-      if (damageRoute && damageRoute.routeCoords && damageRoute.routeCoords.length > 0) {
-        setCustomRouteCoords(damageRoute.routeCoords);
-        setCustomDistanceM(damageRoute.distanceMeters);
-        setCustomWalkMinutes(Math.max(1, Math.round(damageRoute.distanceMeters / 80)));
-        setRouteMode("damage-aware");
-      }
-    } catch (e) {
-      console.warn("Hasar-farkında rota hesaplanamadı:", e);
+    const damageRoute = await damageRoutePromise;
+    if (requestId !== routeRequestIdRef.current) return;
+    if (damageRoute && damageRoute.routeCoords && damageRoute.routeCoords.length > 0) {
+      setCustomRouteCoords(damageRoute.routeCoords);
+      setCustomDistanceM(damageRoute.distanceMeters);
+      setCustomWalkMinutes(Math.max(1, Math.round(damageRoute.distanceMeters / 80)));
+      setRouteMode("damage-aware");
     }
   };
 
@@ -359,6 +457,13 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
     html: `<div style="background:#ef4444; border:2px solid #ffffff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow: 0 0 15px rgba(239,68,68,0.9);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>`,
     iconSize: [28, 28],
     iconAnchor: [14, 14],
+  });
+
+  const debrisReportIcon = L.divIcon({
+    className: "custom-debris-icon",
+    html: `<div style="width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:18px solid #fb923c;filter:drop-shadow(0 0 5px rgba(251,146,60,0.9));"></div>`,
+    iconSize: [20, 18],
+    iconAnchor: [10, 16],
   });
 
   const userGpsIcon = L.divIcon({
@@ -426,6 +531,14 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
             <span>OSM Sokak Rotası</span>
           </div>
         </div>
+
+        {damageAnalysisSource && (
+          <div className="pt-1.5 border-t border-slate-800 text-[9px] text-slate-500 font-mono leading-snug">
+            {damageAnalysisSource === "senaryo"
+              ? "Yol durumu: ekip tarafıyla aynı senaryo verisi"
+              : "Yol durumu: bu bölge için canlı görüntü analizi"}
+          </div>
+        )}
       </div>
 
       {/* FOOTER INFO CARD (BOTTOM LEFT) */}
@@ -510,6 +623,21 @@ function InnerEvacuationMap({ role, onShelterSelect }: SafeEvacuationMapProps) {
             </span>
           </Tooltip>
         </Marker>
+
+        {/* KAMERA MODELLERİYLE TESPİT EDİLEN ENKAZ/ÇATLAK NOKTALARI (paylaşılan /api/camera/reports) */}
+        {debrisReports.map((r) => (
+          <Marker key={`debris-${r.id}`} position={[r.latitude, r.longitude]} icon={debrisReportIcon}>
+            <Popup>
+              <div className="text-slate-900 text-xs font-sans space-y-1 p-1">
+                <div className="font-bold text-orange-600 flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" /> {r.topLabel || "Enkaz/Çatlak Tespiti"}
+                </div>
+                <div>Şiddet: <b>{r.severity}</b> | Tespit sayısı: {r.detectionCount}</div>
+                <div className="text-slate-500">{new Date(r.receivedAt).toLocaleTimeString("tr-TR")}</div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
 
         {/* REAL OFFICIAL AFAD ASSEMBLY & SAFE ZONES */}
         {assemblyData?.records?.map((s, idx) => {

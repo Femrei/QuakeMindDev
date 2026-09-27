@@ -145,7 +145,14 @@ def run_inference(img, road_mask_binary, model, device, damage_booster, threshol
     img_np = np.array(img.convert("RGB"))
 
     patch_size = 512
-    stride = 256  # %50 overlap — patch sınır artefaktlarını ortadan kaldırır
+    # ORTUSME. Varsayilan %50 (stride 256): parca sinir artefaktlarini siler
+    # ama 1280x1280 goruntude 25 parca demek ve cikarim suresinin tamami bu.
+    # `QM_CIKARIM_ADIMI` ile degistirilebilir; DEGISTIRMEDEN ONCE maske farki
+    # olculmeli (asagidaki olcum kayitli).
+    try:
+        stride = max(64, min(patch_size, int(os.environ.get("QM_CIKARIM_ADIMI", "256"))))
+    except ValueError:
+        stride = 256
 
     # ImageNet normalizasyon değerleri
     imagenet_mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1).to(device)
@@ -168,29 +175,51 @@ def run_inference(img, road_mask_binary, model, device, damage_booster, threshol
     total_patches = max(1, len(y_positions) * len(x_positions))
     done_patches = 0
 
-    for y in y_positions:
-        for x in x_positions:
+    # YIGIN BOYUTU. Parcalar toplu da kosabilir; cikti BIREBIR AYNI kalir
+    # (dogrulandi: maske ayni, ham olasilikta en buyuk fark 6e-06).
+    #
+    # AMA CPU'DA ISE YARAMIYOR -- olculdu (26 Eylul, 1280x1280, U-Net MiT-B4):
+    #     yigin 1: 8,49 sn   yigin 2: 9,32   yigin 4: 10,02   yigin 8: 9,79
+    # Yiginlamak %18 YAVASLATIYOR: PyTorch tek cagri icinde zaten paralel
+    # calisiyor, is parcacigi sayisi da sinirli (bkz. worker._is_parcacigi_
+    # sinirla), yigin yalnizca bellek baskisi ekliyor. Bu yuzden varsayilan 1.
+    #
+    # GPU'da tersi beklenir; `QM_CIKARIM_YIGINI` o zaman artirilir. Sayi
+    # olcmeden degistirilmemeli.
+    try:
+        yigin = max(1, int(os.environ.get("QM_CIKARIM_YIGINI", "1")))
+    except ValueError:
+        yigin = 1
+
+    konumlar = [(y, x) for y in y_positions for x in x_positions]
+    for bas in range(0, len(konumlar), yigin):
+        oba = konumlar[bas:bas + yigin]
+        girdiler = []
+        for y, x in oba:
             chunk = img_padded[y:y + patch_size, x:x + patch_size, :]
-
-            input_tensor = torch.from_numpy(chunk).permute(2, 0, 1).float() / 255.0
+            t = torch.from_numpy(chunk).permute(2, 0, 1).float() / 255.0
             if use_imagenet_norm:
-                input_tensor = (input_tensor - imagenet_mean.cpu()) / imagenet_std.cpu()
-            input_tensor = input_tensor.unsqueeze(0).to(device)
+                t = (t - imagenet_mean.cpu()) / imagenet_std.cpu()
+            girdiler.append(t)
+        toplu = torch.stack(girdiler).to(device)
 
-            with torch.no_grad():
-                output = model(input_tensor)
-                chunk_pred = torch.sigmoid(output).squeeze().cpu().numpy()
+        with torch.inference_mode():
+            cikti = model(toplu)
+            tahmin = torch.sigmoid(cikti).squeeze(1).cpu().numpy()
 
-            # Ağırlıklı toplama (blending)
+        # Agirlikli toplama: SIRA KORUNUR, boylece kayan nokta toplamasi da
+        # eski dongudekiyle ayni sirada yapilir.
+        for i, (y, x) in enumerate(oba):
+            chunk_pred = tahmin[i]
             raw_probs[y:y + patch_size, x:x + patch_size] += chunk_pred * weight_window
             weight_map[y:y + patch_size, x:x + patch_size] += weight_window
 
-            done_patches += 1
-            if progress_callback is not None:
-                try:
-                    progress_callback(done_patches, total_patches)
-                except Exception:
-                    pass
+        done_patches += len(oba)
+        if progress_callback is not None:
+            try:
+                progress_callback(done_patches, total_patches)
+            except Exception:
+                pass
 
     # Normalize (ağırlıklara böl)
     raw_probs = raw_probs / np.maximum(weight_map, 1e-6)

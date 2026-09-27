@@ -1,0 +1,343 @@
+{
+ "alan": "Hatay / Defne / Elektrik Mah.",
+ "sahne": "Hatay - Defne - Elektrik Mah.",
+ "tarih": "2023-02-09",
+ "model": "unet_mitb4_p2_t42",
+ "tohum": 7,
+ "toplamAday": 118,
+ "modelKapaliAday": 5,
+ "modelAcikAday": 113,
+ "acikOrneklemOrani": 0.2478,
+ "kesitler": {
+  "P001": {
+   "kenar": [
+    "1633195290",
+    "1633195279",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 112.7,
+   "sinif": "residential"
+  },
+  "P002": {
+   "kenar": [
+    "1982050430",
+    "3692801345",
+    0
+   ],
+   "modelKapali": true,
+   "uzunlukM": 22.1,
+   "sinif": "secondary"
+  },
+  "P003": {
+   "kenar": [
+    "10681964495",
+    "10624524118",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 50.0,
+   "sinif": "residential"
+  },
+  "P004": {
+   "kenar": [
+    "2234426150",
+    "1633195285",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 78.8,
+   "sinif": "residential"
+  },
+  "P005": {
+   "kenar": [
+    "2234462654",
+    "1633195204",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 42.1,
+   "sinif": "secondary"
+  },
+  "P006": {
+   "kenar": [
+    "1633195298",
+    "3692801344",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 100.5,
+   "sinif": "secondary"
+  },
+  "P007": {
+   "kenar": [
+    "1633195249",
+    "1633195235",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 57.7,
+   "sinif": "residential"
+  },
+  "P008": {
+   "kenar": [
+    "2234462654",
+    "10681964495",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 45.1,
+   "sinif": "residential"
+  },
+  "P009": {
+   "kenar": [
+    "1982050427",
+    "10681964496",
+    0
+   ],
+   "modelKapali": true,
+   "uzunlukM": 34.4,
+   "sinif": "secondary"
+  },
+  "P010": {
+   "kenar": [
+    "1179141449",
+    "1633195201",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 55.2,
+   "sinif": "residential"
+  },
+  "P011": {
+   "kenar": [
+    "2234426132",
+    "2234426139",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 51.8,
+   "sinif": "residential"
+  },
+  "P012": {
+   "kenar": [
+    "1633195222",
+    "1633195232",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 52.7,
+   "sinif": "residential"
+  },
+  "P013": {
+   "kenar": [
+    "1633195201",
+    "1633195206",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 53.9,
+   "sinif": "residential"
+  },
+  "P014": {
+   "kenar": [
+    "2234462785",
+    "10681964500",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 24.0,
+   "sinif": "secondary"
+  },
+  "P015": {
+   "kenar": [
+    "10681964495",
+    "1633195206",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 2.2,
+   "sinif": "residential"
+  },
+  "P016": {
+   "kenar": [
+    "2234426141",
+    "2234426142",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 40.9,
+   "sinif": "residential"
+  },
+  "P017": {
+   "kenar": [
+    "10681964494",
+    "1633195274",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 13.5,
+   "sinif": "residential"
+  },
+  "P018": {
+   "kenar": [
+    "3692801356",
+    "3692801355",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 24.2,
+   "sinif": "secondary"
+  },
+  "P019": {
+   "kenar": [
+    "1633195291",
+    "1633195273",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 161.7,
+   "sinif": "residential"
+  },
+  "P020": {
+   "kenar": [
+    "1633195271",
+    "2234426144",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 51.1,
+   "sinif": "residential"
+  },
+  "P021": {
+   "kenar": [
+    "1633195271",
+    "2234426132",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 46.5,
+   "sinif": "residential"
+  },
+  "P022": {
+   "kenar": [
+    "1633195212",
+    "1633195225",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 43.5,
+   "sinif": "residential"
+  },
+  "P023": {
+   "kenar": [
+    "1633195288",
+    "1633195283",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 19.0,
+   "sinif": "residential"
+  },
+  "P024": {
+   "kenar": [
+    "1633195279",
+    "2234426150",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 38.6,
+   "sinif": "residential"
+  },
+  "P025": {
+   "kenar": [
+    "10624524118",
+    "1633195210",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 43.1,
+   "sinif": "residential"
+  },
+  "P026": {
+   "kenar": [
+    "1186265815",
+    "1633195208",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 36.5,
+   "sinif": "secondary"
+  },
+  "P027": {
+   "kenar": [
+    "2234293779",
+    "3692801345",
+    0
+   ],
+   "modelKapali": true,
+   "uzunlukM": 21.1,
+   "sinif": "secondary"
+  },
+  "P028": {
+   "kenar": [
+    "1633195273",
+    "1633195279",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 37.7,
+   "sinif": "residential"
+  },
+  "P029": {
+   "kenar": [
+    "2234426136",
+    "1633195256",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 46.4,
+   "sinif": "residential"
+  },
+  "P030": {
+   "kenar": [
+    "1186265916",
+    "1633195288",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 13.2,
+   "sinif": "residential"
+  },
+  "P031": {
+   "kenar": [
+    "10681964497",
+    "1982050430",
+    0
+   ],
+   "modelKapali": true,
+   "uzunlukM": 12.9,
+   "sinif": "secondary"
+  },
+  "P032": {
+   "kenar": [
+    "10681975107",
+    "1186265601",
+    0
+   ],
+   "modelKapali": false,
+   "uzunlukM": 52.2,
+   "sinif": "secondary"
+  },
+  "P033": {
+   "kenar": [
+    "2234293779",
+    "2234426150",
+    0
+   ],
+   "modelKapali": true,
+   "uzunlukM": 84.8,
+   "sinif": "residential"
+  }
+ }
+}

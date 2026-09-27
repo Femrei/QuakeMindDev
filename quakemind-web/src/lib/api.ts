@@ -121,6 +121,26 @@ export interface SOSAlert {
   receivedAt: string;
   status?: "OPEN" | "EN_ROUTE" | "RESOLVED";
   urgency?: "HIGH" | "MEDIUM" | "CRITICAL";
+  /** Diyagramlardaki pil durumu -- gercek donanim sensoru yok, temsili/
+   * simule deger (bkz. rich_simulation.py::generate_incidents). */
+  batteryPercent?: number | null;
+  /** Diyagramlardaki haberlesme durumu -- sebeke normal mi (online), BLE
+   * mesh rolesi uzerinden mi (mesh), yoksa hic ulasmiyor mu (offline). */
+  commsStatus?: "online" | "mesh" | "offline" | null;
+  /** Cihazin otonom guc modu -- pil %20'nin altina dustugunde ekran karartilir,
+   * Edge AI uyutulur, GPS polling seyreltilir (akis diyagramindaki tasarruf dali). */
+  powerMode?: "normal" | "tasarruf" | null;
+  /** Enkaz altindaki cihazin akustik dongusu (100 dB araliklarla siren + mikrofon
+   * dinleme) aktif mi. */
+  sirenActive?: boolean | null;
+  /** Tasarruf modunda seyreltilen GPS polling araligi (saniye). */
+  gpsPollingSec?: number | null;
+  /** BLE mesh fallback'inde gonderilen hafif JSON paketinin OLCULMUS byte
+   * uzunlugu -- tahmin degil, orkestrator serilestirip olcuyor. */
+  payloadBytes?: number | null;
+  /** Ihbarin uretim kanali -- haritadaki pin standardini surer
+   * (yolo=turuncu, nlp=sari, sos=kirmizi flasor). */
+  channel?: "yolo" | "nlp" | "sos" | null;
 }
 
 export async function fetchServerStatus(): Promise<StatusResponse> {
@@ -509,6 +529,129 @@ export async function getSOSAlerts(): Promise<{ alerts: SOSAlert[]; totalAlerts:
   return res.json();
 }
 
+export interface TeamClaim {
+  targetId: string;
+  teamId: string;
+  targetType: string;
+  lat: number;
+  lon: number;
+  status: "active" | "completed";
+  claimedAt: string;
+  routeCoords?: [number, number][];
+  distanceMeters?: number;
+  assumedSpeedKmh?: number;
+  startedAt?: string;
+  /** "Biz olmasaydik nereden giderdi" -- naif ajanin (kapanmalari bilmeden)
+   * FIILEN yurudugu rota, bizim rotamizla karsilastirmali gostermek icin. */
+  naiveRouteCoords?: [number, number][] | null;
+  naiveDistanceMeters?: number | null;
+  naiveReachable?: boolean | null;
+}
+
+export async function getTeamClaims(): Promise<{ claims: TeamClaim[]; totalClaims: number }> {
+  const res = await fetch(`${API_BASE_URL}/api/team/claims`);
+  if (!res.ok) throw new Error("Ekip claim'leri çekilemedi.");
+  return res.json();
+}
+
+export async function claimTeamTarget(payload: {
+  teamId: string;
+  targetId: string;
+  targetType: string;
+  lat: number;
+  lon: number;
+}): Promise<TeamClaim> {
+  const res = await fetch(`${API_BASE_URL}/api/team/claim`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "Ekip ataması başarısız.");
+  }
+  return res.json();
+}
+
+export async function releaseTeamClaim(targetId: string): Promise<TeamClaim> {
+  const res = await fetch(`${API_BASE_URL}/api/team/claim/${targetId}/release`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "Ekip görevi kapatılamadı.");
+  }
+  return res.json();
+}
+
+export async function updateSOSAlertStatus(
+  id: string,
+  status: "OPEN" | "EN_ROUTE" | "RESOLVED"
+): Promise<SOSAlert> {
+  const res = await fetch(`${API_BASE_URL}/api/sos/alert/${id}/status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail || "SOS durumu güncellenemedi.");
+  }
+  return res.json();
+}
+
+/** /recent artik SADECE hafif ozet doner -- agir segment dizileri
+ *  getRoadDamageSegments ile analiz basina BIR KEZ cekilir. Sebep: bir
+ *  bolgenin tam yol agi 2,1 MB JSON eder; dokuz bolgeli senaryoda /recent
+ *  her 20 saniyede ~19 MB gonderiyordu ve cagiranlarin hepsi bu verinin
+ *  neredeyse tamamini atiyordu (yalnizca "kume degisti mi" imzasina
+ *  bakiliyordu). */
+export interface RecentRoadDamageAnalysis {
+  analysisId: string;
+  createdAt: number;
+  bounds: { west: number; south: number; east: number; north: number } | null;
+  safeSegmentCount: number;
+  blockedSegmentCount: number;
+}
+
+export interface RoadDamageSegments {
+  analysisId: string;
+  bounds: { west: number; south: number; east: number; north: number } | null;
+  safeRoadSegments: [number, number][][];
+  blockedRoadSegments: [number, number][][];
+}
+
+export async function getRecentRoadDamage(minutes: number = 60): Promise<{ analyses: RecentRoadDamageAnalysis[] }> {
+  const res = await fetch(`${API_BASE_URL}/api/road_damage/recent?minutes=${minutes}`);
+  if (!res.ok) throw new Error("Güncel yol hasarı analizleri çekilemedi.");
+  return res.json();
+}
+
+/** Bir analizin segmentleri uretildikten sonra ASLA degismez, bu yuzden
+ *  sonuc sekmede kalici olarak onbelleklenir; ayni analizi birden fazla
+ *  sayfa/bilesen isterse (harita, komuta paneli, tahliye haritasi) ag
+ *  istegi yalnizca BIR kez yapilir. Ucus halindeki istek de paylasilir. */
+const roadDamageSegmentsCache = new Map<string, Promise<RoadDamageSegments>>();
+
+export function getRoadDamageSegments(analysisId: string): Promise<RoadDamageSegments> {
+  const cached = roadDamageSegmentsCache.get(analysisId);
+  if (cached) return cached;
+
+  const request = fetch(`${API_BASE_URL}/api/road_damage/segments/${analysisId}`)
+    .then((res) => {
+      if (!res.ok) throw new Error("Yol segmentleri çekilemedi.");
+      return res.json() as Promise<RoadDamageSegments>;
+    })
+    .catch((err) => {
+      // Basarisiz istek onbellekte kalirsa analiz bir daha HIC cekilemez.
+      roadDamageSegmentsCache.delete(analysisId);
+      throw err;
+    });
+
+  roadDamageSegmentsCache.set(analysisId, request);
+  return request;
+}
+
 export interface CameraDetection {
   label: string;
   confidence: number;
@@ -527,13 +670,52 @@ export interface CameraAnalysisResponse {
   timestamp: string;
 }
 
-export async function analyzeCameraFrame(modelType: string = "hybrid", imageBase64?: string): Promise<CameraAnalysisResponse> {
+export async function analyzeCameraFrame(
+  modelType: string = "hybrid",
+  imageBase64?: string,
+  latitude?: number,
+  longitude?: number
+): Promise<CameraAnalysisResponse> {
   const res = await fetch(`${API_BASE_URL}/api/camera/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ modelType, imageBase64 }),
+    body: JSON.stringify({ modelType, imageBase64, latitude, longitude }),
   });
   if (!res.ok) throw new Error("Kamera analizi başarısız.");
+  return res.json();
+}
+
+export interface DebrisReport {
+  id: string;
+  latitude: number;
+  longitude: number;
+  status: string;
+  severity: "CRITICAL" | "SAFE";
+  detectionCount: number;
+  topLabel: string | null;
+  receivedAt: string;
+}
+
+export async function getDebrisReports(): Promise<{ reports: DebrisReport[]; totalReports: number }> {
+  const res = await fetch(`${API_BASE_URL}/api/camera/reports`);
+  if (!res.ok) throw new Error("Enkaz/çatlak raporları çekilemedi.");
+  return res.json();
+}
+
+export interface NLPLocation {
+  id: string;
+  latitude: number;
+  longitude: number;
+  konumMetin: string | null;
+  kategori: string | null;
+  aciliyet: number | null;
+  sourceText: string;
+  receivedAt: string;
+}
+
+export async function getNlpLocations(): Promise<{ locations: NLPLocation[]; totalLocations: number }> {
+  const res = await fetch(`${API_BASE_URL}/api/nlp/locations`);
+  if (!res.ok) throw new Error("NLP konum çıkarımları çekilemedi.");
   return res.json();
 }
 
@@ -552,6 +734,7 @@ export interface EvacuationAssemblyRecord {
   source?: string;
   capacity?: string;
   status?: string;
+  dist_m?: number;
 }
 
 export interface EvacuationAssemblyResponse {

@@ -1,4 +1,6 @@
+import json
 import re
+import threading
 import unicodedata
 
 from transformers import pipeline
@@ -33,6 +35,53 @@ STOP_FALLBACK_TOKENS = ADDRESS_HINTS | NOISE_WORDS
 # konum icin 23'e kadar cikabiliyordu -- her biri bir ag gidis-donusu, ilk
 # (onbelleksiz) sorgu icin olculen 7-10 sn, en kotu durumda ~28 sn).
 MAX_GEOCODE_QUERIES = 4
+
+
+# Geocoding onbellegi -- olculdu: uctan uca process_tweet 7,28sn suruyordu ve
+# bunun 6,45sn'si (%89) Nominatim'i beklemekti. Tek bir metin 23 sorgu adayi
+# uretebiliyor ve her sorgu RateLimiter'in 1,2sn'lik gecikmesi ardinda canli
+# HTTP yapiyor; hicbiri tutmazsa 23 x 1,2sn ~ 28sn. Onbellek olmadigi icin
+# AYNI metin ikinci kez geldiginde bedel bastan odeniyordu.
+#
+# Onbellek sorgu METNINE gore anahtarlanir ve BASARISIZ sonuclari da saklar
+# (asil maliyet zaten tutmayan sorgularin taranmasi). Diske yazildigi icin
+# surec yeniden baslatildiginda da korunur. Sonuclar bit-bit ayni oldugu icin
+# bu degisiklik NLP ciktilarini DEGISTIRMEZ -- yalnizca ayni sonuca daha hizli
+# ulasir.
+_GEOCACHE_PATH = Path(__file__).resolve().parents[1] / "data" / "geocode_cache.json"
+_geocache_lock = threading.Lock()
+_geocache: "dict | None" = None
+
+
+def _load_geocache():
+    global _geocache
+    if _geocache is None:
+        try:
+            _geocache = json.loads(_GEOCACHE_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            _geocache = {}
+    return _geocache
+
+
+def _geocache_get(query):
+    with _geocache_lock:
+        cache = _load_geocache()
+        return cache.get(query, "__MISS__")
+
+
+def _geocache_put(query, value):
+    with _geocache_lock:
+        cache = _load_geocache()
+        cache[query] = value
+        try:
+            _GEOCACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            _GEOCACHE_PATH.write_text(
+                json.dumps(cache, ensure_ascii=False), encoding="utf-8"
+            )
+        except Exception:
+            # Onbellek yazilamiyorsa (salt-okunur kurulum, disk dolu) bellekte
+            # tutmaya devam et -- geocoding'in kendisi calismaya devam etmeli.
+            pass
 
 
 class LocationExtractor:
@@ -324,6 +373,20 @@ class LocationExtractor:
 
         return best_location
 
+    def _query_latlon(self, query):
+        """_query_location'in onbellekli sarmalayicisi. Onbellek geopy
+        Location nesnesini degil, cagiranin zaten kullandigi tek seyi
+        (enlem/boylam ciftini) saklar; BASARISIZLIK da saklanir cunku asil
+        maliyet tutmayan sorgulari taramaktir."""
+        cached = _geocache_get(query)
+        if cached != "__MISS__":
+            return cached
+
+        location = self._query_location(query)
+        value = [location.latitude, location.longitude] if location else None
+        _geocache_put(query, value)
+        return value
+
     def _build_queries(self, location_text, raw_text=None):
         queries = []
         normalized = self._normalize_location_text(location_text)
@@ -407,11 +470,21 @@ class LocationExtractor:
         if local_coords:
             return list(local_coords), first_candidate
 
+        # Adaylar buyuk olcude ortusen sorgular uretiyor ("Antakya, Turkey"
+        # yedi adaydan besinde cikiyor) ve dedupe eskiden yalnizca TEK bir
+        # adayin sorgu listesi icinde yapiliyordu -- yani ayni basarisiz sorgu
+        # ayni metin icinde defalarca aga gidiyordu. Sorgu ADAYLAR ARASINDA da
+        # tekrarlanmaz. Sonuc degismez: tutan bir sorgu zaten aninda donerdi,
+        # dolayisiyla atlanan her sorgu daha once BASARISIZ olmus bir sorgudur.
+        tried = set()
         for candidate in candidates:
             for query in self._build_queries(candidate, raw_text=raw_text):
-                location = self._query_location(query)
-                if location:
-                    return [location.latitude, location.longitude], candidate
+                if query in tried:
+                    continue
+                tried.add(query)
+                latlon = self._query_latlon(query)
+                if latlon:
+                    return latlon, candidate
 
         return None, None
 

@@ -1,0 +1,858 @@
+[
+ {
+  "istek": "GET /",
+  "durum": 200,
+  "anahtarlar": [
+   "message",
+   "status"
+  ]
+ },
+ {
+  "istek": "GET /api/status",
+  "durum": 200,
+  "anahtarlar": [
+   "modules",
+   "status",
+   "yuklu"
+  ]
+ },
+ {
+  "istek": "GET /api/postgis/status",
+  "durum": 200,
+  "anahtarlar": [
+   "dbUrl",
+   "hybridFallbackActive",
+   "message",
+   "postgisConnected"
+  ]
+ },
+ {
+  "istek": "POST /api/auth/register",
+  "durum": 200,
+  "anahtarlar": [
+   "message",
+   "savedToPostgres",
+   "status",
+   "token",
+   "user"
+  ]
+ },
+ {
+  "istek": "POST /api/auth/login",
+  "durum": 200,
+  "anahtarlar": [
+   "message",
+   "status",
+   "token",
+   "user"
+  ]
+ },
+ {
+  "istek": "GET /api/auth/me?token=gecersiz",
+  "durum": 200,
+  "anahtarlar": [
+   "status",
+   "user"
+  ]
+ },
+ {
+  "istek": "GET /api/oturum/ben +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "kullanici"
+  ]
+ },
+ {
+  "istek": "GET /api/oturum/ben",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/oturum/giris",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/oturum/rol +jeton",
+  "durum": 403,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/oturum/yenile",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/ozet +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "atananSos",
+   "bekleyenSos",
+   "ekipSayisi",
+   "gorevdekiEkip",
+   "hasarliYapi",
+   "hasarliYol",
+   "kapananSos",
+   "kaynakSayilari",
+   "musaitEkip",
+   "olusturuldu",
+   "sahadakiKisi",
+   "yikikYapi"
+  ]
+ },
+ {
+  "istek": "GET /api/ozet",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/sos +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": [
+   "atamaZamani",
+   "durum",
+   "durumSecildi",
+   "ekipId",
+   "gorevler",
+   "id",
+   "ihtiyaclar",
+   "kisiSayisi",
+   "konumDogrulukM",
+   "konumKaynagi",
+   "lat",
+   "lon",
+   "mahalle",
+   "metin",
+   "oncelik",
+   "zaman"
+  ]
+ },
+ {
+  "istek": "GET /api/ekipler +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": [
+   "ad",
+   "durum",
+   "gorev",
+   "guncellendi",
+   "id",
+   "kisiSayisi",
+   "konumZamani",
+   "kurum",
+   "lat",
+   "lon",
+   "musait",
+   "tur",
+   "uyeler",
+   "yerAdi"
+  ]
+ },
+ {
+  "istek": "GET /api/hasar-noktalari +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": [
+   "etiket",
+   "guven",
+   "id",
+   "kaynak",
+   "lat",
+   "lon",
+   "skor",
+   "zaman"
+  ]
+ },
+ {
+  "istek": "GET /api/sos/yok/en-yakin-ekip +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/sos/yok/ata +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/sos/yok/kapat +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/ekipler/yok/konum +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/gorevler +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": [
+   "adimlar",
+   "atandi",
+   "atayanAd",
+   "bitti",
+   "cikis",
+   "durum",
+   "ekDestek",
+   "ekip",
+   "ekipKonumu",
+   "hedef",
+   "hedefId",
+   "hedefTur",
+   "id",
+   "kalanM",
+   "kisiSayisi",
+   "not",
+   "olaySuruyor",
+   "rota",
+   "sonuc",
+   "vardi",
+   "yol",
+   "yolaCikti"
+  ]
+ },
+ {
+  "istek": "GET /api/gorevler",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/gorevler/aday-ekipler?hedefTur=sos&hedefId=yok +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/gorevler +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/gorevler",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/gorevler/yok/durum +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/ekibim +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "ekip",
+   "gecmis",
+   "gorev"
+  ]
+ },
+ {
+  "istek": "POST /api/ekipler +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/ekipler/uye-adaylari +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": [
+   "adSoyad",
+   "ekipId",
+   "eposta",
+   "id"
+  ]
+ },
+ {
+  "istek": "PUT /api/ekipler/yok/uyeler +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/sos/alerts",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/sos/alert",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/sos/alert/yok/status",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/team/claims",
+  "durum": 200,
+  "anahtarlar": [
+   "claims",
+   "totalClaims"
+  ]
+ },
+ {
+  "istek": "POST /api/team/claim",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/team/claim/yok/release",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/team/claim/yok/route",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/notifications/active",
+  "durum": 200,
+  "anahtarlar": [
+   "activeAlert",
+   "totalAlerts"
+  ]
+ },
+ {
+  "istek": "POST /api/notifications/send_emergency",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/chat/messages?token=gecersiz",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/chat/send",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/camera/reports",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/camera/analyze",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/nlp/locations",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/nlp/analyze",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/risk/fault_lines",
+  "durum": 200,
+  "anahtarlar": [
+   "count",
+   "faultLines"
+  ]
+ },
+ {
+  "istek": "GET /api/risk/all_quakes?limit=5",
+  "durum": 200,
+  "anahtarlar": [
+   "datasetEnd",
+   "datasetStart",
+   "datasetTotal",
+   "quakes",
+   "returned",
+   "totalMatched"
+  ]
+ },
+ {
+  "istek": "POST /api/risk/predict",
+  "durum": 200,
+  "anahtarlar": [
+   "city",
+   "coordinates",
+   "factors",
+   "faultLines",
+   "heatmapEvents",
+   "lastUpdate",
+   "mapEvents",
+   "mapHtml",
+   "metrics",
+   "nearbyFaults",
+   "recentEvents",
+   "refreshMessage",
+   "riskLevel",
+   "riskScore",
+   "source",
+   "summary",
+   "technicalLayers",
+   "technicalQuakes",
+   "usedManualCoordinates"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/analyze",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/status/yok",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/segments/yok",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/gorsel/yok/imageOriginal",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/gorsel/yok/..%2Fgizli",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/route",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/route",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/simulate_closures",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/closures_from_mask",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/closures_from_emsr",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/naive_compare",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/reference_compare",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/safe_route",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/calculate_custom_route",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/road_damage/report_blockage",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/recent?minutes=5",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/nearest_debris?latitude=36.2&longitude=36.16&limit=3",
+  "durum": 200,
+  "anahtarlar": [
+   "debrisSites",
+   "nearestDebrisCount",
+   "source",
+   "teamLocation"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/heatmap?latitude=36.202&longitude=36.161&radiusKm=5",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/road_damage/assembly?latitude=36.202&longitude=36.161&radiusKm=2&allowOnlineFallback=false",
+  "durum": 200,
+  "anahtarlar": [
+   "activeDataSource",
+   "nearest",
+   "nearestAirM",
+   "osmError",
+   "records",
+   "routeCoords",
+   "routeError",
+   "routeLengthM"
+  ]
+ },
+ {
+  "istek": "GET /api/live",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/bildirimler/aktif +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": null
+ },
+ {
+  "istek": "GET /api/bildirimler/aktif",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/altlik/yerler +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "yerler"
+  ]
+ },
+ {
+  "istek": "GET /api/altlik/yerler",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/sos +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/bildirimler",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/bildirimler +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/bildirimler +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": [
+   "baslik",
+   "buyukluk",
+   "gonderen",
+   "id",
+   "kaldiran",
+   "kaldirildi",
+   "kaynak",
+   "konum",
+   "metin",
+   "onem",
+   "zaman"
+  ]
+ },
+ {
+  "istek": "POST /api/bildirimler/yok/kaldir +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/yakin-yerler?lat=36.2086&lon=36.1547 +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "hizmetKapsami",
+   "kaynaklar",
+   "yaricapKm",
+   "yerler",
+   "yurume"
+  ]
+ },
+ {
+  "istek": "GET /api/yakin-yerler?lat=36.2086&lon=36.1547",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/sokak-rotasi",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/fotograf-analiz",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/fotograf-analiz +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/metin-analiz",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/metin-analiz +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/ihbarlar",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/ihbarlar +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/ihbarlar?baslangic=0&bitis=1 +jeton",
+  "durum": 200,
+  "liste": true,
+  "ogeAnahtarlari": null
+ },
+ {
+  "istek": "GET /api/ihbarlar",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/ihbarlar/yok/fotograf +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/ihbarlar/yok/durum +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/rota",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/rota +jeton",
+  "durum": 404,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "POST /api/afetzede/rota +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "adimlar",
+   "algoritma",
+   "baglanti",
+   "hasar",
+   "kaynak",
+   "koordinatlar",
+   "uyari",
+   "uzunlukM",
+   "yuruyusDk"
+  ]
+ },
+ {
+  "istek": "GET /api/katman/kapanmalar +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "kayitlar",
+   "kaynak",
+   "kutu",
+   "sayi"
+  ]
+ },
+ {
+  "istek": "GET /api/katman/kapanmalar",
+  "durum": 401,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/katman/depremler?enAz=6 +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "enAz",
+   "kayitlar",
+   "kaynak",
+   "kutu",
+   "kutudakiToplam",
+   "sayi"
+  ]
+ },
+ {
+  "istek": "GET /api/katman/faylar?kutu=36.0,36.0,37.0,37.0 +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "kayitlar",
+   "kaynak",
+   "kutu",
+   "sayi"
+  ]
+ },
+ {
+  "istek": "GET /api/katman/faylar?kutu=0,0,90,90 +jeton",
+  "durum": 422,
+  "anahtarlar": [
+   "detail"
+  ]
+ },
+ {
+  "istek": "GET /api/katman/toplanma?kutu=36.1,36.15,36.25,36.25 +jeton",
+  "durum": 200,
+  "anahtarlar": [
+   "kayitlar",
+   "kaynak",
+   "kutu",
+   "kutudakiToplam",
+   "sayi"
+  ]
+ }
+]

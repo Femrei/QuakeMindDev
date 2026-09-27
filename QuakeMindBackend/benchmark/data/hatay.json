@@ -1,0 +1,276 @@
+{
+  "region": "hatay",
+  "label": "Hatay / Antakya (merkez)",
+  "bbox": {
+    "west": 36.041101873,
+    "south": 36.184509363000004,
+    "east": 36.287904422,
+    "north": 36.360655515
+  },
+  "toplanmaAlaniCount": 95,
+  "toplanmaAlaniUrbanCoreCount": 76,
+  "mahalleler": [
+    {
+      "name": "AÇIKDERE",
+      "ilce": "ANTAKYA",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.266337453999995,
+        "south": 36.233661405999996,
+        "east": 36.276337454,
+        "north": 36.243661406
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "AÇIKDERE",
+          "lat": 36.238661406,
+          "lon": 36.271337454
+        }
+      ]
+    },
+    {
+      "name": "AKASYA",
+      "ilce": "ANTAKYA",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.122724455,
+        "south": 36.225855585,
+        "east": 36.132724455,
+        "north": 36.235855585
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "AKASYA",
+          "lat": 36.230855585,
+          "lon": 36.127724455
+        }
+      ]
+    },
+    {
+      "name": "AKCURUN",
+      "ilce": "ANTAKYA",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.261133535,
+        "south": 36.212411611,
+        "east": 36.271133535000004,
+        "north": 36.222411611000005
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "AKCURUN",
+          "lat": 36.217411611,
+          "lon": 36.266133535
+        }
+      ]
+    },
+    {
+      "name": "AKÇAOVA",
+      "ilce": "ANTAKYA",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.234236104,
+        "south": 36.289982636999994,
+        "east": 36.244236104,
+        "north": 36.299982637
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "AKÇAOVA",
+          "lat": 36.294982637,
+          "lon": 36.239236104
+        }
+      ]
+    },
+    {
+      "name": "AKEVLER",
+      "ilce": "ANTAKYA",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.149745288999995,
+        "south": 36.203573168999995,
+        "east": 36.159745289,
+        "north": 36.213573169
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "AKEVLER",
+          "lat": 36.208573169,
+          "lon": 36.154745289
+        }
+      ]
+    },
+    {
+      "name": "AKHİSAR",
+      "ilce": "ANTAKYA",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.182193061999996,
+        "south": 36.307868823,
+        "east": 36.192193062,
+        "north": 36.317868823000005
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "AKHİSAR",
+          "lat": 36.312868823,
+          "lon": 36.187193062
+        }
+      ]
+    },
+    {
+      "name": "AKSARAY",
+      "ilce": "ANTAKYA",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.140675564,
+        "south": 36.215717723999994,
+        "east": 36.150675564000004,
+        "north": 36.225717724
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "AKSARAY",
+          "lat": 36.220717724,
+          "lon": 36.145675564
+        }
+      ]
+    },
+    {
+      "name": "ALAATTİN",
+      "ilce": "ANTAKYA",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.232318121,
+        "south": 36.276607485999996,
+        "east": 36.242318121000004,
+        "north": 36.286607486
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "ALAATTİN",
+          "lat": 36.281607486,
+          "lon": 36.237318121
+        }
+      ]
+    },
+    {
+      "name": "ALAZI",
+      "ilce": "ANTAKYA",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.167188196,
+        "south": 36.307043955,
+        "east": 36.177188196,
+        "north": 36.317043955
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "ALAZI",
+          "lat": 36.312043955,
+          "lon": 36.172188196
+        }
+      ]
+    },
+    {
+      "name": "ALTINÇAY",
+      "ilce": "ANTAKYA",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.135726768,
+        "south": 36.207426997,
+        "east": 36.145726768,
+        "north": 36.217426997000004
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "ALTINÇAY",
+          "lat": 36.212426997,
+          "lon": 36.140726768
+        }
+      ]
+    },
+    {
+      "name": "ANAYAZI",
+      "ilce": "ANTAKYA",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.204463165,
+        "south": 36.315473895,
+        "east": 36.214463165000005,
+        "north": 36.325473895
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "ANAYAZI",
+          "lat": 36.320473895,
+          "lon": 36.209463165
+        }
+      ]
+    },
+    {
+      "name": "AYDINLIKEVLER",
+      "ilce": "ANTAKYA",
+      "toplanmaAlaniCount": 1,
+      "bbox": {
+        "west": 36.177191437999994,
+        "south": 36.202586483,
+        "east": 36.187191438,
+        "north": 36.212586483
+      },
+      "toplanmaAlanlari": [
+        {
+          "name": "AYDINLIKEVLER",
+          "lat": 36.207586483,
+          "lon": 36.182191438
+        }
+      ]
+    }
+  ],
+  "infra": {
+    "itfaiye": [],
+    "hastane": [
+      {
+        "name": "Özel Antakya Akademi Hastanesi",
+        "lat": 36.235842,
+        "lon": 36.1697494
+      },
+      {
+        "name": "Antakya Devlet Hastanesi",
+        "lat": 36.2145194,
+        "lon": 36.1367626
+      },
+      {
+        "name": "Hatay Devlet Hastanesi",
+        "lat": 36.2699485,
+        "lon": 36.2245215
+      },
+      {
+        "name": "Özel Mozaik Kadın Hastalıkları ve Doğum Merkezi",
+        "lat": 36.1966765,
+        "lon": 36.1638492
+      },
+      {
+        "name": "Isimsiz",
+        "lat": 36.3358668,
+        "lon": 36.1976964
+      },
+      {
+        "name": "Isimsiz",
+        "lat": 36.3359466,
+        "lon": 36.1991471
+      },
+      {
+        "name": "Özel Antakya Göz Hastanesi",
+        "lat": 36.1968384,
+        "lon": 36.1641023
+      },
+      {
+        "name": "Kocaeli Büyükşehir Belediyesi Hastanesi",
+        "lat": 36.2282928,
+        "lon": 36.1305544
+      }
+    ],
+    "afadUmke": []
+  }
+}

@@ -1,0 +1,10 @@
+region,severity,teamId,victimId,mahalle,ourEngineDistanceMeters,ourEngineTimeMin,naiveDistanceMeters,naiveTimeMin,timeSavedMin,naiveUnreachable,naiveDiscoveries
+hatay,orta,ekip-1,AKSARAY-2,AKSARAY,4441.7,17.8,4441.7,17.8,0.0,False,0
+hatay,orta,ekip-3,AKSARAY-4,AKSARAY,5366.8,21.5,4788.2,19.2,-2.3,False,0
+hatay,orta,ekip-6,AKSARAY-6,AKSARAY,4895.8,19.6,4317.2,17.3,-2.3,False,0
+hatay,agir,ekip-5,AKSARAY-4,AKSARAY,5296.3,21.2,4982.4,19.9,-1.3,False,2
+hatay,agir,ekip-6,AKSARAY-5,AKSARAY,4830.8,19.3,4252.2,17.0,-2.3,False,0
+kahramanmaras,orta,ekip-5,EKMEKÇİ-6,EKMEKÇİ,1987.1,7.9,1803.9,7.2,-0.7,False,0
+kahramanmaras,orta,ekip-2,EKMEKÇİ-5,EKMEKÇİ,1966.7,7.9,1966.7,7.9,0.0,False,0
+kahramanmaras,agir,ekip-1,EKMEKÇİ-5,EKMEKÇİ,1396.9,5.6,,,,True,
+kahramanmaras,agir,ekip-2,EKMEKÇİ-6,EKMEKÇİ,1797.7,7.2,,,,True,

@@ -1,0 +1,23 @@
+---
+import Marka from './Marka.astro'
+import { tr } from '@/icerik/tr'
+---
+
+<header class="sticky top-0 z-10 border-b border-line bg-panel">
+  <div class="kap flex h-topbar items-center gap-gutter">
+    <a href="#ust" aria-label="QuakeMind, sayfa başı"><Marka /></a>
+    <nav class="ml-auto hidden items-center gap-0.5 genis:flex" aria-label="Sayfa bölümleri">
+      {
+        tr.menu.map((oge) => (
+          <a
+            href={oge.hedef}
+            class="rounded-control px-2.5 py-1.5 text-body text-ink-2 transition-colors duration-150 ease-out-qm hover:bg-hover hover:text-ink"
+          >
+            {oge.ad}
+          </a>
+        ))
+      }
+    </nav>
+    <span class="ml-auto text-small text-ink-3 genis:ml-0">TÜBİTAK 2209-A</span>
+  </div>
+</header>

@@ -1,12 +1,25 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem, MapPolylineItem } from "@/components/map/InteractiveMap";
-import { getSOSAlerts, fetchServerStatus, SOSAlert } from "@/lib/api";
+import {
+  getSOSAlerts,
+  fetchServerStatus,
+  SOSAlert,
+  getTeamClaims,
+  getRecentRoadDamage,
+  getRoadDamageSegments,
+  getDebrisReports,
+  getNlpLocations,
+  TeamClaim,
+  DebrisReport,
+  NLPLocation,
+} from "@/lib/api";
 import { deriveUrgencyTier, urgencyLabel, urgencyTextClass } from "@/lib/urgency";
-import { useMapLayers } from "@/context/MapLayersContext";
+import { interpolateTeamPosition } from "@/lib/teamPosition";
+import { COMMS_LABEL, CHANNEL_LABEL } from "@/lib/commsStatus";
 import {
   ShieldAlert,
   Siren,
@@ -19,13 +32,17 @@ import {
   TrendingUp,
   Users,
   ArrowUpRight,
-  Sparkles,
+  Radio,
 } from "lucide-react";
+
+const SIMULATION_POLL_MS = 2500;
+// Yol agi buyuk (bir sehir ~4,5MB JSON) ve analiz basina bir kez uretilir --
+// hizli dongude her tur cekmeye gerek yok.
+const ROAD_POLL_MS = 20000;
 
 const ANTAKYA_CENTER: [number, number] = [36.202, 36.161];
 
 export default function CommandDashboardPage() {
-  const { sosAlerts: contextSosAlerts, demoActive } = useMapLayers();
   const [alerts, setAlerts] = useState<SOSAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<{ nlp: boolean; risk: boolean; road_damage: boolean }>({
@@ -34,14 +51,116 @@ export default function CommandDashboardPage() {
     road_damage: true,
   });
 
-  // Global simülasyon aktifken war-room haritası ve metrikler de Navbar'ın
-  // ürettiği ortak SOS veri setini kullanır.
+  const [simulationMode, setSimulationMode] = useState(false);
+  const [teamClaims, setTeamClaims] = useState<TeamClaim[]>([]);
+  const [damagePolylines, setDamagePolylines] = useState<MapPolylineItem[]>([]);
+  const [roadStats, setRoadStats] = useState<{ safe: number; blocked: number }>({ safe: 0, blocked: 0 });
+  const [debrisReports, setDebrisReports] = useState<DebrisReport[]>([]);
+  const [nlpLocations, setNlpLocations] = useState<NLPLocation[]>([]);
+  // Ekip pozisyonlari zaman-bazli interpolasyonla turetildigi icin, harita
+  // yeniden render olsun diye her tick'te bagimsiz bir "simdi" tetigi lazim.
+  const [, setSimTick] = useState(0);
+  // Yol analizi kumesinin "imzasi" (id + segment sayilari) -- degismediyse
+  // 90.000 elemanli polyline dizileri yeniden olusturulmaz.
+  const roadSignatureRef = useRef<string>("");
+
   useEffect(() => {
-    if (demoActive) {
-      setAlerts(contextSosAlerts);
-      setLoading(false);
-      return;
-    }
+    if (!simulationMode) return;
+
+    const poll = async () => {
+      try {
+        const [sosData, claimsData, debrisData, nlpData] = await Promise.all([
+          getSOSAlerts(),
+          getTeamClaims(),
+          getDebrisReports(),
+          getNlpLocations(),
+        ]);
+        setAlerts(sosData.alerts);
+        setTeamClaims(claimsData.claims);
+        setDebrisReports(debrisData.reports);
+        setNlpLocations(nlpData.locations);
+      } catch {
+        // sunucu gecici olarak yanit vermiyor olabilir -- bir sonraki tick'te tekrar dene
+      }
+      setSimTick((t) => t + 1);
+    };
+
+    poll();
+    const interval = setInterval(poll, SIMULATION_POLL_MS);
+    return () => clearInterval(interval);
+  }, [simulationMode]);
+
+  // Yol agi AYRI ve cok daha seyrek cekilir: bir sehrin tam yol agi ~4,5MB
+  // JSON eder ve 2,5sn'lik hizli dongude her tur yeniden indirilip
+  // ayristirilirsa istekler ust uste binip arayuzu bogar (olculdu: tek
+  // istek ~1,8sn). Ayrica analiz kumesi degismediyse (ayni analysisId'ler,
+  // ayni segment sayilari) 90.000 elemanli diziler bosuna yeniden
+  // olusturulmaz -- yol kapanmalari zaten analiz basina bir kez uretilir.
+  useEffect(() => {
+    if (!simulationMode) return;
+
+    const pollRoads = async () => {
+      try {
+        const damageData = await getRecentRoadDamage(120);
+        // /recent artik yalnizca hafif ozet doner (bkz. api.ts). Imza
+        // degismediyse tek bir agir istek bile atilmaz; degistiyse agir
+        // diziler analiz basina BIR KEZ (getRoadDamageSegments onbellegi)
+        // cekilir.
+        const signature = damageData.analyses
+          .map((a) => `${a.analysisId}:${a.safeSegmentCount}:${a.blockedSegmentCount}`)
+          .join("|");
+        if (signature === roadSignatureRef.current) return;
+        roadSignatureRef.current = signature;
+
+        const segments = await Promise.all(
+          damageData.analyses.map((a) => getRoadDamageSegments(a.analysisId).catch(() => null))
+        );
+
+        const polylines: MapPolylineItem[] = [];
+        let safeCount = 0;
+        let blockedCount = 0;
+        segments.forEach((seg) => {
+          if (!seg) return;
+          safeCount += seg.safeRoadSegments.length;
+          blockedCount += seg.blockedRoadSegments.length;
+          // Bir sehrin TAM yol agi ~50.000 segment surer -- her segmenti ayri
+          // bir <Polyline> yapmak React'i ve Leaflet'i kilitliyordu (olculdu:
+          // katmani acmak tarayiciyi 30sn+ dondurdu). Acik yollarin hepsi TEK,
+          // kapalilarin hepsi TEK cok-parcali katman olarak cizilir.
+          if (seg.safeRoadSegments.length > 0) {
+            polylines.push({
+              id: `${seg.analysisId}-safe`,
+              coords: [],
+              coordGroups: seg.safeRoadSegments as [number, number][][],
+              color: "#22c55e",
+              weight: 2,
+              opacity: 0.75,
+            });
+          }
+          if (seg.blockedRoadSegments.length > 0) {
+            polylines.push({
+              id: `${seg.analysisId}-blocked`,
+              coords: [],
+              coordGroups: seg.blockedRoadSegments as [number, number][][],
+              color: "#ef4444",
+              weight: 3,
+              opacity: 0.95,
+            });
+          }
+        });
+        setDamagePolylines(polylines);
+        setRoadStats({ safe: safeCount, blocked: blockedCount });
+      } catch {
+        // sunucu gecici olarak yanit vermiyor olabilir -- bir sonraki turda tekrar dene
+      }
+    };
+
+    pollRoads();
+    const interval = setInterval(pollRoads, ROAD_POLL_MS);
+    return () => clearInterval(interval);
+  }, [simulationMode]);
+
+  useEffect(() => {
     getSOSAlerts()
       .then((data) => {
         setAlerts(data.alerts);
@@ -82,8 +201,23 @@ export default function CommandDashboardPage() {
       });
 
     fetchServerStatus().then((res) => setStatus(res.modules)).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demoActive]);
+  }, []);
+
+  // Bir ihbara ekip atanmis mi -- atanmissa marker'i kirmizidan turuncuya
+  // cevirmek icin (diger ekipler oraya zaten gidildigini gorsun, ayni
+  // mantik command/sos/page.tsx'te de kullaniliyor).
+  // Ekip rolu haritada renk olarak gorunsun diye ekip kodundan cikarilir
+  // (HATAY-AK1 / MARAS-MED2 / HATAY-LOJ1). Backend'in claim kaydi rolu ayrica
+  // tutmuyor -- kod zaten rolu tasidigi icin ek bir alan gerekmiyor.
+  const teamRoleFromId = (teamId: string): MapMarkerItem["teamRole"] => {
+    if (/-MED\d*/i.test(teamId)) return "medikal";
+    if (/-LOJ\d*/i.test(teamId)) return "lojistik";
+    if (/-AK\d*/i.test(teamId)) return "arama-kurtarma";
+    return undefined;
+  };
+
+  const claimForAlert = (id: string): TeamClaim | undefined =>
+    teamClaims.find((c) => c.targetId === id && c.status === "active");
 
   const markers: MapMarkerItem[] = alerts.map((a) => ({
     id: a.id,
@@ -91,8 +225,151 @@ export default function CommandDashboardPage() {
     lng: a.longitude,
     title: `SOS: ${a.message || "Acil Çağrı"}`,
     type: "sos",
-    popupText: `Durum: ${a.status || "AÇIK"} | Alındı: ${new Date(a.receivedAt).toLocaleTimeString()}`,
+    claimStatus: claimForAlert(a.id) ? "active" : a.status === "RESOLVED" ? "completed" : "unclaimed",
+    // Enkaz altindaki cihazin otonom siren dongusu aciksa pin yanip soner --
+    // henuz ekip atanmamis olanlarda anlamli (atanmis olan zaten turuncu).
+    flashing: a.sirenActive === true,
+    popupText: `Durum: ${a.status || "AÇIK"}${claimForAlert(a.id) ? ` | Ekip yolda: ${claimForAlert(a.id)!.teamId}` : ""}${a.channel ? ` | Kanal: ${CHANNEL_LABEL[a.channel]}` : ""}${a.batteryPercent != null ? ` | Pil: %${a.batteryPercent}` : ""}${a.powerMode ? ` (${a.powerMode === "tasarruf" ? "Tasarruf Modu" : "Normal"})` : ""}${a.sirenActive ? " | 🔊 Siren aktif" : ""}${a.commsStatus ? ` | Haberleşme: ${COMMS_LABEL[a.commsStatus]}` : ""}${a.payloadBytes != null ? ` (${a.payloadBytes} B)` : ""} | Alındı: ${new Date(a.receivedAt).toLocaleTimeString()}`,
   }));
+
+  const debrisMarkers: MapMarkerItem[] = simulationMode
+    ? debrisReports.map((r) => ({
+        id: `debris-${r.id}`,
+        lat: r.latitude,
+        lng: r.longitude,
+        title: `Enkaz: ${r.topLabel || "Tespit"}`,
+        type: "debris",
+        popupText: `Şiddet: ${r.severity} | Tespit sayısı: ${r.detectionCount} | ${new Date(r.receivedAt).toLocaleTimeString()}`,
+      }))
+    : [];
+
+  // NLP'nin serbest metinden CIKARDIGI konum -- afetzedenin kendi GPS'inden
+  // (kirmizi SOS pin'i) bilincli olarak ayri, mor baklava isareti.
+  const nlpMarkers: MapMarkerItem[] = simulationMode
+    ? nlpLocations.map((n) => ({
+        id: `nlp-${n.id}`,
+        lat: n.latitude,
+        lng: n.longitude,
+        title: `NLP Konum Çıkarımı: ${n.konumMetin || "Bilinmeyen"}`,
+        type: "nlp",
+        popupText: `Metin: "${n.sourceText}" | Kategori: ${n.kategori || "-"} | Aciliyet: ${n.aciliyet ?? "-"}`,
+      }))
+    : [];
+
+  const teamMarkers: MapMarkerItem[] = [];
+  const teamTrailPolylines: MapPolylineItem[] = [];
+  // Karargah -> oradan cikan ekipler. Koordinata gore tekillestirilir.
+  const hqTeamsByKey = new Map<string, { lat: number; lng: number; teams: string[] }>();
+  if (simulationMode) {
+    teamClaims
+      .filter((c) => c.status === "active")
+      .forEach((claim) => {
+        // Ekibin yola CIKTIGI nokta = karargah. Rotanin ilk koordinati zaten
+        // karargahin kendisi oldugu icin ayri bir veri kaynagina gerek yok.
+        // AYNI karargahtan birden fazla ekip cikabildigi icin (senaryo v2'de
+        // Maras merkezde 3 karargah 6 ekibi barindiriyor) koordinata gore
+        // TEKILLESTIRILIR -- aksi halde ust uste binen pinler olusur.
+        if (claim.routeCoords && claim.routeCoords.length > 0) {
+          const [hqLat, hqLng] = claim.routeCoords[0];
+          const hqKey = `${hqLat.toFixed(5)},${hqLng.toFixed(5)}`;
+          const existing = hqTeamsByKey.get(hqKey);
+          if (existing) {
+            existing.teams.push(claim.teamId);
+          } else {
+            hqTeamsByKey.set(hqKey, { lat: hqLat, lng: hqLng, teams: [claim.teamId] });
+          }
+        }
+        const pos = interpolateTeamPosition(claim);
+        if (!pos) return;
+
+        // "Biz olmasaydik nereden giderdi" -- naif ajanin FIILEN yurudugu
+        // rota varsa, mesafe karsilastirmasi hem ekip popup'ina hem de
+        // (asagida) kendi rota cizgisinin popup'ina eklenir.
+        const hasNaive = claim.naiveReachable && claim.naiveDistanceMeters != null && claim.distanceMeters != null;
+        const savedM = hasNaive ? Math.round(claim.naiveDistanceMeters! - claim.distanceMeters!) : null;
+        const comparisonText = hasNaive
+          ? `Bizim rota: ${Math.round(claim.distanceMeters!)} m | Naif (kapanmayı bilmese) rota: ${Math.round(claim.naiveDistanceMeters!)} m | Kazanç: ${savedM! >= 0 ? "+" : ""}${savedM} m`
+          : claim.naiveReachable === false
+          ? "Naif ajan (kapanmaları bilmeden) bu hedefe hiç ulaşamadı."
+          : null;
+
+        teamMarkers.push({
+          id: `team-${claim.teamId}-${claim.targetId}`,
+          lat: pos[0],
+          lng: pos[1],
+          title: `Ekip: ${claim.teamId}`,
+          type: "team",
+          teamRole: teamRoleFromId(claim.teamId),
+          popupText: `Hedef: ${claim.targetId} | Tür: ${claim.targetType}${comparisonText ? `\n${comparisonText}` : ""}`,
+        });
+        if (claim.routeCoords) {
+          // Ekibin GERCEKTEN gittigi (bizim motorumuzun buldugu) rota --
+          // acik/kapali yol katmanindaki yesil/kirmizden VE naif rotadan
+          // acikca ayrilsin diye canli, elektrik mavisi bir renk.
+          teamTrailPolylines.push({
+            id: `team-route-${claim.teamId}-${claim.targetId}`,
+            coords: claim.routeCoords,
+            color: "#00e5ff",
+            weight: 5,
+            opacity: 0.95,
+            casing: true,
+            popupText: comparisonText || undefined,
+          });
+        }
+        if (claim.naiveRouteCoords && claim.naiveRouteCoords.length > 1) {
+          // Karsilastirma icin: ayni ekip, ayni hedef, ama kapanmalari
+          // BILMEDEN naif ajanin fiilen yuruyecegi rota -- kesikli, farkli
+          // (pembe/magenta) bir renkle, "varsayimsal/alternatif" oldugu
+          // acikca belli olsun diye casing'siz.
+          teamTrailPolylines.push({
+            id: `team-naive-route-${claim.teamId}-${claim.targetId}`,
+            coords: claim.naiveRouteCoords,
+            color: "#ec4899",
+            weight: 4,
+            opacity: 0.85,
+            dashArray: "10,8",
+            popupText: comparisonText || undefined,
+          });
+        }
+      });
+  }
+
+  // Sabit mavi us ikonu -- senaryodaki karargah pin standardi.
+  const hqMarkers: MapMarkerItem[] = Array.from(hqTeamsByKey.entries()).map(([key, hq]) => ({
+    id: `hq-${key}`,
+    lat: hq.lat,
+    lng: hq.lng,
+    title: `Karargâh (${hq.teams.length} ekip)`,
+    type: "hq",
+    popupText: `Buradan çıkan ekipler: ${hq.teams.join(", ")}`,
+  }));
+
+  const allMarkers = simulationMode
+    ? [...markers, ...teamMarkers, ...hqMarkers, ...debrisMarkers, ...nlpMarkers]
+    : markers;
+  const allPolylines = simulationMode ? [...damagePolylines, ...teamTrailPolylines] : [];
+  // Sabit Antakya merkezine kilitlenmek yerine, simulasyon aktifken haritayi
+  // gercek olay verisinin (SOS + ekip konumlari) oldugu yere otomatik
+  // odakla -- hangi bolge (Kahramanmaras, Hatay, ...) calisirsa calissin.
+  // NLP marker'lari BILEREK disarida birakilir: NLP metinden sadece il/ilce
+  // seviyesinde konum cikarabiliyor (mahalle gazetteer'i yok), bu yuzden
+  // gercek ilce merkezine (bazen analiz alaninin onlarca km disina) duser --
+  // bu marker'lar haritada gorunur kalir ama otomatik zoom'u bozmasin diye
+  // odaklama hesabina dahil edilmez.
+  const fitBoundsPoints: [number, number][] = simulationMode
+    ? [...markers, ...teamMarkers, ...debrisMarkers].map((m) => [m.lat, m.lng] as [number, number])
+    : [];
+
+  const criticalAlertCount = alerts.filter((a) => deriveUrgencyTier(a) === "CRITICAL").length;
+  const uniqueTeamIds = new Set(teamClaims.map((c) => c.teamId));
+  const totalTeamCount = uniqueTeamIds.size;
+  const activeTeamCount = new Set(
+    teamClaims.filter((c) => c.status === "active").map((c) => c.teamId)
+  ).size;
+  const totalRoadSegments = roadStats.safe + roadStats.blocked;
+  const blockedRoadRatio =
+    totalRoadSegments > 0 ? ((roadStats.blocked / totalRoadSegments) * 100).toFixed(1) : "0.0";
+  const activeModuleCount = [status.nlp, status.risk, status.road_damage].filter(Boolean).length;
 
   return (
     <div className="flex-1 flex w-full">
@@ -110,11 +387,17 @@ export default function CommandDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {demoActive && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-purple-500/10 text-purple-200 border border-purple-500/40">
-                <Sparkles className="w-3.5 h-3.5" /> Simülasyon Modu Aktif
-              </span>
-            )}
+            <button
+              onClick={() => setSimulationMode((v) => !v)}
+              className={`px-4 py-2.5 rounded-xl font-bold text-xs shadow-lg flex items-center gap-2 transition-all ${
+                simulationMode
+                  ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30"
+                  : "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+              }`}
+            >
+              <Radio className={`w-4 h-4 ${simulationMode ? "animate-pulse" : ""}`} />
+              {simulationMode ? "SİMÜLASYON AKIYOR" : "SİMÜLASYON MODU"}
+            </button>
             <Link
               href="/command/sos"
               className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 flex items-center gap-2 transition-all"
@@ -141,7 +424,7 @@ export default function CommandDashboardPage() {
               <span className="text-3xl font-black text-red-400 font-mono">{alerts.length}</span>
               <span className="text-xs text-red-300/80 font-bold">Vaka Bekliyor</span>
             </div>
-            <div className="text-[10px] text-slate-500">2 Kritik Enkaz Çağrısı Aktif</div>
+            <div className="text-[10px] text-slate-500">{criticalAlertCount} Kritik Enkaz Çağrısı Aktif</div>
           </div>
 
           <div className="glass-panel p-5 rounded-2xl border border-emerald-500/30 space-y-2">
@@ -150,10 +433,12 @@ export default function CommandDashboardPage() {
               <Users className="w-4 h-4 text-emerald-400" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-emerald-400 font-mono">18</span>
+              <span className="text-3xl font-black text-emerald-400 font-mono">{totalTeamCount}</span>
               <span className="text-xs text-emerald-300/80 font-bold">Saha Ekibi</span>
             </div>
-            <div className="text-[10px] text-slate-500">12 Ekip Görevde, 6 Hazırda</div>
+            <div className="text-[10px] text-slate-500">
+              {activeTeamCount} Ekip Görevde, {Math.max(totalTeamCount - activeTeamCount, 0)} Hazırda
+            </div>
           </div>
 
           <div className="glass-panel p-5 rounded-2xl border border-amber-500/30 space-y-2">
@@ -162,7 +447,7 @@ export default function CommandDashboardPage() {
               <TrendingUp className="w-4 h-4 text-amber-400" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-amber-400 font-mono">%34.8</span>
+              <span className="text-3xl font-black text-amber-400 font-mono">%{blockedRoadRatio}</span>
               <span className="text-xs text-amber-300/80 font-bold">Tıkalı Sokak</span>
             </div>
             <div className="text-[10px] text-slate-500">Segformer MIT-B4 Model Analizi</div>
@@ -174,8 +459,10 @@ export default function CommandDashboardPage() {
               <Activity className="w-4 h-4 text-blue-400" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-blue-400 font-mono">3/3</span>
-              <span className="text-xs text-blue-300/80 font-bold">Tümü Aktif</span>
+              <span className="text-3xl font-black text-blue-400 font-mono">{activeModuleCount}/3</span>
+              <span className="text-xs text-blue-300/80 font-bold">
+                {activeModuleCount === 3 ? "Tümü Aktif" : "Kısmi Aktif"}
+              </span>
             </div>
             <div className="text-[10px] text-emerald-400 flex items-center gap-1 font-semibold">
               <CheckCircle2 className="w-3 h-3" /> NLP, Risk & Segformer Hazır
@@ -196,7 +483,7 @@ export default function CommandDashboardPage() {
               </span>
             </div>
             <div className="flex-1 rounded-2xl overflow-hidden border border-slate-800">
-              <InteractiveMap center={ANTAKYA_CENTER} zoom={13} markers={markers} />
+              <InteractiveMap center={ANTAKYA_CENTER} zoom={13} markers={allMarkers} polylines={allPolylines} />
             </div>
           </div>
 

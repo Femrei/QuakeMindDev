@@ -1,0 +1,398 @@
+[
+ {
+  "id": "HE-01",
+  "label": "hatay EMSR hucresi 0,0",
+  "city": "hatay",
+  "center": [
+   36.143414,
+   36.134871
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 16
+ },
+ {
+  "id": "HE-02",
+  "label": "hatay EMSR hucresi 1,0",
+  "city": "hatay",
+  "center": [
+   36.143414,
+   36.146008
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 5
+ },
+ {
+  "id": "HE-03",
+  "label": "hatay EMSR hucresi 2,5",
+  "city": "hatay",
+  "center": [
+   36.188634,
+   36.157144
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 18
+ },
+ {
+  "id": "HE-04",
+  "label": "hatay EMSR hucresi 3,6",
+  "city": "hatay",
+  "center": [
+   36.197678,
+   36.16828
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 9
+ },
+ {
+  "id": "HE-05",
+  "label": "hatay EMSR hucresi 1,7",
+  "city": "hatay",
+  "center": [
+   36.206722,
+   36.146008
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 4
+ },
+ {
+  "id": "HE-06",
+  "label": "hatay EMSR hucresi 2,7",
+  "city": "hatay",
+  "center": [
+   36.206722,
+   36.157144
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 146
+ },
+ {
+  "id": "HE-07",
+  "label": "hatay EMSR hucresi 2,8",
+  "city": "hatay",
+  "center": [
+   36.215766,
+   36.157144
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 2
+ },
+ {
+  "id": "HE-08",
+  "label": "hatay EMSR hucresi 4,10",
+  "city": "hatay",
+  "center": [
+   36.233854,
+   36.179416
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 1
+ },
+ {
+  "id": "HE-09",
+  "label": "hatay EMSR hucresi 3,11",
+  "city": "hatay",
+  "center": [
+   36.242898,
+   36.16828
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 38
+ },
+ {
+  "id": "HE-10",
+  "label": "hatay EMSR hucresi 4,11",
+  "city": "hatay",
+  "center": [
+   36.242898,
+   36.179416
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 27
+ },
+ {
+  "id": "HE-11",
+  "label": "hatay EMSR hucresi 5,13",
+  "city": "hatay",
+  "center": [
+   36.260986,
+   36.190552
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 32
+ },
+ {
+  "id": "HE-12",
+  "label": "hatay EMSR hucresi 4,14",
+  "city": "hatay",
+  "center": [
+   36.27003,
+   36.179416
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 6
+ },
+ {
+  "id": "HE-13",
+  "label": "hatay EMSR hucresi 5,14",
+  "city": "hatay",
+  "center": [
+   36.27003,
+   36.190552
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI11_GRA_MONIT01_r1_RTP01_v2_vector.zip",
+  "emsrKoseSayisi": 106
+ },
+ {
+  "id": "KE-01",
+  "label": "kahramanmaras EMSR hucresi 3,0",
+  "city": "kahramanmaras",
+  "center": [
+   37.565073,
+   36.905605
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 1
+ },
+ {
+  "id": "KE-02",
+  "label": "kahramanmaras EMSR hucresi 4,0",
+  "city": "kahramanmaras",
+  "center": [
+   37.565073,
+   36.916939
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 1
+ },
+ {
+  "id": "KE-03",
+  "label": "kahramanmaras EMSR hucresi 6,0",
+  "city": "kahramanmaras",
+  "center": [
+   37.565073,
+   36.939609
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 14
+ },
+ {
+  "id": "KE-04",
+  "label": "kahramanmaras EMSR hucresi 7,0",
+  "city": "kahramanmaras",
+  "center": [
+   37.565073,
+   36.950944
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 2
+ },
+ {
+  "id": "KE-05",
+  "label": "kahramanmaras EMSR hucresi 3,1",
+  "city": "kahramanmaras",
+  "center": [
+   37.574117,
+   36.905605
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 16
+ },
+ {
+  "id": "KE-06",
+  "label": "kahramanmaras EMSR hucresi 4,1",
+  "city": "kahramanmaras",
+  "center": [
+   37.574117,
+   36.916939
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 129
+ },
+ {
+  "id": "KE-07",
+  "label": "kahramanmaras EMSR hucresi 5,1",
+  "city": "kahramanmaras",
+  "center": [
+   37.574117,
+   36.928274
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 238
+ },
+ {
+  "id": "KE-08",
+  "label": "kahramanmaras EMSR hucresi 6,1",
+  "city": "kahramanmaras",
+  "center": [
+   37.574117,
+   36.939609
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 20
+ },
+ {
+  "id": "KE-09",
+  "label": "kahramanmaras EMSR hucresi 0,2",
+  "city": "kahramanmaras",
+  "center": [
+   37.583162,
+   36.871601
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 5
+ },
+ {
+  "id": "KE-10",
+  "label": "kahramanmaras EMSR hucresi 1,2",
+  "city": "kahramanmaras",
+  "center": [
+   37.583162,
+   36.882935
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 10
+ },
+ {
+  "id": "KE-11",
+  "label": "kahramanmaras EMSR hucresi 2,2",
+  "city": "kahramanmaras",
+  "center": [
+   37.583162,
+   36.89427
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 18
+ },
+ {
+  "id": "KE-12",
+  "label": "kahramanmaras EMSR hucresi 3,2",
+  "city": "kahramanmaras",
+  "center": [
+   37.583162,
+   36.905605
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 8
+ },
+ {
+  "id": "KE-13",
+  "label": "kahramanmaras EMSR hucresi 4,2",
+  "city": "kahramanmaras",
+  "center": [
+   37.583162,
+   36.916939
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 19
+ },
+ {
+  "id": "KE-14",
+  "label": "kahramanmaras EMSR hucresi 5,2",
+  "city": "kahramanmaras",
+  "center": [
+   37.583162,
+   36.928274
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 113
+ },
+ {
+  "id": "KE-15",
+  "label": "kahramanmaras EMSR hucresi 8,2",
+  "city": "kahramanmaras",
+  "center": [
+   37.583162,
+   36.962278
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 7
+ },
+ {
+  "id": "KE-16",
+  "label": "kahramanmaras EMSR hucresi 9,2",
+  "city": "kahramanmaras",
+  "center": [
+   37.583162,
+   36.973613
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 4
+ },
+ {
+  "id": "KE-17",
+  "label": "kahramanmaras EMSR hucresi 11,2",
+  "city": "kahramanmaras",
+  "center": [
+   37.583162,
+   36.996282
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 8
+ },
+ {
+  "id": "KE-18",
+  "label": "kahramanmaras EMSR hucresi 0,3",
+  "city": "kahramanmaras",
+  "center": [
+   37.592206,
+   36.871601
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 3
+ },
+ {
+  "id": "KE-19",
+  "label": "kahramanmaras EMSR hucresi 1,3",
+  "city": "kahramanmaras",
+  "center": [
+   37.592206,
+   36.882935
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 6
+ },
+ {
+  "id": "KE-20",
+  "label": "kahramanmaras EMSR hucresi 6,3",
+  "city": "kahramanmaras",
+  "center": [
+   37.592206,
+   36.939609
+  ],
+  "radiusKm": 0.5,
+  "emsrPackage": "EMSR648_AOI04_GRA_MONIT01_r1_RTP01_v1_vector.zip",
+  "emsrKoseSayisi": 9
+ }
+]

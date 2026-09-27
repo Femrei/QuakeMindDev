@@ -1,0 +1,332 @@
+[
+ {
+  "parca": "Defne - Elektrik",
+  "il": "Hatay",
+  "yer": "Defne / Elektrik Mah.",
+  "sahneAdi": "Hatay - Defne - Elektrik Mah.",
+  "tarih": "2023-02-09",
+  "saglayici": "Help.NGO",
+  "tmsUrl": "https://tiles.openaerialmap.org/63eb7815ca43600005f4d91e/0/63eb7815ca43600005f4d91f/{z}/{x}/{y}",
+  "oamBbox": [
+   36.146753,
+   36.195466,
+   36.15189,
+   36.199922
+  ],
+  "analizBbox": [
+   36.146629,
+   36.195473,
+   36.152186,
+   36.199958
+  ],
+  "doluluk": 0.591,
+  "osmYolOrani": 0.3019,
+  "taramaZoom": 16,
+  "gecerliPikselOraniZ18": 0.3872,
+  "pencereM": 499.3,
+  "merkez": {
+   "lat": 36.197716,
+   "lon": 36.149407
+  }
+ },
+ {
+  "parca": "Narlica Ortaokulu",
+  "il": "Hatay",
+  "yer": "Antakya / Narlıca (ortaokul çevresi)",
+  "sahneAdi": "Hatay - Narlica Ortaokulu (Middle School) Merkez",
+  "tarih": "2023-02-12",
+  "saglayici": "Help.NGO, Portugese GRU",
+  "tmsUrl": "https://tiles.openaerialmap.org/63eb85d0ca43600005f4d92b/0/63eb85d0ca43600005f4d92c/{z}/{x}/{y}",
+  "oamBbox": [
+   36.208208,
+   36.225072,
+   36.210918,
+   36.228533
+  ],
+  "analizBbox": [
+   36.205444,
+   36.224698,
+   36.210659,
+   36.228904
+  ],
+  "doluluk": 0.34,
+  "osmYolOrani": 0.153,
+  "taramaZoom": 16,
+  "gecerliPikselOraniZ18": 0.2045,
+  "pencereM": 468.2,
+  "merkez": {
+   "lat": 36.226801,
+   "lon": 36.208051
+  }
+ },
+ {
+  "parca": "Hatay - Narlica",
+  "il": "Hatay",
+  "yer": "Antakya / Narlıca",
+  "sahneAdi": "Hatay - Narlica",
+  "tarih": "2023-02-09",
+  "saglayici": "Help.NGO, Portugese GRU",
+  "tmsUrl": "https://tiles.openaerialmap.org/63eb83d1ca43600005f4d928/0/63eb83d1ca43600005f4d929/{z}/{x}/{y}",
+  "oamBbox": [
+   36.207601,
+   36.221968,
+   36.211371,
+   36.226685
+  ],
+  "analizBbox": [
+   36.205981,
+   36.22217,
+   36.211538,
+   36.226654
+  ],
+  "doluluk": 0.571,
+  "osmYolOrani": 0.1023,
+  "taramaZoom": 16,
+  "gecerliPikselOraniZ18": 0.3778,
+  "pencereM": 499.1,
+  "merkez": {
+   "lat": 36.224412,
+   "lon": 36.208759
+  }
+ },
+ {
+  "parca": "Mansurlu",
+  "il": "Hatay",
+  "yer": "Antakya / Mansurlu",
+  "sahneAdi": "Hatay - Mansurlu",
+  "tarih": "2023-02-12",
+  "saglayici": "Help.NGO, Portugese GRU",
+  "tmsUrl": "https://tiles.openaerialmap.org/63eb8724ca43600005f4d92e/0/63eb8724ca43600005f4d92f/{z}/{x}/{y}",
+  "oamBbox": [
+   36.229427,
+   36.218689,
+   36.234767,
+   36.223587
+  ],
+  "analizBbox": [
+   36.229026,
+   36.219037,
+   36.234584,
+   36.223521
+  ],
+  "doluluk": 0.65,
+  "osmYolOrani": 0.0918,
+  "taramaZoom": 16,
+  "gecerliPikselOraniZ18": 0.431,
+  "pencereM": 499.1,
+  "merkez": {
+   "lat": 36.221279,
+   "lon": 36.231805
+  }
+ },
+ {
+  "parca": "Turinclu",
+  "il": "Hatay",
+  "yer": "Antakya / Türünçlü – Akdeniz – Armutlu",
+  "sahneAdi": "Hatay - Turinclu - Akdeniz Mah - Armutlu Mah.",
+  "tarih": "2023-02-09",
+  "saglayici": "Help.NGO, Portugese GRU",
+  "tmsUrl": "https://tiles.openaerialmap.org/63eb8222ca43600005f4d925/0/63eb8222ca43600005f4d926/{z}/{x}/{y}",
+  "oamBbox": [
+   36.142957,
+   36.192684,
+   36.15092,
+   36.19543
+  ],
+  "analizBbox": [
+   36.143646,
+   36.191317,
+   36.14886,
+   36.195525
+  ],
+  "doluluk": 0.558,
+  "osmYolOrani": 0.2399,
+  "taramaZoom": 16,
+  "gecerliPikselOraniZ18": 0.4325,
+  "pencereM": 468.4,
+  "merkez": {
+   "lat": 36.193421,
+   "lon": 36.146253
+  }
+ },
+ {
+  "parca": "Islahiye",
+  "il": "Gaziantep",
+  "yer": "İslahiye",
+  "sahneAdi": "Islahiye, Turkey - Feb 15, 2023",
+  "tarih": "2023-02-14",
+  "saglayici": "Help.NGO",
+  "tmsUrl": "https://tiles.openaerialmap.org/63eef8d8525f0700077ed498/0/63eef8d8525f0700077ed499/{z}/{x}/{y}",
+  "oamBbox": [
+   36.618377,
+   37.011388,
+   36.634497,
+   37.026755
+  ],
+  "analizBbox": [
+   36.627474,
+   37.017254,
+   36.633096,
+   37.021742
+  ],
+  "doluluk": 1.0,
+  "osmYolOrani": 0.2178,
+  "taramaZoom": 16,
+  "gecerliPikselOraniZ18": 0.9997,
+  "pencereM": 499.7,
+  "merkez": {
+   "lat": 37.019498,
+   "lon": 36.630285
+  }
+ },
+ {
+  "parca": "Nurdagi",
+  "il": "Gaziantep",
+  "yer": "Nurdağı",
+  "sahneAdi": "Nurdagi - Feb 15, 2023 (Warning Low Quality)",
+  "tarih": "2023-02-14",
+  "saglayici": "Help.NGO",
+  "tmsUrl": "https://tiles.openaerialmap.org/63ef6855525f0700077ed4a0/0/63ef6855525f0700077ed4a1/{z}/{x}/{y}",
+  "oamBbox": [
+   36.726396,
+   37.170562,
+   36.751683,
+   37.185598
+  ],
+  "analizBbox": [
+   36.73017,
+   37.174081,
+   36.735814,
+   37.178577
+  ],
+  "doluluk": 1.0,
+  "osmYolOrani": 0.2199,
+  "taramaZoom": 16,
+  "gecerliPikselOraniZ18": 0.9994,
+  "pencereM": 500.5,
+  "merkez": {
+   "lat": 37.176329,
+   "lon": 36.732992
+  }
+ },
+ {
+  "parca": "Sekeroba Flight 1",
+  "il": "Kahramanmaraş",
+  "yer": "Şekeroba (kuzeybatı)",
+  "sahneAdi": "Sekeroba Flight 1 North Western Portion Feb 16 2023",
+  "tarih": "2023-02-15",
+  "saglayici": "Help.NGO",
+  "tmsUrl": "https://tiles.openaerialmap.org/63ef7dee525f0700077ed4af/0/63ef7dee525f0700077ed4b0/{z}/{x}/{y}",
+  "oamBbox": [
+   36.755765,
+   37.258035,
+   36.769014,
+   37.266175
+  ],
+  "analizBbox": [
+   36.763129,
+   37.26075,
+   36.768773,
+   37.265241
+  ],
+  "doluluk": 0.993,
+  "osmYolOrani": 0.1903,
+  "taramaZoom": 16,
+  "gecerliPikselOraniZ18": 0.8405,
+  "pencereM": 500.0,
+  "merkez": {
+   "lat": 37.262996,
+   "lon": 36.765951
+  }
+ },
+ {
+  "parca": "Sekeroba Flight 4",
+  "il": "Kahramanmaraş",
+  "yer": "Şekeroba (orta)",
+  "sahneAdi": "Sekeroba Flight 4 Upper Center Feb 16 2023",
+  "tarih": "2023-02-15",
+  "saglayici": "Help.NGO",
+  "tmsUrl": "https://tiles.openaerialmap.org/63ef6c8a525f0700077ed4a4/0/63ef6c8a525f0700077ed4a5/{z}/{x}/{y}",
+  "oamBbox": [
+   36.765302,
+   37.258206,
+   36.778238,
+   37.271631
+  ],
+  "analizBbox": [
+   36.76918,
+   37.25935,
+   36.774824,
+   37.263841
+  ],
+  "doluluk": 1.0,
+  "osmYolOrani": 0.2056,
+  "taramaZoom": 16,
+  "gecerliPikselOraniZ18": 0.9883,
+  "pencereM": 500.0,
+  "merkez": {
+   "lat": 37.261595,
+   "lon": 36.772002
+  }
+ },
+ {
+  "parca": "Gokcedere",
+  "il": "Gaziantep",
+  "yer": "Gökçedere",
+  "sahneAdi": "Gokcedere - Türkiye",
+  "tarih": "2023-02-14",
+  "saglayici": "Help.NGO",
+  "tmsUrl": "https://tiles.openaerialmap.org/63ee1119525f0700077ed467/0/63ee1119525f0700077ed468/{z}/{x}/{y}",
+  "oamBbox": [
+   36.712933,
+   37.165773,
+   36.717576,
+   37.169594
+  ],
+  "analizBbox": [
+   36.711931,
+   37.165395,
+   36.717575,
+   37.169892
+  ],
+  "doluluk": 0.386,
+  "osmYolOrani": 0.1103,
+  "taramaZoom": 16,
+  "gecerliPikselOraniZ18": 0.2607,
+  "pencereM": 500.6,
+  "merkez": {
+   "lat": 37.167643,
+   "lon": 36.714753
+  }
+ },
+ {
+  "parca": "Stadyumu",
+  "il": "Kahramanmaraş",
+  "yer": "Merkez / Şubat Stadyumu çevresi",
+  "sahneAdi": "Şubat Stadyumu,  Merkez/Kahramanmaraş, Türkiye",
+  "tarih": "2023-02-09",
+  "saglayici": "Help.NGO",
+  "tmsUrl": "https://tiles.openaerialmap.org/63eb7e9dca43600005f4d922/0/63eb7e9dca43600005f4d923/{z}/{x}/{y}",
+  "oamBbox": [
+   36.917486,
+   37.573071,
+   36.923946,
+   37.578173
+  ],
+  "analizBbox": [
+   36.917968,
+   37.573596,
+   36.923633,
+   37.578086
+  ],
+  "doluluk": 0.887,
+  "osmYolOrani": 0.2374,
+  "taramaZoom": 16,
+  "gecerliPikselOraniZ18": 0.6643,
+  "pencereM": 499.8,
+  "merkez": {
+   "lat": 37.575841,
+   "lon": 36.9208
+  }
+ }
+]

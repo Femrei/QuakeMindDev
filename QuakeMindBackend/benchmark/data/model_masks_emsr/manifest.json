@@ -1,0 +1,354 @@
+[
+  {
+    "zoneId": "HE-02",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\HE-02",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.001968,
+    "timingsSec": {
+      "fetch": 11.6,
+      "inference": 46.2
+    }
+  },
+  {
+    "zoneId": "HE-03",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\HE-03",
+    "validPixelFraction": 0.999996,
+    "damagePixelFractionOfObserved": 0.002428,
+    "timingsSec": {
+      "fetch": 9.9,
+      "inference": 45.4
+    }
+  },
+  {
+    "zoneId": "HE-04",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\HE-04",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.001887,
+    "timingsSec": {
+      "fetch": 10.1,
+      "inference": 97.5
+    }
+  },
+  {
+    "zoneId": "HE-05",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\HE-05",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.011227,
+    "timingsSec": {
+      "fetch": 5.8,
+      "inference": 62.5
+    }
+  },
+  {
+    "zoneId": "HE-06",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\HE-06",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.028378,
+    "timingsSec": {
+      "fetch": 4.0,
+      "inference": 43.9
+    }
+  },
+  {
+    "zoneId": "HE-07",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\HE-07",
+    "validPixelFraction": 0.999999,
+    "damagePixelFractionOfObserved": 0.022553,
+    "timingsSec": {
+      "fetch": 7.7,
+      "inference": 76.6
+    }
+  },
+  {
+    "zoneId": "HE-08",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\HE-08",
+    "validPixelFraction": 0.999999,
+    "damagePixelFractionOfObserved": 0.018218,
+    "timingsSec": {
+      "fetch": 10.0,
+      "inference": 76.3
+    }
+  },
+  {
+    "zoneId": "HE-09",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\HE-09",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.01147,
+    "timingsSec": {
+      "fetch": 11.4,
+      "inference": 88.7
+    }
+  },
+  {
+    "zoneId": "HE-10",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\HE-10",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.013655,
+    "timingsSec": {
+      "fetch": 11.5,
+      "inference": 87.2
+    }
+  },
+  {
+    "zoneId": "HE-11",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\HE-11",
+    "validPixelFraction": 0.999998,
+    "damagePixelFractionOfObserved": 0.007579,
+    "timingsSec": {
+      "fetch": 7.9,
+      "inference": 43.3
+    }
+  },
+  {
+    "zoneId": "HE-12",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\HE-12",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.002566,
+    "timingsSec": {
+      "fetch": 9.3,
+      "inference": 75.7
+    }
+  },
+  {
+    "zoneId": "HE-13",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\HE-13",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.004706,
+    "timingsSec": {
+      "fetch": 9.2,
+      "inference": 74.3
+    }
+  },
+  {
+    "zoneId": "KE-01",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-01",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.015435,
+    "timingsSec": {
+      "fetch": 11.5,
+      "inference": 78.4
+    }
+  },
+  {
+    "zoneId": "KE-02",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-02",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.017258,
+    "timingsSec": {
+      "fetch": 11.5,
+      "inference": 89.2
+    }
+  },
+  {
+    "zoneId": "KE-03",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-03",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.006959,
+    "timingsSec": {
+      "fetch": 12.2,
+      "inference": 80.6
+    }
+  },
+  {
+    "zoneId": "KE-04",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-04",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.003086,
+    "timingsSec": {
+      "fetch": 14.2,
+      "inference": 79.1
+    }
+  },
+  {
+    "zoneId": "KE-05",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-05",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.003307,
+    "timingsSec": {
+      "fetch": 14.1,
+      "inference": 91.5
+    }
+  },
+  {
+    "zoneId": "KE-06",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-06",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.008765,
+    "timingsSec": {
+      "fetch": 13.8,
+      "inference": 85.1
+    }
+  },
+  {
+    "zoneId": "KE-07",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-07",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.012295,
+    "timingsSec": {
+      "fetch": 10.7,
+      "inference": 91.9
+    }
+  },
+  {
+    "zoneId": "KE-08",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-08",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.010339,
+    "timingsSec": {
+      "fetch": 13.5,
+      "inference": 49.6
+    }
+  },
+  {
+    "zoneId": "KE-09",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-09",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.004076,
+    "timingsSec": {
+      "fetch": 13.7,
+      "inference": 51.9
+    }
+  },
+  {
+    "zoneId": "KE-10",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-10",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.011241,
+    "timingsSec": {
+      "fetch": 12.9,
+      "inference": 46.8
+    }
+  },
+  {
+    "zoneId": "KE-11",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-11",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.010334,
+    "timingsSec": {
+      "fetch": 11.7,
+      "inference": 80.3
+    }
+  },
+  {
+    "zoneId": "KE-12",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-12",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.01169,
+    "timingsSec": {
+      "fetch": 12.6,
+      "inference": 47.1
+    }
+  },
+  {
+    "zoneId": "KE-13",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-13",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.007279,
+    "timingsSec": {
+      "fetch": 15.2,
+      "inference": 96.3
+    }
+  },
+  {
+    "zoneId": "KE-14",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-14",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.009827,
+    "timingsSec": {
+      "fetch": 11.0,
+      "inference": 45.9
+    }
+  },
+  {
+    "zoneId": "KE-15",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-15",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.006982,
+    "timingsSec": {
+      "fetch": 13.4,
+      "inference": 112.0
+    }
+  },
+  {
+    "zoneId": "KE-16",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-16",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.009634,
+    "timingsSec": {
+      "fetch": 9.6,
+      "inference": 42.9
+    }
+  },
+  {
+    "zoneId": "KE-17",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-17",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.002909,
+    "timingsSec": {
+      "fetch": 9.7,
+      "inference": 51.5
+    }
+  },
+  {
+    "zoneId": "KE-18",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-18",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.005801,
+    "timingsSec": {
+      "fetch": 12.9,
+      "inference": 55.1
+    }
+  },
+  {
+    "zoneId": "KE-19",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-19",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.005997,
+    "timingsSec": {
+      "fetch": 10.1,
+      "inference": 47.3
+    }
+  },
+  {
+    "zoneId": "KE-20",
+    "status": "done",
+    "dir": "benchmark\\data\\model_masks_emsr\\KE-20",
+    "validPixelFraction": 1.0,
+    "damagePixelFractionOfObserved": 0.005077,
+    "timingsSec": {
+      "fetch": 11.4,
+      "inference": 49.0
+    }
+  }
+]

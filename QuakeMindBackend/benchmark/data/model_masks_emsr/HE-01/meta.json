@@ -1,0 +1,77 @@
+{
+  "maskId": "HE-01",
+  "zoneId": "HE-01",
+  "zoneLabel": "hatay EMSR hucresi 0,0",
+  "city": "hatay",
+  "center": {
+    "lat": 36.143414,
+    "lon": 36.134871
+  },
+  "radiusKm": 0.5,
+  "zoneBbox": {
+    "west": 36.129292964718104,
+    "south": 36.1389094954955,
+    "east": 36.14044903528189,
+    "north": 36.1479185045045
+  },
+  "bounds": {
+    "west": 36.1285400390625,
+    "south": 36.137874718407275,
+    "east": 36.140899658203125,
+    "north": 36.14896463588831
+  },
+  "width": 2304,
+  "height": 2560,
+  "zoom": 18,
+  "metresPerPixel": 0.4822,
+  "sceneNativeGsdM": null,
+  "projectionNote": "Web Mercator karolari; yerel boru hatti enlemi dogrusal izdusumler (canli /analyze ile ayni). 6 km'lik bolgede en kotu sapma ~0,5 m (~1 piksel).",
+  "eventDate": "2023-02-06",
+  "postEventWindowEnd": "2023-06-30",
+  "scenes": [
+    {
+      "id": "63ecac68ca43600005f4d96c",
+      "title": "Maxar 10300500D9F8D500",
+      "provider": "Maxar",
+      "date": "2023-02-08",
+      "tilesUsed": 90
+    },
+    {
+      "id": "63ee3632525f0700077ed477",
+      "title": "Maxar 10300100E18CB600",
+      "provider": "Maxar",
+      "date": "2023-02-11",
+      "tilesUsed": 90
+    }
+  ],
+  "validPixelFraction": 1.0,
+  "damagePixelFraction": 0.002065,
+  "damagePixelFractionOfObserved": 0.002065,
+  "model": {
+    "repo": "Utbird/dispath_optimized_mitb4_focal_dice30",
+    "file": "optimized_mitb4_focal_dice30.pth",
+    "sha256": "7d7fb8d822aaf241f1be2f002f3bff9e72b66331e941408c4ef77d4e1d2900ce",
+    "architecture": "smp.Segformer(mit_b4, classes=1)"
+  },
+  "damageBooster": 3.5,
+  "threshold": 0.4,
+  "useImagenetNorm": true,
+  "postProcessLevel": 2,
+  "invalidPixelsZeroed": true,
+  "inferenceDevice": "cpu",
+  "libraries": {
+    "python": "3.10.11",
+    "torch": "2.11.0",
+    "segmentation-models-pytorch": "0.5.0",
+    "timm": "1.0.26",
+    "numpy": "2.2.6",
+    "opencv-python": "4.13.0.92",
+    "opencv-python-headless": "4.13.0.92",
+    "Pillow": "12.2.0"
+  },
+  "timingsSec": {
+    "fetch": 14.1,
+    "inference": 60.4
+  },
+  "createdAt": "2026-09-21T06:06:04.184839+00:00"
+}

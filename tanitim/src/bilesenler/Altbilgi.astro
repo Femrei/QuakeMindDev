@@ -1,0 +1,13 @@
+---
+import Marka from './Marka.astro'
+import { tr } from '@/icerik/tr'
+const yil = new Date().getFullYear()
+---
+
+<footer class="border-t border-line bg-panel">
+  <div class="kap flex flex-col gap-3 py-8 genis:flex-row genis:items-center genis:justify-between">
+    <Marka />
+    <p class="max-w-olcum text-small text-ink-3">{tr.altbilgi.not}</p>
+    <p class="text-small text-ink-3">{yil} · {tr.altbilgi.hak}</p>
+  </div>
+</footer>

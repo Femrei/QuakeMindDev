@@ -1,0 +1,65 @@
+{
+ "alan": "hatay-elektrik",
+ "katman": "genis",
+ "kaynak": "Maxar 10300500D9F8D500",
+ "tarih": "2023-02-08",
+ "model": "unet_mitb4_p2_t42",
+ "esik": 0.5,
+ "tohum": 42,
+ "toplamYolM": 831646.3,
+ "ciftSayisi": 25,
+ "satirlar": [
+  {
+   "rh": 0.0,
+   "kapaliKenar": 29,
+   "kapaliM": 2216.9,
+   "kapaliYuzde": 0.27,
+   "ortUzamaM": 23.2,
+   "ortUzamaYuzde": 1.5,
+   "uzamaCift": 20,
+   "enBuyukUzamaM": 163.3,
+   "yurumeCift": 5,
+   "ortYurumeM": 17.1,
+   "ulasilamayan": 0
+  },
+  {
+   "rh": 10.0,
+   "kapaliKenar": 72,
+   "kapaliM": 4740.4,
+   "kapaliYuzde": 0.57,
+   "ortUzamaM": 44.9,
+   "ortUzamaYuzde": 1.4,
+   "uzamaCift": 5,
+   "enBuyukUzamaM": 103.8,
+   "yurumeCift": 20,
+   "ortYurumeM": 47.1,
+   "ulasilamayan": 0
+  },
+  {
+   "rh": 15.0,
+   "kapaliKenar": 104,
+   "kapaliM": 7276.6,
+   "kapaliYuzde": 0.87,
+   "ortUzamaM": null,
+   "ortUzamaYuzde": null,
+   "uzamaCift": 0,
+   "enBuyukUzamaM": null,
+   "yurumeCift": 25,
+   "ortYurumeM": 47.6,
+   "ulasilamayan": 0
+  },
+  {
+   "rh": 25.0,
+   "kapaliKenar": 148,
+   "kapaliM": 11673.5,
+   "kapaliYuzde": 1.4,
+   "ortUzamaM": null,
+   "ortUzamaYuzde": null,
+   "uzamaCift": 0,
+   "enBuyukUzamaM": null,
+   "yurumeCift": 25,
+   "ortYurumeM": 55.0,
+   "ulasilamayan": 0
+  }
+ ]
+}

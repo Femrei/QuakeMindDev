@@ -19,6 +19,7 @@ interface InteractiveMapProps {
   enableDraw?: boolean;
   onBoundsSelected?: (bbox: [number, number, number, number]) => void;
   onDrawCleared?: () => void;
+  fitBoundsPoints?: [number, number][];
 }
 
 const DynamicMap = dynamic(() => import("./LeafletContainer"), {

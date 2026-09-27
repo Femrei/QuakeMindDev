@@ -22,3 +22,20 @@ apps/disaster_nlp/models/2kveri/model.safetensors
 apps/road_damage/models/optimized_mitb4_focal_dice30.pth
 apps/road_damage/models/210926_deneme_18epoch_mitb4_imagenet_focalanddiceloss.pth
 \n# Offline OSM Data (Hosted on HuggingFace)\napps/road_damage/data/osm/*.gpkg\napps/road_damage/data/osm/*.geojson
+
+# Uretilen model ve onbellek dosyalari (egitim komutuyla yeniden uretilir)
+apps/earthquake_risk/models/
+veri/*.sqlite3*
+
+# Analiz tani gorselleri (her iste ~16 MB, uretilir)
+veri/analiz_gorselleri/
+
+# Yumusak maliyet deneyi (J-34): il graflari PBF'ten yeniden uretilir, onizlemeler agir
+benchmark/data/emsr_graf_*.pkl
+benchmark/data/model_masks_emsr/*/preview.jpg
+
+# Harita altligi paketleri (J-40): yerel OSM kopyasindan uretilir, araclar_altlik_uret.py
+veri/altlik/
+
+# Yurume yol agi (J-44): yerel OSM kopyasindan uretilir, araclar_yol_agi_uret.py
+veri/yol_agi/

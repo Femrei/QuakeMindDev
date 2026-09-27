@@ -1,5 +1,7 @@
 import math
 import os
+import time
+
 import requests
 import numpy as np
 import cv2
@@ -105,16 +107,31 @@ def fetch_satellite_area(lat, lon, bbox=None, zoom_level=18, wayback_id=None, pr
         else:
             return None, None
 
-        def _fetch_tile(coords):
+        # KARO YENIDEN DENENIR. Once tek deneme vardi ve hata sessizce
+        # yutuluyordu: basarisiz karo 256x256'lik SIYAH bir blok birakiyor,
+        # analiz o blogu "goruntu yok" sayiyor, hasar ve kapanma dusuyordu --
+        # kosu HATA VERMEDEN zayifliyordu (J-89). Ayni alan arka arkaya
+        # kosuldugunda kapsama %44 ile %14 arasinda oynuyordu; olculdu, iki
+        # ayri koşuda gecerli piksel %100 yerine %68 ve %39 geldi.
+        #
+        # 404 yeniden DENENMEZ: o "karo yok" demektir (kapsama disi) ve
+        # tekrar denemek yalnizca zaman kaybettirir. Gecici olanlar denenir:
+        # baglanti hatasi, zaman asimi, 5xx.
+        def _fetch_tile(coords, denemeler=3):
             x, y = coords
             from io import BytesIO
-            try:
-                r = requests.get(url_for(x, y), headers=headers, timeout=8)
-                if r.status_code == 200:
-                    tile_img = Image.open(BytesIO(r.content)).convert('RGB')
-                    return (x - xtile_min) * 256, (y - ytile_min) * 256, tile_img
-            except Exception:
-                pass
+            for deneme in range(denemeler):
+                try:
+                    r = requests.get(url_for(x, y), headers=headers, timeout=8)
+                    if r.status_code == 200:
+                        tile_img = Image.open(BytesIO(r.content)).convert('RGB')
+                        return (x - xtile_min) * 256, (y - ytile_min) * 256, tile_img
+                    if r.status_code == 404:
+                        return None                      # kapsama disi: tekrar deneme
+                except Exception:
+                    pass
+                if deneme < denemeler - 1:
+                    time.sleep(0.4 * (deneme + 1))       # kisa geri cekilme
             return None
 
         tile_coords = [
@@ -182,6 +199,21 @@ def get_osm_roads_overpass(bounds, w, h, thickness=4):
 
     if cache_key in _roads_cache:
         return _roads_cache[cache_key].copy()
+
+    # Bolge dosyasi (araclar_yerel_osm_kur.py): graf ile AYNI kaynak. Once buna
+    # bakilir -- Overpass'in dort aynasi da dustugunde maske bos geliyor ve
+    # kosu sessizce "0 kapali yol" diyordu (J-68, J-79).
+    try:
+        from apps.road_damage.utils import yerel_yol
+        if yerel_yol.veri_var():
+            m = yerel_yol.maske(bounds, w, h, kalinlik_px=thickness)
+            if np.any(m):
+                if len(_roads_cache) >= 24:
+                    _roads_cache.pop(next(iter(_roads_cache)))
+                _roads_cache[cache_key] = m.copy()
+                return m
+    except Exception as e:
+        _warn(f"Yerel bolge yol dosyasi okunamadi: {type(e).__name__}: {e}")
 
     if has_local_roads_dataset():
         local_mask = draw_local_road_mask(bounds, w, h, thickness=thickness)

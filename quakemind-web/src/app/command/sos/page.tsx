@@ -3,16 +3,133 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import InteractiveMap, { MapMarkerItem } from "@/components/map/InteractiveMap";
-import { getSOSAlerts, sendSOSAlert, SOSAlert } from "@/lib/api";
+import {
+  getSOSAlerts,
+  sendSOSAlert,
+  SOSAlert,
+  getTeamClaims,
+  claimTeamTarget,
+  releaseTeamClaim,
+  updateSOSAlertStatus,
+  TeamClaim,
+} from "@/lib/api";
 import { deriveUrgencyTier, urgencyLabel, urgencyBadgeClass, urgencyTextClass } from "@/lib/urgency";
 import { useMapLayers } from "@/context/MapLayersContext";
-import { Siren, ShieldAlert, CheckCircle2, Clock, UserCheck, Plus, Filter } from "lucide-react";
+import { COMMS_LABEL, CHANNEL_LABEL, COMMS_FALLBACK_LABEL, type IncidentChannel } from "@/lib/commsStatus";
+import {
+  Siren,
+  ShieldAlert,
+  CheckCircle2,
+  Clock,
+  UserCheck,
+  Plus,
+  Filter,
+  BatteryFull,
+  BatteryMedium,
+  BatteryWarning,
+  Wifi,
+  Radio,
+  WifiOff,
+  Moon,
+  Volume2,
+  Radar,
+} from "lucide-react";
+
+const DISPATCH_POLL_MS = 4000;
+
+/** Pil yuzdesine gore ikon + renk -- diyagramdaki "pil durumu" gostergesi
+ * icin, dusuk pil = daha kritik (telefon her an kapanabilir) vurgusu. */
+function BatteryBadge({ percent }: { percent: number }) {
+  const Icon = percent < 20 ? BatteryWarning : percent < 60 ? BatteryMedium : BatteryFull;
+  const color = percent < 20 ? "text-red-400" : percent < 60 ? "text-amber-400" : "text-emerald-400";
+  return (
+    <span className={`inline-flex items-center gap-1 ${color}`} title="Pil durumu (temsili)">
+      <Icon className="w-3.5 h-3.5" />%{percent}
+    </span>
+  );
+}
+
+/** Diyagramdaki haberlesme durumu -- normal sebeke (online), yakindaki
+ * cihazlar uzerinden BLE mesh rolesi (mesh) veya hic sinyal yok (offline). */
+function CommsBadge({ status }: { status: "online" | "mesh" | "offline" }) {
+  if (status === "online") {
+    return (
+      <span className="inline-flex items-center gap-1 text-slate-400" title="Normal şebeke bağlantısı">
+        <Wifi className="w-3.5 h-3.5" />Şebeke
+      </span>
+    );
+  }
+  if (status === "mesh") {
+    return (
+      <span className="inline-flex items-center gap-1 text-cyan-400" title="Şebeke yok, BLE mesh röleyle ulaştı">
+        <Radio className="w-3.5 h-3.5" />Mesh
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-red-400" title="Hiçbir sinyal yok, ekip sahaya varana kadar ulaşılamaz">
+      <WifiOff className="w-3.5 h-3.5" />Çevrimdışı
+    </span>
+  );
+}
+
+/** Cihazın otonom güç modu -- pil %20'nin altına düştüğünde ekran karartılır,
+ * Edge AI uyutulur, GPS polling seyreltilir. */
+function PowerModeBadge({ mode, gpsPollingSec }: { mode: string; gpsPollingSec?: number | null }) {
+  if (mode !== "tasarruf") return null;
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-amber-400"
+      title={`Tasarruf modu: ekran karartıldı, Edge AI uyutuldu${gpsPollingSec ? `, GPS polling ${gpsPollingSec} sn'ye çekildi` : ""}`}
+    >
+      <Moon className="w-3.5 h-3.5" />Tasarruf
+    </span>
+  );
+}
+
+/** Enkaz altındaki cihazın akustik döngüsü: 100 dB aralıklı siren, ardından
+ * mikrofonla enkaz üstü ses dinleme. */
+function SirenBadge({ active }: { active?: boolean | null }) {
+  if (!active) return null;
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-red-400 animate-pulse"
+      title="Otonom akustik döngü aktif: 100 dB siren + mikrofon dinleme"
+    >
+      <Volume2 className="w-3.5 h-3.5" />Siren
+    </span>
+  );
+}
+
+/** İhbarın hangi veri üretim kanalından geldiği (YOLOv8 / NLP / tek dokunuş SOS). */
+function ChannelBadge({ channel }: { channel: IncidentChannel }) {
+  const styles: Record<IncidentChannel, string> = {
+    yolo: "text-orange-400",
+    nlp: "text-yellow-400",
+    sos: "text-red-400",
+  };
+  return (
+    <span className={`inline-flex items-center gap-1 ${styles[channel]}`} title="İhbarın geldiği kanal">
+      <Radar className="w-3.5 h-3.5" />{CHANNEL_LABEL[channel]}
+    </span>
+  );
+}
 
 export default function SOSDispatchPage() {
   const { setSosAlerts, sosAlerts: contextSosAlerts, demoActive } = useMapLayers();
   const [alerts, setAlerts] = useState<SOSAlert[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<SOSAlert | null>(null);
   const [filter, setFilter] = useState<"ALL" | "OPEN" | "EN_ROUTE" | "RESOLVED">("ALL");
+  const [teamClaims, setTeamClaims] = useState<TeamClaim[]>([]);
+  const [assignTeamId, setAssignTeamId] = useState("");
+  const [assigning, setAssigning] = useState(false);
+  const [assignError, setAssignError] = useState<string | null>(null);
+
+  const refreshClaims = () => {
+    getTeamClaims()
+      .then((data) => setTeamClaims(data.claims))
+      .catch(() => {});
+  };
 
   // Global simülasyon aktifse Navbar'ın ürettiği ortak veriyi kullan; değilse
   // gerçek backend'den çek (başarısız olursa yerel örnek veriye düş).
@@ -61,12 +178,67 @@ export default function SOSDispatchPage() {
     setSosAlerts(alerts);
   }, [alerts, setSosAlerts]);
 
+  useEffect(() => {
+    refreshClaims();
+    const timer = setInterval(() => {
+      getSOSAlerts()
+        .then((data) => setAlerts(data.alerts))
+        .catch(() => {});
+      refreshClaims();
+    }, DISPATCH_POLL_MS);
+    return () => clearInterval(timer);
+  }, []);
+
   const updateStatus = (id: string, newStatus: "OPEN" | "EN_ROUTE" | "RESOLVED") => {
     setAlerts((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
     );
     if (selectedAlert && selectedAlert.id === id) {
       setSelectedAlert({ ...selectedAlert, status: newStatus });
+    }
+    updateSOSAlertStatus(id, newStatus).catch(() => {
+      // sunucuya yazilamadi -- bir sonraki poll gercek durumu geri getirir
+    });
+  };
+
+  const claimForAlert = (id: string): TeamClaim | undefined =>
+    teamClaims.find((c) => c.targetId === id && c.status === "active");
+
+  const knownTeamIds = Array.from(new Set(teamClaims.map((c) => c.teamId))).sort();
+
+  const assignTeam = async (alert: SOSAlert) => {
+    const teamId = assignTeamId.trim();
+    if (!teamId) {
+      setAssignError("Ekip kimliği girin (örn. EKIP-01).");
+      return;
+    }
+    setAssigning(true);
+    setAssignError(null);
+    try {
+      await claimTeamTarget({
+        teamId,
+        targetId: alert.id,
+        targetType: "sos",
+        lat: alert.latitude,
+        lon: alert.longitude,
+      });
+      refreshClaims();
+      updateStatus(alert.id, "EN_ROUTE");
+      setAssignTeamId("");
+    } catch (err) {
+      setAssignError(err instanceof Error ? err.message : "Ekip ataması başarısız.");
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const completeAssignment = async (alert: SOSAlert) => {
+    try {
+      await releaseTeamClaim(alert.id);
+      refreshClaims();
+      updateStatus(alert.id, "RESOLVED");
+    } catch {
+      // görev zaten kapanmış olabilir -- bir sonraki poll tutarli hali getirir
     }
   };
 
@@ -76,9 +248,10 @@ export default function SOSDispatchPage() {
     id: a.id,
     lat: a.latitude,
     lng: a.longitude,
+    claimStatus: claimForAlert(a.id) ? "active" : a.status === "RESOLVED" ? "completed" : "unclaimed",
     title: a.message || "SOS İhbarı",
     type: "sos",
-    popupText: `Durum: ${a.status || "AÇIK"}`,
+    popupText: `Durum: ${a.status || "AÇIK"}${a.batteryPercent != null ? ` | Pil: %${a.batteryPercent}` : ""}${a.commsStatus ? ` | Haberleşme: ${COMMS_LABEL[a.commsStatus]}` : ""}`,
   }));
 
   return (
@@ -147,9 +320,26 @@ export default function SOSDispatchPage() {
 
                   <p className="text-xs text-slate-200 font-medium leading-relaxed">{alert.message}</p>
 
+                  {(alert.batteryPercent != null || alert.commsStatus || alert.channel) && (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] font-semibold">
+                      {alert.channel && <ChannelBadge channel={alert.channel} />}
+                      {alert.batteryPercent != null && <BatteryBadge percent={alert.batteryPercent} />}
+                      {alert.powerMode && (
+                        <PowerModeBadge mode={alert.powerMode} gpsPollingSec={alert.gpsPollingSec} />
+                      )}
+                      <SirenBadge active={alert.sirenActive} />
+                      {alert.commsStatus && <CommsBadge status={alert.commsStatus} />}
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
                     <span className="text-[11px] text-slate-400">
                       Konum: {alert.latitude.toFixed(3)}, {alert.longitude.toFixed(3)}
+                      {claimForAlert(alert.id) && (
+                        <span className="ml-2 text-amber-400 font-semibold">
+                          · {claimForAlert(alert.id)!.teamId}
+                        </span>
+                      )}
                     </span>
                     <div className="flex items-center gap-1">
                       {alert.status === "OPEN" && (
@@ -199,6 +389,28 @@ export default function SOSDispatchPage() {
                   {selectedAlert.message}
                 </p>
 
+                {(selectedAlert.batteryPercent != null || selectedAlert.commsStatus || selectedAlert.channel) && (
+                  <div className="space-y-2 px-1">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold">
+                      {selectedAlert.channel && <ChannelBadge channel={selectedAlert.channel} />}
+                      {selectedAlert.batteryPercent != null && <BatteryBadge percent={selectedAlert.batteryPercent} />}
+                      {selectedAlert.powerMode && (
+                        <PowerModeBadge mode={selectedAlert.powerMode} gpsPollingSec={selectedAlert.gpsPollingSec} />
+                      )}
+                      <SirenBadge active={selectedAlert.sirenActive} />
+                      {selectedAlert.commsStatus && <CommsBadge status={selectedAlert.commsStatus} />}
+                    </div>
+                    {/* Iletim zinciri: hangi fallback seviyesinden ulasti ve
+                        mesh paketi kac byte (olculmus deger). */}
+                    {selectedAlert.commsStatus && (
+                      <p className="text-[11px] text-slate-400">
+                        İletim: {COMMS_FALLBACK_LABEL[selectedAlert.commsStatus]}
+                        {selectedAlert.payloadBytes != null && ` · ${selectedAlert.payloadBytes} byte paket`}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-bold text-slate-300">Durumu Güncelle:</span>
                   <div className="flex items-center gap-2">
@@ -233,6 +445,58 @@ export default function SOSDispatchPage() {
                       Kurtarıldı / Çözüldü
                     </button>
                   </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-800 space-y-2">
+                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5" /> Ekip Ataması
+                  </span>
+                  {claimForAlert(selectedAlert.id) ? (
+                    <div className="flex items-center justify-between gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2">
+                      <span className="text-xs text-amber-300 font-semibold">
+                        {claimForAlert(selectedAlert.id)!.teamId} ekibi yolda
+                      </span>
+                      <button
+                        onClick={() => completeAssignment(selectedAlert)}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition-all"
+                      >
+                        Görevi Tamamla
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={assignTeamId}
+                          onChange={(e) => setAssignTeamId(e.target.value)}
+                          placeholder="Ekip kimliği (örn. EKIP-01)"
+                          className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-red-500"
+                        />
+                        <button
+                          onClick={() => assignTeam(selectedAlert)}
+                          disabled={assigning}
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white transition-all"
+                        >
+                          Ekip Ata
+                        </button>
+                      </div>
+                      {knownTeamIds.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {knownTeamIds.map((tid) => (
+                            <button
+                              key={tid}
+                              onClick={() => setAssignTeamId(tid)}
+                              className="px-2 py-1 rounded-lg text-[10px] font-bold glass-button text-slate-400 hover:text-slate-200"
+                            >
+                              {tid}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {assignError && <p className="text-[10px] text-red-400">{assignError}</p>}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (

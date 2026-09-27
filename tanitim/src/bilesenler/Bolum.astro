@@ -1,0 +1,15 @@
+---
+// Her bölüm aynı iskeletle kurulur: mikro etiket, başlık, tek paragraf giriş,
+// sonra içerik. Panel kuralının site karşılığı (ARAYUZ §9).
+type Props = { kimlik: string; etiket: string; baslik: string; giris?: string; koyu?: boolean }
+const { kimlik, etiket, baslik, giris, koyu } = Astro.props
+---
+
+<section id={kimlik} class={koyu ? 'border-t border-line bg-sunken' : 'border-t border-line'}>
+  <div class="kap py-14">
+    <p class="text-micro ls-micro text-ink-3 uppercase">{etiket}</p>
+    <h2 class="mt-2 max-w-olcum text-section text-ink">{baslik}</h2>
+    {giris && <p class="mt-3 max-w-olcum text-lead text-ink-2">{giris}</p>}
+    <div class="mt-8"><slot /></div>
+  </div>
+</section>

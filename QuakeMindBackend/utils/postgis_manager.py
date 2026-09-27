@@ -24,7 +24,27 @@ class PostGISManager:
         self.db_url = db_url
         self.connected = False
 
-    def check_connection(self) -> bool:
+    # Baglanti denemesi 2 sn zaman asimina dusuyor ve bazi uclar bunu istek
+    # basina birkac kez cagiriyordu (olculen: isi haritasi ucu 4,0 sn). Sonuc
+    # kisa sureligine saklanir; PostgreSQL acilinca en gec bu surede gorulur.
+    _SONUC_OMRU_SN = 30.0
+    _son_kontrol = 0.0
+    _son_sonuc = None
+
+    def check_connection(self, zorla: bool = False) -> bool:
+        import time as _time
+
+        if not zorla and self._son_sonuc is not None:
+            if (_time.time() - self._son_kontrol) < self._SONUC_OMRU_SN:
+                return self._son_sonuc
+
+        sonuc = self._baglantiyi_dene()
+        type(self)._son_kontrol = _time.time()
+        type(self)._son_sonuc = sonuc
+        self.connected = sonuc
+        return sonuc
+
+    def _baglantiyi_dene(self) -> bool:
         if not PSYCOPG2_AVAILABLE:
             self.connected = False
             return False

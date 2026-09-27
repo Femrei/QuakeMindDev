@@ -1,0 +1,885 @@
+<title>QuakeMind — Akış Doğrulama ve Karşılaştırmalı Performans Raporu</title>
+<style>
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14110f;
+      --surface: #1c1815;
+      --surface-2: #221d19;
+      --ink: #ede7de;
+      --muted: #a99d8d;
+      --line: #38312a;
+      --accent: #e2643f;
+      --accent-ink: #fff3ee;
+      --critical: #e2493c;
+      --critical-bg: rgba(226, 73, 60, 0.14);
+      --success: #6cb389;
+      --success-bg: rgba(108, 179, 137, 0.14);
+      --waiting: #d9a441;
+      --waiting-bg: rgba(217, 164, 65, 0.14);
+    }
+  }
+  :root {
+    --bg: #f2ede2;
+    --surface: #fffdf8;
+    --surface-2: #faf4e8;
+    --ink: #221d18;
+    --muted: #6d6153;
+    --line: #ddd2bd;
+    --accent: #c04a2c;
+    --accent-ink: #fff3ee;
+    --critical: #bd3a2b;
+    --critical-bg: rgba(189, 58, 43, 0.09);
+    --success: #3d7d58;
+    --success-bg: rgba(61, 125, 88, 0.1);
+    --waiting: #a6741c;
+    --waiting-bg: rgba(166, 116, 28, 0.1);
+  }
+  :root[data-theme="dark"] {
+    --bg: #14110f;
+    --surface: #1c1815;
+    --surface-2: #221d19;
+    --ink: #ede7de;
+    --muted: #a99d8d;
+    --line: #38312a;
+    --accent: #e2643f;
+    --accent-ink: #fff3ee;
+    --critical: #e2493c;
+    --critical-bg: rgba(226, 73, 60, 0.14);
+    --success: #6cb389;
+    --success-bg: rgba(108, 179, 137, 0.14);
+    --waiting: #d9a441;
+    --waiting-bg: rgba(217, 164, 65, 0.14);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Noto Serif", serif;
+    font-size: 16.5px;
+    line-height: 1.62;
+    margin: 0;
+    padding: 4.5rem 1.5rem 6rem;
+  }
+
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  h1, h2, h3, .eyebrow, .kpi-label, .tag, th, .mono-label {
+    font-family: "Bahnschrift", "Segoe UI Semibold", "Arial Narrow", "Helvetica Neue", sans-serif;
+  }
+
+  .num, .mono, td.num, .kpi-value, code {
+    font-family: "Cascadia Code", "Consolas", ui-monospace, "SF Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1 { text-wrap: balance; }
+  h2 { text-wrap: balance; }
+
+  /* ---------- Header ---------- */
+  .eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0 0 0.9rem;
+  }
+
+  h1 {
+    font-size: 2.35rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.7rem;
+    line-height: 1.14;
+    color: var(--ink);
+  }
+
+  .subtitle {
+    font-size: 1.06rem;
+    color: var(--muted);
+    max-width: 62ch;
+    margin: 0 0 2rem;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.6rem;
+    padding: 1.1rem 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 3rem;
+  }
+  .meta-item { font-size: 0.82rem; color: var(--muted); }
+  .meta-item b {
+    display: block;
+    color: var(--ink);
+    font-family: "Bahnschrift", sans-serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin-top: 0.15rem;
+  }
+
+  /* ---------- Section scaffolding ---------- */
+  section { margin-bottom: 3.6rem; }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    margin-bottom: 1.3rem;
+  }
+  .section-no {
+    font-family: "Cascadia Code", ui-monospace, monospace;
+    font-size: 0.78rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.1rem 0.4rem;
+    flex-shrink: 0;
+  }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--ink);
+  }
+  .section-intro {
+    color: var(--muted);
+    font-size: 0.98rem;
+    max-width: 66ch;
+    margin: 0 0 1.6rem;
+  }
+
+  p { margin: 0 0 1rem; }
+  strong { color: var(--ink); font-weight: 700; }
+
+  /* ---------- KPI strip ---------- */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .kpi {
+    background: var(--surface);
+    padding: 1.1rem 1.15rem;
+  }
+  .kpi-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.45rem;
+  }
+  .kpi-value {
+    font-size: 1.65rem;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .kpi-value .unit {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-left: 0.15rem;
+  }
+  .kpi-value.accent { color: var(--accent); }
+  .kpi-sub { font-size: 0.74rem; color: var(--muted); margin-top: 0.35rem; }
+
+  /* ---------- Flow map (diagram-to-system) ---------- */
+  .flow {
+    border-left: 2px solid var(--line);
+    margin-left: 0.55rem;
+    padding-left: 1.7rem;
+  }
+  .flow-step {
+    position: relative;
+    padding-bottom: 1.9rem;
+  }
+  .flow-step:last-child { padding-bottom: 0; }
+  .flow-step::before {
+    content: attr(data-n);
+    position: absolute;
+    left: -2.28rem;
+    top: 0.05rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+    font-family: "Cascadia Code", ui-monospace, monospace;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .flow-diagram {
+    font-size: 0.68rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.25rem;
+  }
+  .flow-title {
+    font-family: "Bahnschrift", sans-serif;
+    font-weight: 600;
+    font-size: 1.03rem;
+    margin-bottom: 0.35rem;
+    color: var(--ink);
+  }
+  .flow-body { color: var(--muted); font-size: 0.94rem; max-width: 64ch; }
+  .flow-evidence {
+    margin-top: 0.6rem;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.82rem;
+  }
+  .flow-evidence .ev-label {
+    font-family: "Bahnschrift", sans-serif;
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .flow-note {
+    margin-top: 0.55rem;
+    font-size: 0.82rem;
+    color: var(--waiting);
+    border-left: 2px solid var(--waiting);
+    padding-left: 0.6rem;
+  }
+
+  /* ---------- City block ---------- */
+  .city-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 0.3rem;
+  }
+  .city-name {
+    font-family: "Bahnschrift", sans-serif;
+    font-size: 1.22rem;
+    font-weight: 600;
+  }
+  .city-coords {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .city-sub { color: var(--muted); font-size: 0.88rem; margin-bottom: 1.2rem; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-bottom: 1.4rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  th {
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-2);
+    font-weight: 600;
+  }
+  tr:last-child td { border-bottom: none; }
+  td.num { text-align: right; }
+  td.wrap { white-space: normal; }
+  tbody tr:hover { background: var(--surface-2); }
+
+  .pill {
+    display: inline-block;
+    font-family: "Bahnschrift", sans-serif;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.16rem 0.5rem;
+    border-radius: 20px;
+  }
+  .pill.critical { background: var(--critical-bg); color: var(--critical); }
+  .pill.waiting { background: var(--waiting-bg); color: var(--waiting); }
+  .pill.success { background: var(--success-bg); color: var(--success); }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.9rem;
+    margin: 1.1rem 0 1.5rem;
+  }
+  .stat {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    background: var(--surface);
+  }
+  .stat-label { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .stat-value { font-size: 1.28rem; margin-top: 0.3rem; }
+  .stat-value.success { color: var(--success); }
+  .stat-value.critical { color: var(--critical); }
+
+  .callout {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.2rem;
+    font-size: 0.95rem;
+    color: var(--ink);
+    margin: 1.2rem 0;
+  }
+  .callout b { color: var(--accent); }
+
+  hr.rule {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 3.4rem 0;
+  }
+
+  ul.plain { margin: 0 0 1rem; padding-left: 1.2rem; }
+  ul.plain li { margin-bottom: 0.45rem; color: var(--ink); font-size: 0.96rem; }
+  ul.plain li::marker { color: var(--accent); }
+
+  .limits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .limit-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    background: var(--surface);
+  }
+  .limit-card h3 {
+    font-size: 0.85rem;
+    margin: 0 0 0.4rem;
+    color: var(--ink);
+  }
+  .limit-card p { font-size: 0.85rem; color: var(--muted); margin: 0; }
+
+  footer {
+    color: var(--muted);
+    font-size: 0.78rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--line);
+  }
+
+  @media (max-width: 640px) {
+    body { padding: 3rem 1.1rem 4rem; }
+    h1 { font-size: 1.85rem; }
+    th, td { padding: 0.45rem 0.55rem; }
+  }
+</style>
+
+<div class="page">
+
+  <p class="eyebrow">QuakeMind &middot; Doğrulama Çalışması</p>
+  <h1>Akış Diyagramlarının Gerçek Sisteme Karşı Doğrulanması ve Karşılaştırmalı Performans Raporu</h1>
+  <p class="subtitle">
+    Afetzede ve ekip akış diyagramlarında tarif edilen her adım, QuakeMind'ın gerçek backend
+    servislerine karşı, iki gerçek deprem bölgesinde (Kahramanmaraş, Hatay) çalıştırılarak
+    doğrulanmıştır. Bu belge o çalıştırmalardan çıkan sayısal kanıtı, kullanılan gerçek ekip/konum
+    verilerini ve sistemin naif bir yaklaşıma göre ne kazandırdığını raporlar.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-item">Çalıştırma tarihi<b>13 Ağustos 2026</b></div>
+    <div class="meta-item">Senaryo motoru<b>benchmark/rich_simulation.py</b></div>
+    <div class="meta-item">Bölgeler<b>Kahramanmaraş &middot; Hatay</b></div>
+    <div class="meta-item">Rastgele tohum<b>seed = 42</b></div>
+    <div class="meta-item">Koşu kimliği<b>tam-yol-kontrol</b></div>
+  </div>
+
+  <!-- ============ 1. ÖZET ============ -->
+  <section>
+    <div class="section-head">
+      <span class="section-no">01</span>
+      <h2>Genel Özet</h2>
+    </div>
+    <p class="section-intro">
+      İki şehirde toplam 10 ekip, 20 ihbar ve 4 gerçek YOLO enkaz tespiti gerçek backend
+      API'lerinden geçirildi. Aşağıdaki sayılar mock veri değildir — her biri çalıştırma
+      sırasında üretilen <code>events.jsonl</code> ve <code>summary.json</code> kayıtlarından
+      alınmıştır.
+    </p>
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-label">Toplam İhbar</div>
+        <div class="kpi-value">20</div>
+        <div class="kpi-sub">10 aktif (ekip yolda) &middot; 10 bekleyen</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Toplam Ekip Ataması</div>
+        <div class="kpi-value">10</div>
+        <div class="kpi-sub">tamamı gerçek rota ile eşleşti</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Naif Ajan Hedefe Ulaşamadı</div>
+        <div class="kpi-value accent">2<span class="unit">/10</span></div>
+        <div class="kpi-sub">kapanmayı bilmeden yol grafiğinde sıkıştı</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Ulaşabildiği 8 Vakada Kazanç</div>
+        <div class="kpi-value accent">39.7<span class="unit">dk toplam</span></div>
+        <div class="kpi-sub">hiçbir vakada negatif — eşit veya daha iyi, ~9.9 km toplam mesafe tasarrufu</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. METODOLOJİ ============ -->
+  <section>
+    <div class="section-head">
+      <span class="section-no">02</span>
+      <h2>Metodoloji: Nasıl Ölçüldü</h2>
+    </div>
+    <p class="section-intro">
+      Amaç yalnızca özelliklerin çalıştığını göstermek değil, yol-kapanması tespiti olmasaydı
+      ekiplerin ne kadar zaman/mesafe kaybedeceğini sayısal olarak savunabilmekti. Bunun için iki
+      ayrı motor aynı gerçek yol grafiği üzerinde karşılaştırıldı.
+    </p>
+    <div class="callout">
+      <b>Bizim motor</b> — gerçek OpenStreetMap yol grafiği üzerinde Dijkstra/A* ile, kapalı
+      yolları <em>bilerek</em> hesaplanan güvenli rota.<br>
+      <b>Naif ajan</b> — aynı grafikte, kapanmaları bilmeden en kısa yolu dener; bir kapalı kenara
+      ancak <em>tam önünde</em> vardığında fark eder (kendi lehine, iyimser bir varsayım), geri
+      dönüp bildiği kapanmaları eleyerek yeniden hesaplar. Bu, sahadaki gerçek "yanlış yola girip
+      geri dönme" davranışının savunulabilir bir modelidir.
+    </div>
+    <p>
+      Yol kapanmaları, kullanıcıyla birlikte kararlaştırılan bir sadeleştirmeyle
+      <strong>temsili/rastgele</strong> atanmıştır — canlı uydu görüntüsü + SegFormer hasar
+      tespiti modelinin kendisi bu çalışmadan <strong>ayrı olarak</strong>, Kate-PD veri setinde
+      %99.7 güvenle doğrulanmıştır (bu raporun kapsamı dışında). Burada gösterilmek istenen,
+      kapanma verisi nereden gelirse gelsin, <strong>rota motorunun onu doğru şekilde
+      kullanabildiğidir</strong>.
+    </p>
+    <p>
+      Rastgele kapanma oranı yol ağının güçlü-bağlılığını (strongly connected) en az %92 oranında
+      koruyacak şekilde otomatik ayarlanır — aksi halde dar/tek yönlü sokak ağırlıklı gerçek şehir
+      topolojilerinde rastgele kapatma grafiği düzinelerce izole parçaya bölüp rota motorunu hiç
+      çalıştıramaz hale getirebiliyordu; bu, çalışma sırasında tespit edilip
+      <code>simulate_random_closures</code> içinde düzeltildi.
+    </p>
+    <div class="callout">
+      <b>Doğrulama sırasında bulunan ve düzeltilen bir hesaplama hatası:</b> ilk karşılaştırma
+      turunda naif ajanın bazı vakalarda bizim motordan daha kısa bir mesafe bulduğu (matematiksel
+      olarak imkânsız olması gereken bir durum) fark edildi. Kök sebep izlendiğinde, rota
+      motorunun bazı OSM yol kenarlarının geometrisini <em>ters yönde</em> okuduğu ve ardışık
+      kenarları birleştirirken gerçekte var olmayan sıçramalar eklediği ortaya çıktı — bu, yalnızca
+      bu karşılaştırmayı değil, <strong>sistemdeki tüm gerçek rota mesafelerini</strong>
+      sistematik olarak şişiriyordu. Düzeltme <code>calculate_route</code> içinde uygulandı ve her
+      iki şehirde tüm atamalar yeniden çalıştırıldı; bu rapordaki sayılar düzeltme <em>sonrası</em>
+      elde edilmiştir.
+    </div>
+    <div class="callout">
+      <b>Yol ağı kapsamının genişletilmesi:</b> ilk koşularda yol grafiği yalnızca
+      <em>araç</em> geçişine açık yolları içeriyordu ve haritaya gönderilen segment sayısı 8.000 ile
+      sınırlıydı; bu nedenle şehir ağının yalnızca bir bölümü analiz ediliyor ve
+      görselleştiriliyordu. Bu koşuda yol ağı yaya <em>ve</em> araç geçişine açık tüm sokakları
+      kapsayacak şekilde genişletildi (Kahramanmaraş 39.285 → 49.666 kenar, Hatay 32.963 → 40.950)
+      ve segment sınırı kaldırıldı. Arama-kurtarma ekipleri sahada hem araçla hem yaya ilerlediği
+      için bu, senaryonun gerçekliğini de artırmaktadır. Aşağıdaki tüm sayılar bu genişletilmiş
+      ağ üzerinde üretilmiştir.
+    </div>
+  </section>
+
+  <!-- ============ 3. DİYAGRAM → SİSTEM EŞLEŞTİRMESİ ============ -->
+  <section>
+    <div class="section-head">
+      <span class="section-no">03</span>
+      <h2>Akış Diyagramı → Gerçek Sistem Eşleştirmesi</h2>
+    </div>
+    <p class="section-intro">
+      Afetzede ve ekip akış diyagramlarındaki her adım aşağıda gerçek bir backend uç noktasına ve
+      bu çalıştırmadan alınan somut bir kanıta bağlanmıştır.
+    </p>
+
+    <div class="flow">
+      <div class="flow-step" data-n="1">
+        <div class="flow-diagram">Diyagram — Afetzede Girişi</div>
+        <div class="flow-title">Fiziksel durum dallanması: "Enkaz altında / mahsur" ↔ "Dışarıda / hareket edebiliyor"</div>
+        <div class="flow-body">
+          Her sentetik afetzedeye 4 durum sınıfından biri (kritik, mahsur, yaralı, hafif) ve GPS
+          konumu atanır; bu, diyagramdaki fiziksel-durum dallanmasının veri karşılığıdır.
+        </div>
+        <div class="flow-evidence"><span class="ev-label">Kanıt</span> 20 afetzede profili — durum dağılımı: 6 mahsur, 4 kritik, 6 yaralı, 4 hafif</div>
+      </div>
+
+      <div class="flow-step" data-n="2">
+        <div class="flow-diagram">Diyagram — 5 Paralel Eylem: SOS</div>
+        <div class="flow-title">SOS sinyali → <code>POST /api/sos/alert</code></div>
+        <div class="flow-body">
+          Mahsur/kritik durumdaki ve yaralıların yarısı otomatik SOS sinyali gönderir; gerçek
+          koordinat ve kimlikle backend'e kaydedilir, komuta merkezi haritasında anında pin olarak
+          belirir.
+        </div>
+        <div class="flow-evidence"><span class="ev-label">Kanıt</span> 20/20 istek 200 OK — örnek: <code>rich-ihbar-2</code> → alertId <code>d28dd96b…</code></div>
+      </div>
+
+      <div class="flow-step" data-n="3">
+        <div class="flow-diagram">Diyagram — 5 Paralel Eylem: İhtiyaç Bildirimi</div>
+        <div class="flow-title">Serbest metin → BERTurk NLP → <code>POST /api/nlp/analyze</code></div>
+        <div class="flow-body">
+          Her ihbarın Türkçe metni gerçek BERTurk tabanlı sınıflandırıcıdan geçer; kategori ve
+          aciliyet skoru çıkarılır, SOS mesajına eklenir.
+        </div>
+        <div class="flow-evidence"><span class="ev-label">Kanıt</span> örn. "Enkazın altındayım…" → kategori=<em>Enkaz Bildirimi</em>, aciliyet=5/5, güven=0.955</div>
+      </div>
+
+      <div class="flow-step" data-n="4">
+        <div class="flow-diagram">Diyagram — 5 Paralel Eylem: Hasar Bildirimi</div>
+        <div class="flow-title">Kamera görüntüsü → YOLO (çatlak/bina) → <code>POST /api/camera/analyze</code></div>
+        <div class="flow-body">
+          Kate-PD veri setiyle doğrulanmış gerçek hasarlı bina fotoğrafları, gerçek koordinatlarla
+          modele gönderildi — mock tespit değil, gerçek YOLO çıkarımı. Pozitif tespit otomatik
+          olarak "enkaz" katmanına yazıldı.
+        </div>
+        <div class="flow-evidence"><span class="ev-label">Kanıt</span> 4/4 gerçek çıkarım → <em>CRITICAL_EVACUATE</em>, her biri 2 tespit</div>
+      </div>
+
+      <div class="flow-step" data-n="5">
+        <div class="flow-diagram">Diyagram — 5 Paralel Eylem: Yol Durumu</div>
+        <div class="flow-title">OSM karşılaştırma → <code>POST /api/road_damage/simulate_closures</code></div>
+        <div class="flow-body">
+          Gerçek OpenStreetMap yol grafiği (yerel önbellekten, Overpass'e gitmeden) çekilir,
+          kenarların bir kısmı temsili olarak kapalı işaretlenir — yol ağının bütünlüğü otomatik
+          korunur (bkz. Bölüm 02).
+        </div>
+        <div class="flow-evidence"><span class="ev-label">Kanıt</span> Kahramanmaraş: 20.643 düğüm / 1.117 kapalı segment &middot; Hatay: 18.060 düğüm / 460 kapalı segment</div>
+      </div>
+
+      <div class="flow-step" data-n="6">
+        <div class="flow-diagram">Diyagram — Mesh Komşu Arama (BLE)</div>
+        <div class="flow-title">Çevrimdışı mesh iletişimi</div>
+        <div class="flow-body">
+          Bu bileşen diyagramda tanımlı ancak bu doğrulama çalışmasının kapsamı dışında
+          bırakılmıştır; internet bağlantısı olan bir sunucu ortamında test edilemez.
+        </div>
+        <div class="flow-note">Bu koşuda doğrulanmadı — saha testinde ayrıca ele alınmalı.</div>
+      </div>
+
+      <div class="flow-step" data-n="7">
+        <div class="flow-diagram">Diyagram — "TÜM VERİLER TOPLANIR VE SİSTEME GÖNDERİLİR"</div>
+        <div class="flow-title">Birleşik komuta haritası ve senkronizasyon</div>
+        <div class="flow-body">
+          SOS, hasar, yol durumu ve ekip verileri tek bir haritada (<code>/command</code> ve
+          <code>/command/map</code>) katman katman birleşir; her katman kendi gerçek uç noktasından
+          canlı olarak beslenir.
+        </div>
+        <div class="flow-evidence"><span class="ev-label">Kanıt</span> Haritada 34 aktif işaretçi (20 SOS + 10 ekip + 4 enkaz) ve 90.616 yol segmenti (89.039 açık / 1.577 kapalı) — tarayıcıda doğrulandı</div>
+      </div>
+
+      <div class="flow-step" data-n="8">
+        <div class="flow-diagram">Diyagram — Backend Doğrulama ve Rota Motoru</div>
+        <div class="flow-title">SegFormer doğrulama + GNN/Dijkstra rota → <code>POST /api/road_damage/route</code></div>
+        <div class="flow-body">
+          Her ekip-ihbar eşleşmesi için gerçek yol grafiği üzerinde güvenli en kısa rota
+          hesaplanır; diyagramdaki "&lt;10 saniye" hedefiyle tutarlı olarak istekler saniyeler
+          içinde yanıtlandı.
+        </div>
+        <div class="flow-evidence"><span class="ev-label">Kanıt</span> 10/10 rota isteği başarılı — 978 m ile 3.959 m arası gerçek yürüme/araç mesafeleri</div>
+      </div>
+
+      <div class="flow-step" data-n="9">
+        <div class="flow-diagram">Ekip Akışı — Hedef Kilitleme</div>
+        <div class="flow-title">Çakışma önleme → <code>POST /api/team/claim</code> (409 korumalı)</div>
+        <div class="flow-body">
+          Bir ekip bir ihbarı üstlendiğinde diğer ekipler aynı hedefe atanamaz; bu, diyagramdaki
+          "ekip müdahale ediyor, diğerleri görür" adımının gerçek karşılığıdır.
+        </div>
+        <div class="flow-evidence"><span class="ev-label">Kanıt</span> 10/10 claim başarılı, ikinci ekip aynı hedefe denendiğinde 409 döndüğü ayrıca doğrulandı</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ 4. ŞEHİR SONUÇLARI ============ -->
+  <section>
+    <div class="section-head">
+      <span class="section-no">04</span>
+      <h2>Şehir Bazlı Sonuçlar</h2>
+    </div>
+    <p class="section-intro">
+      Her şehir için: senaryo merkezi ve gerçek altyapı kaynağı, atanan 5 ekip, 10 ihbarın tamamı
+      ve naif-ajan karşılaştırmasının satır satır dökümü.
+    </p>
+
+    <!-- KAHRAMANMARAŞ -->
+    <div class="city-head">
+      <span class="city-name">Kahramanmaraş (merkez)</span>
+      <span class="city-coords">37.5756° K, 36.9207° D &middot; yarıçap 3 km &middot; koşu <code>tam-yol-kontrol</code></span>
+    </div>
+    <p class="city-sub">
+      Analiz alanı: 20.643 düğüm / 49.666 kenar gerçek OSM yol grafiği — yaya ve araç geçişine açık
+      <em>tüm</em> sokaklar dahil (yerel önbellek, Overpass'e gidilmedi). Kapanma oranı otomatik ayar
+      sonrası: 1.117 / 49.666 segment (%2,2 tıkalı).
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Ekip</th><th>Birim</th><th>Rol</th><th>Başlangıç Noktası (gerçek)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">rich-ekip-1</td><td class="wrap">Jandarma Arama Kurtarma</td><td>Arama-Kurtarma</td><td class="wrap">Özel Uğur Göz Hastanesi</td></tr>
+          <tr><td class="mono">rich-ekip-2</td><td class="wrap">UMKE Sahra Sağlık</td><td>Lojistik / İlk Yardım</td><td class="wrap">Yörük Selim Ek Hizmet Binası</td></tr>
+          <tr><td class="mono">rich-ekip-3</td><td class="wrap">AKUT Saha Ekibi</td><td>Arama-Kurtarma</td><td class="wrap">Hayat Hastanesi</td></tr>
+          <tr><td class="mono">rich-ekip-4</td><td class="wrap">UMKE Sahra Sağlık</td><td>Lojistik / İlk Yardım</td><td class="wrap">Hayat Hastanesi</td></tr>
+          <tr><td class="mono">rich-ekip-5</td><td class="wrap">Jandarma Arama Kurtarma</td><td>Arama-Kurtarma</td><td class="wrap">Özel Uğur Göz Hastanesi</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Ekip → İhbar</th><th>Durum</th><th>Bizim Motor</th><th>Naif Ajan</th><th>Kazanç</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">rich-ekip-1 → rich-ihbar-2</td>
+            <td><span class="pill critical">kritik</span></td>
+            <td class="num">1.354 m / 5,4 dk</td>
+            <td class="num"><span class="pill critical">hedefe ulaşamadı</span></td>
+            <td class="num">—</td>
+          </tr>
+          <tr>
+            <td class="mono">rich-ekip-2 → rich-ihbar-1</td>
+            <td><span class="pill waiting">mahsur</span></td>
+            <td class="num">2.380 m / 9,5 dk</td>
+            <td class="num">2.380 m / 9,5 dk</td>
+            <td class="num">eşit (1 keşif, rotayı değiştirmedi)</td>
+          </tr>
+          <tr>
+            <td class="mono">rich-ekip-5 → rich-ihbar-5</td>
+            <td><span class="pill waiting">yaralı</span></td>
+            <td class="num">1.938 m / 7,8 dk</td>
+            <td class="num"><span class="pill critical">hedefe ulaşamadı</span></td>
+            <td class="num">—</td>
+          </tr>
+          <tr>
+            <td class="mono">rich-ekip-3 → rich-ihbar-6</td>
+            <td><span class="pill waiting">yaralı</span></td>
+            <td class="num">2.262 m / 9,0 dk</td>
+            <td class="num">3.970 m / 15,9 dk</td>
+            <td class="num" style="color:var(--success)">+1.709 m / +6,9 dk</td>
+          </tr>
+          <tr>
+            <td class="mono">rich-ekip-4 → rich-ihbar-10</td>
+            <td><span class="pill waiting">yaralı</span></td>
+            <td class="num">978 m / 3,9 dk</td>
+            <td class="num">978 m / 3,9 dk</td>
+            <td class="num">eşit (kapanmaya rastlamadı)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="stat-label">Naif Sıkışan</div><div class="stat-value critical">2 / 5 ekip</div></div>
+      <div class="stat"><div class="stat-label">Ulaşılabilirde Toplam Kazanç</div><div class="stat-value success">6,9 dk</div></div>
+      <div class="stat"><div class="stat-label">Bekleyen İhbar</div><div class="stat-value">5</div></div>
+      <div class="stat"><div class="stat-label">Gerçek Enkaz Tespiti</div><div class="stat-value">2</div></div>
+    </div>
+
+    <hr class="rule" style="margin: 2.4rem 0;">
+
+    <!-- HATAY -->
+    <div class="city-head">
+      <span class="city-name">Hatay / Antakya</span>
+      <span class="city-coords">36.1941° K, 36.1469° D &middot; yarıçap 3 km &middot; koşu <code>tam-yol-kontrol</code></span>
+    </div>
+    <p class="city-sub">
+      Analiz alanı: 18.060 düğüm / 40.950 kenar gerçek OSM yol grafiği — yaya ve araç geçişine açık
+      <em>tüm</em> sokaklar dahil. Kapanma oranı otomatik ayar sonrası: 460 / 40.950 segment
+      (%1,1 tıkalı).
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Ekip</th><th>Birim</th><th>Rol</th><th>Başlangıç Noktası (gerçek)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">rich-ekip-1</td><td class="wrap">Jandarma Arama Kurtarma</td><td>Arama-Kurtarma</td><td class="wrap">Özel Mozaik Kadın Hastalıkları ve Doğum Merkezi</td></tr>
+          <tr><td class="mono">rich-ekip-2</td><td class="wrap">UMKE Sahra Sağlık</td><td>Lojistik / İlk Yardım</td><td class="wrap">Antakya Devlet Hastanesi</td></tr>
+          <tr><td class="mono">rich-ekip-3</td><td class="wrap">AKUT Saha Ekibi</td><td>Arama-Kurtarma</td><td class="wrap">Özel Mozaik Kadın Hastalıkları ve Doğum Merkezi</td></tr>
+          <tr><td class="mono">rich-ekip-4</td><td class="wrap">UMKE Sahra Sağlık</td><td>Lojistik / İlk Yardım</td><td class="wrap">Özel Mozaik Kadın Hastalıkları ve Doğum Merkezi</td></tr>
+          <tr><td class="mono">rich-ekip-5</td><td class="wrap">Jandarma Arama Kurtarma</td><td>Arama-Kurtarma</td><td class="wrap">Özel Mozaik Kadın Hastalıkları ve Doğum Merkezi</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Ekip → İhbar</th><th>Durum</th><th>Bizim Motor</th><th>Naif Ajan</th><th>Kazanç</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">rich-ekip-1 → rich-ihbar-2</td>
+            <td><span class="pill critical">kritik</span></td>
+            <td class="num">2.407 m / 9,6 dk</td>
+            <td class="num">2.916 m / 11,7 dk</td>
+            <td class="num" style="color:var(--success)">+509 m / +2,1 dk</td>
+          </tr>
+          <tr>
+            <td class="mono">rich-ekip-2 → rich-ihbar-1</td>
+            <td><span class="pill waiting">mahsur</span></td>
+            <td class="num">1.397 m / 5,6 dk</td>
+            <td class="num">1.802 m / 7,2 dk</td>
+            <td class="num" style="color:var(--success)">+406 m / +1,6 dk</td>
+          </tr>
+          <tr>
+            <td class="mono">rich-ekip-3 → rich-ihbar-5</td>
+            <td><span class="pill waiting">yaralı</span></td>
+            <td class="num">3.651 m / 14,6 dk</td>
+            <td class="num">9.120 m / 36,5 dk</td>
+            <td class="num" style="color:var(--success)">+5.468 m / +21,9 dk</td>
+          </tr>
+          <tr>
+            <td class="mono">rich-ekip-4 → rich-ihbar-6</td>
+            <td><span class="pill waiting">yaralı</span></td>
+            <td class="num">3.959 m / 15,8 dk</td>
+            <td class="num">5.283 m / 21,1 dk</td>
+            <td class="num" style="color:var(--success)">+1.324 m / +5,3 dk</td>
+          </tr>
+          <tr>
+            <td class="mono">rich-ekip-5 → rich-ihbar-10</td>
+            <td><span class="pill waiting">yaralı</span></td>
+            <td class="num">1.539 m / 6,2 dk</td>
+            <td class="num">2.014 m / 8,1 dk</td>
+            <td class="num" style="color:var(--success)">+475 m / +1,9 dk</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="stat-label">Naif Sıkışan</div><div class="stat-value">0 / 5 ekip</div></div>
+      <div class="stat"><div class="stat-label">Ulaşılabilirde Toplam Kazanç</div><div class="stat-value success">32,8 dk</div></div>
+      <div class="stat"><div class="stat-label">Bekleyen İhbar</div><div class="stat-value">5</div></div>
+      <div class="stat"><div class="stat-label">Gerçek Enkaz Tespiti</div><div class="stat-value">2</div></div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ 5. YORUM ============ -->
+  <section>
+    <div class="section-head">
+      <span class="section-no">05</span>
+      <h2>Sayıların Okunuşu</h2>
+    </div>
+    <p>
+      On atamanın <strong>ikisinde</strong> (Kahramanmaraş; rich-ekip-1 → rich-ihbar-2 ve
+      rich-ekip-5 → rich-ihbar-5) naif ajan hedefe hiçbir zaman ulaşamadı — rastgele kapatılan
+      yolların oluşturduğu yerel labirentte, bilmeden ilerleyip geri dönme döngüsüne girip
+      çözülemeyen bir noktada kaldı (<code>naiveUnreachable: true</code>). Bu iki vakada sonuç
+      nettir: <strong>sistem olmasaydı bu ekipler hedeflerine hiç ulaşamayacaktı</strong> — üstelik
+      biri "kritik" durumdaki bir enkaz çağrısıydı ve bizim motor oraya 5,4 dakikada bir rota buldu.
+    </p>
+    <p>
+      Kalan <strong>sekiz</strong> vakanın tamamında naif ajan hedefe ulaştı, ve
+      <strong>hiçbirinde bizim motorumuzdan daha kötü değildi</strong> — iki vakada (kapanmanın
+      rotayı hiç etkilemediği durumlarda) iki motor birebir aynı mesafeyi buldu, altı vakada bizim
+      motor ölçülebilir şekilde daha kısa bir rota sundu. Bu altı vakadaki toplam kazanç
+      <strong>39,7 dakika</strong> ve <strong>~9.891 metre</strong>; en büyük tekil kazanç Hatay'da
+      rich-ekip-3 için <strong>+21,9 dakika / +5.468 metre</strong> oldu — naif ajan 9,1 km yol
+      kat ederken bizim motor aynı hedefe 3,7 km'de vardı.
+    </p>
+    <p>
+      Naif ajanın kaç kez "keşif" yaptığı da (<code>naiveDiscoveries</code>) kayıtlıdır — kazançlı
+      altı vakada 2 ile 13 arasında değişen sayıda yanlış yola girip geri dönmüştür; en pahalı vaka
+      olan Hatay/rich-ekip-3'te 13 ayrı kapalı yola bizzat varıp geri dönmek zorunda kalmıştır. Bu,
+      sahadaki gerçek zaman kaybının (her keşif = bir U dönüşü + yeniden yönlenme) bir başka
+      boyutunu gösterir. Sonuçların iki vakada birebir eşit çıkması da ayrıca önemlidir: bu,
+      karşılaştırmanın rastgele gürültüden değil gerçek bir farktan (kapanmanın rotayı fiilen
+      etkileyip etkilemediğinden) kaynaklandığını doğrular.
+    </p>
+    <p>
+      Bu koşuda kapanma oranlarının düşük görünmesi (%2,2 ve %1,1) yanıltıcı olmamalıdır: yol ağı
+      artık yaya geçişine açık <em>tüm</em> sokakları içerdiği için payda ~40–50 bin segmente
+      çıkmıştır. Mutlak sayı olarak Kahramanmaraş'ta 1.117, Hatay'da 460 gerçek yol segmenti
+      kapatılmıştır ve bunların ekiplerin gitmesi gereken güzergâhlar üzerindeki etkisi yukarıdaki
+      tablolarda görüldüğü gibi belirleyici olmuştur.
+    </p>
+  </section>
+
+  <!-- ============ 6. SINIRLAMALAR ============ -->
+  <section>
+    <div class="section-head">
+      <span class="section-no">06</span>
+      <h2>Kapsam ve Sınırlamalar</h2>
+    </div>
+    <div class="limits-grid">
+      <div class="limit-card">
+        <h3>Temsili yol kapanması</h3>
+        <p>Bu koşuda hangi yolun kapalı olduğu SegFormer değil rastgele seçimle belirlendi (kullanıcı onaylı sadeleştirme). Model doğruluğu ayrı bir çalışmada (Kate-PD, %99.7 güven) kanıtlandı.</p>
+      </div>
+      <div class="limit-card">
+        <h3>Sabit hız varsayımı</h3>
+        <p>Süre hesapları saatte 15 km sabit saha hızı varsayar (<code>AVERAGE_SPEED_KMH</code>); gerçek trafik/molozlu sokak koşulları değişkenlik gösterir.</p>
+      </div>
+      <div class="limit-card">
+        <h3>Mesh/BLE kapsam dışı</h3>
+        <p>Diyagramdaki çevrimdışı komşu-arama bileşeni, internet bağlantılı bir sunucu ortamında test edilemediği için bu koşuda doğrulanmadı.</p>
+      </div>
+      <div class="limit-card">
+        <h3>Tek koşu, sabit tohum</h3>
+        <p>Sonuçlar <code>seed = 42</code> ile tek bir rastgele kapanma örneklemine aittir; makalede birden fazla tohumla tekrar önerilir.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7. KAYNAKÇA ============ -->
+  <section style="margin-bottom: 0;">
+    <div class="section-head">
+      <span class="section-no">07</span>
+      <h2>Ham Veri ve Yeniden Üretilebilirlik</h2>
+    </div>
+    <p>
+      Tüm istek/yanıt çiftleri zaman damgalı olarak kaydedildi ve tekrar üretilebilir:
+    </p>
+    <ul class="plain">
+      <li><code>benchmark/runs/tam-yol-kontrol/events.jsonl</code>, <code>summary.json</code></li>
+      <li>Yeniden çalıştırma: <code>python benchmark/rich_simulation.py &lt;kahramanmaras|hatay|all&gt; --seed 42</code></li>
+      <li>Yol grafiği önbelleği: <code>python benchmark/warm_rich_sim_cache.py</code> (yaya+araç ağı)</li>
+    </ul>
+  </section>
+
+  <footer>
+    QuakeMind Afet Müdahale Sistemi — Doğrulama Raporu. Bu belgedeki tüm sayılar
+    <code>benchmark/rich_simulation.py</code>'nin 13 Ağustos 2026 çalıştırmasından, gerçek backend
+    API yanıtlarından türetilmiştir; senaryo verisi (ekip/ihbar konumları) sentetik, altyapı
+    verisi (itfaiye/hastane konumları, yol ağı) OpenStreetMap kaynaklı gerçek verilerdir.
+  </footer>
+
+</div>

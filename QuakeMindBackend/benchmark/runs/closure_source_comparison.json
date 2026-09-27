@@ -1,0 +1,245 @@
+[
+  {
+    "run": "v2-sentetik-8ilce",
+    "source": "sentetik %18",
+    "zones": [
+      "H-Z1",
+      "H-Z2",
+      "H-Z3",
+      "H-Z4",
+      "H-Z5",
+      "K-Z1",
+      "K-Z2",
+      "K-Z3"
+    ],
+    "zoneClosedPct": {
+      "H-Z1": 2.2466422466422467,
+      "H-Z2": 4.496511980588414,
+      "H-Z3": 1.1207443434129838,
+      "H-Z4": 2.2458715596330276,
+      "H-Z5": 0.551828608526293,
+      "K-Z1": 4.498046953650385,
+      "K-Z2": 4.494612621857363,
+      "K-Z3": 1.1160714285714286
+    },
+    "victims": 18,
+    "routed": 18,
+    "naiveReached": 18,
+    "naiveStuck": 0,
+    "uTurns": 73,
+    "ourMin": 222.2,
+    "naiveMin": 1744.8,
+    "savedMin": 1522.6,
+    "savedFromDistanceMin": 62.6,
+    "savedFromUTurnPenaltyMin": 1460.0,
+    "uTurnShareOfSaving": 0.959
+  },
+  {
+    "run": "v2-sentetik-4ilce",
+    "source": "sentetik %18",
+    "zones": [
+      "H-Z1",
+      "H-Z3",
+      "K-Z1",
+      "K-Z2"
+    ],
+    "zoneClosedPct": {
+      "H-Z1": 2.2466422466422467,
+      "H-Z3": 1.1207443434129838,
+      "K-Z1": 4.498046953650385,
+      "K-Z2": 4.494612621857363
+    },
+    "victims": 13,
+    "routed": 13,
+    "naiveReached": 13,
+    "naiveStuck": 0,
+    "uTurns": 68,
+    "ourMin": 180.3,
+    "naiveMin": 1600.3,
+    "savedMin": 1420.0,
+    "savedFromDistanceMin": 60.0,
+    "savedFromUTurnPenaltyMin": 1360.0,
+    "uTurnShareOfSaving": 0.958
+  },
+  {
+    "run": "v2-emsr-strict",
+    "source": "EMSR648 strict",
+    "zones": [
+      "H-Z1",
+      "H-Z3",
+      "K-Z1",
+      "K-Z2"
+    ],
+    "zoneClosedPct": {
+      "H-Z1": 0.3028083028083028,
+      "H-Z3": 0.0,
+      "K-Z1": 0.0,
+      "K-Z2": 0.0
+    },
+    "victims": 13,
+    "routed": 13,
+    "naiveReached": 13,
+    "naiveStuck": 0,
+    "uTurns": 3,
+    "ourMin": 177.6,
+    "naiveMin": 238.0,
+    "savedMin": 60.4,
+    "savedFromDistanceMin": 0.4,
+    "savedFromUTurnPenaltyMin": 60.0,
+    "uTurnShareOfSaving": 0.993
+  },
+  {
+    "run": "v2-emsr-medium",
+    "source": "EMSR648 medium",
+    "zones": [
+      "H-Z1",
+      "H-Z3",
+      "K-Z1",
+      "K-Z2"
+    ],
+    "zoneClosedPct": {
+      "H-Z1": 0.8400488400488401,
+      "H-Z3": 0.0,
+      "K-Z1": 1.795997261708211,
+      "K-Z2": 0.45151359671626473
+    },
+    "victims": 13,
+    "routed": 13,
+    "naiveReached": 13,
+    "naiveStuck": 0,
+    "uTurns": 83,
+    "ourMin": 189.1,
+    "naiveMin": 1924.7,
+    "savedMin": 1735.6,
+    "savedFromDistanceMin": 75.6,
+    "savedFromUTurnPenaltyMin": 1660.0,
+    "uTurnShareOfSaving": 0.956
+  },
+  {
+    "run": "v2-emsr-loose",
+    "source": "EMSR648 loose",
+    "zones": [
+      "H-Z1",
+      "H-Z3",
+      "K-Z1",
+      "K-Z2"
+    ],
+    "zoneClosedPct": {
+      "H-Z1": 0.8400488400488401,
+      "H-Z3": 0.3171917953055614,
+      "K-Z1": 1.795997261708211,
+      "K-Z2": 0.5336069779374037
+    },
+    "victims": 13,
+    "routed": 13,
+    "naiveReached": 13,
+    "naiveStuck": 0,
+    "uTurns": 87,
+    "ourMin": 189.5,
+    "naiveMin": 2006.7,
+    "savedMin": 1817.2,
+    "savedFromDistanceMin": 77.2,
+    "savedFromUTurnPenaltyMin": 1740.0,
+    "uTurnShareOfSaving": 0.958
+  },
+  {
+    "run": "drone-sentetik",
+    "source": "sentetik %18",
+    "zones": [
+      "H-D1",
+      "H-D2",
+      "K-D1"
+    ],
+    "zoneClosedPct": {
+      "H-D1": 4.18848167539267,
+      "H-D2": 4.072398190045249,
+      "K-D1": 2.030456852791878
+    },
+    "victims": 9,
+    "routed": 9,
+    "naiveReached": 9,
+    "naiveStuck": 0,
+    "uTurns": 7,
+    "ourMin": 20.4,
+    "naiveMin": 161.8,
+    "savedMin": 141.4,
+    "savedFromDistanceMin": 1.4,
+    "savedFromUTurnPenaltyMin": 140.0,
+    "uTurnShareOfSaving": 0.99
+  },
+  {
+    "run": "drone-emsr-loose",
+    "source": "EMSR648 loose",
+    "zones": [
+      "H-D1",
+      "H-D2",
+      "K-D1"
+    ],
+    "zoneClosedPct": {
+      "H-D1": 0.0,
+      "H-D2": 0.0,
+      "K-D1": 24.365482233502537
+    },
+    "victims": 9,
+    "routed": 9,
+    "naiveReached": 9,
+    "naiveStuck": 0,
+    "uTurns": 2,
+    "ourMin": 20.7,
+    "naiveMin": 60.9,
+    "savedMin": 40.2,
+    "savedFromDistanceMin": 0.2,
+    "savedFromUTurnPenaltyMin": 40.0,
+    "uTurnShareOfSaving": 0.995
+  },
+  {
+    "run": "drone-model-z18-r0",
+    "source": "model -z18 r_h=0.0",
+    "zones": [
+      "H-D1",
+      "H-D2",
+      "K-D1"
+    ],
+    "zoneClosedPct": {
+      "H-D1": 2.094240837696335,
+      "H-D2": 0.0,
+      "K-D1": 1.015228426395939
+    },
+    "victims": 9,
+    "routed": 9,
+    "naiveReached": 9,
+    "naiveStuck": 0,
+    "uTurns": 0,
+    "ourMin": 19.5,
+    "naiveMin": 19.5,
+    "savedMin": 0.0,
+    "savedFromDistanceMin": 0.0,
+    "savedFromUTurnPenaltyMin": 0.0,
+    "uTurnShareOfSaving": null
+  },
+  {
+    "run": "drone-model-z19-r15",
+    "source": "model -z19 r_h=15.0",
+    "zones": [
+      "H-D1",
+      "H-D2",
+      "K-D1"
+    ],
+    "zoneClosedPct": {
+      "H-D1": 25.654450261780106,
+      "H-D2": 18.099547511312217,
+      "K-D1": 29.949238578680202
+    },
+    "victims": 9,
+    "routed": 1,
+    "naiveReached": 1,
+    "naiveStuck": 0,
+    "uTurns": 0,
+    "ourMin": 0.2,
+    "naiveMin": 0.2,
+    "savedMin": 0.0,
+    "savedFromDistanceMin": 0.0,
+    "savedFromUTurnPenaltyMin": 0.0,
+    "uTurnShareOfSaving": null
+  }
+]

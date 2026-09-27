@@ -1,5 +1,5 @@
 import json
-from src.preprocessing import clean_text, zemberek_lemmatize
+from src.preprocessing import clean_text
 from src.classification import DisasterClassifier
 from src.ner_extraction import LocationExtractor
 
@@ -19,9 +19,15 @@ class DisasterPipeline:
         """
         # 1. Preprocessing
         clean_tx_cased = clean_text(raw_text, lowercase=False)  # Keep case for NER!
-        clean_tx_lower = clean_text(raw_text, lowercase=True)   # For Zeyrek
-        lemmatized_text = zemberek_lemmatize(clean_tx_lower)
-        
+        # NOT: Burada eskiden `lemmatized_text = zemberek_lemmatize(...)` vardi
+        # ama sonucu bu dosyanin HICBIR yerinde okunmuyordu -- hem
+        # siniflandirma hem NER clean_tx_cased ile calisiyor. Olculdu: istek
+        # basina 0,28sn tamamen bosa gidiyordu (ayrica Zeyrek her cagrida
+        # stdout'a onlarca "APPENDING RESULT" satiri basiyordu). Cagri
+        # kaldirildi; lemmatize edilmis metni GERCEKTEN siniflandiriciya
+        # vermek ayri bir karardir ve makalede raporlanan skorlari
+        # degistirecegi icin ayrica ele alinmalidir.
+
         # 2. Classification
         category, confidence = self.classifier.classify(clean_tx_cased)
         
