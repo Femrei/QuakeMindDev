@@ -33,13 +33,21 @@ from utils.postgis_manager import postgis_engine
 from apps.road_damage.utils.serialization import compact_segment_coords as _compact_segment_coords, serialize_segments as _serialize_segments, haversine_m as _haversine_m
 from apps.road_damage.utils.imaging import image_array_to_b64 as _image_array_to_b64, build_damage_overlay as _build_damage_overlay, build_segmentation_overlay as _build_segmentation_overlay
 from apps.road_damage.utils.tiling import zoom_for_radius as _zoom_for_radius
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+
+import kimlik
 
 yonlendirici = APIRouter()
 
+# Bu uclar yetki denetimi olmadan calisiyordu: adresi bilen herkes bir hedefi
+# 'kilitleyebiliyor' ya da baskasinin kilidini birakabiliyordu (J-119). Yalniz
+# eski web ve benchmark betikleri kullaniyor; yeni konsol kullanmiyor. Diger eski
+# uclar gibi varsayilan olarak KAPALIDIR (kimlik.eski_uc, J-53); gerekirse
+# QUAKEMIND_ESKI_UCLAR=1 ile acilir.
+
 
 @yonlendirici.post("/api/team/claim")
-def claim_team_target(req: ck.TeamClaimRequest):
+def claim_team_target(req: ck.TeamClaimRequest, _eski: None = Depends(kimlik.eski_uc)):
     with ck.team_claims_lock:
         existing = ck.team_claims.get(req.targetId)
         if existing is not None and existing["status"] == "active" and existing["teamId"] != req.teamId:
@@ -61,14 +69,15 @@ def claim_team_target(req: ck.TeamClaimRequest):
 
 
 @yonlendirici.get("/api/team/claims")
-def list_team_claims():
+def list_team_claims(_eski: None = Depends(kimlik.eski_uc)):
     with ck.team_claims_lock:
         claims = list(ck.team_claims.values())
     return {"claims": claims, "totalClaims": len(claims)}
 
 
 @yonlendirici.post("/api/team/claim/{target_id}/route")
-def attach_team_route(target_id: str, req: ck.TeamRouteAttachRequest):
+def attach_team_route(target_id: str, req: ck.TeamRouteAttachRequest,
+                      _eski: None = Depends(kimlik.eski_uc)):
     """Bir claim'e gercek GNN rotasini ekler -- canli simulasyonda frontend
     bu rota + startedAt zaman damgasini kullanarak ekip pozisyonunu istemci
     tarafinda zaman-bazli interpolasyonla hesaplar (ayrica bir 'pozisyon
@@ -88,7 +97,7 @@ def attach_team_route(target_id: str, req: ck.TeamRouteAttachRequest):
 
 
 @yonlendirici.post("/api/team/claim/{target_id}/release")
-def release_team_claim(target_id: str):
+def release_team_claim(target_id: str, _eski: None = Depends(kimlik.eski_uc)):
     with ck.team_claims_lock:
         claim = ck.team_claims.get(target_id)
         if claim is None:

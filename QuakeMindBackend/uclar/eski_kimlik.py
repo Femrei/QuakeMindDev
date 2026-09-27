@@ -34,14 +34,25 @@ from utils.postgis_manager import postgis_engine
 from apps.road_damage.utils.serialization import compact_segment_coords as _compact_segment_coords, serialize_segments as _serialize_segments, haversine_m as _haversine_m
 from apps.road_damage.utils.imaging import image_array_to_b64 as _image_array_to_b64, build_damage_overlay as _build_damage_overlay, build_segmentation_overlay as _build_segmentation_overlay
 from apps.road_damage.utils.tiling import zoom_for_radius as _zoom_for_radius
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+
+import kimlik
 
 yonlendirici = APIRouter()
 
+# ROL ISTEMCIDEN GELMEZ (CLAUDE.md kural 5, J-119). Eski kayit ve giris uclari
+# istemcinin gonderdigi `role` alanini (ve giriste bilinmeyen e-posta icin
+# varsayilan "responder"i) aynen yaziyordu: herkes kendini ekip olarak
+# kaydedebiliyordu. Artik bu uclardan acilan her hesap afetzededir; yetki
+# yukseltme yalniz yeni akista (uclar/oturum.py) yonetici eliyle yapilir. Uclar
+# ayrica diger eski uclar gibi varsayilan olarak KAPALIDIR (kimlik.eski_uc, J-53).
+ESKI_VARSAYILAN_ROL = "survivor"
+
 
 @yonlendirici.post("/api/auth/register")
-def auth_register(req: ck.UserRegisterRequest):
+def auth_register(req: ck.UserRegisterRequest, _eski: None = Depends(kimlik.eski_uc)):
     email = req.email.lower().strip()
+    rol = ESKI_VARSAYILAN_ROL  # req.role yok sayilir
 
     # Check PostgreSQL database first
     existing = postgis_engine.get_user_by_email_db(email)
@@ -55,9 +66,9 @@ def auth_register(req: ck.UserRegisterRequest):
         "name": req.name,
         "email": email,
         "password": ck._hash_password(req.password),
-        "role": req.role,
+        "role": rol,
         "city": req.city or "Hatay",
-        "unit": req.unit or ("Arama Kurtarma Saha Ekibi" if req.role == "responder" else "Sivil Afetzede"),
+        "unit": "Sivil Afetzede",
         "token": token
     }
     ck.USER_DATABASE[email] = new_user
@@ -70,7 +81,7 @@ def auth_register(req: ck.UserRegisterRequest):
     user_profile.pop("password", None)
     return {
         "status": "success",
-        "message": f"Hesabiniz basariyla olusturuldu ({req.role.upper()} yetkisi ile - {db_status_text}).",
+        "message": f"Hesabiniz basariyla olusturuldu ({rol.upper()} yetkisi ile - {db_status_text}).",
         "token": token,
         "user": user_profile,
         "savedToPostgres": saved_to_db
@@ -78,7 +89,7 @@ def auth_register(req: ck.UserRegisterRequest):
 
 
 @yonlendirici.post("/api/auth/login")
-def auth_login(req: ck.UserLoginRequest):
+def auth_login(req: ck.UserLoginRequest, _eski: None = Depends(kimlik.eski_uc)):
     email = req.email.lower().strip()
 
     # Check PostgreSQL database first
@@ -89,7 +100,7 @@ def auth_login(req: ck.UserLoginRequest):
         # Auto-register demo account for smooth instant testing
         user_id = f"usr-{uuid.uuid4().hex[:6]}"
         token = f"token-{uuid.uuid4().hex[:12]}"
-        user_role = req.role or "responder"
+        user_role = ESKI_VARSAYILAN_ROL  # req.role yok sayilir (kural 5)
         user = {
             "id": user_id,
             "name": email.split("@")[0].capitalize(),
@@ -97,7 +108,7 @@ def auth_login(req: ck.UserLoginRequest):
             "password": ck._hash_password(req.password),
             "role": user_role,
             "city": "Hatay",
-            "unit": "Arama Kurtarma Operatörü" if user_role == "responder" else "Sivil Afetzede",
+            "unit": "Sivil Afetzede",
             "token": token
         }
         ck.USER_DATABASE[email] = user
@@ -119,7 +130,7 @@ def auth_login(req: ck.UserLoginRequest):
 
 
 @yonlendirici.get("/api/auth/me")
-def auth_me(token: Optional[str] = None):
+def auth_me(token: Optional[str] = None, _eski: None = Depends(kimlik.eski_uc)):
     if token:
         db_user = postgis_engine.get_user_by_token_db(token)
         if db_user:
