@@ -120,3 +120,30 @@ R0–R3 148, "8 bölge / 48 çift" 157, t_u / 20 dk 79, sentetik 41,
 2. **3.9 / 4.7 görev ataması** — tatbikata eklensin mi, yoksa "gelecek çalışma" mı?
 3. **4.5 çok kanallı senaryo** — YOLOv8/BERTurk tatbikata eklensin mi, yoksa senaryo daraltılsın mı?
 4. ~~4.8 r_h duyarlılığı~~ — **koşuldu, kapandı** (§10).
+
+## E. Şekil altyazılarında düzeltilmesi gereken iki şey
+
+27 Eylül 2026'da `QuakeMindBackend/capture_app_screenshots.py` incelenirken bulundu.
+Kod hatası değil, makale altyazısı eksiği — ama kural 1 gereği zorunlu.
+
+1. **Şekil 4 (`4_isi_haritasi_guzergah.png`) demo modunda çekilmiş.** Betik
+   sayfayı açıp **"Örnek Verilerle Simüle Et"** düğmesine basıyor
+   (`capture_app_screenshots.py:94`), yani görseldeki ısı haritası ve yol ağı
+   **sentetik veriyle** üretilmiş. Betiğin kendi açıklaması da bunu
+   "arayüzü tanıtan bir ekran görüntüsü" diye niteliyor. Altyazıda bunun
+   **simüle veri** olduğu açıkça yazmalı; şu hâliyle okuyucu gerçek analiz
+   çıktısı sanır. Görselin kendisinde "Simülasyon Modu Aktif" etiketi kalıyor
+   (`hide_map_badges` yalnız Leaflet atıf kutusunu gizliyor), ama altyazı bunu
+   tekrarlamazsa yetmez.
+
+2. **Harita atıf kutusu görsellerden silinmiş.** `HIDE_ATTRIBUTION` ile
+   `.leaflet-control-attribution` gizleniyor; betikteki yorum "atıf, makale
+   metninde/altyazıda verildiği için görselden kaldırılması tercih ediliyor"
+   diyor. O hâlde altyazı **gerçekten** atfı taşımalı (hangi altlık: Esri
+   Wayback / Google / OAM ve yakalama tarihi). Taşımıyorsa atıf hiç verilmemiş
+   olur.
+
+Kontrol edilecek diğer arayüz şekilleri: Şekil 21 (kamera, gerçek YOLO
+çıkarımı — `QM_CRACK_PHOTO` ile), Şekil 22 (risk, gerçek model), Şekil 23
+(metin analizi). Bunlar gerçek çıkarımla üretiliyor; yalnız Şekil 4 demo
+verisiyle.
