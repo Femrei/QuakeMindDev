@@ -619,10 +619,34 @@ kodlamayı **çağırmıyor** (kural 3: pahalı iş istek yolunda çalışmaz).
 
 | | |
 |---|---|
-| Yerleştirilen fotoğraf | 4 → 13 çatlak, 15 bina tespiti |
+| Yerleştirilen fotoğraf | 4 → 14 çatlak, 40 bina tespiti |
 | Yerleştirilen ihbar | 5 |
 | Ortak sözleşmeye yazılan | `kamera` 4 · `metin` 5 · `uydu` 41 kayıt |
 | Konum | hepsi tatbikat kutusunun içinde, dokuzu da ayrı nokta |
 
 Kayıtlar `ek.tatbikat` taşır: koşu bitirilince `hasar_sil_tatbikat` bunları
 siler, tatbikat verisi gerçek olay verisiyle karışmaz.
+
+### 17.5 Üç kanal tek haritada — makale şekli
+
+`araclar_makale_uc_kanal.py --hepsi` üç alan için tek karede üç kanalı ve
+zincirin sonunu (kapalı yollar + güzergâh) çizer. Çıktı
+`benchmark/makale_sekilleri/sekil_uc_kanal_{defne,islahiye,nurdagi}.png`.
+
+| Alan | Kapalı kenar | Ekip | Afetzede | Kamera | Metin |
+|---|---|---|---|---|---|
+| Hatay / Defne — Elektrik Mah. | 12 | 3 | 3 | 4 foto → 14 çatlak, 40 bina | 5 |
+| Gaziantep / İslahiye | 12 | 5 | 5 | 4 foto → 12 çatlak, 41 bina | 5 |
+| Gaziantep / Nurdağı | 26 | 5 | 5 | 4 foto → 15 çatlak, 41 bina | 5 |
+
+**Fotoğraf seçimi alana bağlıdır.** Önce yalnız tohuma bağlıydı ve üç alanın
+şeklinde de aynı dört fotoğraf çıkıyordu. Artık alan adı kararlı bir sayıya
+(`zlib.crc32`) çevrilip tohuma karışır — aynı alan + aynı tohum yine aynı
+sonucu verir, farklı alanlar farklı fotoğraf alır. (`hash` kullanılamaz:
+Python'da süreç başına tuzlanır.)
+
+**Şekle yazılan uyarı:** katalogdaki fotoğrafların hepsi **Hatay ve
+Adıyaman**'dan. Gaziantep alanlarına yerleştirildiklerinde aynı depremin
+gerçek fotoğraflarıdır ama **o mahallenin** fotoğrafı değildirler. Bu, hem
+göstergenin künye satırında hem de kanal çıktısının `not` alanında yazılıdır.
+Makale altyazısında da tekrarlanmalıdır.

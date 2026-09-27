@@ -148,3 +148,28 @@ Kontrol edilecek diğer arayüz şekilleri: Şekil 21 (kamera, gerçek YOLO
 çıkarımı — `QM_CRACK_PHOTO` ile), Şekil 22 (risk, gerçek model), Şekil 23
 (metin analizi). Bunlar gerçek çıkarımla üretiliyor; yalnız Şekil 4 demo
 verisiyle.
+
+## F. Üç kanal şekli — §4.5 için önerilen görsel
+
+`benchmark/makale_sekilleri/sekil_uc_kanal_{defne,islahiye,nurdagi}.png`
+(27 Eylül 2026). Üçünden biri seçilir; **Nurdağı** en okunaklısı (26 kapalı
+kenar, kazanım da orada en yüksek).
+
+**Önerilen altyazı:**
+
+> **Şekil X.** Üç veri kanalının tek mahalle karesinde birleşmesi ve zincirin
+> sonu. Zemin: (alan) için (sağlayıcı), (tarih) görüntüsü. Kırmızı alanlar
+> uydu bölütlemesinin hasarlı bulduğu pikseller; sarı kareler kamera
+> kanalının, mor daireler metin kanalının kayıtları. Koyu kırmızı kalın
+> çizgiler hasarın yola taştığı ve kapalı sayılan kenarlar, mavi çizgiler bu
+> kapanmalara göre hesaplanan ekip güzergâhı. Sağ alttaki iç görüntü, sarı
+> noktalardan birinin gerçek fotoğrafı ve modelin üzerinde bulduğu kutulardır.
+> Görüntü, fotoğraflar ve bütün model çıktıları gerçektir; ihbar metinleri ile
+> kamera ve metin kayıtlarının harita konumları üretilmiştir. Fotoğraflar aynı
+> depremin (6 Şubat 2023) Hatay ve Adıyaman'dan çekilmiş kareleridir, gösterilen
+> mahallenin fotoğrafı değildir.
+
+**Neden bu şekil gerekli:** §1'de "yazında hasar algılama, yol erişilebilirliği
+ve ihtiyaç çıkarımı ayrı ayrı çözülmüş, tek karar zincirinde birleştirilmemiştir"
+deniyor. Katkı iddiası bu. Şekil onun tek karelik kanıtı — okuyucu üç kanalın
+aynı mahalleye indiğini ve sonucun güzergâha döndüğünü bir bakışta görür.

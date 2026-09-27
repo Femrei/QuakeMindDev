@@ -40,6 +40,7 @@ import json
 import math
 import random
 import time
+import zlib
 from pathlib import Path
 
 KOK = Path(__file__).resolve().parents[2]  # .../QuakeMindBackend/apps
@@ -138,6 +139,13 @@ def _hasar_konumlari(hasar_maskesi, bounds, sayi, tohum, en_az_piksel=40,
     return secilen
 
 
+def _alan_kaymasi(anahtar):
+    """Alan adindan KARARLI bir tamsayi (surecten surece degismez)."""
+    if not anahtar:
+        return 0
+    return zlib.crc32(str(anahtar).encode("utf-8")) % 10_000
+
+
 def _kunye_oku():
     if not FOTO_DIZINI.exists():
         return []
@@ -152,7 +160,8 @@ def _kunye_oku():
 
 # --- kamera kanalı ---------------------------------------------------------
 
-def kamera_kanali(hasar_maskesi, bounds, sayi=4, tohum=42, model_tipi="hybrid"):
+def kamera_kanali(hasar_maskesi, bounds, sayi=4, tohum=42, model_tipi="hybrid",
+                  alan_anahtari=""):
     """Gerçek deprem fotoğraflarında gerçek YOLO; konum tohumla üretilir.
 
     Dönüş: her fotoğraf için bir kayıt. `tespitler` modelin gerçekten bulduğu
@@ -166,12 +175,16 @@ def kamera_kanali(hasar_maskesi, bounds, sayi=4, tohum=42, model_tipi="hybrid"):
         return {"kayitlar": [], "not": "Fotoğraf kataloğu yok (KUNYE.json bulunamadı)."}
 
     # Fotoğraf seçimi de tohuma bağlı: aynı tohum aynı tatbikat.
+    # ALAN TOHUMA KARISIR: aksi hâlde üç alanın şeklinde de aynı dört fotoğraf
+    # çıkıyordu. Alan adı kararlı bir sayıya çevrilir (`hash` süreç başına
+    # tuzlanır, kullanılamaz); aynı alan + aynı tohum yine aynı sonucu verir.
+    kayma = _alan_kaymasi(alan_anahtari)
     sirali = sorted(kunye, key=lambda k: k["dosya"])
     karisik = list(sirali)
-    random.Random(tohum + 101).shuffle(karisik)
+    random.Random(tohum + 101 + kayma).shuffle(karisik)
     secilen = karisik[:sayi]
 
-    konumlar = _hasar_konumlari(hasar_maskesi, bounds, len(secilen), tohum + 101)
+    konumlar = _hasar_konumlari(hasar_maskesi, bounds, len(secilen), tohum + 101 + kayma)
     if not konumlar:
         return {"kayitlar": [], "not": "Model hasarlı alan bulamadı; kamera kanalı yerleştirilemedi."}
 
@@ -231,13 +244,18 @@ def kamera_kanali(hasar_maskesi, bounds, sayi=4, tohum=42, model_tipi="hybrid"):
     return {
         "kayitlar": kayitlar,
         "fotoKaynagi": "Wikimedia Commons — 6 Şubat 2023 depremi, Public domain (VOA) ve CC BY-SA 4.0",
-        "not": "Fotoğraflar ve model çıktısı gerçek; haritadaki konumları üretildi.",
+        "not": ("Fotoğraflar ve model çıktısı gerçek; haritadaki konumları üretildi. "
+                "Katalogdaki fotoğraflar Hatay ve Adıyaman'dan; başka bir ildeki alana "
+                "yerleştirildiklerinde aynı depremin fotoğrafıdırlar ama O MAHALLENİN "
+                "fotoğrafı değildirler."),
+        "ilUyarisi": True,
     }
 
 
 # --- metin kanalı ----------------------------------------------------------
 
-def metin_kanali(hasar_maskesi, bounds, il, sayi=5, tohum=42, cografi_kodla=False):
+def metin_kanali(hasar_maskesi, bounds, il, sayi=5, tohum=42, cografi_kodla=False,
+                 alan_anahtari=""):
     """Sentetik Türkçe ihbarlarda gerçek BERTurk; konum tohumla üretilir.
 
     `cografi_kodla=False` (varsayılan): NER'in bulduğu yer adı saklanır ama
@@ -259,11 +277,12 @@ def metin_kanali(hasar_maskesi, bounds, il, sayi=5, tohum=42, cografi_kodla=Fals
     if not liste:
         return {"kayitlar": [], "not": f"'{il}' için sentetik metin yok."}
 
+    kayma = _alan_kaymasi(alan_anahtari)
     karisik = list(liste)
-    random.Random(tohum + 202).shuffle(karisik)
+    random.Random(tohum + 202 + kayma).shuffle(karisik)
     secilen = karisik[:sayi]
 
-    konumlar = _hasar_konumlari(hasar_maskesi, bounds, len(secilen), tohum + 202)
+    konumlar = _hasar_konumlari(hasar_maskesi, bounds, len(secilen), tohum + 202 + kayma)
     if not konumlar:
         return {"kayitlar": [], "not": "Model hasarlı alan bulamadı; metin kanalı yerleştirilemedi."}
 

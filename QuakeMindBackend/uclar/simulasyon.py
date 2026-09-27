@@ -532,9 +532,11 @@ def _rota_asamasi(is_id):
         kanallar = {}
         for ad, cagir in (
             ("kamera", lambda: tatbikat_kanallar.kamera_kanali(
-                maske, bounds, sayi=istek.get("kameraSayisi", 4), tohum=istek["tohum"])),
+                maske, bounds, sayi=istek.get("kameraSayisi", 4), tohum=istek["tohum"],
+                alan_anahtari=sim["alan"]["id"])),
             ("metin", lambda: tatbikat_kanallar.metin_kanali(
-                maske, bounds, il=il, sayi=istek.get("metinSayisi", 5), tohum=istek["tohum"])),
+                maske, bounds, il=il, sayi=istek.get("metinSayisi", 5), tohum=istek["tohum"],
+                alan_anahtari=sim["alan"]["id"])),
         ):
             try:
                 kanallar[ad] = cagir()
