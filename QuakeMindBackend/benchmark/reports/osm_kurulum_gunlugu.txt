@@ -1,0 +1,9 @@
+PBF   : apps/road_damage/data/osm/turkey-latest.osm.pbf
+bolge : [36.05, 36.1, 37.0, 37.65]
+yol   : 755236 kenar, 717341 dugum  (1230 sn)
+yazildi: D:\quakemind_final\QuakeMind\QuakeMindBackend\apps\road_damage\data\osm\roads.gpkg  (163.6 MB)
+D:\quakemind_final\QuakeMind\QuakeMindBackend\araclar_yerel_osm_kur.py:76: UserWarning: Geometry is in a geographic CRS. Results from 'centroid' are likely incorrect. Use 'GeoSeries.to_crs()' to re-project geometries to a projected CRS before this operation.
+
+  poi["geometry"] = poi.geometry.centroid
+tesis : 201 kayit -> D:\quakemind_final\QuakeMind\QuakeMindBackend\apps\road_damage\data\osm\tesisler.gpkg  (2 sn)
+cikis: 0

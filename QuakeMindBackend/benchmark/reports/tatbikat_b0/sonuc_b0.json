@@ -1,0 +1,7681 @@
+[
+ {
+  "alan": "Defne / Elektrik Mah.",
+  "il": "Hatay",
+  "sahne": "Hatay - Defne - Elektrik Mah.",
+  "tarih": "2023-02-09",
+  "saglayici": "Help.NGO",
+  "analizBbox": [
+   36.146629,
+   36.195473,
+   36.152186,
+   36.199958
+  ],
+  "gercekBounds": [
+   36.146392822265625,
+   36.194416903538226,
+   36.15325927734375,
+   36.199958059328935
+  ],
+  "pencereM": 499.3,
+  "doluluk": 0.591,
+  "model": {
+   "ad": "segformer_mitb0_p2_t42",
+   "etiket": "segformer_mitb0 · P2 · tohum 42",
+   "mimari": "Segformer",
+   "kodlayici": "mit_b0",
+   "esik": 0.5,
+   "guclendirme": 1.0,
+   "sonIsleme": 0,
+   "kararKaynagi": "02 defterinin ölçtüğü ayar: sigmoid > eşik; güçlendirme ve son işleme yok.",
+   "egitimGsdM": [
+    0.3,
+    0.5
+   ],
+   "sha256Kisa": "a29a2e85c068",
+   "olcum": {
+    "dogrulamaIoU": 0.4123723776669902,
+    "sinamaIoU": 0.38227481768696886,
+    "sinama": {
+     "iou": 0.38227481768696886,
+     "f1": 0.553109718553144,
+     "kesinlik": 0.5665221859425327,
+     "duyarlilik": 0.5403176461701152,
+     "karo": 91
+    },
+    "disQqb": {
+     "iou": 0.26764471202669216,
+     "f1": 0.4222708610503106,
+     "kesinlik": 0.34064209384448235,
+     "duyarlilik": 0.5553506923539966,
+     "karo": 74
+    },
+    "disMedbfs": {
+     "iou": 0.016217239991476687,
+     "f1": 0.03191687633957618,
+     "kesinlik": 0.025155154052365864,
+     "duyarlilik": 0.043650035047470614,
+     "karo": 17
+    },
+    "not": "02 defteri, sinama_sonrasi_tumu / dis_qqb / dis_medbfs (eşik = karar.esik).",
+    "ileriGecis512Sn": 0.14,
+    "ileriGecisNotu": "512x512 tek ileri geçiş, CPU (12th Gen Intel Core i7-12700H), API'nin koştuğu ortam (torch 2.11.0+cpu, depo kökündeki venv); `python araclar_model_teslim.py <ad> --karo-yok`, 25 Eylül 2026. Aynı ölçüm QuakeMindBackend/venv'de (torch 2.13.0) 6 kat yavaş çıkıyor — ürün kök venv ile koştuğu için buradaki değer geçerlidir."
+   },
+   "kullanilanGsdM": 0.482,
+   "gsdUyarisi": false
+  },
+  "analizSn": 16.6,
+  "hasarKare": 0.0026,
+  "hasarGecerli": 0.0067,
+  "gecerliPikselOrani": 0.3884,
+  "acikYol": 660,
+  "kapaliYol": 4,
+  "yolKatmaniYok": false,
+  "ekipSayisi": 5,
+  "afetzedeSayisi": 1,
+  "elenenAfetzede": 0,
+  "tohumSayac": {
+   "42": {
+    "afetzede": 1,
+    "ekip": 1,
+    "elenen": 0
+   },
+   "43": {
+    "afetzede": 1,
+    "ekip": 1,
+    "elenen": 0
+   },
+   "44": {
+    "afetzede": 1,
+    "ekip": 1,
+    "elenen": 0
+   },
+   "45": {
+    "afetzede": 1,
+    "ekip": 1,
+    "elenen": 0
+   },
+   "46": {
+    "afetzede": 1,
+    "ekip": 1,
+    "elenen": 0
+   }
+  },
+  "grafDugum": 652,
+  "grafKenar": 1360,
+  "kapaliKenar": 4,
+  "kapsama": {
+   "edgesTotal": 1360,
+   "edgesObserved": 262,
+   "edgesObservedFraction": 0.1926,
+   "sampleObservedFraction": 0.2204
+  },
+  "kapsam": "mahalle",
+  "kollar": {
+   "varyantlar": {
+    "Kapanmayı bilmeyen ekip": {
+     "gorevSayisi": 1,
+     "ulasanGorev": 0,
+     "ortakGorev": 0,
+     "ortalamaSureDk": null,
+     "ortalamaMesafeM": null,
+     "toplamKesif": 0,
+     "cezaliOlay": 0,
+     "kapanmaCezasiDk": null,
+     "cezadanGelenDk": null,
+     "donusSuresiDk": null,
+     "toplamSureDk": null,
+     "toplamCezaDk": null,
+     "donusler": {
+      "duz": 0,
+      "sag": 0,
+      "sol": 0,
+      "u": 0
+     },
+     "uDonusuSayisi": 0
+    },
+    "Telsizle paylaşan filo": {
+     "gorevSayisi": 1,
+     "ulasanGorev": 0,
+     "ortakGorev": 0,
+     "ortalamaSureDk": null,
+     "ortalamaMesafeM": null,
+     "toplamKesif": 0,
+     "cezaliOlay": 0,
+     "kapanmaCezasiDk": null,
+     "cezadanGelenDk": null,
+     "donusSuresiDk": null,
+     "toplamSureDk": null,
+     "toplamCezaDk": null,
+     "donusler": {
+      "duz": 0,
+      "sag": 0,
+      "sol": 0,
+      "u": 0
+     },
+     "uDonusuSayisi": 0
+    },
+    "QuakeMind": {
+     "gorevSayisi": 1,
+     "ulasanGorev": 0,
+     "ortakGorev": 0,
+     "ortalamaSureDk": null,
+     "ortalamaMesafeM": null,
+     "toplamKesif": 0,
+     "cezaliOlay": 0,
+     "kapanmaCezasiDk": null,
+     "cezadanGelenDk": null,
+     "donusSuresiDk": null,
+     "toplamSureDk": null,
+     "toplamCezaDk": null,
+     "donusler": {
+      "duz": 0,
+      "sag": 0,
+      "sol": 0,
+      "u": 0
+     },
+     "uDonusuSayisi": 0
+    }
+   },
+   "izlenenYollar": {},
+   "gorusMesafesiM": 0.0,
+   "donusMaliyetli": true,
+   "degerlendirmeDk": null,
+   "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+  },
+  "kollarTohum": {
+   "42": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "QuakeMind": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {},
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   },
+   "43": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "QuakeMind": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {},
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   },
+   "44": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "QuakeMind": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {},
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   },
+   "45": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "QuakeMind": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {},
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   },
+   "46": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "QuakeMind": {
+      "gorevSayisi": 1,
+      "ulasanGorev": 0,
+      "ortakGorev": 0,
+      "ortalamaSureDk": null,
+      "ortalamaMesafeM": null,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": null,
+      "cezadanGelenDk": null,
+      "donusSuresiDk": null,
+      "toplamSureDk": null,
+      "toplamCezaDk": null,
+      "donusler": {
+       "duz": 0,
+       "sag": 0,
+       "sol": 0,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {},
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   }
+  },
+  "tohumlar": [
+   42,
+   43,
+   44,
+   45,
+   46
+  ],
+  "farkliAfetzedeKumesi": 1,
+  "rhKiyasi": null,
+  "rhTohum": null
+ },
+ {
+  "alan": "İslahiye",
+  "il": "Gaziantep",
+  "sahne": "Islahiye, Turkey - Feb 15, 2023",
+  "tarih": "2023-02-14",
+  "saglayici": "Help.NGO",
+  "analizBbox": [
+   36.627474,
+   37.017254,
+   36.633096,
+   37.021742
+  ],
+  "gercekBounds": [
+   36.627044677734375,
+   37.01680872317755,
+   36.6339111328125,
+   37.02229110771148
+  ],
+  "pencereM": 499.7,
+  "doluluk": 1.0,
+  "model": {
+   "ad": "segformer_mitb0_p2_t42",
+   "etiket": "segformer_mitb0 · P2 · tohum 42",
+   "mimari": "Segformer",
+   "kodlayici": "mit_b0",
+   "esik": 0.5,
+   "guclendirme": 1.0,
+   "sonIsleme": 0,
+   "kararKaynagi": "02 defterinin ölçtüğü ayar: sigmoid > eşik; güçlendirme ve son işleme yok.",
+   "egitimGsdM": [
+    0.3,
+    0.5
+   ],
+   "sha256Kisa": "a29a2e85c068",
+   "olcum": {
+    "dogrulamaIoU": 0.4123723776669902,
+    "sinamaIoU": 0.38227481768696886,
+    "sinama": {
+     "iou": 0.38227481768696886,
+     "f1": 0.553109718553144,
+     "kesinlik": 0.5665221859425327,
+     "duyarlilik": 0.5403176461701152,
+     "karo": 91
+    },
+    "disQqb": {
+     "iou": 0.26764471202669216,
+     "f1": 0.4222708610503106,
+     "kesinlik": 0.34064209384448235,
+     "duyarlilik": 0.5553506923539966,
+     "karo": 74
+    },
+    "disMedbfs": {
+     "iou": 0.016217239991476687,
+     "f1": 0.03191687633957618,
+     "kesinlik": 0.025155154052365864,
+     "duyarlilik": 0.043650035047470614,
+     "karo": 17
+    },
+    "not": "02 defteri, sinama_sonrasi_tumu / dis_qqb / dis_medbfs (eşik = karar.esik).",
+    "ileriGecis512Sn": 0.14,
+    "ileriGecisNotu": "512x512 tek ileri geçiş, CPU (12th Gen Intel Core i7-12700H), API'nin koştuğu ortam (torch 2.11.0+cpu, depo kökündeki venv); `python araclar_model_teslim.py <ad> --karo-yok`, 25 Eylül 2026. Aynı ölçüm QuakeMindBackend/venv'de (torch 2.13.0) 6 kat yavaş çıkıyor — ürün kök venv ile koştuğu için buradaki değer geçerlidir."
+   },
+   "kullanilanGsdM": 0.477,
+   "gsdUyarisi": false
+  },
+  "analizSn": 9.4,
+  "hasarKare": 0.0093,
+  "hasarGecerli": 0.0093,
+  "gecerliPikselOrani": 0.9999,
+  "acikYol": 612,
+  "kapaliYol": 7,
+  "yolKatmaniYok": false,
+  "ekipSayisi": 5,
+  "afetzedeSayisi": 4,
+  "elenenAfetzede": 0,
+  "tohumSayac": {
+   "42": {
+    "afetzede": 4,
+    "ekip": 4,
+    "elenen": 0
+   },
+   "43": {
+    "afetzede": 4,
+    "ekip": 4,
+    "elenen": 0
+   },
+   "44": {
+    "afetzede": 4,
+    "ekip": 4,
+    "elenen": 0
+   },
+   "45": {
+    "afetzede": 4,
+    "ekip": 4,
+    "elenen": 0
+   },
+   "46": {
+    "afetzede": 4,
+    "ekip": 4,
+    "elenen": 0
+   }
+  },
+  "grafDugum": 582,
+  "grafKenar": 1265,
+  "kapaliKenar": 10,
+  "kapsama": {
+   "edgesTotal": 1265,
+   "edgesObserved": 576,
+   "edgesObservedFraction": 0.4553,
+   "sampleObservedFraction": 0.4203
+  },
+  "kapsam": "mahalle",
+  "kollar": {
+   "varyantlar": {
+    "Kapanmayı bilmeyen ekip": {
+     "gorevSayisi": 16,
+     "ulasanGorev": 12,
+     "ortakGorev": 12,
+     "ortalamaSureDk": 1.402,
+     "ortalamaMesafeM": 671.783,
+     "toplamKesif": 1,
+     "cezaliOlay": 1,
+     "kapanmaCezasiDk": 1.0,
+     "cezadanGelenDk": 0.08,
+     "donusSuresiDk": 0.25,
+     "toplamSureDk": 16.82,
+     "toplamCezaDk": 1.0,
+     "donusler": {
+      "duz": 195,
+      "sag": 24,
+      "sol": 11,
+      "u": 0
+     },
+     "uDonusuSayisi": 0
+    },
+    "Telsizle paylaşan filo": {
+     "gorevSayisi": 16,
+     "ulasanGorev": 12,
+     "ortakGorev": 12,
+     "ortalamaSureDk": 1.402,
+     "ortalamaMesafeM": 671.783,
+     "toplamKesif": 1,
+     "cezaliOlay": 1,
+     "kapanmaCezasiDk": 1.0,
+     "cezadanGelenDk": 0.08,
+     "donusSuresiDk": 0.25,
+     "toplamSureDk": 16.82,
+     "toplamCezaDk": 1.0,
+     "donusler": {
+      "duz": 195,
+      "sag": 24,
+      "sol": 11,
+      "u": 0
+     },
+     "uDonusuSayisi": 0
+    },
+    "QuakeMind": {
+     "gorevSayisi": 16,
+     "ulasanGorev": 12,
+     "ortakGorev": 12,
+     "ortalamaSureDk": 1.28,
+     "ortalamaMesafeM": 653.225,
+     "toplamKesif": 0,
+     "cezaliOlay": 0,
+     "kapanmaCezasiDk": 1.0,
+     "cezadanGelenDk": 0.0,
+     "donusSuresiDk": 0.24,
+     "toplamSureDk": 15.36,
+     "toplamCezaDk": 0.0,
+     "donusler": {
+      "duz": 199,
+      "sag": 24,
+      "sol": 10,
+      "u": 0
+     },
+     "uDonusuSayisi": 0
+    }
+   },
+   "izlenenYollar": {
+    "Kapanmayı bilmeyen ekip": [
+     [
+      [
+       37.017854,
+       36.626658
+      ],
+      [
+       37.018301,
+       36.627086
+      ],
+      [
+       37.018711,
+       36.627376
+      ],
+      [
+       37.018778,
+       36.627424
+      ],
+      [
+       37.019371,
+       36.627842
+      ],
+      [
+       37.020297,
+       36.628496
+      ]
+     ],
+     [
+      [
+       37.022293,
+       36.633541
+      ],
+      [
+       37.022117,
+       36.633556
+      ],
+      [
+       37.022043,
+       36.633548
+      ],
+      [
+       37.021744,
+       36.633508
+      ],
+      [
+       37.021531,
+       36.633441
+      ],
+      [
+       37.021805,
+       36.63281
+      ],
+      [
+       37.021969,
+       36.632365
+      ],
+      [
+       37.02204,
+       36.632155
+      ]
+     ],
+     [
+      [
+       37.01634,
+       36.632153
+      ],
+      [
+       37.016354,
+       36.631847
+      ],
+      [
+       37.016951,
+       36.631836
+      ],
+      [
+       37.017316,
+       36.631829
+      ],
+      [
+       37.017584,
+       36.631824
+      ],
+      [
+       37.017622,
+       36.631804
+      ],
+      [
+       37.017678,
+       36.63173
+      ],
+      [
+       37.0179,
+       36.631245
+      ],
+      [
+       37.01818,
+       36.631327
+      ]
+     ]
+    ],
+    "QuakeMind": [
+     [
+      [
+       37.017854,
+       36.626658
+      ],
+      [
+       37.018301,
+       36.627086
+      ],
+      [
+       37.018711,
+       36.627376
+      ],
+      [
+       37.018778,
+       36.627424
+      ],
+      [
+       37.019371,
+       36.627842
+      ],
+      [
+       37.020297,
+       36.628496
+      ]
+     ],
+     [
+      [
+       37.022293,
+       36.633541
+      ],
+      [
+       37.022117,
+       36.633556
+      ],
+      [
+       37.022043,
+       36.633548
+      ],
+      [
+       37.021744,
+       36.633508
+      ],
+      [
+       37.021531,
+       36.633441
+      ],
+      [
+       37.021805,
+       36.63281
+      ],
+      [
+       37.021969,
+       36.632365
+      ],
+      [
+       37.02204,
+       36.632155
+      ]
+     ],
+     [
+      [
+       37.01634,
+       36.632153
+      ],
+      [
+       37.016354,
+       36.631847
+      ],
+      [
+       37.016951,
+       36.631836
+      ],
+      [
+       37.017316,
+       36.631829
+      ],
+      [
+       37.017584,
+       36.631824
+      ],
+      [
+       37.017622,
+       36.631804
+      ],
+      [
+       37.017678,
+       36.63173
+      ],
+      [
+       37.0179,
+       36.631245
+      ],
+      [
+       37.01818,
+       36.631327
+      ]
+     ]
+    ]
+   },
+   "gorusMesafesiM": 0.0,
+   "donusMaliyetli": true,
+   "degerlendirmeDk": null,
+   "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+  },
+  "kollarTohum": {
+   "42": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.402,
+      "ortalamaMesafeM": 671.783,
+      "toplamKesif": 1,
+      "cezaliOlay": 1,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.08,
+      "donusSuresiDk": 0.25,
+      "toplamSureDk": 16.82,
+      "toplamCezaDk": 1.0,
+      "donusler": {
+       "duz": 195,
+       "sag": 24,
+       "sol": 11,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.402,
+      "ortalamaMesafeM": 671.783,
+      "toplamKesif": 1,
+      "cezaliOlay": 1,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.08,
+      "donusSuresiDk": 0.25,
+      "toplamSureDk": 16.82,
+      "toplamCezaDk": 1.0,
+      "donusler": {
+       "duz": 195,
+       "sag": 24,
+       "sol": 11,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "QuakeMind": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.28,
+      "ortalamaMesafeM": 653.225,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.0,
+      "donusSuresiDk": 0.24,
+      "toplamSureDk": 15.36,
+      "toplamCezaDk": 0.0,
+      "donusler": {
+       "duz": 199,
+       "sag": 24,
+       "sol": 10,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {
+     "Kapanmayı bilmeyen ekip": [
+      [
+       [
+        37.017854,
+        36.626658
+       ],
+       [
+        37.018301,
+        36.627086
+       ],
+       [
+        37.018711,
+        36.627376
+       ],
+       [
+        37.018778,
+        36.627424
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.020297,
+        36.628496
+       ]
+      ],
+      [
+       [
+        37.022293,
+        36.633541
+       ],
+       [
+        37.022117,
+        36.633556
+       ],
+       [
+        37.022043,
+        36.633548
+       ],
+       [
+        37.021744,
+        36.633508
+       ],
+       [
+        37.021531,
+        36.633441
+       ],
+       [
+        37.021805,
+        36.63281
+       ],
+       [
+        37.021969,
+        36.632365
+       ],
+       [
+        37.02204,
+        36.632155
+       ]
+      ],
+      [
+       [
+        37.01634,
+        36.632153
+       ],
+       [
+        37.016354,
+        36.631847
+       ],
+       [
+        37.016951,
+        36.631836
+       ],
+       [
+        37.017316,
+        36.631829
+       ],
+       [
+        37.017584,
+        36.631824
+       ],
+       [
+        37.017622,
+        36.631804
+       ],
+       [
+        37.017678,
+        36.63173
+       ],
+       [
+        37.0179,
+        36.631245
+       ],
+       [
+        37.01818,
+        36.631327
+       ]
+      ]
+     ],
+     "QuakeMind": [
+      [
+       [
+        37.017854,
+        36.626658
+       ],
+       [
+        37.018301,
+        36.627086
+       ],
+       [
+        37.018711,
+        36.627376
+       ],
+       [
+        37.018778,
+        36.627424
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.020297,
+        36.628496
+       ]
+      ],
+      [
+       [
+        37.022293,
+        36.633541
+       ],
+       [
+        37.022117,
+        36.633556
+       ],
+       [
+        37.022043,
+        36.633548
+       ],
+       [
+        37.021744,
+        36.633508
+       ],
+       [
+        37.021531,
+        36.633441
+       ],
+       [
+        37.021805,
+        36.63281
+       ],
+       [
+        37.021969,
+        36.632365
+       ],
+       [
+        37.02204,
+        36.632155
+       ]
+      ],
+      [
+       [
+        37.01634,
+        36.632153
+       ],
+       [
+        37.016354,
+        36.631847
+       ],
+       [
+        37.016951,
+        36.631836
+       ],
+       [
+        37.017316,
+        36.631829
+       ],
+       [
+        37.017584,
+        36.631824
+       ],
+       [
+        37.017622,
+        36.631804
+       ],
+       [
+        37.017678,
+        36.63173
+       ],
+       [
+        37.0179,
+        36.631245
+       ],
+       [
+        37.01818,
+        36.631327
+       ]
+      ]
+     ]
+    },
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   },
+   "43": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.402,
+      "ortalamaMesafeM": 671.783,
+      "toplamKesif": 1,
+      "cezaliOlay": 1,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.08,
+      "donusSuresiDk": 0.25,
+      "toplamSureDk": 16.82,
+      "toplamCezaDk": 1.0,
+      "donusler": {
+       "duz": 195,
+       "sag": 24,
+       "sol": 11,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.402,
+      "ortalamaMesafeM": 671.783,
+      "toplamKesif": 1,
+      "cezaliOlay": 1,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.08,
+      "donusSuresiDk": 0.25,
+      "toplamSureDk": 16.82,
+      "toplamCezaDk": 1.0,
+      "donusler": {
+       "duz": 195,
+       "sag": 24,
+       "sol": 11,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "QuakeMind": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.28,
+      "ortalamaMesafeM": 653.225,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.0,
+      "donusSuresiDk": 0.24,
+      "toplamSureDk": 15.36,
+      "toplamCezaDk": 0.0,
+      "donusler": {
+       "duz": 199,
+       "sag": 24,
+       "sol": 10,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {
+     "Kapanmayı bilmeyen ekip": [
+      [
+       [
+        37.017854,
+        36.626658
+       ],
+       [
+        37.018301,
+        36.627086
+       ],
+       [
+        37.018711,
+        36.627376
+       ],
+       [
+        37.018778,
+        36.627424
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.022256,
+        36.631522
+       ],
+       [
+        37.022199,
+        36.631654
+       ],
+       [
+        37.02204,
+        36.632155
+       ]
+      ],
+      [
+       [
+        37.022293,
+        36.633541
+       ],
+       [
+        37.022117,
+        36.633556
+       ],
+       [
+        37.022278,
+        36.633268
+       ],
+       [
+        37.022398,
+        36.633094
+       ],
+       [
+        37.022479,
+        36.632973
+       ],
+       [
+        37.022515,
+        36.632895
+       ],
+       [
+        37.02255,
+        36.632796
+       ],
+       [
+        37.022593,
+        36.632651
+       ],
+       [
+        37.022747,
+        36.632048
+       ],
+       [
+        37.022522,
+        36.631821
+       ],
+       [
+        37.022256,
+        36.631522
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.020297,
+        36.628496
+       ]
+      ],
+      [
+       [
+        37.01634,
+        36.632153
+       ],
+       [
+        37.016354,
+        36.631847
+       ],
+       [
+        37.016951,
+        36.631836
+       ],
+       [
+        37.017316,
+        36.631829
+       ],
+       [
+        37.017584,
+        36.631824
+       ],
+       [
+        37.017622,
+        36.631804
+       ],
+       [
+        37.017678,
+        36.63173
+       ],
+       [
+        37.0179,
+        36.631245
+       ],
+       [
+        37.01818,
+        36.631327
+       ]
+      ]
+     ],
+     "QuakeMind": [
+      [
+       [
+        37.017854,
+        36.626658
+       ],
+       [
+        37.018301,
+        36.627086
+       ],
+       [
+        37.018711,
+        36.627376
+       ],
+       [
+        37.018778,
+        36.627424
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.022256,
+        36.631522
+       ],
+       [
+        37.022199,
+        36.631654
+       ],
+       [
+        37.02204,
+        36.632155
+       ]
+      ],
+      [
+       [
+        37.022293,
+        36.633541
+       ],
+       [
+        37.022117,
+        36.633556
+       ],
+       [
+        37.022278,
+        36.633268
+       ],
+       [
+        37.022398,
+        36.633094
+       ],
+       [
+        37.022479,
+        36.632973
+       ],
+       [
+        37.022515,
+        36.632895
+       ],
+       [
+        37.02255,
+        36.632796
+       ],
+       [
+        37.022593,
+        36.632651
+       ],
+       [
+        37.022747,
+        36.632048
+       ],
+       [
+        37.022522,
+        36.631821
+       ],
+       [
+        37.022256,
+        36.631522
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.020297,
+        36.628496
+       ]
+      ],
+      [
+       [
+        37.01634,
+        36.632153
+       ],
+       [
+        37.016354,
+        36.631847
+       ],
+       [
+        37.016951,
+        36.631836
+       ],
+       [
+        37.017316,
+        36.631829
+       ],
+       [
+        37.017584,
+        36.631824
+       ],
+       [
+        37.017622,
+        36.631804
+       ],
+       [
+        37.017678,
+        36.63173
+       ],
+       [
+        37.0179,
+        36.631245
+       ],
+       [
+        37.01818,
+        36.631327
+       ]
+      ]
+     ]
+    },
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   },
+   "44": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.402,
+      "ortalamaMesafeM": 671.783,
+      "toplamKesif": 1,
+      "cezaliOlay": 1,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.08,
+      "donusSuresiDk": 0.25,
+      "toplamSureDk": 16.82,
+      "toplamCezaDk": 1.0,
+      "donusler": {
+       "duz": 195,
+       "sag": 24,
+       "sol": 11,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.402,
+      "ortalamaMesafeM": 671.783,
+      "toplamKesif": 1,
+      "cezaliOlay": 1,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.08,
+      "donusSuresiDk": 0.25,
+      "toplamSureDk": 16.82,
+      "toplamCezaDk": 1.0,
+      "donusler": {
+       "duz": 195,
+       "sag": 24,
+       "sol": 11,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "QuakeMind": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.28,
+      "ortalamaMesafeM": 653.225,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.0,
+      "donusSuresiDk": 0.24,
+      "toplamSureDk": 15.36,
+      "toplamCezaDk": 0.0,
+      "donusler": {
+       "duz": 199,
+       "sag": 24,
+       "sol": 10,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {
+     "Kapanmayı bilmeyen ekip": [
+      [
+       [
+        37.022543,
+        36.629748
+       ],
+       [
+        37.021564,
+        36.629217
+       ],
+       [
+        37.020671,
+        36.628592
+       ],
+       [
+        37.020425,
+        36.628421
+       ],
+       [
+        37.020386,
+        36.628394
+       ],
+       [
+        37.019543,
+        36.627805
+       ],
+       [
+        37.019005,
+        36.627429
+       ],
+       [
+        37.018504,
+        36.627079
+       ],
+       [
+        37.018443,
+        36.627037
+       ],
+       [
+        37.017956,
+        36.626584
+       ],
+       [
+        37.017499,
+        36.626058
+       ],
+       [
+        37.017479,
+        36.626039
+       ],
+       [
+        37.017394,
+        36.625951
+       ],
+       [
+        37.017309,
+        36.626067
+       ],
+       [
+        37.017368,
+        36.626129
+       ],
+       [
+        37.017415,
+        36.626174
+       ],
+       [
+        37.017854,
+        36.626658
+       ],
+       [
+        37.018301,
+        36.627086
+       ],
+       [
+        37.018711,
+        36.627376
+       ],
+       [
+        37.018778,
+        36.627424
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.020297,
+        36.628496
+       ]
+      ],
+      [
+       [
+        37.017854,
+        36.626658
+       ],
+       [
+        37.018301,
+        36.627086
+       ],
+       [
+        37.018711,
+        36.627376
+       ],
+       [
+        37.018778,
+        36.627424
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.020297,
+        36.628496
+       ],
+       [
+        37.020342,
+        36.628547
+       ],
+       [
+        37.020584,
+        36.628704
+       ],
+       [
+        37.02098,
+        36.628963
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.019792,
+        36.62943
+       ],
+       [
+        37.019191,
+        36.630088
+       ],
+       [
+        37.019002,
+        36.630365
+       ],
+       [
+        37.018973,
+        36.63041
+       ],
+       [
+        37.018812,
+        36.63066
+       ],
+       [
+        37.018529,
+        36.631139
+       ],
+       [
+        37.018487,
+        36.631244
+       ],
+       [
+        37.01846,
+        36.631345
+       ],
+       [
+        37.01833,
+        36.631351
+       ],
+       [
+        37.01818,
+        36.631327
+       ]
+      ],
+      [
+       [
+        37.01634,
+        36.632153
+       ],
+       [
+        37.016996,
+        36.632486
+       ],
+       [
+        37.017336,
+        36.632657
+       ],
+       [
+        37.018158,
+        36.633116
+       ],
+       [
+        37.018281,
+        36.633167
+       ],
+       [
+        37.018376,
+        36.633197
+       ],
+       [
+        37.018792,
+        36.633257
+       ],
+       [
+        37.01892,
+        36.633128
+       ],
+       [
+        37.01897,
+        36.633083
+       ],
+       [
+        37.019197,
+        36.632983
+       ],
+       [
+        37.019396,
+        36.632859
+       ],
+       [
+        37.019872,
+        36.632572
+       ],
+       [
+        37.019931,
+        36.632524
+       ],
+       [
+        37.020032,
+        36.632542
+       ],
+       [
+        37.020153,
+        36.632588
+       ],
+       [
+        37.020389,
+        36.632694
+       ],
+       [
+        37.020604,
+        36.63277
+       ],
+       [
+        37.020782,
+        36.632857
+       ],
+       [
+        37.020941,
+        36.632978
+       ],
+       [
+        37.021191,
+        36.633174
+       ],
+       [
+        37.021369,
+        36.633307
+       ],
+       [
+        37.021531,
+        36.633441
+       ],
+       [
+        37.021805,
+        36.63281
+       ],
+       [
+        37.021969,
+        36.632365
+       ],
+       [
+        37.02204,
+        36.632155
+       ]
+      ]
+     ],
+     "QuakeMind": [
+      [
+       [
+        37.022543,
+        36.629748
+       ],
+       [
+        37.021564,
+        36.629217
+       ],
+       [
+        37.020671,
+        36.628592
+       ],
+       [
+        37.020425,
+        36.628421
+       ],
+       [
+        37.020386,
+        36.628394
+       ],
+       [
+        37.019543,
+        36.627805
+       ],
+       [
+        37.019005,
+        36.627429
+       ],
+       [
+        37.018504,
+        36.627079
+       ],
+       [
+        37.018443,
+        36.627037
+       ],
+       [
+        37.017956,
+        36.626584
+       ],
+       [
+        37.017499,
+        36.626058
+       ],
+       [
+        37.017479,
+        36.626039
+       ],
+       [
+        37.017394,
+        36.625951
+       ],
+       [
+        37.017309,
+        36.626067
+       ],
+       [
+        37.017368,
+        36.626129
+       ],
+       [
+        37.017415,
+        36.626174
+       ],
+       [
+        37.017854,
+        36.626658
+       ],
+       [
+        37.018301,
+        36.627086
+       ],
+       [
+        37.018711,
+        36.627376
+       ],
+       [
+        37.018778,
+        36.627424
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.020297,
+        36.628496
+       ]
+      ],
+      [
+       [
+        37.017854,
+        36.626658
+       ],
+       [
+        37.018301,
+        36.627086
+       ],
+       [
+        37.018711,
+        36.627376
+       ],
+       [
+        37.018778,
+        36.627424
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.019792,
+        36.62943
+       ],
+       [
+        37.019191,
+        36.630088
+       ],
+       [
+        37.019002,
+        36.630365
+       ],
+       [
+        37.018973,
+        36.63041
+       ],
+       [
+        37.018812,
+        36.63066
+       ],
+       [
+        37.018529,
+        36.631139
+       ],
+       [
+        37.018487,
+        36.631244
+       ],
+       [
+        37.01846,
+        36.631345
+       ],
+       [
+        37.01833,
+        36.631351
+       ],
+       [
+        37.01818,
+        36.631327
+       ]
+      ],
+      [
+       [
+        37.01634,
+        36.632153
+       ],
+       [
+        37.016996,
+        36.632486
+       ],
+       [
+        37.017336,
+        36.632657
+       ],
+       [
+        37.018158,
+        36.633116
+       ],
+       [
+        37.018281,
+        36.633167
+       ],
+       [
+        37.018376,
+        36.633197
+       ],
+       [
+        37.018792,
+        36.633257
+       ],
+       [
+        37.01892,
+        36.633128
+       ],
+       [
+        37.01897,
+        36.633083
+       ],
+       [
+        37.019197,
+        36.632983
+       ],
+       [
+        37.019396,
+        36.632859
+       ],
+       [
+        37.019872,
+        36.632572
+       ],
+       [
+        37.019931,
+        36.632524
+       ],
+       [
+        37.020032,
+        36.632542
+       ],
+       [
+        37.020153,
+        36.632588
+       ],
+       [
+        37.020389,
+        36.632694
+       ],
+       [
+        37.020604,
+        36.63277
+       ],
+       [
+        37.020782,
+        36.632857
+       ],
+       [
+        37.020941,
+        36.632978
+       ],
+       [
+        37.021191,
+        36.633174
+       ],
+       [
+        37.021369,
+        36.633307
+       ],
+       [
+        37.021531,
+        36.633441
+       ],
+       [
+        37.021805,
+        36.63281
+       ],
+       [
+        37.021969,
+        36.632365
+       ],
+       [
+        37.02204,
+        36.632155
+       ]
+      ]
+     ]
+    },
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   },
+   "45": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.402,
+      "ortalamaMesafeM": 671.783,
+      "toplamKesif": 1,
+      "cezaliOlay": 1,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.08,
+      "donusSuresiDk": 0.25,
+      "toplamSureDk": 16.82,
+      "toplamCezaDk": 1.0,
+      "donusler": {
+       "duz": 195,
+       "sag": 24,
+       "sol": 11,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.402,
+      "ortalamaMesafeM": 671.783,
+      "toplamKesif": 1,
+      "cezaliOlay": 1,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.08,
+      "donusSuresiDk": 0.25,
+      "toplamSureDk": 16.82,
+      "toplamCezaDk": 1.0,
+      "donusler": {
+       "duz": 195,
+       "sag": 24,
+       "sol": 11,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "QuakeMind": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.28,
+      "ortalamaMesafeM": 653.225,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.0,
+      "donusSuresiDk": 0.24,
+      "toplamSureDk": 15.36,
+      "toplamCezaDk": 0.0,
+      "donusler": {
+       "duz": 199,
+       "sag": 24,
+       "sol": 10,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {
+     "Kapanmayı bilmeyen ekip": [
+      [
+       [
+        37.022543,
+        36.629748
+       ],
+       [
+        37.022632,
+        36.629476
+       ],
+       [
+        37.022656,
+        36.629365
+       ],
+       [
+        37.022754,
+        36.628993
+       ],
+       [
+        37.023219,
+        36.629185
+       ],
+       [
+        37.023219,
+        36.630106
+       ],
+       [
+        37.023245,
+        36.63027
+       ],
+       [
+        37.023261,
+        36.630396
+       ],
+       [
+        37.023314,
+        36.630581
+       ],
+       [
+        37.023348,
+        36.630724
+       ],
+       [
+        37.022762,
+        36.631009
+       ],
+       [
+        37.022422,
+        36.631149
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.019792,
+        36.62943
+       ],
+       [
+        37.019191,
+        36.630088
+       ],
+       [
+        37.019002,
+        36.630365
+       ],
+       [
+        37.018973,
+        36.63041
+       ],
+       [
+        37.018812,
+        36.63066
+       ],
+       [
+        37.018529,
+        36.631139
+       ],
+       [
+        37.018487,
+        36.631244
+       ],
+       [
+        37.01846,
+        36.631345
+       ],
+       [
+        37.01833,
+        36.631351
+       ],
+       [
+        37.01818,
+        36.631327
+       ]
+      ],
+      [
+       [
+        37.017854,
+        36.626658
+       ],
+       [
+        37.018301,
+        36.627086
+       ],
+       [
+        37.018711,
+        36.627376
+       ],
+       [
+        37.018778,
+        36.627424
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.022256,
+        36.631522
+       ],
+       [
+        37.022199,
+        36.631654
+       ],
+       [
+        37.02204,
+        36.632155
+       ]
+      ],
+      [
+       [
+        37.022293,
+        36.633541
+       ],
+       [
+        37.022117,
+        36.633556
+       ],
+       [
+        37.022278,
+        36.633268
+       ],
+       [
+        37.022398,
+        36.633094
+       ],
+       [
+        37.022479,
+        36.632973
+       ],
+       [
+        37.022515,
+        36.632895
+       ],
+       [
+        37.02255,
+        36.632796
+       ],
+       [
+        37.022593,
+        36.632651
+       ],
+       [
+        37.022747,
+        36.632048
+       ],
+       [
+        37.022522,
+        36.631821
+       ],
+       [
+        37.022256,
+        36.631522
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.020297,
+        36.628496
+       ]
+      ]
+     ],
+     "QuakeMind": [
+      [
+       [
+        37.022543,
+        36.629748
+       ],
+       [
+        37.022632,
+        36.629476
+       ],
+       [
+        37.022656,
+        36.629365
+       ],
+       [
+        37.022754,
+        36.628993
+       ],
+       [
+        37.023219,
+        36.629185
+       ],
+       [
+        37.023219,
+        36.630106
+       ],
+       [
+        37.023245,
+        36.63027
+       ],
+       [
+        37.023261,
+        36.630396
+       ],
+       [
+        37.023314,
+        36.630581
+       ],
+       [
+        37.023348,
+        36.630724
+       ],
+       [
+        37.022762,
+        36.631009
+       ],
+       [
+        37.022422,
+        36.631149
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.019792,
+        36.62943
+       ],
+       [
+        37.019191,
+        36.630088
+       ],
+       [
+        37.019002,
+        36.630365
+       ],
+       [
+        37.018973,
+        36.63041
+       ],
+       [
+        37.018812,
+        36.63066
+       ],
+       [
+        37.018529,
+        36.631139
+       ],
+       [
+        37.018487,
+        36.631244
+       ],
+       [
+        37.01846,
+        36.631345
+       ],
+       [
+        37.01833,
+        36.631351
+       ],
+       [
+        37.01818,
+        36.631327
+       ]
+      ],
+      [
+       [
+        37.017854,
+        36.626658
+       ],
+       [
+        37.018301,
+        36.627086
+       ],
+       [
+        37.018711,
+        36.627376
+       ],
+       [
+        37.018778,
+        36.627424
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.022256,
+        36.631522
+       ],
+       [
+        37.022199,
+        36.631654
+       ],
+       [
+        37.02204,
+        36.632155
+       ]
+      ],
+      [
+       [
+        37.022293,
+        36.633541
+       ],
+       [
+        37.022117,
+        36.633556
+       ],
+       [
+        37.022278,
+        36.633268
+       ],
+       [
+        37.022398,
+        36.633094
+       ],
+       [
+        37.022479,
+        36.632973
+       ],
+       [
+        37.022515,
+        36.632895
+       ],
+       [
+        37.02255,
+        36.632796
+       ],
+       [
+        37.022593,
+        36.632651
+       ],
+       [
+        37.022747,
+        36.632048
+       ],
+       [
+        37.022522,
+        36.631821
+       ],
+       [
+        37.022256,
+        36.631522
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.020297,
+        36.628496
+       ]
+      ]
+     ]
+    },
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   },
+   "46": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.402,
+      "ortalamaMesafeM": 671.783,
+      "toplamKesif": 1,
+      "cezaliOlay": 1,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.08,
+      "donusSuresiDk": 0.25,
+      "toplamSureDk": 16.82,
+      "toplamCezaDk": 1.0,
+      "donusler": {
+       "duz": 195,
+       "sag": 24,
+       "sol": 11,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.402,
+      "ortalamaMesafeM": 671.783,
+      "toplamKesif": 1,
+      "cezaliOlay": 1,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.08,
+      "donusSuresiDk": 0.25,
+      "toplamSureDk": 16.82,
+      "toplamCezaDk": 1.0,
+      "donusler": {
+       "duz": 195,
+       "sag": 24,
+       "sol": 11,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "QuakeMind": {
+      "gorevSayisi": 16,
+      "ulasanGorev": 12,
+      "ortakGorev": 12,
+      "ortalamaSureDk": 1.28,
+      "ortalamaMesafeM": 653.225,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.0,
+      "donusSuresiDk": 0.24,
+      "toplamSureDk": 15.36,
+      "toplamCezaDk": 0.0,
+      "donusler": {
+       "duz": 199,
+       "sag": 24,
+       "sol": 10,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {
+     "Kapanmayı bilmeyen ekip": [
+      [
+       [
+        37.017854,
+        36.626658
+       ],
+       [
+        37.018301,
+        36.627086
+       ],
+       [
+        37.018711,
+        36.627376
+       ],
+       [
+        37.018778,
+        36.627424
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.022256,
+        36.631522
+       ],
+       [
+        37.022199,
+        36.631654
+       ],
+       [
+        37.02204,
+        36.632155
+       ]
+      ],
+      [
+       [
+        37.022293,
+        36.633541
+       ],
+       [
+        37.022117,
+        36.633556
+       ],
+       [
+        37.022278,
+        36.633268
+       ],
+       [
+        37.022398,
+        36.633094
+       ],
+       [
+        37.022479,
+        36.632973
+       ],
+       [
+        37.022515,
+        36.632895
+       ],
+       [
+        37.02255,
+        36.632796
+       ],
+       [
+        37.022593,
+        36.632651
+       ],
+       [
+        37.022747,
+        36.632048
+       ],
+       [
+        37.022522,
+        36.631821
+       ],
+       [
+        37.022256,
+        36.631522
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.020297,
+        36.628496
+       ]
+      ],
+      [
+       [
+        37.01634,
+        36.632153
+       ],
+       [
+        37.016354,
+        36.631847
+       ],
+       [
+        37.016951,
+        36.631836
+       ],
+       [
+        37.017316,
+        36.631829
+       ],
+       [
+        37.017584,
+        36.631824
+       ],
+       [
+        37.017622,
+        36.631804
+       ],
+       [
+        37.017678,
+        36.63173
+       ],
+       [
+        37.0179,
+        36.631245
+       ],
+       [
+        37.01818,
+        36.631327
+       ]
+      ]
+     ],
+     "QuakeMind": [
+      [
+       [
+        37.017854,
+        36.626658
+       ],
+       [
+        37.018301,
+        36.627086
+       ],
+       [
+        37.018711,
+        36.627376
+       ],
+       [
+        37.018778,
+        36.627424
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.022256,
+        36.631522
+       ],
+       [
+        37.022199,
+        36.631654
+       ],
+       [
+        37.02204,
+        36.632155
+       ]
+      ],
+      [
+       [
+        37.022293,
+        36.633541
+       ],
+       [
+        37.022117,
+        36.633556
+       ],
+       [
+        37.022278,
+        36.633268
+       ],
+       [
+        37.022398,
+        36.633094
+       ],
+       [
+        37.022479,
+        36.632973
+       ],
+       [
+        37.022515,
+        36.632895
+       ],
+       [
+        37.02255,
+        36.632796
+       ],
+       [
+        37.022593,
+        36.632651
+       ],
+       [
+        37.022747,
+        36.632048
+       ],
+       [
+        37.022522,
+        36.631821
+       ],
+       [
+        37.022256,
+        36.631522
+       ],
+       [
+        37.022046,
+        36.63131
+       ],
+       [
+        37.02178,
+        36.631062
+       ],
+       [
+        37.021636,
+        36.630915
+       ],
+       [
+        37.021423,
+        36.630691
+       ],
+       [
+        37.02119,
+        36.630479
+       ],
+       [
+        37.021152,
+        36.630434
+       ],
+       [
+        37.020903,
+        36.630212
+       ],
+       [
+        37.020526,
+        36.629846
+       ],
+       [
+        37.020427,
+        36.62976
+       ],
+       [
+        37.019911,
+        36.629315
+       ],
+       [
+        37.019736,
+        36.629177
+       ],
+       [
+        37.019595,
+        36.629068
+       ],
+       [
+        37.019516,
+        36.628961
+       ],
+       [
+        37.019434,
+        36.628838
+       ],
+       [
+        37.019393,
+        36.628756
+       ],
+       [
+        37.019386,
+        36.628637
+       ],
+       [
+        37.019399,
+        36.628506
+       ],
+       [
+        37.019396,
+        36.628371
+       ],
+       [
+        37.019391,
+        36.628207
+       ],
+       [
+        37.019371,
+        36.627842
+       ],
+       [
+        37.020297,
+        36.628496
+       ]
+      ],
+      [
+       [
+        37.01634,
+        36.632153
+       ],
+       [
+        37.016354,
+        36.631847
+       ],
+       [
+        37.016951,
+        36.631836
+       ],
+       [
+        37.017316,
+        36.631829
+       ],
+       [
+        37.017584,
+        36.631824
+       ],
+       [
+        37.017622,
+        36.631804
+       ],
+       [
+        37.017678,
+        36.63173
+       ],
+       [
+        37.0179,
+        36.631245
+       ],
+       [
+        37.01818,
+        36.631327
+       ]
+      ]
+     ]
+    },
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   }
+  },
+  "tohumlar": [
+   42,
+   43,
+   44,
+   45,
+   46
+  ],
+  "farkliAfetzedeKumesi": 1,
+  "rhKiyasi": null,
+  "rhTohum": null
+ },
+ {
+  "alan": "Nurdağı",
+  "il": "Gaziantep",
+  "sahne": "Nurdagi - Feb 15, 2023 (Warning Low Quality)",
+  "tarih": "2023-02-14",
+  "saglayici": "Help.NGO",
+  "analizBbox": [
+   36.73017,
+   37.174081,
+   36.735814,
+   37.178577
+  ],
+  "gercekBounds": [
+   36.73004150390625,
+   37.17344871200958,
+   36.736907958984375,
+   37.178919774039876
+  ],
+  "pencereM": 500.5,
+  "doluluk": 1.0,
+  "model": {
+   "ad": "segformer_mitb0_p2_t42",
+   "etiket": "segformer_mitb0 · P2 · tohum 42",
+   "mimari": "Segformer",
+   "kodlayici": "mit_b0",
+   "esik": 0.5,
+   "guclendirme": 1.0,
+   "sonIsleme": 0,
+   "kararKaynagi": "02 defterinin ölçtüğü ayar: sigmoid > eşik; güçlendirme ve son işleme yok.",
+   "egitimGsdM": [
+    0.3,
+    0.5
+   ],
+   "sha256Kisa": "a29a2e85c068",
+   "olcum": {
+    "dogrulamaIoU": 0.4123723776669902,
+    "sinamaIoU": 0.38227481768696886,
+    "sinama": {
+     "iou": 0.38227481768696886,
+     "f1": 0.553109718553144,
+     "kesinlik": 0.5665221859425327,
+     "duyarlilik": 0.5403176461701152,
+     "karo": 91
+    },
+    "disQqb": {
+     "iou": 0.26764471202669216,
+     "f1": 0.4222708610503106,
+     "kesinlik": 0.34064209384448235,
+     "duyarlilik": 0.5553506923539966,
+     "karo": 74
+    },
+    "disMedbfs": {
+     "iou": 0.016217239991476687,
+     "f1": 0.03191687633957618,
+     "kesinlik": 0.025155154052365864,
+     "duyarlilik": 0.043650035047470614,
+     "karo": 17
+    },
+    "not": "02 defteri, sinama_sonrasi_tumu / dis_qqb / dis_medbfs (eşik = karar.esik).",
+    "ileriGecis512Sn": 0.14,
+    "ileriGecisNotu": "512x512 tek ileri geçiş, CPU (12th Gen Intel Core i7-12700H), API'nin koştuğu ortam (torch 2.11.0+cpu, depo kökündeki venv); `python araclar_model_teslim.py <ad> --karo-yok`, 25 Eylül 2026. Aynı ölçüm QuakeMindBackend/venv'de (torch 2.13.0) 6 kat yavaş çıkıyor — ürün kök venv ile koştuğu için buradaki değer geçerlidir."
+   },
+   "kullanilanGsdM": 0.476,
+   "gsdUyarisi": false
+  },
+  "analizSn": 9.5,
+  "hasarKare": 0.038,
+  "hasarGecerli": 0.038,
+  "gecerliPikselOrani": 0.9994,
+  "acikYol": 374,
+  "kapaliYol": 22,
+  "yolKatmaniYok": false,
+  "ekipSayisi": 5,
+  "afetzedeSayisi": 5,
+  "elenenAfetzede": 0,
+  "tohumSayac": {
+   "42": {
+    "afetzede": 5,
+    "ekip": 5,
+    "elenen": 0
+   },
+   "43": {
+    "afetzede": 5,
+    "ekip": 5,
+    "elenen": 0
+   },
+   "44": {
+    "afetzede": 5,
+    "ekip": 5,
+    "elenen": 0
+   },
+   "45": {
+    "afetzede": 5,
+    "ekip": 5,
+    "elenen": 0
+   },
+   "46": {
+    "afetzede": 5,
+    "ekip": 5,
+    "elenen": 0
+   }
+  },
+  "grafDugum": 296,
+  "grafKenar": 715,
+  "kapaliKenar": 22,
+  "kapsama": {
+   "edgesTotal": 715,
+   "edgesObserved": 315,
+   "edgesObservedFraction": 0.4406,
+   "sampleObservedFraction": 0.4729
+  },
+  "kapsam": "mahalle",
+  "kollar": {
+   "varyantlar": {
+    "Kapanmayı bilmeyen ekip": {
+     "gorevSayisi": 25,
+     "ulasanGorev": 25,
+     "ortakGorev": 25,
+     "ortalamaSureDk": 3.526,
+     "ortalamaMesafeM": 761.236,
+     "toplamKesif": 40,
+     "cezaliOlay": 40,
+     "kapanmaCezasiDk": 1.0,
+     "cezadanGelenDk": 1.6,
+     "donusSuresiDk": 0.55,
+     "toplamSureDk": 88.16,
+     "toplamCezaDk": 40.0,
+     "donusler": {
+      "duz": 218,
+      "sag": 78,
+      "sol": 59,
+      "u": 0
+     },
+     "uDonusuSayisi": 0
+    },
+    "Telsizle paylaşan filo": {
+     "gorevSayisi": 25,
+     "ulasanGorev": 25,
+     "ortakGorev": 25,
+     "ortalamaSureDk": 2.88,
+     "ortalamaMesafeM": 731.832,
+     "toplamKesif": 26,
+     "cezaliOlay": 26,
+     "kapanmaCezasiDk": 1.0,
+     "cezadanGelenDk": 1.04,
+     "donusSuresiDk": 0.48,
+     "toplamSureDk": 72.0,
+     "toplamCezaDk": 26.0,
+     "donusler": {
+      "duz": 191,
+      "sag": 72,
+      "sol": 50,
+      "u": 0
+     },
+     "uDonusuSayisi": 0
+    },
+    "QuakeMind": {
+     "gorevSayisi": 25,
+     "ulasanGorev": 25,
+     "ortakGorev": 25,
+     "ortalamaSureDk": 1.446,
+     "ortalamaMesafeM": 621.416,
+     "toplamKesif": 0,
+     "cezaliOlay": 0,
+     "kapanmaCezasiDk": 1.0,
+     "cezadanGelenDk": 0.0,
+     "donusSuresiDk": 0.32,
+     "toplamSureDk": 36.16,
+     "toplamCezaDk": 0.0,
+     "donusler": {
+      "duz": 153,
+      "sag": 41,
+      "sol": 36,
+      "u": 0
+     },
+     "uDonusuSayisi": 0
+    }
+   },
+   "izlenenYollar": {
+    "Kapanmayı bilmeyen ekip": [
+     [
+      [
+       37.173069,
+       36.729618
+      ],
+      [
+       37.173628,
+       36.731974
+      ],
+      [
+       37.173677,
+       36.732179
+      ],
+      [
+       37.173885,
+       36.733031
+      ],
+      [
+       37.174119,
+       36.734135
+      ],
+      [
+       37.174291,
+       36.734879
+      ],
+      [
+       37.174447,
+       36.735508
+      ],
+      [
+       37.174495,
+       36.735779
+      ],
+      [
+       37.174732,
+       36.737113
+      ],
+      [
+       37.175471,
+       36.736878
+      ],
+      [
+       37.175269,
+       36.736043
+      ],
+      [
+       37.17609,
+       36.735706
+      ],
+      [
+       37.176078,
+       36.735619
+      ],
+      [
+       37.176255,
+       36.735594
+      ],
+      [
+       37.176428,
+       36.73556
+      ],
+      [
+       37.176686,
+       36.735398
+      ],
+      [
+       37.176794,
+       36.735302
+      ],
+      [
+       37.177116,
+       36.735183
+      ],
+      [
+       37.177133,
+       36.735674
+      ]
+     ],
+     [
+      [
+       37.174732,
+       36.737113
+      ],
+      [
+       37.175471,
+       36.736878
+      ],
+      [
+       37.175269,
+       36.736043
+      ],
+      [
+       37.17609,
+       36.735706
+      ],
+      [
+       37.176078,
+       36.735619
+      ],
+      [
+       37.176255,
+       36.735594
+      ],
+      [
+       37.176428,
+       36.73556
+      ],
+      [
+       37.176686,
+       36.735398
+      ],
+      [
+       37.176794,
+       36.735302
+      ],
+      [
+       37.177116,
+       36.735183
+      ],
+      [
+       37.177133,
+       36.735674
+      ],
+      [
+       37.17715,
+       36.736162
+      ],
+      [
+       37.176215,
+       36.736519
+      ]
+     ],
+     [
+      [
+       37.179214,
+       36.734702
+      ],
+      [
+       37.178874,
+       36.733958
+      ],
+      [
+       37.178423,
+       36.733041
+      ],
+      [
+       37.178311,
+       36.733111
+      ],
+      [
+       37.177836,
+       36.733418
+      ],
+      [
+       37.177491,
+       36.733622
+      ],
+      [
+       37.177317,
+       36.733728
+      ],
+      [
+       37.176933,
+       36.733962
+      ],
+      [
+       37.176497,
+       36.734243
+      ],
+      [
+       37.176234,
+       36.733334
+      ],
+      [
+       37.175716,
+       36.733515
+      ],
+      [
+       37.175493,
+       36.732571
+      ],
+      [
+       37.176039,
+       36.732417
+      ]
+     ],
+     [
+      [
+       37.17317,
+       36.735126
+      ],
+      [
+       37.17353,
+       36.735052
+      ],
+      [
+       37.174291,
+       36.734879
+      ],
+      [
+       37.174447,
+       36.735508
+      ],
+      [
+       37.174495,
+       36.735779
+      ],
+      [
+       37.174732,
+       36.737113
+      ],
+      [
+       37.175471,
+       36.736878
+      ],
+      [
+       37.175269,
+       36.736043
+      ],
+      [
+       37.17609,
+       36.735706
+      ],
+      [
+       37.176078,
+       36.735619
+      ],
+      [
+       37.176255,
+       36.735594
+      ],
+      [
+       37.176428,
+       36.73556
+      ],
+      [
+       37.176686,
+       36.735398
+      ],
+      [
+       37.176794,
+       36.735302
+      ],
+      [
+       37.177116,
+       36.735183
+      ],
+      [
+       37.177133,
+       36.735674
+      ],
+      [
+       37.17715,
+       36.736162
+      ]
+     ],
+     [
+      [
+       37.175817,
+       36.738196
+      ],
+      [
+       37.175471,
+       36.736878
+      ],
+      [
+       37.175269,
+       36.736043
+      ],
+      [
+       37.17609,
+       36.735706
+      ],
+      [
+       37.176078,
+       36.735619
+      ],
+      [
+       37.176255,
+       36.735594
+      ],
+      [
+       37.176428,
+       36.73556
+      ],
+      [
+       37.176686,
+       36.735398
+      ],
+      [
+       37.176794,
+       36.735302
+      ],
+      [
+       37.177116,
+       36.735183
+      ],
+      [
+       37.177133,
+       36.735674
+      ],
+      [
+       37.17715,
+       36.736162
+      ],
+      [
+       37.177223,
+       36.736833
+      ],
+      [
+       37.177266,
+       36.737067
+      ],
+      [
+       37.177352,
+       36.73732
+      ],
+      [
+       37.177411,
+       36.73748
+      ],
+      [
+       37.177657,
+       36.737262
+      ],
+      [
+       37.177839,
+       36.737026
+      ],
+      [
+       37.177909,
+       36.736921
+      ],
+      [
+       37.177918,
+       36.736813
+      ],
+      [
+       37.177693,
+       36.736002
+      ],
+      [
+       37.17781,
+       36.735969
+      ],
+      [
+       37.178156,
+       36.735735
+      ],
+      [
+       37.178231,
+       36.735675
+      ],
+      [
+       37.178628,
+       36.73536
+      ]
+     ]
+    ],
+    "QuakeMind": [
+     [
+      [
+       37.173069,
+       36.729618
+      ],
+      [
+       37.173628,
+       36.731974
+      ],
+      [
+       37.173677,
+       36.732179
+      ],
+      [
+       37.173885,
+       36.733031
+      ],
+      [
+       37.174119,
+       36.734135
+      ],
+      [
+       37.17455,
+       36.733989
+      ],
+      [
+       37.174946,
+       36.7338
+      ],
+      [
+       37.175716,
+       36.733515
+      ],
+      [
+       37.176234,
+       36.733334
+      ],
+      [
+       37.176497,
+       36.734243
+      ],
+      [
+       37.176559,
+       36.73471
+      ],
+      [
+       37.176686,
+       36.735398
+      ],
+      [
+       37.176794,
+       36.735302
+      ],
+      [
+       37.177116,
+       36.735183
+      ],
+      [
+       37.177133,
+       36.735674
+      ]
+     ],
+     [
+      [
+       37.174732,
+       36.737113
+      ],
+      [
+       37.175471,
+       36.736878
+      ],
+      [
+       37.175817,
+       36.738196
+      ],
+      [
+       37.176323,
+       36.737756
+      ],
+      [
+       37.176555,
+       36.737574
+      ],
+      [
+       37.176215,
+       36.736519
+      ]
+     ],
+     [
+      [
+       37.179214,
+       36.734702
+      ],
+      [
+       37.178874,
+       36.733958
+      ],
+      [
+       37.178423,
+       36.733041
+      ],
+      [
+       37.178311,
+       36.733111
+      ],
+      [
+       37.178034,
+       36.732457
+      ],
+      [
+       37.177824,
+       36.73193
+      ],
+      [
+       37.176899,
+       36.732166
+      ],
+      [
+       37.176039,
+       36.732417
+      ]
+     ],
+     [
+      [
+       37.17317,
+       36.735126
+      ],
+      [
+       37.17353,
+       36.735052
+      ],
+      [
+       37.174291,
+       36.734879
+      ],
+      [
+       37.174119,
+       36.734135
+      ],
+      [
+       37.17455,
+       36.733989
+      ],
+      [
+       37.174946,
+       36.7338
+      ],
+      [
+       37.175716,
+       36.733515
+      ],
+      [
+       37.176234,
+       36.733334
+      ],
+      [
+       37.176497,
+       36.734243
+      ],
+      [
+       37.176559,
+       36.73471
+      ],
+      [
+       37.176686,
+       36.735398
+      ],
+      [
+       37.176794,
+       36.735302
+      ],
+      [
+       37.177116,
+       36.735183
+      ],
+      [
+       37.177133,
+       36.735674
+      ],
+      [
+       37.17715,
+       36.736162
+      ]
+     ],
+     [
+      [
+       37.175817,
+       36.738196
+      ],
+      [
+       37.176323,
+       36.737756
+      ],
+      [
+       37.176555,
+       36.737574
+      ],
+      [
+       37.177266,
+       36.737067
+      ],
+      [
+       37.177352,
+       36.73732
+      ],
+      [
+       37.177411,
+       36.73748
+      ],
+      [
+       37.177657,
+       36.737262
+      ],
+      [
+       37.177839,
+       36.737026
+      ],
+      [
+       37.177909,
+       36.736921
+      ],
+      [
+       37.177918,
+       36.736813
+      ],
+      [
+       37.177693,
+       36.736002
+      ],
+      [
+       37.17781,
+       36.735969
+      ],
+      [
+       37.178156,
+       36.735735
+      ],
+      [
+       37.178231,
+       36.735675
+      ],
+      [
+       37.178628,
+       36.73536
+      ]
+     ]
+    ]
+   },
+   "gorusMesafesiM": 0.0,
+   "donusMaliyetli": true,
+   "degerlendirmeDk": null,
+   "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+  },
+  "kollarTohum": {
+   "42": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 3.526,
+      "ortalamaMesafeM": 761.236,
+      "toplamKesif": 40,
+      "cezaliOlay": 40,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 1.6,
+      "donusSuresiDk": 0.55,
+      "toplamSureDk": 88.16,
+      "toplamCezaDk": 40.0,
+      "donusler": {
+       "duz": 218,
+       "sag": 78,
+       "sol": 59,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 2.88,
+      "ortalamaMesafeM": 731.832,
+      "toplamKesif": 26,
+      "cezaliOlay": 26,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 1.04,
+      "donusSuresiDk": 0.48,
+      "toplamSureDk": 72.0,
+      "toplamCezaDk": 26.0,
+      "donusler": {
+       "duz": 191,
+       "sag": 72,
+       "sol": 50,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     },
+     "QuakeMind": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 1.446,
+      "ortalamaMesafeM": 621.416,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.0,
+      "donusSuresiDk": 0.32,
+      "toplamSureDk": 36.16,
+      "toplamCezaDk": 0.0,
+      "donusler": {
+       "duz": 153,
+       "sag": 41,
+       "sol": 36,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {
+     "Kapanmayı bilmeyen ekip": [
+      [
+       [
+        37.173069,
+        36.729618
+       ],
+       [
+        37.173628,
+        36.731974
+       ],
+       [
+        37.173677,
+        36.732179
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174495,
+        36.735779
+       ],
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175269,
+        36.736043
+       ],
+       [
+        37.17609,
+        36.735706
+       ],
+       [
+        37.176078,
+        36.735619
+       ],
+       [
+        37.176255,
+        36.735594
+       ],
+       [
+        37.176428,
+        36.73556
+       ],
+       [
+        37.176686,
+        36.735398
+       ],
+       [
+        37.176794,
+        36.735302
+       ],
+       [
+        37.177116,
+        36.735183
+       ],
+       [
+        37.177133,
+        36.735674
+       ]
+      ],
+      [
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175269,
+        36.736043
+       ],
+       [
+        37.17609,
+        36.735706
+       ],
+       [
+        37.176078,
+        36.735619
+       ],
+       [
+        37.176255,
+        36.735594
+       ],
+       [
+        37.176428,
+        36.73556
+       ],
+       [
+        37.176686,
+        36.735398
+       ],
+       [
+        37.176794,
+        36.735302
+       ],
+       [
+        37.177116,
+        36.735183
+       ],
+       [
+        37.177133,
+        36.735674
+       ],
+       [
+        37.17715,
+        36.736162
+       ],
+       [
+        37.176215,
+        36.736519
+       ]
+      ],
+      [
+       [
+        37.179214,
+        36.734702
+       ],
+       [
+        37.178874,
+        36.733958
+       ],
+       [
+        37.178423,
+        36.733041
+       ],
+       [
+        37.178311,
+        36.733111
+       ],
+       [
+        37.177836,
+        36.733418
+       ],
+       [
+        37.177491,
+        36.733622
+       ],
+       [
+        37.177317,
+        36.733728
+       ],
+       [
+        37.176933,
+        36.733962
+       ],
+       [
+        37.176497,
+        36.734243
+       ],
+       [
+        37.176234,
+        36.733334
+       ],
+       [
+        37.175716,
+        36.733515
+       ],
+       [
+        37.175493,
+        36.732571
+       ],
+       [
+        37.176039,
+        36.732417
+       ]
+      ],
+      [
+       [
+        37.17317,
+        36.735126
+       ],
+       [
+        37.17353,
+        36.735052
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174495,
+        36.735779
+       ],
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175269,
+        36.736043
+       ],
+       [
+        37.17609,
+        36.735706
+       ],
+       [
+        37.176078,
+        36.735619
+       ],
+       [
+        37.176255,
+        36.735594
+       ],
+       [
+        37.176428,
+        36.73556
+       ],
+       [
+        37.176686,
+        36.735398
+       ],
+       [
+        37.176794,
+        36.735302
+       ],
+       [
+        37.177116,
+        36.735183
+       ],
+       [
+        37.177133,
+        36.735674
+       ],
+       [
+        37.17715,
+        36.736162
+       ]
+      ],
+      [
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175269,
+        36.736043
+       ],
+       [
+        37.17609,
+        36.735706
+       ],
+       [
+        37.176078,
+        36.735619
+       ],
+       [
+        37.176255,
+        36.735594
+       ],
+       [
+        37.176428,
+        36.73556
+       ],
+       [
+        37.176686,
+        36.735398
+       ],
+       [
+        37.176794,
+        36.735302
+       ],
+       [
+        37.177116,
+        36.735183
+       ],
+       [
+        37.177133,
+        36.735674
+       ],
+       [
+        37.17715,
+        36.736162
+       ],
+       [
+        37.177223,
+        36.736833
+       ],
+       [
+        37.177266,
+        36.737067
+       ],
+       [
+        37.177352,
+        36.73732
+       ],
+       [
+        37.177411,
+        36.73748
+       ],
+       [
+        37.177657,
+        36.737262
+       ],
+       [
+        37.177839,
+        36.737026
+       ],
+       [
+        37.177909,
+        36.736921
+       ],
+       [
+        37.177918,
+        36.736813
+       ],
+       [
+        37.177693,
+        36.736002
+       ],
+       [
+        37.17781,
+        36.735969
+       ],
+       [
+        37.178156,
+        36.735735
+       ],
+       [
+        37.178231,
+        36.735675
+       ],
+       [
+        37.178628,
+        36.73536
+       ]
+      ]
+     ],
+     "QuakeMind": [
+      [
+       [
+        37.173069,
+        36.729618
+       ],
+       [
+        37.173628,
+        36.731974
+       ],
+       [
+        37.173677,
+        36.732179
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ],
+       [
+        37.176234,
+        36.733334
+       ],
+       [
+        37.176497,
+        36.734243
+       ],
+       [
+        37.176559,
+        36.73471
+       ],
+       [
+        37.176686,
+        36.735398
+       ],
+       [
+        37.176794,
+        36.735302
+       ],
+       [
+        37.177116,
+        36.735183
+       ],
+       [
+        37.177133,
+        36.735674
+       ]
+      ],
+      [
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.176323,
+        36.737756
+       ],
+       [
+        37.176555,
+        36.737574
+       ],
+       [
+        37.176215,
+        36.736519
+       ]
+      ],
+      [
+       [
+        37.179214,
+        36.734702
+       ],
+       [
+        37.178874,
+        36.733958
+       ],
+       [
+        37.178423,
+        36.733041
+       ],
+       [
+        37.178311,
+        36.733111
+       ],
+       [
+        37.178034,
+        36.732457
+       ],
+       [
+        37.177824,
+        36.73193
+       ],
+       [
+        37.176899,
+        36.732166
+       ],
+       [
+        37.176039,
+        36.732417
+       ]
+      ],
+      [
+       [
+        37.17317,
+        36.735126
+       ],
+       [
+        37.17353,
+        36.735052
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ],
+       [
+        37.176234,
+        36.733334
+       ],
+       [
+        37.176497,
+        36.734243
+       ],
+       [
+        37.176559,
+        36.73471
+       ],
+       [
+        37.176686,
+        36.735398
+       ],
+       [
+        37.176794,
+        36.735302
+       ],
+       [
+        37.177116,
+        36.735183
+       ],
+       [
+        37.177133,
+        36.735674
+       ],
+       [
+        37.17715,
+        36.736162
+       ]
+      ],
+      [
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.176323,
+        36.737756
+       ],
+       [
+        37.176555,
+        36.737574
+       ],
+       [
+        37.177266,
+        36.737067
+       ],
+       [
+        37.177352,
+        36.73732
+       ],
+       [
+        37.177411,
+        36.73748
+       ],
+       [
+        37.177657,
+        36.737262
+       ],
+       [
+        37.177839,
+        36.737026
+       ],
+       [
+        37.177909,
+        36.736921
+       ],
+       [
+        37.177918,
+        36.736813
+       ],
+       [
+        37.177693,
+        36.736002
+       ],
+       [
+        37.17781,
+        36.735969
+       ],
+       [
+        37.178156,
+        36.735735
+       ],
+       [
+        37.178231,
+        36.735675
+       ],
+       [
+        37.178628,
+        36.73536
+       ]
+      ]
+     ]
+    },
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   },
+   "43": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 3.313,
+      "ortalamaMesafeM": 721.412,
+      "toplamKesif": 37,
+      "cezaliOlay": 37,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 1.48,
+      "donusSuresiDk": 0.52,
+      "toplamSureDk": 82.82,
+      "toplamCezaDk": 37.0,
+      "donusler": {
+       "duz": 216,
+       "sag": 59,
+       "sol": 58,
+       "u": 1
+      },
+      "uDonusuSayisi": 1
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 2.733,
+      "ortalamaMesafeM": 691.404,
+      "toplamKesif": 25,
+      "cezaliOlay": 25,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 1.0,
+      "donusSuresiDk": 0.44,
+      "toplamSureDk": 68.33,
+      "toplamCezaDk": 25.0,
+      "donusler": {
+       "duz": 194,
+       "sag": 55,
+       "sol": 47,
+       "u": 1
+      },
+      "uDonusuSayisi": 1
+     },
+     "QuakeMind": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 1.393,
+      "ortalamaMesafeM": 604.324,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.0,
+      "donusSuresiDk": 0.28,
+      "toplamSureDk": 34.82,
+      "toplamCezaDk": 0.0,
+      "donusler": {
+       "duz": 163,
+       "sag": 38,
+       "sol": 30,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {
+     "Kapanmayı bilmeyen ekip": [
+      [
+       [
+        37.173069,
+        36.729618
+       ],
+       [
+        37.173628,
+        36.731974
+       ],
+       [
+        37.173677,
+        36.732179
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174495,
+        36.735779
+       ],
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175269,
+        36.736043
+       ],
+       [
+        37.17609,
+        36.735706
+       ],
+       [
+        37.176078,
+        36.735619
+       ],
+       [
+        37.176255,
+        36.735594
+       ],
+       [
+        37.176428,
+        36.73556
+       ],
+       [
+        37.176686,
+        36.735398
+       ],
+       [
+        37.176794,
+        36.735302
+       ],
+       [
+        37.177116,
+        36.735183
+       ],
+       [
+        37.177133,
+        36.735674
+       ],
+       [
+        37.17715,
+        36.736162
+       ],
+       [
+        37.177223,
+        36.736833
+       ],
+       [
+        37.177266,
+        36.737067
+       ],
+       [
+        37.177352,
+        36.73732
+       ],
+       [
+        37.177411,
+        36.73748
+       ],
+       [
+        37.177657,
+        36.737262
+       ],
+       [
+        37.177839,
+        36.737026
+       ],
+       [
+        37.177909,
+        36.736921
+       ],
+       [
+        37.177918,
+        36.736813
+       ],
+       [
+        37.177693,
+        36.736002
+       ],
+       [
+        37.17781,
+        36.735969
+       ],
+       [
+        37.178156,
+        36.735735
+       ],
+       [
+        37.178231,
+        36.735675
+       ],
+       [
+        37.178628,
+        36.73536
+       ]
+      ],
+      [
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175269,
+        36.736043
+       ],
+       [
+        37.17609,
+        36.735706
+       ],
+       [
+        37.176078,
+        36.735619
+       ],
+       [
+        37.176255,
+        36.735594
+       ],
+       [
+        37.176428,
+        36.73556
+       ],
+       [
+        37.176686,
+        36.735398
+       ],
+       [
+        37.176794,
+        36.735302
+       ],
+       [
+        37.177116,
+        36.735183
+       ],
+       [
+        37.177133,
+        36.735674
+       ],
+       [
+        37.17715,
+        36.736162
+       ]
+      ],
+      [
+       [
+        37.179214,
+        36.734702
+       ],
+       [
+        37.178628,
+        36.73536
+       ],
+       [
+        37.178231,
+        36.735675
+       ],
+       [
+        37.178156,
+        36.735735
+       ],
+       [
+        37.17781,
+        36.735969
+       ],
+       [
+        37.177693,
+        36.736002
+       ],
+       [
+        37.177918,
+        36.736813
+       ],
+       [
+        37.177909,
+        36.736921
+       ],
+       [
+        37.177839,
+        36.737026
+       ],
+       [
+        37.177657,
+        36.737262
+       ],
+       [
+        37.177411,
+        36.73748
+       ],
+       [
+        37.177352,
+        36.73732
+       ],
+       [
+        37.177266,
+        36.737067
+       ],
+       [
+        37.177223,
+        36.736833
+       ],
+       [
+        37.17715,
+        36.736162
+       ],
+       [
+        37.176215,
+        36.736519
+       ],
+       [
+        37.17715,
+        36.736162
+       ],
+       [
+        37.177133,
+        36.735674
+       ],
+       [
+        37.177116,
+        36.735183
+       ],
+       [
+        37.176794,
+        36.735302
+       ],
+       [
+        37.176686,
+        36.735398
+       ],
+       [
+        37.176428,
+        36.73556
+       ],
+       [
+        37.176255,
+        36.735594
+       ],
+       [
+        37.176078,
+        36.735619
+       ],
+       [
+        37.175969,
+        36.734557
+       ],
+       [
+        37.175716,
+        36.733515
+       ]
+      ],
+      [
+       [
+        37.17317,
+        36.735126
+       ],
+       [
+        37.17353,
+        36.735052
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ],
+       [
+        37.176234,
+        36.733334
+       ],
+       [
+        37.176497,
+        36.734243
+       ],
+       [
+        37.176933,
+        36.733962
+       ],
+       [
+        37.177317,
+        36.733728
+       ],
+       [
+        37.177491,
+        36.733622
+       ],
+       [
+        37.17716,
+        36.732841
+       ]
+      ],
+      [
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.176323,
+        36.737756
+       ],
+       [
+        37.176555,
+        36.737574
+       ],
+       [
+        37.177266,
+        36.737067
+       ],
+       [
+        37.177223,
+        36.736833
+       ],
+       [
+        37.17715,
+        36.736162
+       ],
+       [
+        37.177133,
+        36.735674
+       ]
+      ]
+     ],
+     "QuakeMind": [
+      [
+       [
+        37.173069,
+        36.729618
+       ],
+       [
+        37.173888,
+        36.729315
+       ],
+       [
+        37.174119,
+        36.729146
+       ],
+       [
+        37.174301,
+        36.729072
+       ],
+       [
+        37.174673,
+        36.728999
+       ],
+       [
+        37.175088,
+        36.7289
+       ],
+       [
+        37.175419,
+        36.728822
+       ],
+       [
+        37.176348,
+        36.728585
+       ],
+       [
+        37.176653,
+        36.729421
+       ],
+       [
+        37.176743,
+        36.729593
+       ],
+       [
+        37.177,
+        36.730082
+       ],
+       [
+        37.177527,
+        36.731034
+       ],
+       [
+        37.177599,
+        36.731145
+       ],
+       [
+        37.17791,
+        36.731624
+       ],
+       [
+        37.178229,
+        36.732064
+       ],
+       [
+        37.17883,
+        36.732783
+       ],
+       [
+        37.17928,
+        36.733582
+       ],
+       [
+        37.179618,
+        36.734161
+       ],
+       [
+        37.179214,
+        36.734702
+       ],
+       [
+        37.178628,
+        36.73536
+       ]
+      ],
+      [
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.176323,
+        36.737756
+       ],
+       [
+        37.176555,
+        36.737574
+       ],
+       [
+        37.177266,
+        36.737067
+       ],
+       [
+        37.177223,
+        36.736833
+       ],
+       [
+        37.17715,
+        36.736162
+       ]
+      ],
+      [
+       [
+        37.179214,
+        36.734702
+       ],
+       [
+        37.178874,
+        36.733958
+       ],
+       [
+        37.178423,
+        36.733041
+       ],
+       [
+        37.178311,
+        36.733111
+       ],
+       [
+        37.177836,
+        36.733418
+       ],
+       [
+        37.177491,
+        36.733622
+       ],
+       [
+        37.177317,
+        36.733728
+       ],
+       [
+        37.176933,
+        36.733962
+       ],
+       [
+        37.176497,
+        36.734243
+       ],
+       [
+        37.175969,
+        36.734557
+       ],
+       [
+        37.175716,
+        36.733515
+       ]
+      ],
+      [
+       [
+        37.17317,
+        36.735126
+       ],
+       [
+        37.17353,
+        36.735052
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ],
+       [
+        37.175493,
+        36.732571
+       ],
+       [
+        37.176039,
+        36.732417
+       ],
+       [
+        37.176899,
+        36.732166
+       ],
+       [
+        37.17716,
+        36.732841
+       ]
+      ],
+      [
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.176323,
+        36.737756
+       ],
+       [
+        37.176555,
+        36.737574
+       ],
+       [
+        37.177266,
+        36.737067
+       ],
+       [
+        37.177223,
+        36.736833
+       ],
+       [
+        37.17715,
+        36.736162
+       ],
+       [
+        37.177133,
+        36.735674
+       ]
+      ]
+     ]
+    },
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   },
+   "44": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 2.794,
+      "ortalamaMesafeM": 720.164,
+      "toplamKesif": 27,
+      "cezaliOlay": 27,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 1.08,
+      "donusSuresiDk": 0.43,
+      "toplamSureDk": 69.84,
+      "toplamCezaDk": 27.0,
+      "donusler": {
+       "duz": 213,
+       "sag": 55,
+       "sol": 46,
+       "u": 1
+      },
+      "uDonusuSayisi": 1
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 2.321,
+      "ortalamaMesafeM": 693.888,
+      "toplamKesif": 18,
+      "cezaliOlay": 18,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.72,
+      "donusSuresiDk": 0.36,
+      "toplamSureDk": 58.02,
+      "toplamCezaDk": 18.0,
+      "donusler": {
+       "duz": 185,
+       "sag": 49,
+       "sol": 36,
+       "u": 1
+      },
+      "uDonusuSayisi": 1
+     },
+     "QuakeMind": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 1.241,
+      "ortalamaMesafeM": 564.452,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.0,
+      "donusSuresiDk": 0.22,
+      "toplamSureDk": 31.03,
+      "toplamCezaDk": 0.0,
+      "donusler": {
+       "duz": 148,
+       "sag": 31,
+       "sol": 23,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {
+     "Kapanmayı bilmeyen ekip": [
+      [
+       [
+        37.173069,
+        36.729618
+       ],
+       [
+        37.173628,
+        36.731974
+       ],
+       [
+        37.173677,
+        36.732179
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ]
+      ],
+      [
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.174495,
+        36.735779
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.17432,
+        36.732931
+       ]
+      ],
+      [
+       [
+        37.179214,
+        36.734702
+       ],
+       [
+        37.178628,
+        36.73536
+       ]
+      ],
+      [
+       [
+        37.17317,
+        36.735126
+       ],
+       [
+        37.17353,
+        36.735052
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.17432,
+        36.732931
+       ],
+       [
+        37.174735,
+        36.732802
+       ],
+       [
+        37.17454,
+        36.731916
+       ],
+       [
+        37.175297,
+        36.731707
+       ],
+       [
+        37.175395,
+        36.73168
+       ],
+       [
+        37.175863,
+        36.731549
+       ],
+       [
+        37.176039,
+        36.732417
+       ]
+      ],
+      [
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.175708,
+        36.738285
+       ],
+       [
+        37.175181,
+        36.738719
+       ],
+       [
+        37.174978,
+        36.738236
+       ],
+       [
+        37.174824,
+        36.737634
+       ],
+       [
+        37.174739,
+        36.737168
+       ],
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.174495,
+        36.735779
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.17432,
+        36.732931
+       ],
+       [
+        37.174735,
+        36.732802
+       ]
+      ]
+     ],
+     "QuakeMind": [
+      [
+       [
+        37.173069,
+        36.729618
+       ],
+       [
+        37.173628,
+        36.731974
+       ],
+       [
+        37.173677,
+        36.732179
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ]
+      ],
+      [
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.174495,
+        36.735779
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.17432,
+        36.732931
+       ]
+      ],
+      [
+       [
+        37.179214,
+        36.734702
+       ],
+       [
+        37.178628,
+        36.73536
+       ]
+      ],
+      [
+       [
+        37.17317,
+        36.735126
+       ],
+       [
+        37.17353,
+        36.735052
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ],
+       [
+        37.175493,
+        36.732571
+       ],
+       [
+        37.176039,
+        36.732417
+       ]
+      ],
+      [
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.175708,
+        36.738285
+       ],
+       [
+        37.175181,
+        36.738719
+       ],
+       [
+        37.174978,
+        36.738236
+       ],
+       [
+        37.174824,
+        36.737634
+       ],
+       [
+        37.174739,
+        36.737168
+       ],
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.174495,
+        36.735779
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.17432,
+        36.732931
+       ],
+       [
+        37.174735,
+        36.732802
+       ]
+      ]
+     ]
+    },
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   },
+   "45": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 2.585,
+      "ortalamaMesafeM": 685.02,
+      "toplamKesif": 24,
+      "cezaliOlay": 24,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.96,
+      "donusSuresiDk": 0.41,
+      "toplamSureDk": 64.63,
+      "toplamCezaDk": 24.0,
+      "donusler": {
+       "duz": 182,
+       "sag": 61,
+       "sol": 41,
+       "u": 1
+      },
+      "uDonusuSayisi": 1
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 2.316,
+      "ortalamaMesafeM": 672.324,
+      "toplamKesif": 18,
+      "cezaliOlay": 18,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.72,
+      "donusSuresiDk": 0.4,
+      "toplamSureDk": 57.91,
+      "toplamCezaDk": 18.0,
+      "donusler": {
+       "duz": 179,
+       "sag": 59,
+       "sol": 39,
+       "u": 1
+      },
+      "uDonusuSayisi": 1
+     },
+     "QuakeMind": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 1.274,
+      "ortalamaMesafeM": 564.46,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.0,
+      "donusSuresiDk": 0.27,
+      "toplamSureDk": 31.84,
+      "toplamCezaDk": 0.0,
+      "donusler": {
+       "duz": 138,
+       "sag": 34,
+       "sol": 30,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {
+     "Kapanmayı bilmeyen ekip": [
+      [
+       [
+        37.173069,
+        36.729618
+       ],
+       [
+        37.173628,
+        36.731974
+       ],
+       [
+        37.173677,
+        36.732179
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174495,
+        36.735779
+       ],
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175269,
+        36.736043
+       ],
+       [
+        37.17609,
+        36.735706
+       ],
+       [
+        37.176078,
+        36.735619
+       ],
+       [
+        37.176255,
+        36.735594
+       ],
+       [
+        37.176428,
+        36.73556
+       ],
+       [
+        37.176686,
+        36.735398
+       ],
+       [
+        37.176794,
+        36.735302
+       ],
+       [
+        37.177116,
+        36.735183
+       ],
+       [
+        37.177133,
+        36.735674
+       ]
+      ],
+      [
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175269,
+        36.736043
+       ],
+       [
+        37.17609,
+        36.735706
+       ],
+       [
+        37.176078,
+        36.735619
+       ],
+       [
+        37.176255,
+        36.735594
+       ],
+       [
+        37.176428,
+        36.73556
+       ],
+       [
+        37.176686,
+        36.735398
+       ],
+       [
+        37.176794,
+        36.735302
+       ],
+       [
+        37.177116,
+        36.735183
+       ],
+       [
+        37.177133,
+        36.735674
+       ],
+       [
+        37.17715,
+        36.736162
+       ],
+       [
+        37.176215,
+        36.736519
+       ]
+      ],
+      [
+       [
+        37.179214,
+        36.734702
+       ],
+       [
+        37.178874,
+        36.733958
+       ],
+       [
+        37.178423,
+        36.733041
+       ],
+       [
+        37.178311,
+        36.733111
+       ],
+       [
+        37.177836,
+        36.733418
+       ],
+       [
+        37.177491,
+        36.733622
+       ],
+       [
+        37.177317,
+        36.733728
+       ],
+       [
+        37.176933,
+        36.733962
+       ],
+       [
+        37.176497,
+        36.734243
+       ]
+      ],
+      [
+       [
+        37.17317,
+        36.735126
+       ],
+       [
+        37.17353,
+        36.735052
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ]
+      ],
+      [
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.175708,
+        36.738285
+       ],
+       [
+        37.175181,
+        36.738719
+       ],
+       [
+        37.174978,
+        36.738236
+       ],
+       [
+        37.174824,
+        36.737634
+       ],
+       [
+        37.174739,
+        36.737168
+       ],
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.174495,
+        36.735779
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.173677,
+        36.732179
+       ],
+       [
+        37.174142,
+        36.732049
+       ],
+       [
+        37.174194,
+        36.732385
+       ]
+      ]
+     ],
+     "QuakeMind": [
+      [
+       [
+        37.173069,
+        36.729618
+       ],
+       [
+        37.173628,
+        36.731974
+       ],
+       [
+        37.173677,
+        36.732179
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ],
+       [
+        37.176234,
+        36.733334
+       ],
+       [
+        37.176497,
+        36.734243
+       ],
+       [
+        37.176559,
+        36.73471
+       ],
+       [
+        37.176686,
+        36.735398
+       ],
+       [
+        37.176794,
+        36.735302
+       ],
+       [
+        37.177116,
+        36.735183
+       ],
+       [
+        37.177133,
+        36.735674
+       ]
+      ],
+      [
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.176323,
+        36.737756
+       ],
+       [
+        37.176555,
+        36.737574
+       ],
+       [
+        37.176215,
+        36.736519
+       ]
+      ],
+      [
+       [
+        37.179214,
+        36.734702
+       ],
+       [
+        37.178874,
+        36.733958
+       ],
+       [
+        37.178423,
+        36.733041
+       ],
+       [
+        37.178311,
+        36.733111
+       ],
+       [
+        37.177836,
+        36.733418
+       ],
+       [
+        37.177491,
+        36.733622
+       ],
+       [
+        37.177317,
+        36.733728
+       ],
+       [
+        37.176933,
+        36.733962
+       ],
+       [
+        37.176497,
+        36.734243
+       ]
+      ],
+      [
+       [
+        37.17317,
+        36.735126
+       ],
+       [
+        37.17353,
+        36.735052
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ]
+      ],
+      [
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.175708,
+        36.738285
+       ],
+       [
+        37.175181,
+        36.738719
+       ],
+       [
+        37.174978,
+        36.738236
+       ],
+       [
+        37.174824,
+        36.737634
+       ],
+       [
+        37.174739,
+        36.737168
+       ],
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.174495,
+        36.735779
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.173677,
+        36.732179
+       ],
+       [
+        37.174142,
+        36.732049
+       ],
+       [
+        37.174194,
+        36.732385
+       ]
+      ]
+     ]
+    },
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   },
+   "46": {
+    "varyantlar": {
+     "Kapanmayı bilmeyen ekip": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 2.417,
+      "ortalamaMesafeM": 690.668,
+      "toplamKesif": 19,
+      "cezaliOlay": 19,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.76,
+      "donusSuresiDk": 0.4,
+      "toplamSureDk": 60.42,
+      "toplamCezaDk": 19.0,
+      "donusler": {
+       "duz": 203,
+       "sag": 42,
+       "sol": 40,
+       "u": 3
+      },
+      "uDonusuSayisi": 3
+     },
+     "Telsizle paylaşan filo": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 2.417,
+      "ortalamaMesafeM": 690.668,
+      "toplamKesif": 19,
+      "cezaliOlay": 19,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.76,
+      "donusSuresiDk": 0.4,
+      "toplamSureDk": 60.42,
+      "toplamCezaDk": 19.0,
+      "donusler": {
+       "duz": 203,
+       "sag": 42,
+       "sol": 40,
+       "u": 3
+      },
+      "uDonusuSayisi": 3
+     },
+     "QuakeMind": {
+      "gorevSayisi": 25,
+      "ulasanGorev": 25,
+      "ortakGorev": 25,
+      "ortalamaSureDk": 1.298,
+      "ortalamaMesafeM": 585.608,
+      "toplamKesif": 0,
+      "cezaliOlay": 0,
+      "kapanmaCezasiDk": 1.0,
+      "cezadanGelenDk": 0.0,
+      "donusSuresiDk": 0.22,
+      "toplamSureDk": 32.46,
+      "toplamCezaDk": 0.0,
+      "donusler": {
+       "duz": 172,
+       "sag": 25,
+       "sol": 25,
+       "u": 0
+      },
+      "uDonusuSayisi": 0
+     }
+    },
+    "izlenenYollar": {
+     "Kapanmayı bilmeyen ekip": [
+      [
+       [
+        37.173069,
+        36.729618
+       ],
+       [
+        37.173628,
+        36.731974
+       ],
+       [
+        37.173677,
+        36.732179
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174688,
+        36.735385
+       ],
+       [
+        37.174619,
+        36.734579
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ],
+       [
+        37.176234,
+        36.733334
+       ],
+       [
+        37.176497,
+        36.734243
+       ]
+      ],
+      [
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.174495,
+        36.735779
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ]
+      ],
+      [
+       [
+        37.179214,
+        36.734702
+       ],
+       [
+        37.178874,
+        36.733958
+       ],
+       [
+        37.178423,
+        36.733041
+       ],
+       [
+        37.178311,
+        36.733111
+       ],
+       [
+        37.177836,
+        36.733418
+       ],
+       [
+        37.177491,
+        36.733622
+       ],
+       [
+        37.177317,
+        36.733728
+       ],
+       [
+        37.176933,
+        36.733962
+       ],
+       [
+        37.176497,
+        36.734243
+       ],
+       [
+        37.176234,
+        36.733334
+       ]
+      ],
+      [
+       [
+        37.17317,
+        36.735126
+       ],
+       [
+        37.17353,
+        36.735052
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.17432,
+        36.732931
+       ]
+      ],
+      [
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175269,
+        36.736043
+       ],
+       [
+        37.175102,
+        36.735165
+       ],
+       [
+        37.175278,
+        36.734986
+       ],
+       [
+        37.175315,
+        36.734948
+       ],
+       [
+        37.175969,
+        36.734557
+       ],
+       [
+        37.176497,
+        36.734243
+       ],
+       [
+        37.176933,
+        36.733962
+       ],
+       [
+        37.177317,
+        36.733728
+       ],
+       [
+        37.177491,
+        36.733622
+       ],
+       [
+        37.177836,
+        36.733418
+       ],
+       [
+        37.178311,
+        36.733111
+       ],
+       [
+        37.178423,
+        36.733041
+       ],
+       [
+        37.17883,
+        36.732783
+       ],
+       [
+        37.179478,
+        36.732381
+       ],
+       [
+        37.179391,
+        36.73228
+       ],
+       [
+        37.179327,
+        36.732132
+       ],
+       [
+        37.179166,
+        36.731865
+       ],
+       [
+        37.179082,
+        36.731666
+       ],
+       [
+        37.178926,
+        36.731026
+       ]
+      ]
+     ],
+     "QuakeMind": [
+      [
+       [
+        37.173069,
+        36.729618
+       ],
+       [
+        37.173628,
+        36.731974
+       ],
+       [
+        37.173677,
+        36.732179
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ],
+       [
+        37.176234,
+        36.733334
+       ],
+       [
+        37.176497,
+        36.734243
+       ]
+      ],
+      [
+       [
+        37.174732,
+        36.737113
+       ],
+       [
+        37.174495,
+        36.735779
+       ],
+       [
+        37.174447,
+        36.735508
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.17455,
+        36.733989
+       ],
+       [
+        37.174946,
+        36.7338
+       ],
+       [
+        37.175716,
+        36.733515
+       ]
+      ],
+      [
+       [
+        37.179214,
+        36.734702
+       ],
+       [
+        37.178874,
+        36.733958
+       ],
+       [
+        37.178423,
+        36.733041
+       ],
+       [
+        37.178311,
+        36.733111
+       ],
+       [
+        37.177836,
+        36.733418
+       ],
+       [
+        37.177491,
+        36.733622
+       ],
+       [
+        37.177317,
+        36.733728
+       ],
+       [
+        37.176933,
+        36.733962
+       ],
+       [
+        37.176497,
+        36.734243
+       ],
+       [
+        37.176234,
+        36.733334
+       ]
+      ],
+      [
+       [
+        37.17317,
+        36.735126
+       ],
+       [
+        37.17353,
+        36.735052
+       ],
+       [
+        37.174291,
+        36.734879
+       ],
+       [
+        37.174119,
+        36.734135
+       ],
+       [
+        37.173885,
+        36.733031
+       ],
+       [
+        37.17432,
+        36.732931
+       ]
+      ],
+      [
+       [
+        37.175817,
+        36.738196
+       ],
+       [
+        37.175471,
+        36.736878
+       ],
+       [
+        37.175269,
+        36.736043
+       ],
+       [
+        37.175102,
+        36.735165
+       ],
+       [
+        37.175278,
+        36.734986
+       ],
+       [
+        37.175315,
+        36.734948
+       ],
+       [
+        37.175969,
+        36.734557
+       ],
+       [
+        37.176497,
+        36.734243
+       ],
+       [
+        37.176933,
+        36.733962
+       ],
+       [
+        37.177317,
+        36.733728
+       ],
+       [
+        37.177491,
+        36.733622
+       ],
+       [
+        37.177836,
+        36.733418
+       ],
+       [
+        37.178311,
+        36.733111
+       ],
+       [
+        37.178423,
+        36.733041
+       ],
+       [
+        37.17883,
+        36.732783
+       ],
+       [
+        37.179478,
+        36.732381
+       ],
+       [
+        37.179391,
+        36.73228
+       ],
+       [
+        37.179327,
+        36.732132
+       ],
+       [
+        37.179166,
+        36.731865
+       ],
+       [
+        37.179082,
+        36.731666
+       ],
+       [
+        37.178926,
+        36.731026
+       ]
+      ]
+     ]
+    },
+    "gorusMesafesiM": 0.0,
+    "donusMaliyetli": true,
+    "degerlendirmeDk": null,
+    "not": "Tatbikatta dünya = modelin kapanmaları olduğu için QuakeMind kolu tanım gereği kusursuz bilgiye sahiptir. Bu kıyas modelin doğruluğunu değil, kapanmayı önceden bilmenin kazandırdığı süreyi ölçer. Ortalamalar yalnız bütün kolların ulaştığı ortak görevler üzerinden alınmıştır (ortakGorev). Trafik sağdan akar: sola dönüş ve U dönüşü maliyetlidir."
+   }
+  },
+  "tohumlar": [
+   42,
+   43,
+   44,
+   45,
+   46
+  ],
+  "farkliAfetzedeKumesi": 5,
+  "rhKiyasi": null,
+  "rhTohum": null
+ }
+]

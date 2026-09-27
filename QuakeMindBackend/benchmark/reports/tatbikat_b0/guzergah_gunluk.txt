@@ -1,0 +1,12 @@
+model : unet_mitb4_p2_t42
+alan  : 1
+
+--- Gaziantep / Nurdağı ---
+Yol agi yerel bolge dosyasindan (152 dugum).
+Yol agi yerel bolge dosyasindan (296 dugum).
+    hasar %3.55 (gecerli piksel) | yol 378 acik / 26 kapali | graf 296 dugum, 26 kapali kenar | kapsama %44.1
+      Kapanmayı bilmeyen ekip      25/25 ulasti | ort 3.704 dk | sol 52 sag 80 U 6
+      Telsizle paylaşan filo       25/25 ulasti | ort 3.189 dk | sol 49 sag 67 U 5
+      QuakeMind                    25/25 ulasti | ort 1.534 dk | sol 34 sag 47 U 0
+
+1 alan -> benchmark/reports/tatbikat_b0/guzergah_nurdagi_unet_t42.json

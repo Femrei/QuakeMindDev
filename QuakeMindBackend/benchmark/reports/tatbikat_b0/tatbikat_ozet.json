@@ -1,0 +1,982 @@
+[
+ {
+  "alan": "Defne / Elektrik Mah.",
+  "model": "segformer_mitb0_p2_t42",
+  "hasarGecerli": 0.0067,
+  "kapaliKenar": 4,
+  "afetzede": 1,
+  "kapsama": 0.1926,
+  "kume": "1/5",
+  "rh": null,
+  "rhTohum": null,
+  "tohum": {
+   "42": {
+    "hata": "kol ulasamadi (arac rotasi yok)"
+   },
+   "43": {
+    "hata": "kol ulasamadi (arac rotasi yok)"
+   },
+   "44": {
+    "hata": "kol ulasamadi (arac rotasi yok)"
+   },
+   "45": {
+    "hata": "kol ulasamadi (arac rotasi yok)"
+   },
+   "46": {
+    "hata": "kol ulasamadi (arac rotasi yok)"
+   }
+  },
+  "bilmeyen": [
+   null,
+   null
+  ],
+  "telsiz": [
+   null,
+   null
+  ],
+  "quakemind": [
+   null,
+   null
+  ],
+  "kazanc": [
+   null,
+   null
+  ],
+  "kesifBilmeyen": [
+   null,
+   null
+  ],
+  "kesifTelsiz": [
+   null,
+   null
+  ],
+  "ortakGorev": [
+   null,
+   null
+  ],
+  "cezaPayi": [
+   null,
+   null
+  ],
+  "gecerliTohum": 0
+ },
+ {
+  "alan": "İslahiye",
+  "model": "segformer_mitb0_p2_t42",
+  "hasarGecerli": 0.0093,
+  "kapaliKenar": 10,
+  "afetzede": 4,
+  "kapsama": 0.4553,
+  "kume": "1/5",
+  "rh": null,
+  "rhTohum": null,
+  "tohum": {
+   "42": {
+    "bilmeyen": 1.402,
+    "telsiz": 1.402,
+    "quakemind": 1.28,
+    "kazanc": 8.701854493580592,
+    "kesifBilmeyen": 1,
+    "kesifTelsiz": 1,
+    "ortakGorev": 12,
+    "cezaPayi": 68.49315068493146,
+    "kapanmaCezasiDk": 1.0
+   },
+   "43": {
+    "bilmeyen": 1.402,
+    "telsiz": 1.402,
+    "quakemind": 1.28,
+    "kazanc": 8.701854493580592,
+    "kesifBilmeyen": 1,
+    "kesifTelsiz": 1,
+    "ortakGorev": 12,
+    "cezaPayi": 68.49315068493146,
+    "kapanmaCezasiDk": 1.0
+   },
+   "44": {
+    "bilmeyen": 1.402,
+    "telsiz": 1.402,
+    "quakemind": 1.28,
+    "kazanc": 8.701854493580592,
+    "kesifBilmeyen": 1,
+    "kesifTelsiz": 1,
+    "ortakGorev": 12,
+    "cezaPayi": 68.49315068493146,
+    "kapanmaCezasiDk": 1.0
+   },
+   "45": {
+    "bilmeyen": 1.402,
+    "telsiz": 1.402,
+    "quakemind": 1.28,
+    "kazanc": 8.701854493580592,
+    "kesifBilmeyen": 1,
+    "kesifTelsiz": 1,
+    "ortakGorev": 12,
+    "cezaPayi": 68.49315068493146,
+    "kapanmaCezasiDk": 1.0
+   },
+   "46": {
+    "bilmeyen": 1.402,
+    "telsiz": 1.402,
+    "quakemind": 1.28,
+    "kazanc": 8.701854493580592,
+    "kesifBilmeyen": 1,
+    "kesifTelsiz": 1,
+    "ortakGorev": 12,
+    "cezaPayi": 68.49315068493146,
+    "kapanmaCezasiDk": 1.0
+   }
+  },
+  "bilmeyen": [
+   1.402,
+   0.0
+  ],
+  "telsiz": [
+   1.402,
+   0.0
+  ],
+  "quakemind": [
+   1.28,
+   0.0
+  ],
+  "kazanc": [
+   8.701854493580592,
+   0.0
+  ],
+  "kesifBilmeyen": [
+   1.0,
+   0.0
+  ],
+  "kesifTelsiz": [
+   1.0,
+   0.0
+  ],
+  "ortakGorev": [
+   12.0,
+   0.0
+  ],
+  "cezaPayi": [
+   68.49315068493146,
+   0.0
+  ],
+  "gecerliTohum": 5
+ },
+ {
+  "alan": "Nurdağı",
+  "model": "segformer_mitb0_p2_t42",
+  "hasarGecerli": 0.038,
+  "kapaliKenar": 22,
+  "afetzede": 5,
+  "kapsama": 0.4406,
+  "kume": "5/5",
+  "rh": null,
+  "rhTohum": null,
+  "tohum": {
+   "42": {
+    "bilmeyen": 3.526,
+    "telsiz": 2.88,
+    "quakemind": 1.446,
+    "kazanc": 58.99035734543392,
+    "kesifBilmeyen": 40,
+    "kesifTelsiz": 26,
+    "ortakGorev": 25,
+    "cezaPayi": 76.92307692307692,
+    "kapanmaCezasiDk": 1.0
+   },
+   "43": {
+    "bilmeyen": 3.313,
+    "telsiz": 2.733,
+    "quakemind": 1.393,
+    "kazanc": 57.953516450347124,
+    "kesifBilmeyen": 37,
+    "kesifTelsiz": 25,
+    "ortakGorev": 25,
+    "cezaPayi": 77.08333333333334,
+    "kapanmaCezasiDk": 1.0
+   },
+   "44": {
+    "bilmeyen": 2.794,
+    "telsiz": 2.321,
+    "quakemind": 1.241,
+    "kazanc": 55.58339298496778,
+    "kesifBilmeyen": 27,
+    "kesifTelsiz": 18,
+    "ortakGorev": 25,
+    "cezaPayi": 69.56969853130636,
+    "kapanmaCezasiDk": 1.0
+   },
+   "45": {
+    "bilmeyen": 2.585,
+    "telsiz": 2.316,
+    "quakemind": 1.274,
+    "kazanc": 50.71566731141199,
+    "kesifBilmeyen": 24,
+    "kesifTelsiz": 18,
+    "ortakGorev": 25,
+    "cezaPayi": 73.19304666056726,
+    "kapanmaCezasiDk": 1.0
+   },
+   "46": {
+    "bilmeyen": 2.417,
+    "telsiz": 2.417,
+    "quakemind": 1.298,
+    "kazanc": 46.29706247414149,
+    "kesifBilmeyen": 19,
+    "kesifTelsiz": 19,
+    "ortakGorev": 25,
+    "cezaPayi": 67.95422031473534,
+    "kapanmaCezasiDk": 1.0
+   }
+  },
+  "bilmeyen": [
+   2.927,
+   0.4750131577124996
+  ],
+  "telsiz": [
+   2.5334,
+   0.25782610418652335
+  ],
+  "quakemind": [
+   1.3304,
+   0.08588538874569988
+  ],
+  "kazanc": [
+   53.90799931326046,
+   5.317914516235217
+  ],
+  "kesifBilmeyen": [
+   29.4,
+   8.848728722251575
+  ],
+  "kesifTelsiz": [
+   21.2,
+   3.96232255123179
+  ],
+  "ortakGorev": [
+   25.0,
+   0.0
+  ],
+  "cezaPayi": [
+   72.94467515260384,
+   4.162720482848335
+  ],
+  "gecerliTohum": 5
+ },
+ {
+  "alan": "Defne / Elektrik Mah.",
+  "model": "segformer_mitb2_p2_t42",
+  "hasarGecerli": 0.0126,
+  "kapaliKenar": 10,
+  "afetzede": 5,
+  "kapsama": 0.1926,
+  "kume": "1/5",
+  "rh": null,
+  "rhTohum": null,
+  "tohum": {
+   "42": {
+    "bilmeyen": 2.031,
+    "telsiz": 1.795,
+    "quakemind": 1.472,
+    "kazanc": 27.523387493845405,
+    "kesifBilmeyen": 8,
+    "kesifTelsiz": 5,
+    "ortakGorev": 20,
+    "cezaPayi": 71.49240393208223,
+    "kapanmaCezasiDk": 1.0
+   },
+   "43": {
+    "bilmeyen": 2.031,
+    "telsiz": 1.795,
+    "quakemind": 1.472,
+    "kazanc": 27.523387493845405,
+    "kesifBilmeyen": 8,
+    "kesifTelsiz": 5,
+    "ortakGorev": 20,
+    "cezaPayi": 71.49240393208223,
+    "kapanmaCezasiDk": 1.0
+   },
+   "44": {
+    "bilmeyen": 2.031,
+    "telsiz": 1.795,
+    "quakemind": 1.472,
+    "kazanc": 27.523387493845405,
+    "kesifBilmeyen": 8,
+    "kesifTelsiz": 5,
+    "ortakGorev": 20,
+    "cezaPayi": 71.49240393208223,
+    "kapanmaCezasiDk": 1.0
+   },
+   "45": {
+    "bilmeyen": 2.031,
+    "telsiz": 1.786,
+    "quakemind": 1.472,
+    "kazanc": 27.523387493845405,
+    "kesifBilmeyen": 8,
+    "kesifTelsiz": 5,
+    "ortakGorev": 20,
+    "cezaPayi": 71.49240393208223,
+    "kapanmaCezasiDk": 1.0
+   },
+   "46": {
+    "bilmeyen": 2.031,
+    "telsiz": 1.795,
+    "quakemind": 1.472,
+    "kazanc": 27.523387493845405,
+    "kesifBilmeyen": 8,
+    "kesifTelsiz": 5,
+    "ortakGorev": 20,
+    "cezaPayi": 71.49240393208223,
+    "kapanmaCezasiDk": 1.0
+   }
+  },
+  "bilmeyen": [
+   2.031,
+   0.0
+  ],
+  "telsiz": [
+   1.7932,
+   0.004024922359499575
+  ],
+  "quakemind": [
+   1.472,
+   0.0
+  ],
+  "kazanc": [
+   27.523387493845405,
+   0.0
+  ],
+  "kesifBilmeyen": [
+   8.0,
+   0.0
+  ],
+  "kesifTelsiz": [
+   5.0,
+   0.0
+  ],
+  "ortakGorev": [
+   20.0,
+   0.0
+  ],
+  "cezaPayi": [
+   71.49240393208223,
+   0.0
+  ],
+  "gecerliTohum": 5
+ },
+ {
+  "alan": "İslahiye",
+  "model": "segformer_mitb2_p2_t42",
+  "hasarGecerli": 0.0206,
+  "kapaliKenar": 16,
+  "afetzede": 5,
+  "kapsama": 0.4553,
+  "kume": "5/5",
+  "rh": null,
+  "rhTohum": null,
+  "tohum": {
+   "42": {
+    "bilmeyen": 2.004,
+    "telsiz": 1.866,
+    "quakemind": 1.287,
+    "kazanc": 35.778443113772454,
+    "kesifBilmeyen": 10,
+    "kesifTelsiz": 8,
+    "ortakGorev": 20,
+    "cezaPayi": 69.7350069735007,
+    "kapanmaCezasiDk": 1.0
+   },
+   "43": {
+    "bilmeyen": 1.976,
+    "telsiz": 1.958,
+    "quakemind": 1.311,
+    "kazanc": 33.65384615384615,
+    "kesifBilmeyen": 12,
+    "kesifTelsiz": 12,
+    "ortakGorev": 25,
+    "cezaPayi": 72.11538461538464,
+    "kapanmaCezasiDk": 1.0
+   },
+   "44": {
+    "bilmeyen": 1.767,
+    "telsiz": 1.775,
+    "quakemind": 1.245,
+    "kazanc": 29.541595925297106,
+    "kesifBilmeyen": 5,
+    "kesifTelsiz": 5,
+    "ortakGorev": 15,
+    "cezaPayi": 63.85696040868456,
+    "kapanmaCezasiDk": 1.0
+   },
+   "45": {
+    "bilmeyen": 2.057,
+    "telsiz": 1.998,
+    "quakemind": 1.27,
+    "kazanc": 38.25960136120563,
+    "kesifBilmeyen": 14,
+    "kesifTelsiz": 13,
+    "ortakGorev": 25,
+    "cezaPayi": 71.21057985757884,
+    "kapanmaCezasiDk": 1.0
+   },
+   "46": {
+    "bilmeyen": 1.882,
+    "telsiz": 1.859,
+    "quakemind": 1.289,
+    "kazanc": 31.50903294367694,
+    "kesifBilmeyen": 8,
+    "kesifTelsiz": 8,
+    "ortakGorev": 20,
+    "cezaPayi": 67.51054852320674,
+    "kapanmaCezasiDk": 1.0
+   }
+  },
+  "bilmeyen": [
+   1.9372,
+   0.11438400237795497
+  ],
+  "telsiz": [
+   1.8912,
+   0.08809483526291426
+  ],
+  "quakemind": [
+   1.2803999999999998,
+   0.02457234217570634
+  ],
+  "kazanc": [
+   33.74850389955966,
+   3.4348551089109747
+  ],
+  "kesifBilmeyen": [
+   9.8,
+   3.492849839314596
+  ],
+  "kesifTelsiz": [
+   9.2,
+   3.271085446759225
+  ],
+  "ortakGorev": [
+   21.0,
+   4.183300132670378
+  ],
+  "cezaPayi": [
+   68.88569607567109,
+   3.3066794093008944
+  ],
+  "gecerliTohum": 5
+ },
+ {
+  "alan": "Nurdağı",
+  "model": "segformer_mitb2_p2_t42",
+  "hasarGecerli": 0.056,
+  "kapaliKenar": 40,
+  "afetzede": 5,
+  "kapsama": 0.4406,
+  "kume": "5/5",
+  "rh": null,
+  "rhTohum": null,
+  "tohum": {
+   "42": {
+    "bilmeyen": 3.336,
+    "telsiz": 3.001,
+    "quakemind": 1.231,
+    "kazanc": 63.09952038369303,
+    "kesifBilmeyen": 39,
+    "kesifTelsiz": 32,
+    "ortakGorev": 25,
+    "cezaPayi": 74.11630558722918,
+    "kapanmaCezasiDk": 1.0
+   },
+   "43": {
+    "bilmeyen": 3.093,
+    "telsiz": 2.835,
+    "quakemind": 1.248,
+    "kazanc": 59.65082444228904,
+    "kesifBilmeyen": 36,
+    "kesifTelsiz": 31,
+    "ortakGorev": 25,
+    "cezaPayi": 78.0403208324301,
+    "kapanmaCezasiDk": 1.0
+   },
+   "44": {
+    "bilmeyen": 3.629,
+    "telsiz": 3.078,
+    "quakemind": 1.246,
+    "kazanc": 65.6654725819785,
+    "kesifBilmeyen": 41,
+    "kesifTelsiz": 32,
+    "ortakGorev": 25,
+    "cezaPayi": 68.826590565721,
+    "kapanmaCezasiDk": 1.0
+   },
+   "45": {
+    "bilmeyen": 3.008,
+    "telsiz": 2.586,
+    "quakemind": 1.246,
+    "kazanc": 58.577127659574465,
+    "kesifBilmeyen": 33,
+    "kesifTelsiz": 25,
+    "ortakGorev": 25,
+    "cezaPayi": 74.8978665456196,
+    "kapanmaCezasiDk": 1.0
+   },
+   "46": {
+    "bilmeyen": 2.249,
+    "telsiz": 2.015,
+    "quakemind": 1.097,
+    "kazanc": 51.22276567363273,
+    "kesifBilmeyen": 22,
+    "kesifTelsiz": 17,
+    "ortakGorev": 25,
+    "cezaPayi": 76.36237417563348,
+    "kapanmaCezasiDk": 1.0
+   }
+  },
+  "bilmeyen": [
+   3.0629999999999997,
+   0.5151228008931462
+  ],
+  "telsiz": [
+   2.7030000000000003,
+   0.4283357328078057
+  ],
+  "quakemind": [
+   1.2136,
+   0.06553853828092294
+  ],
+  "kazanc": [
+   59.64314214823355,
+   5.483023806291851
+  ],
+  "kesifBilmeyen": [
+   34.2,
+   7.463243262818116
+  ],
+  "kesifTelsiz": [
+   27.4,
+   6.5038450166036395
+  ],
+  "ortakGorev": [
+   25.0,
+   0.0
+  ],
+  "cezaPayi": [
+   74.44869154132667,
+   3.481459470409952
+  ],
+  "gecerliTohum": 5
+ },
+ {
+  "alan": "Defne / Elektrik Mah.",
+  "model": "unet_mitb4_p2_t42",
+  "hasarGecerli": 0.0149,
+  "kapaliKenar": 12,
+  "afetzede": 3,
+  "kapsama": 0.1926,
+  "kume": "1/5",
+  "rh": [
+   {
+    "yaricapM": 0.0,
+    "kapaliKenar": 12,
+    "ortakGorev": 6,
+    "bilmeyenDk": 2.347,
+    "quakemindDk": 1.918,
+    "gorunurKazanc": 18.3,
+    "kesifBilmeyen": 2
+   },
+   {
+    "yaricapM": 10.0,
+    "kapaliKenar": 32,
+    "ortakGorev": 3,
+    "bilmeyenDk": 2.28,
+    "quakemindDk": 1.817,
+    "gorunurKazanc": 20.3,
+    "kesifBilmeyen": 1
+   },
+   {
+    "yaricapM": 15.0,
+    "kapaliKenar": 34,
+    "ortakGorev": 3,
+    "bilmeyenDk": 2.28,
+    "quakemindDk": 1.817,
+    "gorunurKazanc": 20.3,
+    "kesifBilmeyen": 1
+   },
+   {
+    "yaricapM": 25.0,
+    "kapaliKenar": 40,
+    "ortakGorev": 0,
+    "bilmeyenDk": null,
+    "quakemindDk": null,
+    "gorunurKazanc": null,
+    "kesifBilmeyen": 0
+   }
+  ],
+  "rhTohum": 42,
+  "tohum": {
+   "42": {
+    "bilmeyen": 2.347,
+    "telsiz": 2.347,
+    "quakemind": 1.918,
+    "kazanc": 18.278653600340864,
+    "kesifBilmeyen": 2,
+    "kesifTelsiz": 2,
+    "ortakGorev": 6,
+    "cezaPayi": 77.82101167315174,
+    "kapanmaCezasiDk": 1.0
+   },
+   "43": {
+    "bilmeyen": 2.347,
+    "telsiz": 2.347,
+    "quakemind": 1.918,
+    "kazanc": 18.278653600340864,
+    "kesifBilmeyen": 2,
+    "kesifTelsiz": 2,
+    "ortakGorev": 6,
+    "cezaPayi": 77.82101167315174,
+    "kapanmaCezasiDk": 1.0
+   },
+   "44": {
+    "bilmeyen": 2.347,
+    "telsiz": 2.347,
+    "quakemind": 1.918,
+    "kazanc": 18.278653600340864,
+    "kesifBilmeyen": 2,
+    "kesifTelsiz": 2,
+    "ortakGorev": 6,
+    "cezaPayi": 77.82101167315174,
+    "kapanmaCezasiDk": 1.0
+   },
+   "45": {
+    "bilmeyen": 2.347,
+    "telsiz": 2.347,
+    "quakemind": 1.918,
+    "kazanc": 18.278653600340864,
+    "kesifBilmeyen": 2,
+    "kesifTelsiz": 2,
+    "ortakGorev": 6,
+    "cezaPayi": 77.82101167315174,
+    "kapanmaCezasiDk": 1.0
+   },
+   "46": {
+    "bilmeyen": 2.347,
+    "telsiz": 2.347,
+    "quakemind": 1.918,
+    "kazanc": 18.278653600340864,
+    "kesifBilmeyen": 2,
+    "kesifTelsiz": 2,
+    "ortakGorev": 6,
+    "cezaPayi": 77.82101167315174,
+    "kapanmaCezasiDk": 1.0
+   }
+  },
+  "bilmeyen": [
+   2.347,
+   0.0
+  ],
+  "telsiz": [
+   2.347,
+   0.0
+  ],
+  "quakemind": [
+   1.918,
+   0.0
+  ],
+  "kazanc": [
+   18.278653600340864,
+   0.0
+  ],
+  "kesifBilmeyen": [
+   2.0,
+   0.0
+  ],
+  "kesifTelsiz": [
+   2.0,
+   0.0
+  ],
+  "ortakGorev": [
+   6.0,
+   0.0
+  ],
+  "cezaPayi": [
+   77.82101167315174,
+   0.0
+  ],
+  "gecerliTohum": 5
+ },
+ {
+  "alan": "İslahiye",
+  "model": "unet_mitb4_p2_t42",
+  "hasarGecerli": 0.0134,
+  "kapaliKenar": 12,
+  "afetzede": 5,
+  "kapsama": 0.4553,
+  "kume": "5/5",
+  "rh": [
+   {
+    "yaricapM": 0.0,
+    "kapaliKenar": 12,
+    "ortakGorev": 20,
+    "bilmeyenDk": 1.159,
+    "quakemindDk": 1.092,
+    "gorunurKazanc": 5.8,
+    "kesifBilmeyen": 1
+   },
+   {
+    "yaricapM": 10.0,
+    "kapaliKenar": 62,
+    "ortakGorev": 5,
+    "bilmeyenDk": 2.952,
+    "quakemindDk": 1.3,
+    "gorunurKazanc": 56.0,
+    "kesifBilmeyen": 5
+   },
+   {
+    "yaricapM": 15.0,
+    "kapaliKenar": 75,
+    "ortakGorev": 5,
+    "bilmeyenDk": 2.864,
+    "quakemindDk": 1.3,
+    "gorunurKazanc": 54.6,
+    "kesifBilmeyen": 5
+   },
+   {
+    "yaricapM": 25.0,
+    "kapaliKenar": 86,
+    "ortakGorev": 0,
+    "bilmeyenDk": null,
+    "quakemindDk": null,
+    "gorunurKazanc": null,
+    "kesifBilmeyen": 0
+   }
+  ],
+  "rhTohum": 42,
+  "tohum": {
+   "42": {
+    "bilmeyen": 1.159,
+    "telsiz": 1.159,
+    "quakemind": 1.092,
+    "kazanc": 5.780845556514231,
+    "kesifBilmeyen": 1,
+    "kesifTelsiz": 1,
+    "ortakGorev": 20,
+    "cezaPayi": 74.6268656716416,
+    "kapanmaCezasiDk": 1.0
+   },
+   "43": {
+    "bilmeyen": 1.162,
+    "telsiz": 1.162,
+    "quakemind": 1.095,
+    "kazanc": 5.765920826161786,
+    "kesifBilmeyen": 1,
+    "kesifTelsiz": 1,
+    "ortakGorev": 20,
+    "cezaPayi": 74.6268656716418,
+    "kapanmaCezasiDk": 1.0
+   },
+   "44": {
+    "bilmeyen": 1.327,
+    "telsiz": 1.327,
+    "quakemind": 1.22,
+    "kazanc": 8.063300678221552,
+    "kesifBilmeyen": 2,
+    "kesifTelsiz": 2,
+    "ortakGorev": 25,
+    "cezaPayi": 74.90636704119845,
+    "kapanmaCezasiDk": 1.0
+   },
+   "45": {
+    "bilmeyen": 1.359,
+    "telsiz": 1.359,
+    "quakemind": 1.198,
+    "kazanc": 11.846946284032377,
+    "kesifBilmeyen": 3,
+    "kesifTelsiz": 3,
+    "ortakGorev": 25,
+    "cezaPayi": 74.81296758104742,
+    "kapanmaCezasiDk": 1.0
+   },
+   "46": {
+    "bilmeyen": 1.296,
+    "telsiz": 1.296,
+    "quakemind": 1.169,
+    "kazanc": 9.799382716049381,
+    "kesifBilmeyen": 2,
+    "kesifTelsiz": 2,
+    "ortakGorev": 20,
+    "cezaPayi": 78.43137254901958,
+    "kapanmaCezasiDk": 1.0
+   }
+  },
+  "bilmeyen": [
+   1.2606,
+   0.09406008717835637
+  ],
+  "telsiz": [
+   1.2606,
+   0.09406008717835637
+  ],
+  "quakemind": [
+   1.1548000000000003,
+   0.05881921454762888
+  ],
+  "kazanc": [
+   8.251279212195865,
+   2.6287273933180324
+  ],
+  "kesifBilmeyen": [
+   1.8,
+   0.8366600265340756
+  ],
+  "kesifTelsiz": [
+   1.8,
+   0.8366600265340756
+  ],
+  "ortakGorev": [
+   22.0,
+   2.7386127875258306
+  ],
+  "cezaPayi": [
+   75.48088770290977,
+   1.6538031447868868
+  ],
+  "gecerliTohum": 5
+ },
+ {
+  "alan": "Nurdağı",
+  "model": "unet_mitb4_p2_t42",
+  "hasarGecerli": 0.0355,
+  "kapaliKenar": 26,
+  "afetzede": 5,
+  "kapsama": 0.4406,
+  "kume": "5/5",
+  "rh": [
+   {
+    "yaricapM": 0.0,
+    "kapaliKenar": 26,
+    "ortakGorev": 25,
+    "bilmeyenDk": 3.704,
+    "quakemindDk": 1.534,
+    "gorunurKazanc": 58.6,
+    "kesifBilmeyen": 40
+   },
+   {
+    "yaricapM": 10.0,
+    "kapaliKenar": 114,
+    "ortakGorev": 6,
+    "bilmeyenDk": 8.533,
+    "quakemindDk": 1.77,
+    "gorunurKazanc": 79.3,
+    "kesifBilmeyen": 29
+   },
+   {
+    "yaricapM": 15.0,
+    "kapaliKenar": 140,
+    "ortakGorev": 6,
+    "bilmeyenDk": 6.05,
+    "quakemindDk": 1.77,
+    "gorunurKazanc": 70.7,
+    "kesifBilmeyen": 18
+   },
+   {
+    "yaricapM": 25.0,
+    "kapaliKenar": 164,
+    "ortakGorev": 5,
+    "bilmeyenDk": 5.642,
+    "quakemindDk": 1.744,
+    "gorunurKazanc": 69.1,
+    "kesifBilmeyen": 14
+   }
+  ],
+  "rhTohum": 42,
+  "tohum": {
+   "42": {
+    "bilmeyen": 3.704,
+    "telsiz": 3.189,
+    "quakemind": 1.534,
+    "kazanc": 58.585313174946,
+    "kesifBilmeyen": 40,
+    "kesifTelsiz": 30,
+    "ortakGorev": 25,
+    "cezaPayi": 73.74631268436579,
+    "kapanmaCezasiDk": 1.0
+   },
+   "43": {
+    "bilmeyen": 3.269,
+    "telsiz": 2.787,
+    "quakemind": 1.362,
+    "kazanc": 58.33588253288467,
+    "kesifBilmeyen": 37,
+    "kesifTelsiz": 27,
+    "ortakGorev": 25,
+    "cezaPayi": 77.6006711409396,
+    "kapanmaCezasiDk": 1.0
+   },
+   "44": {
+    "bilmeyen": 3.172,
+    "telsiz": 2.562,
+    "quakemind": 1.368,
+    "kazanc": 56.87263556116015,
+    "kesifBilmeyen": 34,
+    "kesifTelsiz": 23,
+    "ortakGorev": 25,
+    "cezaPayi": 75.38802660753879,
+    "kapanmaCezasiDk": 1.0
+   },
+   "45": {
+    "bilmeyen": 4.785,
+    "telsiz": 3.889,
+    "quakemind": 1.679,
+    "kazanc": 64.91118077324973,
+    "kesifBilmeyen": 58,
+    "kesifTelsiz": 40,
+    "ortakGorev": 25,
+    "cezaPayi": 74.6941403734707,
+    "kapanmaCezasiDk": 1.0
+   },
+   "46": {
+    "bilmeyen": 4.167,
+    "telsiz": 3.789,
+    "quakemind": 1.604,
+    "kazanc": 61.5070794336453,
+    "kesifBilmeyen": 50,
+    "kesifTelsiz": 40,
+    "ortakGorev": 25,
+    "cezaPayi": 78.05182641273805,
+    "kapanmaCezasiDk": 1.0
+   }
+  },
+  "bilmeyen": [
+   3.8194000000000004,
+   0.6686914834211662
+  ],
+  "telsiz": [
+   3.2432000000000003,
+   0.589500805767049
+  ],
+  "quakemind": [
+   1.5094,
+   0.1414560002262187
+  ],
+  "kazanc": [
+   60.042418295177164,
+   3.198946019343149
+  ],
+  "kesifBilmeyen": [
+   43.8,
+   9.959919678390985
+  ],
+  "kesifTelsiz": [
+   32.0,
+   7.713624310270756
+  ],
+  "ortakGorev": [
+   25.0,
+   0.0
+  ],
+  "cezaPayi": [
+   75.89619544381057,
+   1.8626023538283885
+  ],
+  "gecerliTohum": 5
+ }
+]
