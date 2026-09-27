@@ -73,7 +73,14 @@ def hiz_kmh(satir) -> float:
 
 
 def tek_yon(satir) -> bool:
-    return str(satir.get("oneway") or "").lower() in ("yes", "true", "1", "-1")
+    return str(satir.get("oneway") or "").lower() in ("yes", "true", "1", "-1", "reverse")
+
+
+def ters_tek_yon(satir) -> bool:
+    """OSM `oneway=-1`: trafik cizim yonunun TERSINE akar (v -> u). Eskiden bu
+    da duz tek yon sayilip u -> v kuruluyordu, yani bu yollar yanlis yonde
+    acikti (J-113)."""
+    return str(satir.get("oneway") or "").lower() in ("-1", "reverse")
 
 
 def graf(bounds):
@@ -109,6 +116,10 @@ def graf(bounds):
             ortak = dict(length=float(uzunluk), highway=s.get("highway"),
                          maxspeed=s.get("maxspeed"), oneway=tek_yon(s),
                          hizKmh=h, name=s.get("name"), osmid=s.get("id"))
+            if ters_tek_yon(s):
+                # yalniz v -> u; geometri de trafik yonunde olsun
+                G.add_edge(v, u, geometry=LineString(koord[::-1]), **ortak)
+                continue
             G.add_edge(u, v, geometry=hat, **ortak)
             if not tek_yon(s):
                 G.add_edge(v, u, geometry=LineString(koord[::-1]), **ortak)

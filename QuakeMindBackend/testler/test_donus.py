@@ -88,6 +88,89 @@ def test_tek_yon_ters_girilemez():
     assert ileri is not None and geri is None
 
 
+def test_ters_tek_yon_ters_yonde_kurulur():
+    """OSM `oneway=-1`: trafik cizim yonunun tersine akar; yalniz v -> u (J-113)."""
+    import geopandas as gpd
+    from shapely.geometry import LineString
+
+    from apps.road_damage.utils import yerel_yol
+
+    satirlar = gpd.GeoDataFrame([
+        {"u": "a", "v": "b", "oneway": "-1", "highway": "residential", "length": 111.0,
+         "maxspeed": None, "name": None, "id": 1,
+         "geometry": LineString([(36.000, 36.000), (36.000, 36.001)])},
+        {"u": "c", "v": "d", "oneway": "yes", "highway": "residential", "length": 111.0,
+         "maxspeed": None, "name": None, "id": 2,
+         "geometry": LineString([(36.001, 36.000), (36.001, 36.001)])},
+    ], geometry="geometry", crs="EPSG:4326")
+    eski = yerel_yol._oku
+    yerel_yol._oku = lambda _bounds: satirlar
+    try:
+        G = yerel_yol.graf((35.9, 35.9, 36.1, 36.1))
+    finally:
+        yerel_yol._oku = eski
+    print(f"   kenarlar {sorted((u, v) for u, v in G.edges())}")
+    assert G.has_edge("b", "a") and not G.has_edge("a", "b")   # oneway=-1
+    assert G.has_edge("c", "d") and not G.has_edge("d", "c")   # oneway=yes
+
+
+def _hizli_dolambac_cizgesi():
+    """Kisa ama yavas dogrudan yol (S->H, 90 km/sa) ile uzun ama hizli dolambac
+    (S->A->H, 130 km/sa). Dolambac daha kisa surer; 80 km/sa varsayan sabit
+    sezgisel A'yi fazla pahali sanip yavas yolu secer."""
+    G = nx.MultiDiGraph()
+    G.add_node("S", y=36.0, x=36.0)
+    G.add_node("H", y=36.0 + 0.00998, x=36.0)
+    G.add_node("A", y=36.0 + 0.00499, x=36.0 + 0.0056)
+    def uz(a, b):
+        na, nb = G.nodes[a], G.nodes[b]
+        return donus._haversine_m(na["y"], na["x"], nb["y"], nb["x"])
+    G.add_edge("S", "H", length=uz("S", "H"), v=90 / 3.6)
+    G.add_edge("S", "A", length=uz("S", "A"), v=130 / 3.6)
+    G.add_edge("A", "H", length=uz("A", "H"), v=130 / 3.6)
+    return G
+
+
+def _hizli_sure(_u, _v, _k, d):
+    return d["length"] / d["v"]
+
+
+def test_astar_hizli_kenarda_eniyi_yolu_bulur():
+    """A* sezgiseli cizgenin gercek en yuksek hizini kullanir (J-114)."""
+    G = _hizli_dolambac_cizgesi()
+    y = donus.kenar_yonleri(G)
+    # Yalniz sezgisel sinaniyor: dolambactaki donusun maliyeti sonucu karistirmasin.
+    sifir = {"duz": 0.0, "sag": 0.0, "sol": 0.0, "u": 0.0}
+    dijkstra = donus.en_kisa_yol(G, "S", "H", _hizli_sure, yonler=y, donus_sn=sifir, a_yildiz=False)[0]
+    astar = donus.en_kisa_yol(G, "S", "H", _hizli_sure, yonler=y, donus_sn=sifir)[0]
+    eski = donus.en_kisa_yol(G, "S", "H", _hizli_sure, yonler=y, donus_sn=sifir,
+                             en_yuksek_hiz_ms=22.2)[0]
+    print(f"   Dijkstra {dijkstra:.1f} sn | A* {astar:.1f} sn | eski sabit 80 km/sa A* {eski:.1f} sn")
+    assert math.isclose(astar, dijkstra, abs_tol=1e-6)
+    assert eski > dijkstra + 1.0   # eski sezgisel gercekten eniyi olmayan yolu seciyordu
+
+
+def test_manevra_iki_kez_sayilmaz():
+    """Donus maliyeti acikken kapanma sabiti yalniz degerlendirmedir; manevrayi
+    ekibin fiilen yaptigi donus oder (J-112)."""
+    from apps.road_damage.utils import network
+
+    G = izgara()
+    for _u, _v, d in G.edges(data=True):
+        d["hizKmh"] = 30.0
+    kapali = {((1, 1), (2, 1), 0), ((2, 1), (1, 1), 0)}
+    gorev = [{"startLat": 36.0, "startLon": 36.0 + ADIM,          # (0,1)
+              "endLat": 36.0 + 2 * ADIM, "endLon": 36.0 + ADIM}]  # (2,1)
+    acik = network.simulate_reference_fleet(G, kapali, gorev, turn_costs=True, edge_speeds=True)[0]
+    kapali_donus = network.simulate_reference_fleet(G, kapali, gorev, turn_costs=False, edge_speeds=True)[0]
+    print(f"   donus acik: ceza {acik['kapanmaCezasiDk']} dk, kesif {acik['discoveries']}, "
+          f"donusler {acik['donusler']} | donus kapali: ceza {kapali_donus['kapanmaCezasiDk']} dk")
+    assert math.isclose(acik["kapanmaCezasiDk"], network.DEGERLENDIRME_DK, abs_tol=1e-3)
+    assert math.isclose(kapali_donus["kapanmaCezasiDk"],
+                        network.DEGERLENDIRME_DK + network.MANEVRA_DK, abs_tol=1e-3)
+    assert acik["discoveries"] == 1
+
+
 if __name__ == "__main__":
     for ad, f in sorted(globals().items()):
         if ad.startswith("test_"):

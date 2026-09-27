@@ -584,7 +584,9 @@ def kiyas_kollari(G, kapali_anahtarlar, ekip_listesi, afetzede_listesi,
         varan = [r for r in sonuc if r]
         o = [sonuc[i] for i in ortak]
         def _ort(alan):
-            return round(sum(r[alan] for r in o) / len(o), 1) if o else None
+            # 3 basamak: 0,1 dk'ya yuvarlamak kucuk farklarda (ör. Islahiye 1,20 -> 1,08)
+            # kazanci +-5 puan belirsiz birakiyordu (J-117).
+            return round(sum(r[alan] for r in o) / len(o), 3) if o else None
         donus_toplam = {"duz": 0, "sag": 0, "sol": 0, "u": 0}
         for r in o:
             for t, n in (r.get("donusler") or {}).items():
@@ -602,6 +604,11 @@ def kiyas_kollari(G, kapali_anahtarlar, ekip_listesi, afetzede_listesi,
             "kapanmaCezasiDk": (o[0].get("kapanmaCezasiDk") if o else None),
             "cezadanGelenDk": round(sum(r.get("cezadanGelenDk", 0.0) for r in o) / len(o), 2) if o else None,
             "donusSuresiDk": round(sum(r.get("donusSuresiDk", 0.0) for r in o) / len(o), 2) if o else None,
+            # Ortak gorevler uzerinden TOPLAMLAR: ceza payi = bilmeyen kolun toplam
+            # cezasi / (bilmeyen toplam sure - QuakeMind toplam sure). Ortalamalardan
+            # geri hesaplamak yuvarlama yuzunden %100'u asabiliyordu (J-112).
+            "toplamSureDk": round(sum(r["arrivalMin"] for r in o), 3) if o else None,
+            "toplamCezaDk": round(sum(r.get("cezadanGelenDk", 0.0) for r in o), 3) if o else None,
             "donusler": donus_toplam,
             "uDonusuSayisi": donus_toplam.get("u", 0),
         }

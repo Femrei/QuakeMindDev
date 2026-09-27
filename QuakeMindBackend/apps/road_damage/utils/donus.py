@@ -104,8 +104,24 @@ def _haversine_m(lat1, lon1, lat2, lon2):
     return 2 * R * math.asin(math.sqrt(a))
 
 
+def en_yuksek_hiz(G, kenar_suresi) -> float | None:
+    """Cizgedeki en yuksek kenar hizi (m/s): uzunluk / kenar_suresi.
+
+    A* sezgiseli (kus ucusu uzaklik / en yuksek hiz) YALNIZ bu hiz hicbir
+    kenarda asilmiyorsa kabul edilebilir. Eskiden sabit 22,2 m/s (~80 km/sa)
+    kullaniliyordu; hiz tablosunda otoyol 90 km/sa ve `maxspeed` 130'a kadar
+    kabul edildiginden A* eniyi yolu kacirabiliyordu (J-114)."""
+    en = 0.0
+    for u, v, k, d in G.edges(keys=True, data=True):
+        uz = d.get("length", 0.0) or 0.0
+        s = kenar_suresi(u, v, k, d)
+        if uz > 0 and s is not None and not math.isinf(s) and s > 0:
+            en = max(en, uz / s)
+    return en or None
+
+
 def en_kisa_yol(G, kaynak, hedef, kenar_suresi, yonler=None, donus_sn=None,
-                a_yildiz: bool = True, en_yuksek_hiz_ms: float = 22.2,
+                a_yildiz: bool = True, en_yuksek_hiz_ms: float | None = None,
                 gelen_kenar=None):
     """Donus maliyetli en kisa (SUREYE gore) yol.
 
@@ -126,6 +142,11 @@ def en_kisa_yol(G, kaynak, hedef, kenar_suresi, yonler=None, donus_sn=None,
     ceza = dict(DONUS_SN if donus_sn is None else donus_sn)
 
     h_lat, h_lon = _dugum_konumu(G, hedef)
+    if a_yildiz and en_yuksek_hiz_ms is None:
+        # cagiran vermediyse cizgeden hesapla (kabul edilebilirlik icin sart)
+        en_yuksek_hiz_ms = en_yuksek_hiz(G, kenar_suresi)
+        if en_yuksek_hiz_ms is None:
+            a_yildiz = False
 
     def sezgi(n):
         if not a_yildiz:

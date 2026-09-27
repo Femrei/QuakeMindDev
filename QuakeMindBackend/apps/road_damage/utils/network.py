@@ -734,6 +734,13 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
     # deger aynen kullanilir (eski tablolar yeniden uretilebilsin diye).
     if u_turn_penalty_min is not None:
         kapanma_cezasi_dk = float(u_turn_penalty_min)
+    elif turn_costs:
+        # Donus maliyeti acikken manevra sabite AYRICA eklenmez (J-112): kapanmada
+        # geri donen ekip yeniden planlamada `gelen_kenar` ile donusunu zaten oduyor
+        # ve step() o donusun suresini saate isliyor. Eskiden sabite bir de 25 sn
+        # manevra ekleniyordu, yani U donusu iki kez sayiliyordu. Simdi ceza yalniz
+        # degerlendirme; manevra, ekibin fiilen yaptigi donusun kendi maliyetidir.
+        kapanma_cezasi_dk = float(assessment_min)
     else:
         kapanma_cezasi_dk = float(assessment_min) + float(manoeuvre_min)
 
@@ -742,9 +749,17 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
     # aktigi icin bu yanlistir. `turn_costs=True` iken planlama kenar tabanli
     # aramaya (donus.en_kisa_yol) gecer ve saat de donus suresini isler.
     _donus = _yonler = None
+    _vmax_ms = None
     if turn_costs:
         from apps.road_damage.utils import donus as _donus
         _yonler = _donus.kenar_yonleri(G)
+        # A* sezgiseli icin en yuksek hiz: _kenar_dk ile AYNI kural (kenarin kendi
+        # hizi, yoksa filo hizi). Bir kez hesaplanir; her yol hesabinda taranmaz.
+        if edge_speeds:
+            _hizlar = [float(d.get("hizKmh") or speed_kmh) for _, _, d in G.edges(data=True)]
+            _vmax_ms = (max(_hizlar) if _hizlar else float(speed_kmh)) / 3.6
+        else:
+            _vmax_ms = float(speed_kmh) / 3.6
 
     per_stop = sight_m > 0
     min_per_m = 60.0 / (speed_kmh * 1000.0)
@@ -829,7 +844,7 @@ def simulate_reference_fleet(G, real_closed_edges: set, tasks: list, sight_m: fl
                     return _kenar_dk(d) * 60.0
                 _sn, path, kenarlar, _say = _donus.en_kisa_yol(
                     G, agent["node"], agent["goal"], _sure, yonler=_yonler,
-                    gelen_kenar=agent["gelen"])
+                    gelen_kenar=agent["gelen"], en_yuksek_hiz_ms=_vmax_ms)
                 if path is None:
                     raise nx.NetworkXNoPath("donus maliyetli yol yok")
                 keys = [e[2] for e in kenarlar]
