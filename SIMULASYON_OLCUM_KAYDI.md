@@ -697,3 +697,117 @@ dördünün ili kaynakta belirtilmemiş ("in Turkiye"; 27 Eylül düzeltmesi —
 gerçek fotoğraflarıdır ama **o mahallenin** fotoğrafı değildirler. Bu, hem
 göstergenin künye satırında hem de kanal çıktısının `not` alanında yazılıdır.
 Makale altyazısında da tekrarlanmalıdır.
+
+## 18. Düzeltilmiş kodla yeniden koşu (28 Eylül 2026)
+
+**Neden.** 27 Eylül taramasında tatbikat kodunda üç kusur bulundu ve düzeltildi
+(EKSIKLER J-112 manevra iki kez sayılıyordu, J-113 `oneway=-1` ileri yön
+sayılıyordu, J-114 A* sezgiseli sabit 80 km/sa). Makalenin bütün tatbikat
+sayıları düzeltilmiş kodla yeniden üretildi. Kapanma cezası artık yalnız
+değerlendirme süresi (1,0 dk); geri dönüş manevrası çizgede fiilen yapılan dönüş
+olarak ödeniyor.
+
+**Nerede, neyle.** İkinci makine (AMD Ryzen 5 5500, 6 çekirdek; Python 3.12.10,
+PyTorch 2.11.0 CPU). Tek komut: `QuakeMindBackend/araclar_b0_kos.sh` (17 dk).
+Çıktılar `QuakeMindBackend/benchmark/reports/tatbikat_b0/` altında: `sonuc_*.json`,
+`duy_*.json`, `tatbikat_ozet.json`, `guzergah_nurdagi_unet_t42.json`, `gunluk.txt`,
+`pip_freeze.txt`.
+
+- **Model ağırlıkları.** Kaggle `furkanemrence/quakemind-modeller`: `segformer_mitb0.pth`,
+  `segformer_mitb2.pth` ve `unet_mitb4.pth`. SHA-256 değerleri künyelerle
+  (`modeller/uydu/*_p2_t42.json`) birebir aynı.
+- **Yol verisi.** `araclar_yerel_osm_kur.py` ile 30 Mayıs 2026'da indirilen
+  Türkiye PBF'inden üretildi (1.230 sn):
+  - Bu makine: 755.236 kenar, 717.341 düğüm, 201 tesis.
+  - i7: 756.623 / 718.564 / 205; fark yaklaşık %0,2, PBF tarihinden.
+  - Tatbikat alanlarında fark yok: hasar oranı, kapalı kenar, afetzede, küme
+    ve kapsama değerleri eskisiyle aynı. Nurdağı mahalle çizgesi de aynı
+    (296 düğüm / 715 kenar).
+  - Bölge dosyasında 43.821 tek yönlü kenar var; `oneway=-1` etiketli kenar
+    yok. Bu yüzden J-113'ün bu veride etkisi yok.
+  - `pyrosm` 0.13.1 kuruldu. Bağımlılığı `cykhash` Windows'ta derlenemediği için
+    conda-forge'un derlenmiş paketi (`cykhash-2.0.1-py312hbb81ca0_3`, SHA-256
+    doğrulandı) venv'e elle kondu.
+- **Gecikmeler i7'de kalıyor.** Tablo 14 ve 16'daki süreler i7 ölçümüdür.
+  Tatbikat sayıları ise benzetim süresidir, donanımdan bağımsızdır.
+
+### 18.1 Ana sonuç (Tablo 15; üç model × üç alan × beş tohum)
+
+| Alan | Model | Hasar | Kapalı k. | Afetzede | Bilmeyen | Telsizle paylaşan | QuakeMind | Kazanç | Keşif (bilmeyen) | Keşif (telsiz) | Ortak görev | Ceza payı | Kapsama | Küme |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Defne / Elektrik Mah. | segformer_mitb0_p2_t42 | %0,67 | 4 | 1 | — | — | — | araç rotası yok | — | — | — | — | %19 | 1/5 |
+| İslahiye | segformer_mitb0_p2_t42 | %0,93 | 10 | 4 | 1,40 ± 0,00 | 1,40 ± 0,00 | 1,28 ± 0,00 | %8,7 ± 0,0 | 1,0 ± 0,0 | 1,0 ± 0,0 | 12,0 ± 0,0 | %68 ± 0 | %46 | 1/5 |
+| Nurdağı | segformer_mitb0_p2_t42 | %3,80 | 22 | 5 | 2,93 ± 0,48 | 2,53 ± 0,26 | 1,33 ± 0,09 | %53,9 ± 5,3 | 29,4 ± 8,8 | 21,2 ± 4,0 | 25,0 ± 0,0 | %73 ± 4 | %44 | 5/5 |
+| Defne / Elektrik Mah. | segformer_mitb2_p2_t42 | %1,26 | 10 | 5 | 2,03 ± 0,00 | 1,79 ± 0,00 | 1,47 ± 0,00 | %27,5 ± 0,0 | 8,0 ± 0,0 | 5,0 ± 0,0 | 20,0 ± 0,0 | %71 ± 0 | %19 | 1/5 |
+| İslahiye | segformer_mitb2_p2_t42 | %2,06 | 16 | 5 | 1,94 ± 0,11 | 1,89 ± 0,09 | 1,28 ± 0,02 | %33,7 ± 3,4 | 9,8 ± 3,5 | 9,2 ± 3,3 | 21,0 ± 4,2 | %69 ± 3 | %46 | 5/5 |
+| Nurdağı | segformer_mitb2_p2_t42 | %5,60 | 40 | 5 | 3,06 ± 0,52 | 2,70 ± 0,43 | 1,21 ± 0,07 | %59,6 ± 5,5 | 34,2 ± 7,5 | 27,4 ± 6,5 | 25,0 ± 0,0 | %74 ± 3 | %44 | 5/5 |
+| Defne / Elektrik Mah. | unet_mitb4_p2_t42 | %1,49 | 12 | 3 | 2,35 ± 0,00 | 2,35 ± 0,00 | 1,92 ± 0,00 | %18,3 ± 0,0 | 2,0 ± 0,0 | 2,0 ± 0,0 | 6,0 ± 0,0 | %78 ± 0 | %19 | 1/5 |
+| İslahiye | unet_mitb4_p2_t42 | %1,34 | 12 | 5 | 1,26 ± 0,09 | 1,26 ± 0,09 | 1,15 ± 0,06 | %8,3 ± 2,6 | 1,8 ± 0,8 | 1,8 ± 0,8 | 22,0 ± 2,7 | %75 ± 2 | %46 | 5/5 |
+| Nurdağı | unet_mitb4_p2_t42 | %3,55 | 26 | 5 | 3,82 ± 0,67 | 3,24 ± 0,59 | 1,51 ± 0,14 | %60,0 ± 3,2 | 43,8 ± 10,0 | 32,0 ± 7,7 | 25,0 ± 0,0 | %76 ± 2 | %44 | 5/5 |
+
+r_h duyarliligi (Tablo 18; ilk tohum):
+| Alan | Model | r_h (m) | Kapalı kenar | Ortak görev | Bilmeyen (dk) | QuakeMind (dk) | Görünür kazanç | Keşif (bilmeyen) |
+|---|---|---|---|---|---|---|---|---|
+| Defne / Elektrik Mah. | unet_mitb4_p2_t42 | 0 | 12 | 6 | 2,35 | 1,92 | %18 | 2 |
+| Defne / Elektrik Mah. | unet_mitb4_p2_t42 | 10 | 32 | 3 | 2,28 | 1,82 | %20 | 1 |
+| Defne / Elektrik Mah. | unet_mitb4_p2_t42 | 15 | 34 | 3 | 2,28 | 1,82 | %20 | 1 |
+| Defne / Elektrik Mah. | unet_mitb4_p2_t42 | 25 | 40 | 0 | — | — | — | 0 |
+| İslahiye | unet_mitb4_p2_t42 | 0 | 12 | 20 | 1,16 | 1,09 | %6 | 1 |
+| İslahiye | unet_mitb4_p2_t42 | 10 | 62 | 5 | 2,95 | 1,30 | %56 | 5 |
+| İslahiye | unet_mitb4_p2_t42 | 15 | 75 | 5 | 2,86 | 1,30 | %55 | 5 |
+| İslahiye | unet_mitb4_p2_t42 | 25 | 86 | 0 | — | — | — | 0 |
+| Nurdağı | unet_mitb4_p2_t42 | 0 | 26 | 25 | 3,70 | 1,53 | %59 | 40 |
+| Nurdağı | unet_mitb4_p2_t42 | 10 | 114 | 6 | 8,53 | 1,77 | %79 | 29 |
+| Nurdağı | unet_mitb4_p2_t42 | 15 | 140 | 6 | 6,05 | 1,77 | %71 | 18 |
+| Nurdağı | unet_mitb4_p2_t42 | 25 | 164 | 5 | 5,64 | 1,74 | %69 | 14 |
+
+**Eskisiyle karşılaştırma:**
+
+| Ölçüt | Eski kod | Düzeltilmiş kod |
+|---|---|---|
+| Kazanç bandı | %7–66 | %8–60 |
+| Nurdağı bandı | %59–66 | %54–60 |
+| Defne | %41 | %18–28 |
+| İslahiye (dengeli / en iyi) | %40,9 / %9,9 | %33,7 / %8,3 |
+
+- **Ceza payı artık ölçülüyor.** Tanımı: kapanmayı bilmeyen ekibin toplam
+  değerlendirme süresinin, iki kol arasındaki toplam farka oranı. Değeri
+  %68–78, Nurdağı'nda %73–76. Eski "kaba kestirim" %83'tü.
+- **Keşif sütunu (J-117).** Eski Tablo 15'teki "Keşif" sütunu kapanmayı bilmeyen
+  ekibe aitmiş: eski ve yeni sayılar birbirine yakın (Nurdağı 29,4 / 33,8 /
+  44,4 → 29,4 / 34,2 / 43,8). Telsizle paylaşan filonun keşfi daha az
+  (21,2 / 27,4 / 32,0).
+
+### 18.2 Duyarlılık (Tablo 19; U-Net MiT-B4, tohum 42)
+
+Hücreler: kapanmayı bilmeyen ekip → QuakeMind (dk) ve kazanç.
+
+| Koşu | Defne | İslahiye | Nurdağı |
+|---|---|---|---|
+| ANA (değerlendirme 1,0 dk, dönüşlü) | 2,35 → 1,92 (%18) | 1,16 → 1,09 (%6) | 3,70 → 1,53 (%59) |
+| Dönüşsüz (ceza 1,42 dk) | 2,04 → 1,55 (%24) | 1,04 → 0,94 (%9) | 3,30 → 1,20 (%64) |
+| Değerlendirme 0,5 dk | 2,18 → 1,92 (%12) | 1,13 → 1,09 (%4) | 2,90 → 1,53 (%47) |
+| Değerlendirme 2,0 dk | 2,68 → 1,92 (%28) | 1,21 → 1,09 (%10) | 5,30 → 1,53 (%71) |
+| Eski sabit 20 dk | 8,68 → 1,92 (%78) | 2,11 → 1,09 (%48) | 34,10 → 1,53 (%96) |
+
+Önceki duyarlılık koşusu `segformer_mitb4_dice30` ile yapılmıştı; bu kez U-Net
+kullanıldı, yani ANA satırı Tablo 15'in tohum 42 değeridir.
+
+### 18.3 Güzergâh varyantları (Tablo 17; Nurdağı, U-Net, tohum 42)
+
+- Artık koşucunun `--guzergah` seçeneğiyle üretiliyor. Eskiden simülasyon
+  ucunun yanıtından elle okunuyordu.
+- Ekip 1, 2, 3 ve 5'in uzunlukları eskisiyle aynı. Eski kayıtta eksik olan
+  Ekip 4 eklendi: 542 → 704 → 724 m.
+- Ortalama uzama 25 çiftin tamamından hesaplandı: 95,0 m (%32,5), süre
+  cinsinden 0,43 dk (%61,4); en büyük uzama 1,8 dk. Eski değer 101,7 m
+  (%32,8) idi.
+
+### 18.4 Şekiller
+
+- Şekil 5 (`sekil_tatbikat_nurdagi.png`): künye artık sarmalanıyor.
+- Şekil 10 (`sekil_uc_kanal_nurdagi.png`): düzeltilmiş metin sınıflandırıcısıyla
+  yeniden üretildi.
+- Şekil 11 ve 12 (`sekil_kiyas_kollari`, `sekil_duyarlilik`, `sekil_kesif_kazanc`):
+  `araclar_makale_sekilleri.py` artık sayıları elle yazılmış sabitlerden değil,
+  doğrudan `tatbikat_b0` JSON'larından okuyor.

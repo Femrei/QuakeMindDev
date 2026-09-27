@@ -1,4 +1,4 @@
-# Kalan İşler — makale (27 Eylül 2026, 4. tur sonrası)
+# Kalan İşler — makale (28 Eylül 2026, 5. tur sonrası)
 
 Bu dosya makalenin **gönderilebilir hâle gelmesi için kalan** işleri tutar. Bu
 makinede yapılabilen her şey yapıldı; aşağıdakiler karar, başka makine ya da
@@ -6,20 +6,29 @@ başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-123
 `SIMULASYON_OLCUM_KAYDI.md`.
 
 **Güncel dosya:** `makale/QuakeMind_Makale_Taslak_2026-09-16_sekillieklendi_v3_LOCAL_2026-09-21.docx`
-(69 sayfa · 24 şekil · 22 tablo · 68 kaynak · 17 denklem; bütün atıflar çözülüyor)
+(70 sayfa · 24 şekil · 22 tablo · 68 kaynak · 17 denklem; bütün atıflar çözülüyor)
 
 **Yedekler (`makale/arsiv/`, yalnız yerel — depoda değil):** `..._pre_simulasyon_revizyonu_...` (1. tur öncesi) ·
 `..._pre_tarama_revizyonu_...` (2. tur öncesi) · `..._pre_revize3/4/5_...` (3. tur adımları) ·
-`..._pre_revize6/7/8/9_...` (4. tur adımları)
+`..._pre_revize6/7/8/9_...` (4. tur) · `..._pre_revize10/11_...` (5. tur)
 
-**Betikler (`makale/analiz_arsivi/`):** `revize2*.py`, `revize3.py` … `revize9.py`,
+**Betikler (`makale/analiz_arsivi/`):** `revize2*.py`, `revize3.py` … `revize11.py`,
 `yardimci.py` — her biri kendi yedeğinden başlar, yeniden çalıştırılabilir
 (yollar oturumun scratchpad'ine göre yazılı; başka yerde çalıştırmak için `sys.path` ve
 `SRC/DST` satırlarını düzeltin).
 
 ---
 
-## Bu turda yapılanlar (4. tur)
+## Bu turda yapılanlar (5. tur, 28 Eylül)
+
+- **B0 yeniden koşusu bu makinede tamamlandı.** Ağırlıklar Kaggle'dan, SHA-256 doğrulandı; yol
+  verisi PBF'ten yeniden üretildi. Bütün tatbikat sayıları düzeltilmiş kodla yeniden üretildi
+  ve makaleye işlendi (revize10): Nurdağı %54–60, genel %8–60, ceza payı ölçüldü %68–78.
+  Ayrıntı: `SIMULASYON_OLCUM_KAYDI.md` §18, EKSIKLER J-112…J-117 kapanış satırı.
+- **Tablo 11 (revize11):** tatbikatın koşulduğu ikinci makine ayrı sütun olarak eklendi;
+  gecikmeler i7 ölçümü olarak kalıyor. Üç tablodaki punto tutarsızlığı giderildi (J-125).
+
+## Önceki tur (4. tur)
 
 - **Metin sınıflandırma katmanı düzeltildi ve yeniden ölçüldü (J-111/J-116):** model
   eminse anahtar sözcük onu ezmiyor; eşleşme sözcük sınırında ("araç" artık "aç"
@@ -104,57 +113,16 @@ başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-123
 - [ ] **Hedef dergi** — seçilince biçim (kaynak stili, sayfa sınırı, çift kör başlık
   sayfası) ayarlanır.
 
-### B0. 🔴 i7 iş paketi — düzeltilmiş kodla yeniden koşu (sırayla)
-`QuakeMindBackend/` içinden, kök `venv/` ile:
-```
-venv/Scripts/python.exe testler/test_donus.py
-```
-(7/7 GECTI görülmeli.) `apps/road_damage/data/osm_graph_cache/` içinde eski çizge
-önbelleği varsa silin (tek yön düzeltmesi çizgeyi değiştirir). Sonra üç model:
-```
-python araclar_tatbikat_kos.py --alanlar apps/road_damage/data/tatbikat_alanlari.json --sec "Defne - Elektrik" "Islahiye" "Nurdagi" --model segformer_mitb0_p2_t42 --tohum 42 43 44 45 46 --cikti sonuc_b0.json
-```
-```
-python araclar_tatbikat_kos.py --alanlar apps/road_damage/data/tatbikat_alanlari.json --sec "Defne - Elektrik" "Islahiye" "Nurdagi" --model segformer_mitb2_p2_t42 --tohum 42 43 44 45 46 --cikti sonuc_b2.json
-```
-```
-python araclar_tatbikat_kos.py --alanlar apps/road_damage/data/tatbikat_alanlari.json --sec "Defne - Elektrik" "Islahiye" "Nurdagi" --model unet_mitb4_p2_t42 --tohum 42 43 44 45 46 --rh 0 10 15 25 --cikti sonuc_unet.json
-```
-```
-python araclar_tatbikat_ozet.py sonuc_b0.json sonuc_b2.json sonuc_unet.json --cikti tatbikat_ozet.json
-```
-Duyarlılık (Tablo 19) bu kez U-Net ile, tek tohum: ana koşu `sonuc_unet.json`'dan; ek
-olarak `--donussuz`, `--degerlendirme-dk 0.5`, `--degerlendirme-dk 2.0` ve eski sabit için
-`--degerlendirme-dk 20` ile `--model unet_mitb4_p2_t42 --tohum 42`. Çıktı JSON'larını
-ve `tatbikat_ozet.json`'u bu oturuma getirin; makale tarafını ben güncellerim.
+### B0. ✅ Yeniden koşu — TAMAMLANDI (28 Eylül, ikinci makine)
+Tek komut: `bash QuakeMindBackend/araclar_b0_kos.sh` (çıktılar `benchmark/reports/tatbikat_b0/`).
+Önkoşullar: P2 ağırlıkları (`apps/road_damage/models/*_p2_t42.pth`; Kaggle
+`furkanemrence/quakemind-modeller`: `segformer_mitb0.pth`, `segformer_mitb2.pth`, `unet_mitb4.pth`,
+künye adlarıyla) ve `roads.gpkg` (`araclar_yerel_osm_kur.py --pbf ...`; `pyrosm` gerekir).
+Tablo 17 için ayrıca: `araclar_tatbikat_kos.py --sec Nurdagi --model unet_mitb4_p2_t42 --tohum 42
+--guzergah`. Şekiller: `araclar_makale_sekilleri.py` (JSON'dan okur).
 
-Aynı makinede iki kısa iş daha (metin katmanı düzeltmesinden sonra):
-```
-python araclar_kanal_olc.py
-```
-(Tablo 14'ün iki satırı; gecikme bugün düzeltme öncesi hatla ölçülmüş diye yazılı.
-Beklenen kategori sonucu 11/18 — farklı çıkarsa bana bildirin.)
-```
-python araclar_makale_uc_kanal.py --hepsi
-```
-(Şekil 10: metin işaretlerinin boyu aciliyete bağlı ve 5 Gaziantep metninin 3'ü Acil
-Yardım → Enkaz Bildirimi'ne geçti; ayrıca "Hatay ve Adıyaman" notu düzeltildi. U-Net
-ağırlığı bu makinede yok.)
-```
-python araclar_makale_haritalari.py --alan Nurdagi
-```
-(Şekil 5: künye satırı artık sarmalanıyor — 27 Eylül'de düzeltildi; makaledeki
-şimdilik künyesi kırpılmış sürüm, `makale/sekiller_hazir/sekil05_tatbikat_nurdagi_kunyesiz.png`.
-Çıktı `benchmark/makale_sekilleri/sekil_tatbikat_nurdagi.png`.)
-
-**Yeniden koşudan sonra makalede değişecek yerler:** ÖZ/ABSTRACT (1,42 dk → 1,0 dk +
-fiilî dönüş; %7–66 ve %59–66 bantları; ceza payı), Kısaltmalar (t_u), §3.8 (A* sezgiseli,
-ceza teriminin niteliği, Algoritma 1 son satırı), Tablo 11 (t_u satırı), Tablo 15 (kol
-başına keşif + ölçülmüş ceza payı; §4.6'daki [ÖLÇÜLECEK]), Tablo 16, Tablo 18 (r_h —
-U-Net koşusunun `--rh 0 10 15 25` çıktısından), Tablo 19 (U-Net), Şekil
-11–12 (`araclar_makale_sekilleri.py` sabit sayıları), §5.1, §5.3(b) (kusur cümlesi
-kalkar), §6, `SIMULASYON_OLCUM_KAYDI.md`; kanal ölçümünden sonra §4.5 "Kanal
-ölçümleri" paragrafı ve Tablo 14 (gecikme + "düzeltme öncesi" notları), Şekil 10 ve Şekil 5 görselleri.
+Kalan (isteğe bağlı): i7'de `python araclar_kanal_olc.py` — Tablo 14'teki metin gecikmesi
+bugün düzeltme öncesi hatla ölçülmüş diye yazılı; tam koşu bu notu kaldırır.
 
 ### B. 🟠 Aynı makinede ek işler
 - [ ] **B2 — Tablo 11 sürümleri:** `pip freeze` ile Python/PyTorch/Ultralytics/Transformers
