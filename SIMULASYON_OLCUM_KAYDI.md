@@ -6,7 +6,7 @@ Bu belge **makaleye girecek sayıların kaynağıdır**. Word belgesi bu oturumd
 değiştirilmedi; makale revizyonunu yapan kişi sayıları buradan alır.
 
 > **Bu simülasyonda ne YOK:** Copernicus EMS / EMSR648 (hiçbir rolde — ne motor
-> ne cetvel; karar 26 Eylül, gerekçe §11), HAZUS eşlemesi, sentetik kapanma
+> ne cetvel; karar 26 Eylül, gerekçe §12), HAZUS eşlemesi, sentetik kapanma
 > üreteci, R0–R3 kod adları. Eski taslakta bunlardan gelen tablolar ve
 > iddialar var; hiçbiri bu ölçümlerle desteklenmiyor ve kullanılmamalıdır.
 
@@ -17,7 +17,7 @@ değiştirilmedi; makale revizyonunu yapan kişi sayıları buradan alır.
 ```
 gerçek açık drone ortofotosu  (Help.NGO / OpenAerialMap, Şubat 2023)
   → kendi hasar modelimiz      (modeller/uydu/<künye>.json, SHA-256 doğrulanır)
-  → OSM yol ağıyla piksel kesişimi
+  → OSM yol kenarlarının merkez çizgisi boyunca ~5 m aralıkla maske örneklemesi
   → kapalı yollar
   → mahalle giriş ağzındaki ekip  →  içerideki afetzede rotaları
   → kıyas kolları
@@ -77,7 +77,8 @@ davranışı doğruluyor (`testler/test_donus.py`): sol > sağ > düz, eşit uzu
 sağ dönüşlü yol seçiliyor, U en pahalı, tek yönlü kenara ters girilemiyor.
 
 Hızlar da düz bir varsayım değil: `maxspeed` etiketi varsa o, yoksa yol sınıfı
-(20–70 km/sa). Eskiden bütün ağda düz 15 km/sa kullanılıyordu.
+(20–90 km/sa; `maxspeed` 5–130 km/sa aralığında kabul edilir). Eskiden bütün ağda
+düz 15 km/sa kullanılıyordu.
 
 ## 5. Kapanmaya varmanın bedeli — eski 20 dakikalık sabit kaldırıldı
 
@@ -90,6 +91,17 @@ Asıl bedel ekibin fiilen fazladan sürdüğü yoldan gelir ve onu çizge hesapl
 Sonuçta hem sabit (`kapanmaCezasiDk`) hem ondan gelen süre (`cezadanGelenDk`)
 yazılır ki okuyan payını görsün. Mekanizma sınamasında cezanın süredeki payı
 **%97,4 → %30** düştü.
+
+> **Düzeltme (27 Eylül, tarama).** %30, bu tatbikatın değil *rastgele kapanma
+> kümesiyle yapılan bir mekanizma sınamasının* sonucudur (EKSIKLER, 26 Eylül
+> kaydı); betiği ve çıktısı depoda yok. §8.2'den kaba kestirim (keşfin
+> bilmeyen kola ait olduğu ve 25 ortak görev varsayımıyla): Nurdağı U-Net
+> 44,4 × 1,4167 ≈ 62,9 dk / 25 × 3,04 ≈ 76,0 dk → **≈ %83**. Yani sabit
+> 1,42 dk'ya inse de kazancın çoğu hâlâ cezadan geliyor; makaleye %30 değil
+> bu kestirim ve duyarlılık bandı (§9) girdi. Kesin pay için koşu
+> `cezadanGelenDk` ile tekrarlanmalı. Ayrıca kapanmada geri dönüş, cezanın
+> içindeki 25 sn manevraya ek olarak yeniden planlamada 25 sn U dönüşü
+> olarak da fiyatlanıyor (manevra iki kez sayılıyor).
 
 ## 6. Yol verisi Overpass'a bağlı değil
 
@@ -121,9 +133,15 @@ olmadan üç alan raporlamak kiraz toplamaktır.
 
 | Alan | İl | Sahne | Çekim | Uçuş izi | Pencere | OSM yol oranı |
 |---|---|---|---|---|---|---|
-| Defne / Elektrik Mah. | Hatay | Hatay - Defne - Elektrik Mah. | 2023-02-09 | %59 | 468 m | 0,302 |
-| İslahiye | Gaziantep | Islahiye, Turkey - Feb 15, 2023 | 2023-02-14 | %100 | 499 m | 0,218 |
-| Nurdağı | Gaziantep | Nurdagi - Feb 15, 2023 (Warning Low Quality) | 2023-02-14 | %100 | 499 m | 0,220 |
+| Defne / Elektrik Mah. | Hatay | Hatay - Defne - Elektrik Mah. | 2023-02-09 | %59 | 499,3 m | 0,302 |
+| İslahiye | Gaziantep | Islahiye, Turkey - Feb 15, 2023 | 2023-02-14 | %100 | 499,7 m | 0,218 |
+| Nurdağı | Gaziantep | Nurdagi - Feb 15, 2023 (Warning Low Quality) | 2023-02-14 | %100 | 500,5 m | 0,220 |
+
+Pencere değerleri katalogdan (`tatbikat_alanlari.json`, `pencereM`); önceki
+sürümde Defne için yazılan 468 m başka bir alana aitti (27 Eylül düzeltmesi).
+Sağlayıcının üçü de Help.NGO; OAM kimlikleri 63eb78a0…920 / 63eef9a4…49a /
+63ef697b…4a2, lisans CC-BY 4.0, özgün çözünürlük 3,41 / 7,85 / 7,10 cm. Model
+bu ortofotoları z18 karolarıyla (~0,48 m/piksel) işler.
 
 Nurdağı sahnesine sağlayıcı kendi kalite uyarısını koymuş ("Warning Low Quality");
 bu makalede belirtilmeli.
@@ -146,6 +164,12 @@ tohum başına tekrarlanır. Süreler dakika, `ortalama ± standart sapma`.
 | Nurdağı | Hızlı | %3,80 | 22 | 5 | 3,42 ± 0,62 | 2,84 ± 0,34 | 1,36 ± 0,09 | **%59,5 ± 5,3** | 29,4 | 5/5 |
 | Nurdağı | Dengeli | %5,60 | 40 | 5 | 3,62 ± 0,68 | 3,18 ± 0,60 | 1,24 ± 0,09 | **%64,9 ± 5,7** | 33,8 | 5/5 |
 | Nurdağı | En iyi | %3,55 | 26 | 5 | 4,58 ± 0,87 | 3,80 ± 0,76 | 1,54 ± 0,13 | **%65,8 ± 3,6** | 44,4 | 5/5 |
+
+**Keşif sütunu** (27 Eylül notu): kod `toplamKesif`'i kol başına, tohum başına ve
+yalnız ortak görevler üzerinden toplar (`tatbikat.py`); tablonun hangi kolun
+keşfini gösterdiği ve 5 tohum ortalamasını üreten birleştirici betik depoda yok.
+Defne'de afetzede sayısı modelden gelir (1–5), yani çift sayısı 25'ten azdır.
+Kapsama modelden bağımsızdır: Defne %19, İslahiye %46, Nurdağı %44.
 
 **Tekrar üretilebilirlik.** Bütün kod değişiklikleri bittikten sonra aynı komut
 baştan koşuldu (3 alan × 3 model × 5 tohum) ve yukarıdaki tablonun **tek sayısı
@@ -194,7 +218,10 @@ Hücreler: *kapanmayı bilmeyen ekip → QuakeMind (kazanç)*, dakika.
 
 **Okunuşu.**
 
-1. **Dönüş maliyeti sonucu belirlemiyor.** Sağdan trafik kuralı mutlak süreleri
+1. **Dönüş maliyeti sonucu büyük ölçüde belirlemiyor — İslahiye hariç.** İslahiye'de
+   kazanç %13 → %27 değişiyor (aşağıdaki cümle yalnız Defne ve Nurdağı için doğru).
+   Not: bu tablo `segformer_mitb4_dice30` ile koşuldu, §8.2'deki modellerle değil;
+   ANA satırı §8.2 ile bu yüzden farklıdır. Sağdan trafik kuralı mutlak süreleri
    ~%30 artırıyor (gerçekçi olan da bu) ama göreli kazancı bırakıyor: %28↔%29,
    %58↔%56. "Kapanmayı bilmek şu kadar kazandırıyor" cümlesi bu parametreye
    yaslanmıyor.
@@ -260,7 +287,7 @@ Nurdağı, U-Net MiT-B4, tohum 42 (uzunluklar):
 
 | Görev | gri | mavi | sarı | okunuşu |
 |---|---|---|---|---|
-| Ekip 1 | 467 m | 462 m | 462 m | kapanma bu rotayı etkilemiyor |
+| Ekip 1 | 467 m | 462 m | 462 m | kapanma rotayı değiştiriyor: metrede kısa, sürede uzun (0,9 → 1,0 dk) |
 | Ekip 2 | 463 m | **820 m** | 820 m | kapanma 357 m dolaştırıyor |
 | Ekip 3 | 822 m | 822 m | **975 m** | yol kapalı değil ama sarı enkazdan uzak duruyor |
 | Ekip 5 | 449 m | 400 m | 466 m | metrede kısa, **sürede uzun** (aşağıya bakınız) |
@@ -440,7 +467,7 @@ Soğuk koşuda (karo ve yol önbellekte yokken) uçtan uca ölçülen süre **35
 15 sn'de koşar; aynı alan+model ikinci kez istenirse parmak izi önbelleği
 çıkarımı hiç koşturmaz.
 
-### 13.1 Denenip BIRAKILAN iyileştirmeler
+### 14.1 Denenip BIRAKILAN iyileştirmeler
 
 Üçü de ölçüldü; hiçbiri varsayılan yapılmadı, gerekçesi yazıldı.
 
@@ -453,7 +480,7 @@ Soğuk koşuda (karo ve yol önbellekte yokken) uçtan uca ölçülen süre **35
 **Sonuç: çıkarım bu kurulumda pratik optimumunda.** Kalan tek gerçek kaldıraç
 model seçimi.
 
-### 13.2 Model seçimi — süre, doğruluk ve operasyonel karşılığı
+### 14.2 Model seçimi — süre, doğruluk ve operasyonel karşılığı
 
 Aynı görüntü, aynı ayar, 6 iş parçacığı.
 
@@ -609,6 +636,25 @@ kayıyor, üstelik yüksek güvenle (0,92 ve 0,97 dahil). Model aciliyet taşıy
 her metni bu sınıfa çekiyor. Makalede F1 iddiası için etiketli bir küme
 gerekir (DepremKit / TSEqD); bu ölçüm onun yerine geçmez.
 
+> **Düzeltme (27 Eylül 2026, J-111/J-116):** Yukarıdaki "model aciliyet taşıyan
+> her metni bu sınıfa çekiyor" yorumu YANLIŞTI. Kaymayı model değil, 13→5
+> katmanındaki anahtar sözcük kurtarması yapıyordu: 18 çıktının 12'sini anahtar
+> sözcük belirlemişti (5'i "ekip lazım", "ambulans", "arama kurtarma" ve iki kez
+> "araç" içindeki "aç"). Katman düzeltildi ve metinler yeniden ölçüldü (ikinci
+> makine, yalnız kategori; gecikme yukarıdaki i7 değeri):
+>
+> | Ölçüt | Eski katman | Düzeltilmiş katman |
+> |---|---|---|
+> | Yazarın niyetiyle örtüşen | 9 / 18 | **11 / 18** |
+> | Kararı veren | anahtar sözcük 12, model 6 | model 15, anahtar sözcük 3 |
+> | Örtüşmeyenlerin gittiği sınıf | Acil Yardım 8, Enkaz 1 | Acil Yardım 4, Enkaz 3 |
+>
+> Rapor: `QuakeMindBackend/benchmark/reports/kanal_olcumu_metin_duzeltilmis.json`
+> (satır başına ham 13 etiketli çıktı ve kararın kaynağı yazılı). Kalan 7 ayrılığın
+> 3'ü eşlemeden (Yemek/Isınma/Arama Ekipmanı → Acil Yardım), 3'ü modelin "Enkaz
+> Kaldırma"sından, 1'i kurtarma önceliğinden ("ambulans giremiyor"). Model 4 yol
+> kapanması metninin hiçbirine ulaşım etiketi vermiyor (J-123).
+
 **Coğrafi kodlama gecikmesi:** tam hat (sınıflandırma + NER + coğrafi kodlama)
 ölçüldüğünde 18 metnin ikisi **3,3 sn** ve **4,4 sn** sürdü (önbellek ıskası,
 ağ çağrısı), medyan 47 ms. Yalnız sınıflandırma ölçüldüğünde medyan
@@ -645,8 +691,9 @@ zincirin sonunu (kapalı yollar + güzergâh) çizer. Çıktı
 sonucu verir, farklı alanlar farklı fotoğraf alır. (`hash` kullanılamaz:
 Python'da süreç başına tuzlanır.)
 
-**Şekle yazılan uyarı:** katalogdaki fotoğrafların hepsi **Hatay ve
-Adıyaman**'dan. Gaziantep alanlarına yerleştirildiklerinde aynı depremin
+**Şekle yazılan uyarı:** katalogdaki fotoğrafların dokuzu **Hatay/Antakya**'dan,
+dördünün ili kaynakta belirtilmemiş ("in Turkiye"; 27 Eylül düzeltmesi — önceki
+"Hatay ve Adıyaman" ifadesinin dayanağı yoktu). Çekim tarihleri Şubat–Ağustos 2023. Gaziantep alanlarına yerleştirildiklerinde aynı depremin
 gerçek fotoğraflarıdır ama **o mahallenin** fotoğrafı değildirler. Bu, hem
 göstergenin künye satırında hem de kanal çıktısının `not` alanında yazılıdır.
 Makale altyazısında da tekrarlanmalıdır.
