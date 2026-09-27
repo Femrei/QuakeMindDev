@@ -84,8 +84,33 @@ def _rh_kiyasi(tam_G, bounds, maske, gecerli, ekip_t, kurban, yaricaplar, donus_
     return satirlar
 
 
+def _guzergah_varyantlari(tam_G, guvenli_G, maske, bounds, ekip_t, kurban):
+    """Haritanin uc guzergah varyanti (gri: kapanma yok sayilir, mavi: kapali
+    kenarlar cikarilir, sari: hasara yakin kenarlar pahalilasir) -- makale
+    Tablo 17 ve Bolum 4.7'deki uzama sayilari. Eskiden yalniz simulasyon ucunun
+    yanitindan elle okunuyordu; depoda ureten betik yoktu. Kurgu simulasyon
+    ucuyla ayni (uclar/simulasyon.py: hasar noktalari, r_h = 0, 15 km/sa yedek hiz)."""
+    from apps.road_damage.utils import tatbikat
+
+    r = tatbikat.rota_kosusu(tam_G, guvenli_G, ekip_t, kurban,
+                             hasar_noktalari=tatbikat.hasar_noktalari(maske, bounds),
+                             ekranda=len(ekip_t))
+    gorevler = []
+    for g in r["gorevler"]:
+        v = g["varyantlar"]
+        sari = v.get("riskli") or {}
+        gorevler.append({
+            "ekip": g["ekipAd"], "afetzede": g["afetzedeAd"],
+            "griM": v["depremOncesi"]["uzunlukM"], "griDk": v["depremOncesi"]["sureDk"],
+            "maviM": v["kapanmali"]["uzunlukM"], "maviDk": v["kapanmali"]["sureDk"],
+            "sariM": sari.get("uzunlukM"), "sonAdimYurumeM": g.get("sonAdimYurumeM"),
+        })
+    olcum = {k: v for k, v in r["olcum"].items() if k != "satirlar"}
+    return {"gorevler": gorevler, "olcum": olcum}
+
+
 def _tek_alan(alan, model_kunye, tohumlar, ekip_sayisi, gorus_m, donus_maliyetli, kapsam,
-              degerlendirme_dk=None, rh_listesi=None):
+              degerlendirme_dk=None, rh_listesi=None, guzergah=False):
     from apps.road_damage.utils import model_kunyesi, tatbikat
     from apps.road_damage.worker import _init_worker, run_analysis_job
 
@@ -183,6 +208,10 @@ def _tek_alan(alan, model_kunye, tohumlar, ekip_sayisi, gorus_m, donus_maliyetli
     if rh_listesi:
         rh_satirlari = _rh_kiyasi(tam_G, bounds, maske, gecerli, ilk_kurulum[0], ilk_kurulum[1],
                                   rh_listesi, donus_maliyetli, degerlendirme_dk)
+    guzergah_sonuc = None
+    if guzergah and ilk_kurulum:
+        guzergah_sonuc = _guzergah_varyantlari(tam_G, guvenli_G, maske, bounds,
+                                               ilk_kurulum[0], ilk_kurulum[1])
     return {
         "alan": alan["yer"], "il": alan["il"], "sahne": alan["sahneAdi"],
         "tarih": alan["tarih"], "saglayici": alan["saglayici"],
@@ -199,6 +228,7 @@ def _tek_alan(alan, model_kunye, tohumlar, ekip_sayisi, gorus_m, donus_maliyetli
         "kollar": kollar, "kollarTohum": kollar_tohum, "tohumlar": list(tohumlar),
         "farkliAfetzedeKumesi": len(kumeler),
         "rhKiyasi": rh_satirlari, "rhTohum": tohumlar[0] if rh_listesi else None,
+        "guzergahVaryantlari": guzergah_sonuc,
     }
 
 
@@ -219,6 +249,8 @@ def main() -> int:
                          "genis = ekipler gercek tesisler, rota alanin disina tasar")
     ap.add_argument("--rh", type=float, nargs="*", default=None,
                     help="moloz yayilim yaricaplari (m), ör. 0 10 15 25: ilk tohumla r_h kiyasi (Tablo 18)")
+    ap.add_argument("--guzergah", action="store_true",
+                    help="ilk tohumla haritanin uc guzergah varyantini (gri/mavi/sari) da yaz (Tablo 17)")
     ap.add_argument("--cikti", default="tatbikat_sonuc.json")
     a = ap.parse_args()
 
@@ -242,7 +274,7 @@ def main() -> int:
         print(f"--- {alan['il']} / {alan['yer']} ---")
         try:
             s = _tek_alan(alan, a.model, a.tohum, a.ekip, a.gorus_m, not a.donussuz, a.kapsam,
-                          a.degerlendirme_dk, a.rh)
+                          a.degerlendirme_dk, a.rh, a.guzergah)
         except Exception as e:
             s = {"alan": alan["yer"], "hata": f"{type(e).__name__}: {e}"}
         sonuc.append(s)

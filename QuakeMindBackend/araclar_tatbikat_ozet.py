@@ -44,9 +44,14 @@ def _bic(ort, ss, basamak=2, yuzde=False):
     return f"{on}{ort:.{basamak}f} ± {ss:.{basamak}f}".replace(".", ",")
 
 
+def _model_adi(m):
+    # kosucu modeli kunye sozlugu olarak yazar; tabloya yalniz adi gider
+    return (m.get("ad") or m.get("etiket")) if isinstance(m, dict) else m
+
+
 def alan_ozeti(s):
     tohum_sonuc = s.get("kollarTohum") or {}
-    satir = {"alan": s.get("alan"), "model": s.get("model"), "hasarGecerli": s.get("hasarGecerli"),
+    satir = {"alan": s.get("alan"), "model": _model_adi(s.get("model")), "hasarGecerli": s.get("hasarGecerli"),
              "kapaliKenar": s.get("kapaliKenar"), "afetzede": s.get("afetzedeSayisi"),
              "kapsama": (s.get("kapsama") or {}).get("edgesObservedFraction"),
              "kume": f"{s.get('farkliAfetzedeKumesi')}/{len(s.get('tohumlar') or [])}",
@@ -87,7 +92,7 @@ def main() -> int:
     for yol in a.girdiler:
         for s in json.loads(Path(yol).read_text(encoding="utf-8")):
             if s.get("hata"):
-                satirlar.append({"alan": s.get("alan"), "model": s.get("model"), "hata": s["hata"]})
+                satirlar.append({"alan": s.get("alan"), "model": _model_adi(s.get("model")), "hata": s["hata"]})
                 continue
             satirlar.append(alan_ozeti(s))
 
@@ -99,12 +104,12 @@ def main() -> int:
         if r.get("hata"):
             print(f"| {r['alan']} | {r.get('model')} | HATA: {r['hata']} |" + " |" * 12)
             continue
-        if not r["gecerliTohum"]:
-            print(f"| {r['alan']} | {r['model']} | | {r['kapaliKenar']} | {r['afetzede']} | — | — | — | "
-                  f"araç rotası yok | — | — | — | — | | {r['kume']} |")
-            continue
         hasar = f"%{(r['hasarGecerli'] or 0) * 100:.2f}".replace(".", ",")
         kapsama = f"%{(r['kapsama'] or 0) * 100:.0f}"
+        if not r["gecerliTohum"]:
+            print(f"| {r['alan']} | {r['model']} | {hasar} | {r['kapaliKenar']} | {r['afetzede']} | — | — | — | "
+                  f"araç rotası yok | — | — | — | — | {kapsama} | {r['kume']} |")
+            continue
         print(f"| {r['alan']} | {r['model']} | {hasar} | {r['kapaliKenar']} | {r['afetzede']} | "
               f"{_bic(*r['bilmeyen'])} | {_bic(*r['telsiz'])} | {_bic(*r['quakemind'])} | "
               f"{_bic(*r['kazanc'], basamak=1, yuzde=True)} | {_bic(*r['kesifBilmeyen'], basamak=1)} | "
