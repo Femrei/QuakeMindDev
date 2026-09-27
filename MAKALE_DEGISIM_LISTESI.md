@@ -152,8 +152,10 @@ verisiyle.
 ## F. Üç kanal şekli — §4.5 için önerilen görsel
 
 `benchmark/makale_sekilleri/sekil_uc_kanal_{defne,islahiye,nurdagi}.png`
-(27 Eylül 2026). Üçünden biri seçilir; **Nurdağı** en okunaklısı (26 kapalı
-kenar, kazanım da orada en yüksek).
+(27 Eylül 2026). **KARAR: `sekil_uc_kanal_nurdagi.png` kullanılacak**
+(Furkan, 27 Eylül). Gerekçe: 26 kapalı kenarla en okunaklı kare ve kazanımın
+en yüksek olduğu alan (%59–66). Diğer iki şekil dosyada duruyor; istenirse ek
+görsel olarak kullanılabilir ama makaleye giren bu.
 
 **Önerilen altyazı:**
 
