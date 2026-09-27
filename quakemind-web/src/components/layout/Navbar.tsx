@@ -122,9 +122,12 @@ export default function Navbar() {
             {showNotifications && (
               <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-80 glass-panel rounded-xl shadow-2xl border border-slate-800 p-3 z-50 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
-                  <span className="text-xs font-bold text-white">Canlı Afet İkaz Akışı</span>
-                  <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-semibold">
-                    Firebase FCM Ready
+                  <span className="text-xs font-bold text-white">Afet İkaz Akışı</span>
+                  {/* J-101: bu panelin icerigi SABIT yazilmis ornektir, canli
+                      veri degildir. "Canli" demek ve etiketsiz birakmak
+                      operatorü yanlis yonlendirir (CLAUDE.md kural 1). */}
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-semibold">
+                    ÖRNEK — canlı veri değil
                   </span>
                 </div>
                 <div className="space-y-2 text-xs">

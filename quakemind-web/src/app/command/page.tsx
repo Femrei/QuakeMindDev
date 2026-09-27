@@ -45,6 +45,8 @@ const ANTAKYA_CENTER: [number, number] = [36.202, 36.161];
 export default function CommandDashboardPage() {
   const [alerts, setAlerts] = useState<SOSAlert[]>([]);
   const [loading, setLoading] = useState(true);
+  // J-101: ihbar ucuna ulasilamadi mi. Uydurma veri yerine bunu gosteririz.
+  const [sunucuHatasi, setSunucuHatasi] = useState(false);
   const [status, setStatus] = useState<{ nlp: boolean; risk: boolean; road_damage: boolean }>({
     nlp: true,
     risk: true,
@@ -167,36 +169,14 @@ export default function CommandDashboardPage() {
         setLoading(false);
       })
       .catch(() => {
-        // Mock sample SOS alerts for fallback
-        setAlerts([
-          {
-            id: "sos-1",
-            latitude: 36.208,
-            longitude: 36.165,
-            message: "[KİŞİ: 4] [KRİTİK] Cebrail Mah. Enkaz altı ses alındı!",
-            receivedAt: new Date().toISOString(),
-            urgency: "CRITICAL",
-            status: "OPEN",
-          },
-          {
-            id: "sos-2",
-            latitude: 36.195,
-            longitude: 36.152,
-            message: "[KİŞİ: 2] [YARALI] Atatürk Cad. Yaşlı çift mahsur.",
-            receivedAt: new Date(Date.now() - 15 * 60000).toISOString(),
-            urgency: "HIGH",
-            status: "EN_ROUTE",
-          },
-          {
-            id: "sos-3",
-            latitude: 36.215,
-            longitude: 36.175,
-            message: "[KİŞİ: 1] [NORMAL] Kan ve battaniye acil ihtiyaç.",
-            receivedAt: new Date(Date.now() - 45 * 60000).toISOString(),
-            urgency: "HIGH",
-            status: "RESOLVED",
-          },
-        ]);
+        // J-101: burada eskiden UC SAHTE IHBAR vardi ("Cebrail Mah. Enkaz alti
+        // ses alindi!" gibi), gercek koordinatlarla ve hicbir yerde "ornek
+        // veri" yazmadan. Sunucuya ulasilamadiginda operator bunlari GERCEK
+        // ihbar sanabilirdi -- CLAUDE.md kural 1'in dogrudan ihlali. Uydurma
+        // veri yerine artik bos liste ve acik bir hata durumu gosterilir:
+        // "veri yok" ile "sunucuya ulasilamadi" birbirine karismasin.
+        setAlerts([]);
+        setSunucuHatasi(true);
         setLoading(false);
       });
 
@@ -499,6 +479,20 @@ export default function CommandDashboardPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {sunucuHatasi && (
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/40 space-y-1">
+                  <p className="text-xs font-bold text-amber-200 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" /> İhbar sunucusuna ulaşılamıyor
+                  </p>
+                  <p className="text-[11px] text-amber-100/80 leading-relaxed">
+                    Liste boş; bu &quot;ihbar yok&quot; demek değildir. Bağlantı gelince
+                    kendiliğinden dolacak.
+                  </p>
+                </div>
+              )}
+              {!loading && !sunucuHatasi && alerts.length === 0 && (
+                <p className="text-xs text-slate-500 py-2">Aralıkta ihbar yok.</p>
+              )}
               {alerts.map((a) => (
                 <div
                   key={a.id}

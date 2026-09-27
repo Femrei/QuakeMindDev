@@ -118,6 +118,8 @@ function ChannelBadge({ channel }: { channel: IncidentChannel }) {
 export default function SOSDispatchPage() {
   const { setSosAlerts, sosAlerts: contextSosAlerts, demoActive } = useMapLayers();
   const [alerts, setAlerts] = useState<SOSAlert[]>([]);
+  // J-101: ihbar ucuna ulasilamadi mi. Uydurma veri yerine bunu gosteririz.
+  const [sunucuHatasi, setSunucuHatasi] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<SOSAlert | null>(null);
   const [filter, setFilter] = useState<"ALL" | "OPEN" | "EN_ROUTE" | "RESOLVED">("ALL");
   const [teamClaims, setTeamClaims] = useState<TeamClaim[]>([]);
@@ -132,7 +134,8 @@ export default function SOSDispatchPage() {
   };
 
   // Global simülasyon aktifse Navbar'ın ürettiği ortak veriyi kullan; değilse
-  // gerçek backend'den çek (başarısız olursa yerel örnek veriye düş).
+  // Gerçek backend'den çek. Başarısız olursa UYDURMA veri gösterilmez:
+  // liste boşalır ve "sunucuya ulaşılamıyor" durumu görünür (J-101).
   useEffect(() => {
     if (demoActive) {
       setAlerts(contextSosAlerts);
@@ -141,35 +144,11 @@ export default function SOSDispatchPage() {
     getSOSAlerts()
       .then((data) => setAlerts(data.alerts))
       .catch(() => {
-        setAlerts([
-          {
-            id: "sos-101",
-            latitude: 36.208,
-            longitude: 36.165,
-            message: "[KİŞİ: 4] [KRİTİK] Cebrail Mah. Enkaz altı ses var!",
-            receivedAt: new Date().toISOString(),
-            status: "OPEN",
-            urgency: "CRITICAL",
-          },
-          {
-            id: "sos-102",
-            latitude: 36.195,
-            longitude: 36.152,
-            message: "[KİŞİ: 2] [YARALI] Atatürk Cad. Yaşlı çift mahsur.",
-            receivedAt: new Date(Date.now() - 20 * 60000).toISOString(),
-            status: "EN_ROUTE",
-            urgency: "HIGH",
-          },
-          {
-            id: "sos-103",
-            latitude: 36.215,
-            longitude: 36.175,
-            message: "[KİŞİ: 1] [NORMAL] Kan ve battaniye acil ihtiyaç.",
-            receivedAt: new Date(Date.now() - 60 * 60000).toISOString(),
-            status: "RESOLVED",
-            urgency: "HIGH",
-          },
-        ]);
+        // J-101: burada da UC SAHTE IHBAR vardi ve bu sayfa EKIP SEVK EDILEN
+        // sayfa -- operator uydurma bir enkaz cagrisina ekip gonderebilirdi.
+        // Uydurma veri yerine bos liste + acik hata durumu (CLAUDE.md 1).
+        setAlerts([]);
+        setSunucuHatasi(true);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demoActive]);
@@ -301,6 +280,18 @@ export default function SOSDispatchPage() {
             </div>
 
             <div className="space-y-3 max-h-[580px] overflow-y-auto pr-1">
+              {sunucuHatasi && (
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/40 space-y-1">
+                  <p className="text-xs font-bold text-amber-200">İhbar sunucusuna ulaşılamıyor</p>
+                  <p className="text-[11px] text-amber-100/80 leading-relaxed">
+                    Liste boş; bu &quot;ihbar yok&quot; demek değildir. Bağlantı gelince
+                    kendiliğinden dolacak.
+                  </p>
+                </div>
+              )}
+              {!sunucuHatasi && filteredAlerts.length === 0 && (
+                <p className="text-xs text-slate-500 py-2">Bu süzgeçte ihbar yok.</p>
+              )}
               {filteredAlerts.map((alert) => (
                 <div
                   key={alert.id}
