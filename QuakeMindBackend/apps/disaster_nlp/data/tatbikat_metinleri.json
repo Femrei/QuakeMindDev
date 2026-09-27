@@ -1,0 +1,84 @@
+{
+ "_not": "SENTETIK IHBAR METINLERI -- hicbiri gercek bir cagri degildir, tatbikat icin yazilmistir (CLAUDE.md kural 1). Gercek olan: metinlerin uzerinde kosan BERTurk siniflandirici ve NER. 'beklenen' alani yazarin niyetidir, modelin dogru cevabi degil; modelin ne dedigi kosuda olculur.",
+ "_uretim": "elle yazildi, 27 Eylul 2026",
+ "iller": {
+  "hatay": [
+   {
+    "metin": "Elektrik Mahallesi 5. sokakta üç katlı bina tamamen çöktü, enkaz altından ses geliyor acil ekip lazım",
+    "beklenen": "Enkaz Bildirimi"
+   },
+   {
+    "metin": "Defne Elektrik Mahallesinde apartmanın giriş katı göçtü, içeride iki kişi olduğunu söylüyorlar",
+    "beklenen": "Enkaz Bildirimi"
+   },
+   {
+    "metin": "Elektrik Mahallesi sokak arası molozla kapandı, ambulans giremiyor başka yoldan gelsinler",
+    "beklenen": "Yol Kapanma Bilgisi / Lojistik"
+   },
+   {
+    "metin": "Mahalle girişindeki cadde çökmüş duvar yüzünden kapalı, iş makinesi gerekiyor",
+    "beklenen": "Yol Kapanma Bilgisi / Lojistik"
+   },
+   {
+    "metin": "Burada yaşlı bir çift mahsur kaldı, kalp ilacı bitmiş acilen ilaç ve sağlık ekibi lazım",
+    "beklenen": "Acil Yardım İhtiyacı"
+   },
+   {
+    "metin": "Çocuklu dört aile sokakta kaldık, battaniye ve çadır gönderin lütfen hava çok soğuk",
+    "beklenen": "Lojistik İhtiyaç Bildirimi"
+   },
+   {
+    "metin": "Su ve bebek maması bitti, mahallede dağıtım yapılmadı henüz",
+    "beklenen": "Lojistik İhtiyaç Bildirimi"
+   },
+   {
+    "metin": "Yan binanın kolonlarında büyük çatlaklar var, boşaltılması lazım riskli görünüyor",
+    "beklenen": "Enkaz Bildirimi"
+   },
+   {
+    "metin": "Herkese geçmiş olsun, Allah yardımcımız olsun",
+    "beklenen": "Alakasız"
+   }
+  ],
+  "gaziantep": [
+   {
+    "metin": "İslahiye merkezde iki bina yan yatmış, altında araç kalmış olabilir ekip yönlendirin",
+    "beklenen": "Enkaz Bildirimi"
+   },
+   {
+    "metin": "Nurdağı çıkışında yol tamamen kapalı, molozdan geçiş yok",
+    "beklenen": "Yol Kapanma Bilgisi / Lojistik"
+   },
+   {
+    "metin": "Nurdağı'nda bir apartmanda enkaz altından ses duyuluyor, acil arama kurtarma",
+    "beklenen": "Enkaz Bildirimi"
+   },
+   {
+    "metin": "İslahiye'de jeneratör ve aydınlatma lazım, gece çalışma yapılamıyor",
+    "beklenen": "Lojistik İhtiyaç Bildirimi"
+   },
+   {
+    "metin": "Yaralı var kanaması durmuyor, en yakın sağlık ekibi gelsin lütfen",
+    "beklenen": "Acil Yardım İhtiyacı"
+   }
+  ],
+  "kahramanmaras": [
+   {
+    "metin": "Şekeroba'da okulun yanındaki bina çökmüş, enkaz kaldırma ekibi gerekiyor",
+    "beklenen": "Enkaz Bildirimi"
+   },
+   {
+    "metin": "Merkezde stadyum çevresindeki yol çatlamış, ağır araç geçemiyor",
+    "beklenen": "Yol Kapanma Bilgisi / Lojistik"
+   },
+   {
+    "metin": "Isınamıyoruz, soba ve yakacak gönderilmesi gerekiyor acil",
+    "beklenen": "Lojistik İhtiyaç Bildirimi"
+   },
+   {
+    "metin": "Enkaz altındaki akrabamdan haber alamıyorum, lütfen bu adrese ekip gönderin",
+    "beklenen": "Acil Yardım İhtiyacı"
+   }
+  ]
+ }
+}

@@ -392,6 +392,84 @@ export function SimulasyonSag() {
         </Bolum>
       )}
 
+      {/* Yer seviyesi kanallar (J-108). Uydu mahalleye yukarıdan baktı; bu
+          ikisi yerden bakıyor. Neyin gerçek neyin üretilmiş olduğu her
+          satırda yazar — kural 1. */}
+      {s.kanallar?.kamera && (
+        <Bolum
+          baslik="Kamera tespiti"
+          ek={<Micro>{katmanlar.simKamera ? 'katman açık' : 'katman kapalı'}</Micro>}
+        >
+          {s.kanallar.kamera.hata ? (
+            <p className="text-small text-crit">{s.kanallar.kamera.hata}</p>
+          ) : s.kanallar.kamera.kayitlar.length === 0 ? (
+            <p className="text-small text-ink-3">{s.kanallar.kamera.not ?? 'Kayıt yok.'}</p>
+          ) : (
+            <>
+              <p className="text-body text-ink">
+                {sayi(s.kanallar.kamera.kayitlar.length)} fotoğraf ·{' '}
+                {sayi(s.kanallar.kamera.kayitlar.reduce((n, k) => n + k.catlakSayisi, 0))} çatlak ·{' '}
+                {sayi(s.kanallar.kamera.kayitlar.reduce((n, k) => n + k.binaSayisi, 0))} bina
+              </p>
+              <ul className="mt-2 flex flex-col gap-1.5">
+                {s.kanallar.kamera.kayitlar.map((k) => (
+                  <li key={k.id} className="flex flex-col">
+                    <span className="text-small text-ink">{k.etiket}</span>
+                    <Micro>
+                      güven %{(k.guven * 100).toFixed(0)} · çıkarım {Math.round(k.cikarimMs)} ms ·{' '}
+                      {k.foto.lisans} / {k.foto.yazar}
+                    </Micro>
+                  </li>
+                ))}
+              </ul>
+              <Teknik>
+                Fotoğraflar gerçek: 6 Şubat 2023 depremi, Wikimedia Commons (Public domain ve CC
+                BY-SA 4.0), künyeleri SHA-256 ile kayıtlı. Model çıktısı da gerçek. Haritadaki
+                konumları ÜRETİLDİ — tohumla, modelin hasarlı bulduğu alanlardan seçildi.
+              </Teknik>
+            </>
+          )}
+        </Bolum>
+      )}
+
+      {s.kanallar?.metin && (
+        <Bolum
+          baslik="Metin ihbarı"
+          ek={<Micro>{katmanlar.simMetin ? 'katman açık' : 'katman kapalı'}</Micro>}
+        >
+          {s.kanallar.metin.hata ? (
+            <p className="text-small text-crit">{s.kanallar.metin.hata}</p>
+          ) : s.kanallar.metin.kayitlar.length === 0 ? (
+            <p className="text-small text-ink-3">{s.kanallar.metin.not ?? 'Kayıt yok.'}</p>
+          ) : (
+            <>
+              <p className="text-body text-ink">
+                {sayi(s.kanallar.metin.kayitlar.length)} ihbar ·{' '}
+                {sayi(s.kanallar.metin.kayitlar.filter((k) => k.elendi).length)} elendi
+              </p>
+              <ul className="mt-2 flex flex-col gap-2">
+                {s.kanallar.metin.kayitlar.map((k) => (
+                  <li key={k.id} className="flex flex-col">
+                    <span className="text-small text-ink">{k.etiket}</span>
+                    <Micro>
+                      aciliyet {k.aciliyet}/5 · güven %{(k.guven * 100).toFixed(0)} ·{' '}
+                      {Math.round(k.cikarimMs)} ms
+                    </Micro>
+                    <span className="mt-0.5 text-small text-ink-2">“{k.metin}”</span>
+                  </li>
+                ))}
+              </ul>
+              <Teknik>
+                Metinler ÜRETİLMİŞTİR — elle yazıldı, gerçek çağrı değil. BERTurk sınıflandırması ve
+                varlık ismi tanıma gerçek olarak koştu. Haritadaki konumları da üretildi: modelin
+                coğrafi kodlayıcısı mahalle merkezine düşürüyor ve 500 m&apos;lik tatbikat kutusunun
+                dışında kalıyor.
+              </Teknik>
+            </>
+          )}
+        </Bolum>
+      )}
+
       {/* Madde 5: iki arama yan yana. Uç rotaları henüz vermiyorsa kart çıkmaz. */}
       {s.rotalar?.length ? <AramaKarti sonuc={s} /> : null}
 

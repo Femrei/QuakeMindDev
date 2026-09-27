@@ -125,6 +125,59 @@ export type SimGorev = {
   durum: string
 }
 
+export type SimKanal<T> = {
+  kayitlar: T[]
+  not?: string
+  hata?: string
+  fotoKaynagi?: string
+}
+
+type SimKanalOrtak = {
+  id: string
+  lat: number
+  lon: number
+  skor: number
+  guven: number
+  zaman: number
+  kaynak: string
+  etiket: string
+  sentetikKonum: true
+  konumNotu: string
+  hasarBlobPiksel: number
+}
+
+export type SimKameraKaydi = SimKanalOrtak & {
+  foto: {
+    dosya: string
+    baslik: string
+    lisans: string
+    yazar: string
+    kaynakSayfa: string
+    sha256: string
+    gercek: true
+  }
+  tespitSayisi: number
+  catlakSayisi: number
+  binaSayisi: number
+  kritik: boolean
+  cikarimMs: number
+  modeller: string[]
+  tespitler: { label: string; sinif: string; confidence: number; model: string }[]
+}
+
+export type SimMetinKaydi = SimKanalOrtak & {
+  sentetikMetin: true
+  metin: string
+  beklenen?: string
+  ortusuyor: boolean
+  elendi: boolean
+  aciliyet: number
+  yerAdaylari: string[]
+  modelKonumu?: [number, number] | null
+  modelKonumMetni?: string | null
+  cikarimMs: number
+}
+
 export type SimSonuc = {
   isId: string
   /** Sözleşme §4: ilerleme YÜZDE (0–100), SSE ile aynı ölçek. */
@@ -183,6 +236,13 @@ export type SimSonuc = {
   /** Kolların FİİLEN sürdüğü yollar (ilk tur). Planlanan varyantlar bunu
       göstermiyor; manşet sayı ise buradan geliyor, o yüzden haritada çizilir. */
   izlenenYollar?: Record<string, LatLonCizgi[]>
+  /** Yer seviyesi kanallar (J-108). Fotoğraf ve model çıktısı GERÇEK;
+      metinler ve her ikisinin KONUMU ÜRETİLMİŞTİR — her kayıt bunu
+      `sentetikKonum` / `sentetikMetin` ile kendi içinde söyler. */
+  kanallar?: {
+    kamera?: SimKanal<SimKameraKaydi>
+    metin?: SimKanal<SimMetinKaydi>
+  } | null
   /* Sözleşmede olmayan, ucun verdiği gerçek ölçümler (J-62). */
   /** Aşama süreleri (ms): uydu, yol, çıkarım, lojistik, toplam. */
   sureler?: Record<string, number>

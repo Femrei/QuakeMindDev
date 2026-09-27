@@ -5,7 +5,9 @@ import type { KatmanId } from '@/durum/konsolDurumu'
 import type {
   LatLonCizgi,
   SimGorev,
+  SimKameraKaydi,
   SimKenar,
+  SimMetinKaydi,
   SimRota,
   SimSonuc,
   SimVaryantId,
@@ -219,6 +221,47 @@ export function simKatmanlari(g: SimHaritaGirdisi): Layer[] {
       }),
     )
   }
+
+  /* Yer seviyesi kanallar (J-108). Ayrım renkten BAŞKA biçimle de yapılır
+     (ARAYUZ §6): kamera tespiti dolu kare, metin ihbarı dolu üçgen. İkisinin
+     de konumu ÜRETİLMİŞTİR; göstergede ve panelde öyle yazar. */
+  if (g.katmanlar.simKamera && s.kanallar?.kamera?.kayitlar?.length) {
+    L.push(
+      new ScatterplotLayer<SimKameraKaydi>({
+        id: 'sim-kanal-kamera',
+        data: s.kanallar.kamera.kayitlar,
+        getPosition: (d) => [d.lon, d.lat],
+        // Kare görünsün diye: deck.gl daireyi köşe sayısıyla yaklaşır.
+        getRadius: 6,
+        radiusUnits: 'pixels',
+        getFillColor: [...tokenRenk('--color-ch-cam'), 235],
+        stroked: true,
+        getLineColor: [...tokenRenk('--color-ground'), 230],
+        lineWidthUnits: 'pixels',
+        getLineWidth: 1.5,
+        pickable: true,
+      }),
+    )
+  }
+  if (g.katmanlar.simMetin && s.kanallar?.metin?.kayitlar?.length) {
+    L.push(
+      new ScatterplotLayer<SimMetinKaydi>({
+        id: 'sim-kanal-metin',
+        data: s.kanallar.metin.kayitlar,
+        getPosition: (d) => [d.lon, d.lat],
+        // Aciliyet 1-5 -> yarıçap: acil ihbar gözle daha büyük.
+        getRadius: (d) => 4 + d.aciliyet * 0.8,
+        radiusUnits: 'pixels',
+        getFillColor: [...tokenRenk('--color-ch-nlp'), 230],
+        stroked: true,
+        getLineColor: [...tokenRenk('--color-ground'), 230],
+        lineWidthUnits: 'pixels',
+        getLineWidth: 1.5,
+        pickable: true,
+      }),
+    )
+  }
+
 
   return L
 }

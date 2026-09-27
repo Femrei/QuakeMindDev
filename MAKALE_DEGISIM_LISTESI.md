@@ -118,7 +118,8 @@ R0–R3 148, "8 bölge / 48 çift" 157, t_u / 20 dk 79, sentetik 41,
 
 1. **Tablo 8** (bina sınıfları ↔ EMS-98/HAZUS) kalsın mı? HAZUS gidiyorsa eşleme de gitmeli.
 2. **3.9 / 4.7 görev ataması** — tatbikata eklensin mi, yoksa "gelecek çalışma" mı?
-3. **4.5 çok kanallı senaryo** — YOLOv8/BERTurk tatbikata eklensin mi, yoksa senaryo daraltılsın mı?
+3. ~~**4.5 çok kanallı senaryo** — YOLOv8/BERTurk tatbikata eklensin mi?~~ — **eklendi, kısmen kapandı (27 Eylül, J-108).** Tatbikat artık üç kanal koşturuyor: uydu (SegFormer/U-Net), kamera (`catlak.pt` + `bina.pt`) ve metin (BERTurk). Ölçümler `SIMULASYON_OLCUM_KAYDI.md` §17'de.
+   **Kalan karar makalede nasıl yazılacağı:** bu ölçümler *tespit sayısı* ve *örtüşme*dir, **mAP ve F1 değildir** — fotoğraflarda kutu düzeyinde yer gerçeği, metinlerde bağımsız etiket yok. İki seçenek: (a) §4.5 bu hâliyle "uçtan uca çalıştığının gösterimi" olarak yazılır, başarım iddiası kurulmaz; (b) mAP/F1 için etiketli küme (DepremKit / TSEqD) ile ayrı bir ölçüm yapılır. Önerim (a) + metin kanalı için (b): özgünlük iddiasının yarısı Türkçe ihtiyaç çıkarımında, orada ölçülmüş bir sayı gerekiyor.
 4. ~~4.8 r_h duyarlılığı~~ — **koşuldu, kapandı** (§10).
 
 ## E. Şekil altyazılarında düzeltilmesi gereken iki şey

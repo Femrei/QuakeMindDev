@@ -28,6 +28,8 @@ export const KATMANLAR = [
   'simKapanma',
   'simRota',
   'simGorev',
+  'simKamera',
+  'simMetin',
 ] as const
 export type KatmanId = (typeof KATMANLAR)[number]
 
@@ -47,6 +49,8 @@ export const KATMAN_ADI: Record<KatmanId, string> = {
   simKapanma: 'Tatbikat: kapanan yollar',
   simRota: 'Tatbikat: rotalar',
   simGorev: 'Tatbikat: ekip ve afetzede',
+  simKamera: 'Tatbikat: kamera tespiti (YOLO)',
+  simMetin: 'Tatbikat: metin ihbarı (BERTurk)',
 }
 
 /** Katmanın grubu, kaynağı ve haritaya bağlı olup olmadığı (J-56). Kaynak her
@@ -108,6 +112,18 @@ export const KATMAN_BILGI: Record<
   simGorev: {
     grup: 'tatbikat',
     kaynak: 'Ekip üssü gerçek OSM tesisi; afetzede konumu ÜRETİLEN senaryo',
+    bagli: true,
+  },
+  simKamera: {
+    grup: 'tatbikat',
+    kaynak:
+      'Fotoğraf GERÇEK (6 Şubat 2023, Wikimedia Commons, PD/CC BY-SA) ve YOLO çıktısı gerçek; haritadaki konum ÜRETİLDİ',
+    bagli: true,
+  },
+  simMetin: {
+    grup: 'tatbikat',
+    kaynak:
+      'Metin ÜRETİLDİ (elle yazıldı), BERTurk sınıflandırması gerçek; haritadaki konum ÜRETİLDİ',
     bagli: true,
   },
 }
@@ -199,6 +215,8 @@ const BASLANGIC: Record<KatmanId, boolean> = {
   simKapanma: false,
   simRota: false,
   simGorev: false,
+  simKamera: false,
+  simMetin: false,
 }
 
 export const useKonsol = create<KonsolDurumu>((set) => ({

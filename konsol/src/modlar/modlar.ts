@@ -78,7 +78,7 @@ export const MODLAR = [
     grup: 'analiz',
     ad: 'Simülasyon (tatbikat)',
     ozet: 'Gerçek görüntüde model koşturup rotaları tatbikat olarak dener; gerçek olay değildir.',
-    katmanlar: ['yollar', 'simHasar', 'simKapanma', 'simRota', 'simGorev'],
+    katmanlar: ['yollar', 'simHasar', 'simKapanma', 'simRota', 'simGorev', 'simKamera', 'simMetin'],
   },
   {
     id: 'yol',

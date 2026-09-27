@@ -166,6 +166,9 @@ class SimulasyonIstegi(BaseModel):
     kapanmaYaricapiM: float = 0.0
     ekipSayisi: int = 5
     afetzedeSayisi: int = 5
+    # Yer seviyesi kanallar: kac fotograf, kac ihbar metni yerlestirilecek.
+    kameraSayisi: int = 4
+    metinSayisi: int = 5
     tohum: int = 42
     hizKmh: float = 15.0
     # Kontrol koşusu: aynı model, aynı alan, DEPREM ÖNCESİ görüntü. Orada
@@ -404,7 +407,7 @@ def _analiz_bitti(is_id, gelecek):
 
 def _rota_asamasi(is_id):
     """Analiz bittikten sonra: afetzedeler, ekipler, rotalar, görevler."""
-    from apps.road_damage.utils import tatbikat
+    from apps.road_damage.utils import tatbikat, tatbikat_kanallar
 
     with simulasyon_kilidi:
         sim = simulasyon_isleri.get(is_id)
@@ -519,6 +522,32 @@ def _rota_asamasi(is_id):
             canli_yayin.yayinla("simulasyon-katman", isId=is_id, katman="kapanma",
                                 sayi=len(kapali))
 
+        # --- yer seviyesi kanallar ----------------------------------------
+        # Uydu kanalı mahalleyi yukarıdan gördü; kamera (YOLO) ve metin
+        # (BERTurk) aynı mahalleye yerden bakar. Gerçek fotoğraf ve gerçek
+        # model çıktısı, ÜRETİLMİŞ konum — gerekçesi tatbikat_kanallar modül
+        # başlığında. En sonda koşarlar: asıl tatbikat bu noktada zaten
+        # çizilebilir, bu iki kanal onun üstüne biner.
+        il = (sim["alan"]["ad"].split("/")[0]).strip()
+        kanallar = {}
+        for ad, cagir in (
+            ("kamera", lambda: tatbikat_kanallar.kamera_kanali(
+                maske, bounds, sayi=istek.get("kameraSayisi", 4), tohum=istek["tohum"])),
+            ("metin", lambda: tatbikat_kanallar.metin_kanali(
+                maske, bounds, il=il, sayi=istek.get("metinSayisi", 5), tohum=istek["tohum"])),
+        ):
+            try:
+                kanallar[ad] = cagir()
+            except Exception as e:
+                # Bir kanal düşerse tatbikatın tamamı düşmez; hata kaydın
+                # içinde durur ve arayüzde yazar (kural 1: eksikse eksik denir).
+                kanallar[ad] = {"kayitlar": [], "hata": f"{type(e).__name__}: {e}"}
+            canli_yayin.yayinla("simulasyon-katman", isId=is_id, katman=ad,
+                                sayi=len(kanallar[ad]["kayitlar"]))
+        with simulasyon_kilidi:
+            sim["kanallar"] = kanallar
+        _kanallari_depoya_yaz(is_id, kanallar)
+
         with simulasyon_kilidi:
             sim["durum"] = "bitti"
             sim["bitis"] = time.time()
@@ -544,6 +573,43 @@ def _gecerli_maske_oku(is_id):
     if not yol.exists():
         return None
     return (np.asarray(Image.open(yol).convert("L")) > 12).astype(np.uint8)
+
+
+def _kanallari_depoya_yaz(is_id, kanallar):
+    """Kamera ve metin kayitlarini ORTAK SOZLESMEYE yazar (CLAUDE.md kural 2).
+
+    Boylece konsolun isi haritasindaki "kamera" ve "metin" kanallari tatbikat
+    sirasinda da dolar; uydu kanaliyla ayni tabloya inerler. Her kayit
+    `ek.tatbikat` tasir: kosu bitirilince `hasar_sil_tatbikat` bunlari siler,
+    tatbikat verisi gercek olay verisiyle karismaz.
+    """
+    try:
+        from depo import aktif_depo
+
+        depo = aktif_depo()
+    except Exception as e:
+        print(f"tatbikat kanallari depoya yazilamadi: {e}", flush=True)
+        return 0
+    yazilan = 0
+    for kanal_adi, kanal in (kanallar or {}).items():
+        for k in kanal.get("kayitlar") or []:
+            try:
+                depo.hasar_ekle(
+                    lon=k["lon"], lat=k["lat"], skor=k["skor"], guven=k["guven"],
+                    kaynak=k["kaynak"], zaman=k["zaman"], etiket=k.get("etiket"),
+                    ek={
+                        "tatbikat": is_id,
+                        "kanal": kanal_adi,
+                        # Konum UYDURULMUSTUR; arayuz ve sorgular bunu gorsun.
+                        "sentetikKonum": True,
+                        "sentetikMetin": bool(k.get("sentetikMetin")),
+                        "kokenNotu": k.get("konumNotu"),
+                    },
+                )
+                yazilan += 1
+            except Exception as e:
+                print(f"tatbikat kanal kaydi yazilamadi ({kanal_adi}): {e}", flush=True)
+    return yazilan
 
 
 def _maske_oku(is_id):
@@ -685,6 +751,10 @@ def simulasyon_kosusu(
         "izlenenYollar": (sim.get("referansAjanlar") or {}).get("izlenenYollar"),
         # Kıyas kutusu: aynı maske, farklı r_h. En sonda dolar; hazır değilse null.
         "yaricapKiyasi": sim.get("yaricapKiyasi"),
+        # Yer seviyesi kanallar (kamera/YOLO ve metin/BERTurk). En sonda dolar;
+        # hazır değilse null. Fotoğraf ve model çıktısı GERÇEK, metinler ve
+        # her ikisinin KONUMU ÜRETİLMİŞ -- her kayıt bunu kendi içinde yazar.
+        "kanallar": sim.get("kanallar"),
         "sureler": analiz.get("timingsMs"),
         "gunluk": analiz.get("logLines"),
     }

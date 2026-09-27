@@ -524,3 +524,105 @@ python testler/test_donus.py
 Yerel OSM bölge verisi (~164 MB) depoya girmez; ilk komut onu yeniden üretir
 (~18 dk, tek geçiş). Kapanma yer gerçeği etiketleme kesitleri için
 `araclar_kapanma_etiketle.py`.
+
+## 17. Yer seviyesi kanallar — kamera (YOLO) ve metin (BERTurk)
+
+27 Eylül 2026'da eklendi (J-108). Uydu kanalı mahalleye yukarıdan bakıyordu;
+bu ikisi aynı mahalleye yerden bakar. Üçü de ortak sözleşmeye iner
+(CLAUDE.md kural 2) ve konsolun ısı haritasındaki kendi kanallarını besler.
+
+### 17.1 Neyin gerçek, neyin üretildiği
+
+| Parça | Durum | Kanıt |
+|---|---|---|
+| Fotoğraflar | **Gerçek** — 6 Şubat 2023 depremi, 13 adet, çoğu Hatay | `[Ö]` Wikimedia Commons; Public domain (VOA) ve CC BY-SA 4.0; künye + SHA-256: `apps/camera_detection/data/tatbikat_foto/KUNYE.json` |
+| YOLO çıkarımı (`catlak.pt` + `bina.pt`) | **Gerçek** — kendi modellerimiz | `[Ö]` §17.2 |
+| İhbar metinleri | **Üretildi** — elle yazıldı, gerçek çağrı değil | `[K]` `apps/disaster_nlp/data/tatbikat_metinleri.json` |
+| BERTurk sınıflandırma + NER | **Gerçek** — model metinlerin üstünde koştu | `[Ö]` §17.3 |
+| Her ikisinin **haritadaki konumu** | **Üretildi** — tohumla, modelin hasarlı bulduğu alanlardan | `[K]` `tatbikat_kanallar._hasar_konumlari` |
+
+Konum neden üretiliyor, iki ölçülmüş sebep:
+
+1. Fotoğrafların EXIF konumu yok, Commons kayıtları da sokak düzeyinde konum
+   vermiyor. Tatbikat alanı 500 m'lik bir mahalle; "Hatay" bilgisi bu ölçekte
+   hiçbir işe yaramıyor.
+2. Metin hattının coğrafi kodlayıcısı **mahalle merkezine** düşürüyor: "Defne
+   Elektrik Mahallesi" → (36,17 / 36,13). Tatbikat kutusunun merkezi ise
+   (36,1977 / 36,1494) — yaklaşık **2 km** ötede ve kutunun tamamen dışında.
+   Yani modelin kendi coğrafi kodu bu ölçekte kullanılamıyor.
+
+Her kayıt `sentetikKonum: true` taşır; harita göstergesi, panel ve depo kaydı
+bunu ayrı ayrı yazar.
+
+### 17.2 Kamera kanalı — ölçüm
+
+Birim: fotoğraf. Cihaz: yerel CPU (kullanıcıda GPU yok). Isınma çağrısı
+ölçüme girmez. Koşum: `araclar_kanal_olc.py`, rapor
+`benchmark/reports/kanal_olcumu.json`.
+
+| Ölçüt | Değer |
+|---|---|
+| Fotoğraf sayısı | 13 |
+| **Tespit veren fotoğraf** | **13 / 13** |
+| Toplam çatlak tespiti | 47 |
+| Toplam bina tespiti | 65 |
+| Hibrit çıkarım, medyan | 307.9 ms |
+| Hibrit çıkarım, en uzun | 383.0 ms |
+
+| Fotoğraf | Çatlak | Bina | En yüksek güven | Lisans |
+|---|---|---|---|---|
+| after_the_7_8_magnitude_earthquake | 5 | 1 | %77 | CC BY-SA 4.0 |
+| after_the_7_8_magnitude_earthquake | 1 | 3 | %67 | CC BY-SA 4.0 |
+| after_the_earthquake_hatay_provinc | 3 | 4 | %65 | CC BY-SA 4.0 |
+| antakya_city_center_after_7_8_magn | 2 | 37 | %88 | Public domain |
+| city_of_antakya_after_7_8_magnitud | 0 | 11 | %86 | Public domain |
+| damage_in_hatay_caused_by_the_eart | 4 | 2 | %49 | Public domain |
+| damage_of_the_hatay_province_after | 3 | 3 | %83 | Public domain |
+| exterior_of_a_damaged_building_aft | 4 | 1 | %67 | CC BY-SA 4.0 |
+| exterior_of_a_damaged_building_aft | 5 | 0 | %74 | CC BY-SA 4.0 |
+| exterior_of_a_damaged_building_aft | 7 | 0 | %84 | CC BY-SA 4.0 |
+| hatay_after_the_earthquake.jpg | 7 | 1 | %70 | CC BY-SA 4.0 |
+| hatay_in_the_2023_gaziantep_kahram | 2 | 2 | %41 | Public domain |
+| interior_of_a_damaged_building_aft | 4 | 0 | %55 | CC BY-SA 4.0 |
+
+Not: bu sayılar **tespit sayısıdır, doğruluk değildir.** Fotoğraflarda kutu
+düzeyinde yer gerçeği yok; mAP ölçülmedi ve makalede ölçülmüş gibi
+sunulmamalıdır (kural 8).
+
+### 17.3 Metin kanalı — ölçüm
+
+Birim: ihbar metni. 18 sentetik metin, üç il havuzu.
+
+| Ölçüt | Değer |
+|---|---|
+| Metin sayısı | 18 |
+| Yazarın niyetiyle örtüşen | **9 / 18** |
+| Sınıflandırma, medyan | 36.6 ms |
+| Sınıflandırma, en uzun | 43.0 ms |
+| Örtüşmeyenlerin gittiği sınıf | {"Acil Yardım İhtiyacı": 8, "Enkaz Bildirimi": 1} |
+
+**Bu bir doğruluk değildir.** "Beklenen" alanı metni yazan tek kişinin
+etiketidir, yer gerçeği değil; "Enkaz Bildirimi" ile "Acil Yardım İhtiyacı"
+sınırı gerçekten bulanıktır (çöken binada mahsur kalan kişi ikisidir birden).
+Görülen eğilim şudur: örtüşmeyen 9 metnin **8'i "Acil Yardım İhtiyacı"na**
+kayıyor, üstelik yüksek güvenle (0,92 ve 0,97 dahil). Model aciliyet taşıyan
+her metni bu sınıfa çekiyor. Makalede F1 iddiası için etiketli bir küme
+gerekir (DepremKit / TSEqD); bu ölçüm onun yerine geçmez.
+
+**Coğrafi kodlama gecikmesi:** tam hat (sınıflandırma + NER + coğrafi kodlama)
+ölçüldüğünde 18 metnin ikisi **3,3 sn** ve **4,4 sn** sürdü (önbellek ıskası,
+ağ çağrısı), medyan 47 ms. Yalnız sınıflandırma ölçüldüğünde medyan
+36.6 ms, en uzun 43.0 ms. Tatbikat bu yüzden coğrafi
+kodlamayı **çağırmıyor** (kural 3: pahalı iş istek yolunda çalışmaz).
+
+### 17.4 Tatbikat koşusunda (Defne/Elektrik · U-Net MiT-B4 · tohum 42)
+
+| | |
+|---|---|
+| Yerleştirilen fotoğraf | 4 → 13 çatlak, 15 bina tespiti |
+| Yerleştirilen ihbar | 5 |
+| Ortak sözleşmeye yazılan | `kamera` 4 · `metin` 5 · `uydu` 41 kayıt |
+| Konum | hepsi tatbikat kutusunun içinde, dokuzu da ayrı nokta |
+
+Kayıtlar `ek.tatbikat` taşır: koşu bitirilince `hasar_sil_tatbikat` bunları
+siler, tatbikat verisi gerçek olay verisiyle karışmaz.

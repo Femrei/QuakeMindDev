@@ -1,0 +1,302 @@
+{
+ "tarih": "2026-09-27",
+ "kamera": {
+  "birim": "fotoğraf",
+  "fotoSayisi": 13,
+  "tespitVeren": 13,
+  "toplamCatlak": 47,
+  "toplamBina": 65,
+  "medyanMs": 307.9,
+  "enUzunMs": 383.0,
+  "satirlar": [
+   {
+    "dosya": "after_the_7_8_magnitude_earthquake_hatay_provi.jpg",
+    "lisans": "CC BY-SA 4.0",
+    "yazar": "Fatih Renkligil",
+    "catlak": 5,
+    "bina": 1,
+    "kritik": true,
+    "enYuksekGuven": 76.8,
+    "ms": 302.6
+   },
+   {
+    "dosya": "after_the_7_8_magnitude_earthquake_hatay_in_tu.jpg",
+    "lisans": "CC BY-SA 4.0",
+    "yazar": "Fatih Renkligil",
+    "catlak": 1,
+    "bina": 3,
+    "kritik": true,
+    "enYuksekGuven": 67.3,
+    "ms": 293.3
+   },
+   {
+    "dosya": "after_the_earthquake_hatay_province_in_turkey.jpg",
+    "lisans": "CC BY-SA 4.0",
+    "yazar": "Fatih Renkligil",
+    "catlak": 3,
+    "bina": 4,
+    "kritik": true,
+    "enYuksekGuven": 65.2,
+    "ms": 321.9
+   },
+   {
+    "dosya": "antakya_city_center_after_7_8_magnitude_earthq.jpg",
+    "lisans": "Public domain",
+    "yazar": "Orhan Erkılıç (VOA)",
+    "catlak": 2,
+    "bina": 37,
+    "kritik": true,
+    "enYuksekGuven": 88.3,
+    "ms": 331.0
+   },
+   {
+    "dosya": "city_of_antakya_after_7_8_magnitude_earthquake.jpg",
+    "lisans": "Public domain",
+    "yazar": "Orhan Erkılıç (VOA)",
+    "catlak": 0,
+    "bina": 11,
+    "kritik": true,
+    "enYuksekGuven": 86.0,
+    "ms": 344.9
+   },
+   {
+    "dosya": "damage_in_hatay_caused_by_the_earthquakes_in_t.jpg",
+    "lisans": "Public domain",
+    "yazar": "Orhan Erkılıç (VOA)",
+    "catlak": 4,
+    "bina": 2,
+    "kritik": true,
+    "enYuksekGuven": 49.2,
+    "ms": 297.4
+   },
+   {
+    "dosya": "damage_of_the_hatay_province_after_7_8_mw_eart.jpg",
+    "lisans": "Public domain",
+    "yazar": "Yıldız Yazıcıoğlu (VOA)",
+    "catlak": 3,
+    "bina": 3,
+    "kritik": true,
+    "enYuksekGuven": 83.1,
+    "ms": 325.5
+   },
+   {
+    "dosya": "exterior_of_a_damaged_building_after_7_8_magni.jpg",
+    "lisans": "CC BY-SA 4.0",
+    "yazar": "Adem",
+    "catlak": 4,
+    "bina": 1,
+    "kritik": true,
+    "enYuksekGuven": 66.7,
+    "ms": 333.4
+   },
+   {
+    "dosya": "exterior_of_a_damaged_building_after_7_8_magni_2.jpg",
+    "lisans": "CC BY-SA 4.0",
+    "yazar": "Adem",
+    "catlak": 5,
+    "bina": 0,
+    "kritik": true,
+    "enYuksekGuven": 74.2,
+    "ms": 307.9
+   },
+   {
+    "dosya": "exterior_of_a_damaged_building_after_7_8_magni_3.jpg",
+    "lisans": "CC BY-SA 4.0",
+    "yazar": "Adem",
+    "catlak": 7,
+    "bina": 0,
+    "kritik": true,
+    "enYuksekGuven": 83.7,
+    "ms": 286.0
+   },
+   {
+    "dosya": "hatay_after_the_earthquake.jpg",
+    "lisans": "CC BY-SA 4.0",
+    "yazar": "Fatih Renkligil",
+    "catlak": 7,
+    "bina": 1,
+    "kritik": true,
+    "enYuksekGuven": 69.7,
+    "ms": 279.6
+   },
+   {
+    "dosya": "hatay_in_the_2023_gaziantep_kahramanmaras_eart.jpg",
+    "lisans": "Public domain",
+    "yazar": "Hilmi Hacaloğlu",
+    "catlak": 2,
+    "bina": 2,
+    "kritik": true,
+    "enYuksekGuven": 40.8,
+    "ms": 383.0
+   },
+   {
+    "dosya": "interior_of_a_damaged_building_after_7_8_magni.jpg",
+    "lisans": "CC BY-SA 4.0",
+    "yazar": "Adem",
+    "catlak": 4,
+    "bina": 0,
+    "kritik": true,
+    "enYuksekGuven": 55.0,
+    "ms": 292.4
+   }
+  ]
+ },
+ "metin": {
+  "birim": "ihbar metni",
+  "metinSayisi": 18,
+  "ortusen": 9,
+  "ortusmeNotu": "Bu bir DOĞRULUK DEĞİLDİR: 'beklenen' metni yazan tek kişinin etiketidir, yer gerçeği değil. Kategori sınırları bulanıktır.",
+  "kaymaDagilimi": {
+   "Acil Yardım İhtiyacı": 8,
+   "Enkaz Bildirimi": 1
+  },
+  "medyanMs": 36.6,
+  "enUzunMs": 43.0,
+  "satirlar": [
+   {
+    "il": "hatay",
+    "beklenen": "Enkaz Bildirimi",
+    "model": "Acil Yardım İhtiyacı",
+    "ortusuyor": false,
+    "guven": 0.971,
+    "ms": 43.0
+   },
+   {
+    "il": "hatay",
+    "beklenen": "Enkaz Bildirimi",
+    "model": "Enkaz Bildirimi",
+    "ortusuyor": true,
+    "guven": 0.946,
+    "ms": 36.5
+   },
+   {
+    "il": "hatay",
+    "beklenen": "Yol Kapanma Bilgisi / Lojistik",
+    "model": "Acil Yardım İhtiyacı",
+    "ortusuyor": false,
+    "guven": 0.583,
+    "ms": 36.3
+   },
+   {
+    "il": "hatay",
+    "beklenen": "Yol Kapanma Bilgisi / Lojistik",
+    "model": "Yol Kapanma Bilgisi / Lojistik",
+    "ortusuyor": true,
+    "guven": 0.891,
+    "ms": 38.4
+   },
+   {
+    "il": "hatay",
+    "beklenen": "Acil Yardım İhtiyacı",
+    "model": "Acil Yardım İhtiyacı",
+    "ortusuyor": true,
+    "guven": 0.703,
+    "ms": 39.1
+   },
+   {
+    "il": "hatay",
+    "beklenen": "Lojistik İhtiyaç Bildirimi",
+    "model": "Lojistik İhtiyaç Bildirimi",
+    "ortusuyor": true,
+    "guven": 0.967,
+    "ms": 36.7
+   },
+   {
+    "il": "hatay",
+    "beklenen": "Lojistik İhtiyaç Bildirimi",
+    "model": "Acil Yardım İhtiyacı",
+    "ortusuyor": false,
+    "guven": 0.832,
+    "ms": 40.0
+   },
+   {
+    "il": "hatay",
+    "beklenen": "Enkaz Bildirimi",
+    "model": "Enkaz Bildirimi",
+    "ortusuyor": true,
+    "guven": 0.508,
+    "ms": 38.4
+   },
+   {
+    "il": "hatay",
+    "beklenen": "Alakasız",
+    "model": "Alakasız",
+    "ortusuyor": true,
+    "guven": 0.854,
+    "ms": 31.4
+   },
+   {
+    "il": "gaziantep",
+    "beklenen": "Enkaz Bildirimi",
+    "model": "Acil Yardım İhtiyacı",
+    "ortusuyor": false,
+    "guven": 0.92,
+    "ms": 42.3
+   },
+   {
+    "il": "gaziantep",
+    "beklenen": "Yol Kapanma Bilgisi / Lojistik",
+    "model": "Yol Kapanma Bilgisi / Lojistik",
+    "ortusuyor": true,
+    "guven": 0.602,
+    "ms": 35.4
+   },
+   {
+    "il": "gaziantep",
+    "beklenen": "Enkaz Bildirimi",
+    "model": "Acil Yardım İhtiyacı",
+    "ortusuyor": false,
+    "guven": 0.969,
+    "ms": 36.2
+   },
+   {
+    "il": "gaziantep",
+    "beklenen": "Lojistik İhtiyaç Bildirimi",
+    "model": "Acil Yardım İhtiyacı",
+    "ortusuyor": false,
+    "guven": 0.513,
+    "ms": 36.6
+   },
+   {
+    "il": "gaziantep",
+    "beklenen": "Acil Yardım İhtiyacı",
+    "model": "Acil Yardım İhtiyacı",
+    "ortusuyor": true,
+    "guven": 0.546,
+    "ms": 35.5
+   },
+   {
+    "il": "kahramanmaras",
+    "beklenen": "Enkaz Bildirimi",
+    "model": "Enkaz Bildirimi",
+    "ortusuyor": true,
+    "guven": 0.96,
+    "ms": 37.9
+   },
+   {
+    "il": "kahramanmaras",
+    "beklenen": "Yol Kapanma Bilgisi / Lojistik",
+    "model": "Acil Yardım İhtiyacı",
+    "ortusuyor": false,
+    "guven": 0.649,
+    "ms": 35.7
+   },
+   {
+    "il": "kahramanmaras",
+    "beklenen": "Lojistik İhtiyaç Bildirimi",
+    "model": "Acil Yardım İhtiyacı",
+    "ortusuyor": false,
+    "guven": 0.816,
+    "ms": 36.0
+   },
+   {
+    "il": "kahramanmaras",
+    "beklenen": "Acil Yardım İhtiyacı",
+    "model": "Enkaz Bildirimi",
+    "ortusuyor": false,
+    "guven": 0.956,
+    "ms": 37.5
+   }
+  ]
+ }
+}

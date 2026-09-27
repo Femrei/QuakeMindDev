@@ -18,7 +18,15 @@ import { sn } from '@/lib/sinif'
    alan / kalın çizgi / içi boş halka / dolu daire.
 --------------------------------------------------------------------------- */
 
-type Bicim = 'alan' | 'cizgi' | 'cizgi-kalin' | 'cizgi-kesik' | 'cizgi-sonuk' | 'halka' | 'daire'
+type Bicim =
+  | 'alan'
+  | 'cizgi'
+  | 'cizgi-kalin'
+  | 'cizgi-kesik'
+  | 'cizgi-sonuk'
+  | 'halka'
+  | 'daire'
+  | 'kare'
 
 type Satir = { renk: string; bicim: Bicim; ad: string; not?: string }
 
@@ -32,6 +40,8 @@ const SATIRLAR: Satir[] = [
   { renk: 'var(--color-ink-3)', bicim: 'cizgi-kesik', ad: 'Kapanma olmasaydı', not: 'kıyas çizgisi' },
   { renk: 'var(--color-accent)', bicim: 'daire', ad: 'Ekip', not: 'mahalle girişi' },
   { renk: 'var(--color-crit)', bicim: 'halka', ad: 'Afetzede', not: 'senaryo' },
+  { renk: 'var(--color-ch-cam)', bicim: 'kare', ad: 'Kamera tespiti', not: 'gerçek foto · YOLO' },
+  { renk: 'var(--color-ch-nlp)', bicim: 'daire', ad: 'Metin ihbarı', not: 'üretilmiş metin · BERTurk' },
 ]
 
 function Isaret({ renk, bicim }: { renk: string; bicim: Bicim }) {
@@ -40,6 +50,8 @@ function Isaret({ renk, bicim }: { renk: string; bicim: Bicim }) {
     return <span className={sn(ortak, 'h-3 w-5 rounded-xs')} style={{ background: renk, opacity: 0.72 }} />
   if (bicim === 'daire')
     return <span className={sn(ortak, 'h-2.5 w-2.5 rounded-full')} style={{ background: renk }} />
+  if (bicim === 'kare')
+    return <span className={sn(ortak, 'h-2.5 w-2.5 rounded-xs')} style={{ background: renk }} />
   if (bicim === 'halka')
     return (
       <span
