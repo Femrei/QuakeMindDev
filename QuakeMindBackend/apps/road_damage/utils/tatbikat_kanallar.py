@@ -59,7 +59,7 @@ IL_ANAHTARI = {
 # --- ortak yerleştirme -----------------------------------------------------
 
 def _hasar_konumlari(hasar_maskesi, bounds, sayi, tohum, en_az_piksel=40,
-                     en_az_ayrim_m=25.0):
+                     en_az_ayrim_m=25.0, kacinilacak=None):
     """Modelin hasarlı dediği yerlerden `sayi` kadar konum.
 
     Önce en büyük blobların ağırlık merkezleri alınır (büyük enkaz kütlesi her
@@ -117,6 +117,12 @@ def _hasar_konumlari(hasar_maskesi, bounds, sayi, tohum, en_az_piksel=40,
     # Ayrım kademeli gevşer: mahalledeki enkaz 40 m çapında birkaç kütleyse
     # 25 m'lik ayrım hiçbir ikinci nokta bırakmıyor (ölçüldü). Önce geniş
     # ayrımı dene, dolmazsa daralt; en sonda ayrımsız doldur.
+    # KANALLAR ARASI AYRIM (J-110): ayrım kuralı yalnız kanalın kendi içinde
+    # çalışıyordu; kamera ve metin ayrı tohum kullandığı için iki ayrı kanalın
+    # işareti 16 piksel arayla düşebiliyor ve haritada tek nokta gibi
+    # görünüyordu. Önceki kanalın noktaları `kacinilacak` ile verilir: mesafe
+    # kontrolüne girer ama sonuca dönmez.
+    onceki = [(la, lo, 0) for la, lo in (kacinilacak or [])]
     secilen = []
     for esik in (en_az_ayrim_m, en_az_ayrim_m / 2.0, en_az_ayrim_m / 4.0, 0.0):
         if len(secilen) >= sayi:
@@ -126,7 +132,7 @@ def _hasar_konumlari(hasar_maskesi, bounds, sayi, tohum, en_az_piksel=40,
                 break
             cx, cy = float(xs[idx]) + 0.5, float(ys[idx]) + 0.5
             lat, lon = cevir(cx, cy)
-            if esik > 0 and not uzak_mi(lat, lon, secilen, esik):
+            if esik > 0 and not uzak_mi(lat, lon, secilen + onceki, esik):
                 continue
             if esik == 0 and any(abs(lat - a) < 1e-9 and abs(lon - b) < 1e-9
                                  for a, b, _ in secilen):
@@ -255,7 +261,7 @@ def kamera_kanali(hasar_maskesi, bounds, sayi=4, tohum=42, model_tipi="hybrid",
 # --- metin kanalı ----------------------------------------------------------
 
 def metin_kanali(hasar_maskesi, bounds, il, sayi=5, tohum=42, cografi_kodla=False,
-                 alan_anahtari=""):
+                 alan_anahtari="", kacinilacak=None):
     """Sentetik Türkçe ihbarlarda gerçek BERTurk; konum tohumla üretilir.
 
     `cografi_kodla=False` (varsayılan): NER'in bulduğu yer adı saklanır ama
@@ -282,7 +288,8 @@ def metin_kanali(hasar_maskesi, bounds, il, sayi=5, tohum=42, cografi_kodla=Fals
     random.Random(tohum + 202 + kayma).shuffle(karisik)
     secilen = karisik[:sayi]
 
-    konumlar = _hasar_konumlari(hasar_maskesi, bounds, len(secilen), tohum + 202 + kayma)
+    konumlar = _hasar_konumlari(hasar_maskesi, bounds, len(secilen), tohum + 202 + kayma,
+                                kacinilacak=kacinilacak)
     if not konumlar:
         return {"kayitlar": [], "not": "Model hasarlı alan bulamadı; metin kanalı yerleştirilemedi."}
 

@@ -530,14 +530,21 @@ def _rota_asamasi(is_id):
         # çizilebilir, bu iki kanal onun üstüne biner.
         il = (sim["alan"]["ad"].split("/")[0]).strip()
         kanallar = {}
-        for ad, cagir in (
-            ("kamera", lambda: tatbikat_kanallar.kamera_kanali(
+        # SIRA ONEMLI: kamera once koşar, konumlarını metin kanalına verir ki
+        # iki kanalın işareti üst üste binmesin (J-110).
+        def _kamera():
+            return tatbikat_kanallar.kamera_kanali(
                 maske, bounds, sayi=istek.get("kameraSayisi", 4), tohum=istek["tohum"],
-                alan_anahtari=sim["alan"]["id"])),
-            ("metin", lambda: tatbikat_kanallar.metin_kanali(
+                alan_anahtari=sim["alan"]["id"])
+
+        def _metin():
+            kam = kanallar.get("kamera") or {}
+            dolu = [(z["lat"], z["lon"]) for z in (kam.get("kayitlar") or [])]
+            return tatbikat_kanallar.metin_kanali(
                 maske, bounds, il=il, sayi=istek.get("metinSayisi", 5), tohum=istek["tohum"],
-                alan_anahtari=sim["alan"]["id"])),
-        ):
+                alan_anahtari=sim["alan"]["id"], kacinilacak=dolu)
+
+        for ad, cagir in (("kamera", _kamera), ("metin", _metin)):
             try:
                 kanallar[ad] = cagir()
             except Exception as e:

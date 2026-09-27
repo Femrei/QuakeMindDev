@@ -53,6 +53,114 @@ R_KAMERA = (242, 193, 78)   # --color-ch-cam
 R_METIN = (176, 140, 255)   # --color-ch-nlp
 
 
+def _sar(d, metin, font, en):
+    """Metni `en` pikseli asmayacak satirlara boler."""
+    kelimeler, satirlar, suan = metin.split(), [], ""
+    for k in kelimeler:
+        deneme = (suan + " " + k).strip()
+        if d.textlength(deneme, font=font) <= en or not suan:
+            suan = deneme
+        else:
+            satirlar.append(suan); suan = k
+    if suan:
+        satirlar.append(suan)
+    return satirlar
+
+
+def _gosterge_sarmali(im, satirlar, baslik=""):
+    """Alt gosterge seridi -- ORTAK `_gosterge`den farki: metni sarmalar ve
+    seridin yuksekligini icerige gore hesaplar.
+
+    Ortak fonksiyon tek satir cizip tasani kesiyordu; kunyedeki
+    "URETILEN: ..." uyarisi sagdan kirpiliyordu (J-110). Bu sekilde o uyari
+    seklin en onemli parcasi, kirpilmamali.
+    """
+    boy = max(15, im.width // 62)
+    f_kunye = _yazitipi(int(boy * 0.92))
+    f_satir = _yazitipi(boy)
+    kenar, isaret_en = boy, boy * 2
+    metin_en = im.width - 2 * kenar - isaret_en - boy // 2
+
+    olcer = ImageDraw.Draw(Image.new("RGB", (8, 8)))
+    kunye_satirlari = _sar(olcer, baslik, f_kunye, im.width - 2 * kenar) if baslik else []
+    coz = [(r, b, _sar(olcer, m, f_satir, metin_en)) for r, b, m in satirlar]
+
+    kunye_h = int(boy * 1.35) * len(kunye_satirlari)
+    govde_h = sum(int(boy * 1.35) * len(s[2]) + int(boy * 0.55) for s in coz)
+    yuk = kunye_h + govde_h + int(boy * 1.6)
+
+    y = Image.new("RGB", (im.width, im.height + yuk), (255, 255, 255))
+    y.paste(im.convert("RGB"), (0, 0))
+    d = ImageDraw.Draw(y)
+
+    yy = im.height + int(boy * 0.5)
+    for s in kunye_satirlari:
+        d.text((kenar, yy), s, fill=(60, 60, 60), font=f_kunye)
+        yy += int(boy * 1.35)
+    yy += int(boy * 0.6)
+
+    for renk, bicim, metin_satirlari in coz:
+        cx, cy, m = kenar, yy, boy
+        if bicim == "cizgi":
+            d.line([(cx, cy + m // 2), (cx + m * 2, cy + m // 2)], fill=renk, width=max(2, boy // 5))
+        elif bicim == "cizgi-kalin":
+            d.line([(cx, cy + m // 2), (cx + m * 2, cy + m // 2)], fill=renk, width=max(5, boy // 2))
+        elif bicim == "alan":
+            d.rectangle([cx, cy, cx + m * 2, cy + m], fill=renk + (150,) if len(renk) == 3 else renk)
+        elif bicim == "daire":
+            d.ellipse([cx + m // 2, cy, cx + m * 3 // 2, cy + m], fill=renk,
+                      outline=(90, 90, 90), width=2)
+        elif bicim == "kare":
+            d.rectangle([cx + m // 2, cy, cx + m * 3 // 2, cy + m], fill=renk,
+                        outline=(40, 40, 40), width=2)
+        for i, s in enumerate(metin_satirlari):
+            d.text((cx + isaret_en + boy // 2, cy - 2 + i * int(boy * 1.35)), s,
+                   fill=(20, 20, 20), font=f_satir)
+        yy += int(boy * 1.35) * len(metin_satirlari) + int(boy * 0.55)
+    return y
+
+
+def _etiket_koy(d, yerlesenler, x, y, metin, font):
+    """Isaret etiketini CAKISMADAN koyar (J-110: M4 ile K1 ust uste biniyordu).
+
+    Once saga, sonra sola, sonra ust/alta denenir; hicbiri bos degilse yine
+    saga konur (kaybolmasin, uzerine binsin).
+    """
+    en = d.textlength(metin, font=font)
+    yuk = font.size + 4
+    for dx, dy in ((18, -12), (-en - 18, -12), (0, -yuk - 14), (0, 14)):
+        kutu = (x + dx, y + dy, x + dx + en, y + dy + yuk)
+        if all(kutu[2] < o[0] or kutu[0] > o[2] or kutu[3] < o[1] or kutu[1] > o[3]
+               for o in yerlesenler):
+            yerlesenler.append(kutu)
+            d.text((kutu[0], kutu[1]), metin, font=font, fill=(255, 255, 255, 255),
+                   stroke_width=4, stroke_fill=(0, 0, 0, 225))
+            return
+    d.text((x + 18, y - 12), metin, font=font, fill=(255, 255, 255, 255),
+           stroke_width=4, stroke_fill=(0, 0, 0, 225))
+
+
+def _foto_seridi(im, foto, baslik, alt_satirlar):
+    """Haritanin ALTINA fotograf seridi ekler (haritayi kapatmaz)."""
+    boy = max(15, im.width // 62)
+    kenar = boy
+    yuk = foto.height + 2 * kenar
+    y = Image.new("RGB", (im.width, im.height + yuk), (248, 248, 248))
+    y.paste(im.convert("RGB"), (0, 0))
+    d = ImageDraw.Draw(y)
+    fy = im.height + kenar
+    d.rectangle([kenar - 4, fy - 4, kenar + foto.width + 4, fy + foto.height + 4],
+                fill=(30, 30, 30), outline=R_KAMERA, width=4)
+    y.paste(foto, (kenar, fy))
+    mx = kenar + foto.width + int(boy * 1.4)
+    d.text((mx, fy + 2), baslik, fill=(20, 20, 20), font=_yazitipi(int(boy * 1.05)))
+    yy = fy + int(boy * 2.0)
+    for s in alt_satirlar:
+        d.text((mx, yy), s, fill=(70, 70, 70), font=_yazitipi(int(boy * 0.9)))
+        yy += int(boy * 1.35)
+    return y
+
+
 def _alan_bul(ad):
     kayitlar = json.loads(ALANLAR_DOSYASI.read_text(encoding="utf-8"))
     return next(x for x in kayitlar if ad.lower() in x["parca"].lower())
@@ -111,8 +219,11 @@ def tek_alan(alan_adi, model_adi, tohum=42):
     anahtar = alan["parca"]
     kam = tatbikat_kanallar.kamera_kanali(maske.astype(np.uint8), B, sayi=4, tohum=tohum,
                                           alan_anahtari=anahtar)
-    met = tatbikat_kanallar.metin_kanali(maske.astype(np.uint8), B, il=alan["il"],
-                                         sayi=5, tohum=tohum, alan_anahtari=anahtar)
+    met = tatbikat_kanallar.metin_kanali(
+        maske.astype(np.uint8), B, il=alan["il"], sayi=5, tohum=tohum,
+        alan_anahtari=anahtar,
+        # Kameranın noktaları metne kapalı: iki kanal üst üste binmesin (J-110).
+        kacinilacak=[(z["lat"], z["lon"]) for z in kam["kayitlar"]])
 
     def pik(lat, lon):
         return ((lon - B[0]) / (B[2] - B[0]) * W, (B[3] - lat) / (B[3] - B[1]) * H)
@@ -151,38 +262,42 @@ def tek_alan(alan_adi, model_adi, tohum=42):
 
     # --- yeni iki kanal ---
     yt = _yazitipi(22)
+    yerlesenler = []
     for i, kayit in enumerate(kam["kayitlar"], 1):
         x, y = pik(kayit["lat"], kayit["lon"])
         d.rectangle([x-13, y-13, x+13, y+13], fill=(*R_KAMERA, 245),
                     outline=(20, 20, 20, 255), width=3)
-        d.text((x+18, y-12), f"K{i}", font=yt, fill=(255, 255, 255, 255),
-               stroke_width=4, stroke_fill=(0, 0, 0, 220))
+        _etiket_koy(d, yerlesenler, x, y, f"K{i}", yt)
     for i, kayit in enumerate(met["kayitlar"], 1):
         x, y = pik(kayit["lat"], kayit["lon"])
         rr = 9 + kayit["aciliyet"] * 1.6
         d.ellipse([x-rr, y-rr, x+rr, y+rr], fill=(*R_METIN, 245),
                   outline=(20, 20, 20, 255), width=3)
-        d.text((x+rr+6, y-12), f"M{i}", font=yt, fill=(255, 255, 255, 255),
-               stroke_width=4, stroke_fill=(0, 0, 0, 220))
+        _etiket_koy(d, yerlesenler, x, y, f"M{i}", yt)
 
-    # --- sağ altta kamera fotoğrafının kendisi ---
+    # --- kamera fotoğrafı KENDİ ŞERİDİNDE ---
+    # Eskiden haritanın sağ altına gömülüydü ve altında kalan işaretleri
+    # gizliyordu: gösterge "5 ihbar" derken haritada 3 tanesi görünüyordu
+    # (J-110). Artık haritanın altına, kendi şeridine konur; harita hiçbir
+    # yerde kapanmaz.
     if kam["kayitlar"]:
         en_iyi = max(kam["kayitlar"], key=lambda z: z["tespitSayisi"])
         sira = kam["kayitlar"].index(en_iyi) + 1
-        ic = _foto_ic_gorsel(en_iyi, yukseklik=max(180, H // 4))
+        ic = _foto_ic_gorsel(en_iyi, yukseklik=max(220, H // 5))
         if ic is not None:
-            px, py = W - ic.width - 24, H - ic.height - 24
-            d.rectangle([px-5, py-5, px+ic.width+5, py+ic.height+5],
-                        fill=(20, 20, 20, 235), outline=(*R_KAMERA, 255), width=4)
-            tv.paste(ic, (px, py))
-            d2 = ImageDraw.Draw(tv, "RGBA")
-            d2.text((px+8, py-34), f"K{sira} — {en_iyi['etiket'][:44]}",
-                    font=yt, fill=(255, 255, 255, 255), stroke_width=4,
-                    stroke_fill=(0, 0, 0, 230))
+            tv = _foto_seridi(
+                tv, ic,
+                f"K{sira} işaretinin GERÇEK fotoğrafı — {en_iyi['etiket']}",
+                [f"kaynak: {en_iyi['foto']['lisans']} · {en_iyi['foto']['yazar']}",
+                 f"modelin bulduğu: {en_iyi['catlakSayisi']} çatlak, "
+                 f"{en_iyi['binaSayisi']} bina  (kutular fotoğrafın üstünde)",
+                 "camgöbeği kutu = çatlak (catlak.pt) · yeşil kutu = bina hasarı (bina.pt)"])
 
     catlak = sum(z["catlakSayisi"] for z in kam["kayitlar"])
     bina = sum(z["binaSayisi"] for z in kam["kayitlar"])
-    tv = _gosterge(tv, [
+    rota_sayisi = sum(1 for g in (rota.get("gorevler") or [])
+                      if len((((g.get("varyantlar") or {}).get("kapanmali") or {}).get("cizgi")) or []) >= 2)
+    tv = _gosterge_sarmali(tv, [
         (R_ACIK, "cizgi", "Açık yol (OpenStreetMap)"),
         (R_KAPALI, "cizgi-kalin", f"Kapalı yol — modelin bulduğu ({len(kapali)} kenar)"),
         (R_HASAR, "alan", "Hasarlı piksel — UYDU kanalı (bölütleme çıktısı)"),
@@ -192,8 +307,17 @@ def tek_alan(alan_adi, model_adi, tohum=42):
         (R_METIN, "daire",
          f"METİN kanalı — {len(met['kayitlar'])} ihbar, BERTurk sınıfı  "
          f"(metin ve konum üretildi)"),
-        (R_ROTA, "cizgi", "Ekip güzergâhı — kapanmalara göre"),
-        (R_ROTA, "daire", f"Mahalle giriş ağzı — {len(ekip)} ekip"),
+        (R_ROTA, "cizgi", f"Ekip güzergâhı — kapanmalara göre ({rota_sayisi} rota)"),
+        # GIRIS AGIZLARI KAREDE OLMAYABILIR: mahalle grafigi goruntu karesinin
+        # +150 m disina tasar, agizlar cogu zaman orada kalir. Cizilmeyen sey
+        # gostergede "var" gibi yazilmaz (kural 1).
+        (R_ROTA, "daire",
+         (f"Mahalle giriş ağzı — {len(ekip)} ekip" if ekip_icerde == len(ekip)
+          else f"Mahalle giriş ağzı — {len(ekip)} ekip; {len(ekip)-ekip_icerde}'i "
+               f"kare dışında (grafik mahallenin +150 m dışına taşar)"
+          if ekip_icerde else
+          f"Mahalle giriş ağzı — {len(ekip)} ekip, HEPSİ KARE DIŞINDA "
+          f"(grafik mahallenin +150 m dışına taşar); güzergâhlar oradan giriyor")),
         (R_HASAR, "kare", f"Afetzede — senaryo ({len(kurban)})"),
     ], baslik=(f"{alan['il']} / {alan['yer']} · {alan['saglayici']} · {alan['tarih']} · "
                f"model {model_adi} · kapsama %{kapsama['edgesObservedFraction']*100:.0f} · "
@@ -207,7 +331,8 @@ def tek_alan(alan_adi, model_adi, tohum=42):
     CIK.mkdir(parents=True, exist_ok=True)
     tv.save(hedef)
     print(f"  {alan['il']} / {alan['yer']}")
-    print(f"    kapali {len(kapali)} · ekip {len(ekip)} · afetzede {len(kurban)} · "
+    print(f"    kapali {len(kapali)} · ekip {len(ekip)} (karede {ekip_icerde}) · "
+          f"afetzede {len(kurban)} · rota cizilen {rota_sayisi} · "
           f"kamera {len(kam['kayitlar'])} ({catlak} çatlak, {bina} bina) · "
           f"metin {len(met['kayitlar'])}")
     print(f"    -> {hedef.name}  ({hedef.stat().st_size//1024} KB)")
