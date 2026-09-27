@@ -115,18 +115,18 @@ FEATURE_TR = {
     "distance_to_fault": "Fay hattına uzaklık (km)",
     "day_of_year": "Yılın günü",
     "cos_month": "Ay (cos)",
-    "rolling_std_7d": "7 günlük büyüklük std. sapma",
-    "rolling_mean_7d": "7 günlük ort. büyüklük",
+    "rolling_std_7d": "Son 7 olay: büyüklük std. sapma",
+    "rolling_mean_7d": "Son 7 olay: ort. büyüklük",
     "sin_month": "Ay (sin)",
     "day": "Gün",
     "year": "Yıl",
-    "rolling_max_7d": "7 günlük maks. büyüklük",
+    "rolling_max_7d": "Son 7 olay: maks. büyüklük",
     "month": "Ay",
     "depth": "Derinlik (km)",
     "sin_hour": "Saat (sin)",
     "cos_hour": "Saat (cos)",
     "hour": "Saat",
-    "event_count_7d": "7 günlük olay sayısı",
+    "event_count_7d": "Son 7 olay: pencere doluluğu",
 }
 
 

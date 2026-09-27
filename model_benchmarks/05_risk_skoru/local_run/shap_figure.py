@@ -31,10 +31,10 @@ TR_LABELS = {
     "latitude": "Enlem",
     "longitude": "Boylam",
     "depth": "Derinlik (km)",
-    "rolling_mean_7d": "7 günlük ort. büyüklük",
-    "rolling_std_7d": "7 günlük büyüklük std. sapma",
-    "rolling_max_7d": "7 günlük maks. büyüklük",
-    "event_count_7d": "7 günlük olay sayısı",
+    "rolling_mean_7d": "Son 7 olay: ort. büyüklük",
+    "rolling_std_7d": "Son 7 olay: büyüklük std. sapma",
+    "rolling_max_7d": "Son 7 olay: maks. büyüklük",
+    "event_count_7d": "Son 7 olay: pencere doluluğu",
     "year": "Yıl",
     "month": "Ay",
     "day": "Gün",
@@ -54,7 +54,20 @@ def turkish_label(col):
 
 
 def main():
-    X, y, _ = cp.load_dataset()
+    # _7d oznitelikleri pandas rolling(window=7) ile SATIR (olay) tabanlidir,
+    # gun tabanli degil. --son-tarih: makaledeki kosu 2 Agustos 2026'ya kadarki
+    # katalogla yapildi (n = 13 609); katalog sonradan buyudugu icin ayni
+    # kumeyi yeniden kurmak uzere ham katalog bu tarihe kadar suzulur.
+    csv = None
+    if '--son-tarih' in sys.argv:
+        import pandas as pd, tempfile
+        son = sys.argv[sys.argv.index('--son-tarih') + 1]
+        ham = pd.read_csv(cp.DEFAULT_QUERY_CSV)
+        ham = ham[pd.to_datetime(ham['time'], utc=True) <= pd.Timestamp(son, tz='UTC')]
+        csv = Path(tempfile.gettempdir()) / 'query_suzulmus.csv'
+        ham.to_csv(csv, index=False)
+    X, y, _ = cp.load_dataset(csv)
+    print('n =', len(X), 'pozitif oran =', round(float(y.mean()), 3))
     splits = cp.walk_forward_splits(len(X), 5)
     tr, te = splits[-1]
 
