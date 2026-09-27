@@ -745,13 +745,11 @@ def run_analysis_job(req: dict) -> dict:
     try:
         damage_overlay = build_damage_overlay(img_np, road_mask_binary, pred_mask_binary, intersection)
         segmentation_overlay = build_segmentation_overlay(img_np, pred_mask_binary)
-        # J-18 duzeltmesi: bu 6 gorsel artik top-level'a B64 olarak SPREAD
-        # edilmiyor (eskiden /status yaniti 17MB'a, %33'u sadece B64 sisme
-        # olacak sekilde sisiyordu). Bunun yerine "kind" adiyla anahtarlanmis
-        # kucuk bir alt-sozluk dondurulur; ana surecteki done-callback bunlari
-        # ayri bir bellek deposuna tasiyip /status'a sadece
-        # /api/road_damage/image/{id}/{kind} URL'lerini yazacak (bkz.
-        # fastapi_app.py::_on_road_damage_job_done).
+        # /status yaniti B64 gorsellerle 17 MB'a sisiyordu (J-18). Cozum:
+        # `cekirdek._gorselleri_diske_al` bu anahtarlari sonuctan CIKARIP diske
+        # yazar, /status'a yalnizca dosya adlari kalir ve gorseller
+        # /api/road_damage/gorsel/{id}/{ad} ile ikili sunulur. Bu yuzden
+        # anahtarlar ust duzeyde ve "B64" ile bitmek ZORUNDA.
         diagnostic_images = {
             "imageOriginalB64": image_array_to_b64(img_np),
             **({"imageOncesiB64": image_array_to_b64(oncesi_np)} if oncesi_np is not None else {}),
@@ -820,7 +818,12 @@ def run_analysis_job(req: dict) -> dict:
         "satelliteSource": source_label,
         "satelliteTileUrl": satellite_tile_url,
         "satelliteAttribution": satellite_attribution,
-        "diagnosticImages": diagnostic_images,
+        # UST DUZEY B64 anahtarlari olarak yayilir -- sarmalanmaz.
+        # `cekirdek._gorselleri_diske_al` sonucun ust duzeyinde "B64" ile
+        # biten anahtarlari arar; `diagnosticImages` altina konursa hicbir
+        # goruntu diske yazilmaz ve tatbikat "Hasar maskesi okunamadi" ile
+        # duser (J-105, 27 Eylul 2026).
+        **diagnostic_images,
         "timingsMs": {
             "satellite": round(satellite_fetch_ms, 1),
             "roads": round(overpass_ms, 1),

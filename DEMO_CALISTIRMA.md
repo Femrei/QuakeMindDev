@@ -32,11 +32,17 @@ QuakeMindBackend/../venv/Scripts/python.exe QuakeMindBackend/araclar_kullanici.p
 1. **Alan:** açılır listede ölçülmüş alan kataloğundan gelir
    (`data/tatbikat_alanlari.json`; 11 gerçek drone alanı, künyeleri ölçülü).
    Demo için: Hatay / Defne — Elektrik Mah.
-2. **Görüntü katmanı:** üçü de gerçek ve tarihli
-   - `Drone ortofoto` — Help.NGO, 2023-02-09 (depremden 3 gün sonra, en net enkaz)
-   - `Uydu — geniş` — Maxar, 2023-02-08 (**sunum için bunu seç**: rota karşılaştırması
-     ancak burada anlamlı, ~0,9 × 0,9 km)
-   - `Deprem öncesi (kontrol)` — Esri Wayback, gerçek çekim 2021-09-27
+2. **Görüntü katmanı:** alan başına **tek** katman vardır — `Drone ortofoto`
+   (Help.NGO / OpenAerialMap, Defne-Elektrik için 2023-02-09, depremden 3 gün
+   sonra). Katman kataloğun `tmsUrl` alanından gelir; her alanın kendi sağlayıcısı
+   ve çekim tarihi arayüzde yazar.
+   **Uyarı:** bu belge bir ara sürümde `Uydu — geniş` (Maxar) ve
+   `Deprem öncesi (kontrol)` (Esri Wayback) katmanlarını da sayıyordu; bu ikisi
+   arayüzde **yoktur**. Maxar geniş katmanıyla yapılan ölçümler (ör.
+   `benchmark/reports/rh_duyarlilik_hatay_elektrik.json`) uç noktayla değil
+   `araclar_tatbikat_kos.py` aracıyla koşulmuştur. Deprem öncesi kontrol görüntüsü
+   ise ayrı bir katman değil, koşunun içindeki `kontrolKosusu` adımıdır.
+   (J-107, 27 Eylül 2026)
 3. **Model:** Hızlı (SegFormer-B0) · Dengeli (SegFormer-B2) · **En iyi** (U-Net MiT-B4)
 4. **Tatbikatı başlat**
 

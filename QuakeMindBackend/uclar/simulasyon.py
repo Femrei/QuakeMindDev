@@ -140,9 +140,22 @@ IS_SINIRI = 20
 parmak_izi_haritasi: dict = {}
 
 
+# VARSAYILANLAR KATALOGDAN GELIR. Sabit yazilinca bayatliyordu: "hatay-elektrik"
+# ve "yakin" yalnizca YEDEK_ALANLAR'da var; olculmus katalogda karsiliklari
+# "defne---elektrik" ve "drone". Govdesiz bir POST /api/simulasyon/kos bu yuzden
+# 404 aliyordu (J-106, 27 Eylul 2026). Konsol kimlikleri hep acikca gonderdigi
+# icin arayuzde gorunmuyordu.
+_VARSAYILAN_ALAN = ALANLAR[0]["id"] if ALANLAR else YEDEK_ALANLAR[0]["id"]
+_VARSAYILAN_KATMAN = (
+    ALANLAR[0]["katmanlar"][0]["id"]
+    if ALANLAR and ALANLAR[0].get("katmanlar")
+    else YEDEK_ALANLAR[0]["katmanlar"][0]["id"]
+)
+
+
 class SimulasyonIstegi(BaseModel):
-    alanId: str = "hatay-elektrik"
-    katmanId: str = "yakin"
+    alanId: str = _VARSAYILAN_ALAN
+    katmanId: str = _VARSAYILAN_KATMAN
     modelId: str = "dengeli"
     esik: float | None = None
     # Ürünün kuralı: varsayılan 0 = "yalnız yolun üstündeki hasar kapatır"

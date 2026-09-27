@@ -24,7 +24,10 @@ export function TatbikatSeridi() {
   if (!isId) return null
 
   const simIs = is?.isTipi === 'simulasyon' ? is : null
-  const alanAdi = sonuc.data?.alan.ad
+  // `alan` OPSIYONEL: bayat bir is kimliginle yenilendiginde sunucu 404 doner
+  // ya da is henuz kuyruktayken yanitta alan kunyesi bulunmaz. Burada `?.`
+  // olmayinca butun konsol beyaz ekrana dusuyordu (J-104, 27 Eylul 2026).
+  const alanAdi = sonuc.data?.alan?.ad
   // Sayfa yenilendiğinde iş kaydı (sekme belleği) sıfırlanır ama koşu sunucuda
   // durur; o yüzden durum SONUCUN kendisinden de okunur, yoksa biten koşu
   // yenileme sonrası "%0 · katman bekleniyor" görünüyordu.

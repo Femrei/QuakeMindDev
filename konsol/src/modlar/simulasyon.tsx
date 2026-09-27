@@ -335,6 +335,20 @@ export function SimulasyonSag() {
       </Bolum>
     )
   }
+  // Koşu kuyruktayken ya da hata verdiğinde yanıtta künye alanları YOKTUR;
+  // tip artık bunu söylüyor (J-104). Eskiden burada `s.kaynak.gercek`
+  // okunuyordu ve bayat bir iş kimliğiyle yenileyince panel çöküyordu.
+  if (!s.alan || !s.kaynak || !s.model) {
+    return (
+      <Bolum baslik="Tatbikat">
+        {s.durum === 'hata' ? (
+          <VeriYok ne="Koşu" neden="koşu hata verdi; yeniden başlat" />
+        ) : (
+          <p className="text-small text-ink-3">Künye bekleniyor…</p>
+        )}
+      </Bolum>
+    )
+  }
 
   return (
     <>

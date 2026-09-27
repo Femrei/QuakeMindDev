@@ -130,8 +130,10 @@ export type SimSonuc = {
   /** Sözleşme §4: ilerleme YÜZDE (0–100), SSE ile aynı ölçek. */
   ilerleme?: number
   parmakIzi: string
-  alan: { id: string; ad: string; bbox: [number, number, number, number] }
-  kaynak: {
+  /** Kuyruktaki ya da hata veren koşuda YOK — `sonucuNormalle` de öyle okuyor. */
+  alan?: { id: string; ad: string; bbox: [number, number, number, number] }
+  /** Kuyruktaki ya da hata veren koşuda YOK. */
+  kaynak?: {
     katmanId: string
     saglayici: string
     cekimTarihi: string
@@ -287,7 +289,9 @@ function sonucuNormalle(ham: Record<string, unknown>): SimSonuc {
   return {
     ...(ham as unknown as SimSonuc),
     rotalar,
-    alan: alan ? { ...(alan as SimSonuc['alan']), bbox: kutuya(alan.bbox) as Kutu } : (ham.alan as SimSonuc['alan']),
+    alan: alan
+      ? ({ ...alan, bbox: kutuya(alan.bbox) as Kutu } as NonNullable<SimSonuc['alan']>)
+      : undefined,
     hasar: hasar
       ? {
           ...(hasar as unknown as NonNullable<SimSonuc['hasar']>),
