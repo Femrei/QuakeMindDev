@@ -177,7 +177,9 @@ def main() -> int:
         ((31, 111, 235), "cizgi", "Ekip güzergâhı (kapanmalara göre)"),
         ((31, 111, 235), "daire",
          f"Mahalle giriş ağzı — {len(ekip)} ekip"
-         + (f", {ekip_icerde}'i karede" if ekip_icerde < len(ekip) else "")),
+         + ("" if ekip_icerde == len(ekip) else
+            ", hepsi kare dışında" if ekip_icerde == 0 else
+            f", {ekip_icerde}'i karede")),
         ((209, 51, 46), "kare", f"Afetzede — senaryo ({len(kurban)})"),
     ], baslik=f"{alan['il']} / {alan['yer']} · {alan['saglayici']} · {alan['tarih']} · "
              f"model {a.model} · kapsama %{kapsama['edgesObservedFraction']*100:.0f}"
