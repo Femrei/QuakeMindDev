@@ -17,6 +17,26 @@ hücresi değişir.
 Her koşu `kosu_kayitlari/.../tohum_<n>.json` üretir; bu dosyaları bu depoya getirmek yeterli.
 Makale tarafını ben güncellerim.
 
+**Hazır defterler.** Ayar bloğu aşağıdakilerle doldurulmuş hâlde bu klasörün altında:
+- `kaggle/03_kaggle_protokol_oturum1_coklu_tohum.ipynb`
+- `kaggle/03_kaggle_protokol_oturum2_bolgeler_arasi.ipynb`
+
+İkisinde de `AGIRLIK_SAKLA = False` ve `GORSEL = False`; yalnız ölçüm gerektiği için çıktı
+küçük kalır.
+
+Adımlar (her oturum için):
+1. Kaggle → Create → New Notebook → File → Import Notebook ile ilgili `.ipynb` dosyasını yükleyin.
+2. Add Input bölümünden `furkanemrence/quakemind-veri-paketi` veri setini ekleyin.
+3. Settings'te Accelerator = GPU T4 x2, Internet = On. İkisi de hesapta telefon doğrulaması
+   ister.
+4. Save Version → Save & Run All (Commit). Defter arka planda koşar, tarayıcı kapatılabilir.
+5. Bitince sürümün Output sekmesinden `QuakeMind_egitim/` klasörünü indirin; `tohum_*`
+   klasörlerindeki `sonuc.json` dosyalarını bana verin.
+
+Süre (eğitim süreleri kayıtlardan: U-Net 82, UPerNet 91, SegFormer-B4 52 dk):
+1. oturum yaklaşık 6,5 saat, 2. oturum yaklaşık 4,5 saat. Defterin süre koruması
+(`KOSU_PAYI_SA`, 11,75 saat sınırı) sığmayan deneyi başlatmaz.
+
 ---
 
 ## Oturum 1 — çoklu tohum (sınırlılık o, Tablo 12 dipnotu)
