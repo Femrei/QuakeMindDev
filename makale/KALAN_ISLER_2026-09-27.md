@@ -1,4 +1,4 @@
-# Kalan İşler — makale (28 Eylül 2026, 5. tur sonrası)
+# Kalan İşler — makale (28 Eylül 2026, 6. tur sonrası)
 
 Bu dosya makalenin **gönderilebilir hâle gelmesi için kalan** işleri tutar. Bu
 makinede yapılabilen her şey yapıldı; aşağıdakiler karar, başka makine ya da
@@ -6,20 +6,33 @@ başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-123
 `SIMULASYON_OLCUM_KAYDI.md`.
 
 **Güncel dosya:** `makale/QuakeMind_Makale_Taslak_2026-09-16_sekillieklendi_v3_LOCAL_2026-09-21.docx`
-(70 sayfa · 24 şekil · 22 tablo · 68 kaynak · 17 denklem; bütün atıflar çözülüyor)
+(71 sayfa · 23 şekil · 22 tablo · 68 kaynak · 17 denklem; bütün atıflar çözülüyor)
 
 **Yedekler (`makale/arsiv/`, yalnız yerel — depoda değil):** `..._pre_simulasyon_revizyonu_...` (1. tur öncesi) ·
 `..._pre_tarama_revizyonu_...` (2. tur öncesi) · `..._pre_revize3/4/5_...` (3. tur adımları) ·
-`..._pre_revize6/7/8/9_...` (4. tur) · `..._pre_revize10/11_...` (5. tur)
+`..._pre_revize6/7/8/9_...` (4. tur) · `..._pre_revize10/11_...` (5. tur) · `..._pre_revize12_...` (6. tur)
 
-**Betikler (`makale/analiz_arsivi/`):** `revize2*.py`, `revize3.py` … `revize11.py`,
+**Betikler (`makale/analiz_arsivi/`):** `revize2*.py`, `revize3.py` … `revize12.py`,
 `yardimci.py` — her biri kendi yedeğinden başlar, yeniden çalıştırılabilir
 (yollar oturumun scratchpad'ine göre yazılı; başka yerde çalıştırmak için `sys.path` ve
 `SRC/DST` satırlarını düzeltin).
 
 ---
 
-## Bu turda yapılanlar (5. tur, 28 Eylül)
+## Bu turda yapılanlar (6. tur, 28 Eylül) — ölçülmemiş eksiklerin kapatılması (revize12)
+
+- **A\* çapraz doğrulandı:** 248 sorguda bağımsız Dijkstra ile aynı (`araclar_astar_capraz.py`).
+- **Kalan sekiz alan koşuldu:** eski "ayrışmadı" cümlesi yanlıştı; üç alan tek modelde ayrışıyor.
+  Seçim ölçütü "en az iki modelde ayrışma" olarak makaleye yazıldı.
+- **Metin üst kategori F₁ ölçüldü:** sızıntısız karşılaştırma BERTurk'üyle mikro 0,797 / makro 0,758.
+  Üretim ağırlığı sınama bölmesini görmüş görünüyor (J-128).
+- **YOLO:** eğitim doğrulama bölmesindeki mAP'ler makaleye girdi (iyimser, bağımsız sınama değil).
+- **Son işleme seviyesi:** ekip Kaggle kayıtlarından; etkisi pratikte yok (ΔIoU ≤ 0,0009).
+- **Şekil 24 kaldırıldı:** örnek veri kipiyle çekilmişti; modülün gerçek çıktısı Şekil 5 ve 10'da.
+- **İki ciddi bulgu makaleye yazıldı:** kapanma etiketlerini Claude yapmış (J-126); metin kümesinde
+  telefon numarası ve adres var (J-127). Etik ve Veri Erişilebilirliği düzeltildi.
+
+## Önceki tur (5. tur, 28 Eylül)
 
 - **B0 yeniden koşusu bu makinede tamamlandı.** Ağırlıklar Kaggle'dan, SHA-256 doğrulandı; yol
   verisi PBF'ten yeniden üretildi. Bütün tatbikat sayıları düzeltilmiş kodla yeniden üretildi
@@ -109,6 +122,13 @@ başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-123
 ## KALAN İŞLER
 
 ### A. 🔴 Sizin karar ya da bilgi vermeniz gerekenler
+- [ ] **Kapanma etiketlemesini bir yazar yapmalı (J-126).** Bugünkü "yer gerçeği" Claude'un etiketi.
+  Kit hazır: `QuakeMindBackend/benchmark/kapanma_yer_gercegi/insan_kiti/etiketle.html` (33 kesit,
+  yaklaşık 20 dk; nasıl yapılacağı `BENIOKU.md`'de). Etiket dosyası gelince `araclar_kapanma_uyum.py` ile
+  ölçer, makaledeki "yapay zekâ etiketleyici" notlarını insan sonucuyla değiştiririm.
+- [ ] **Metin kümesinde kişisel veri (J-127).** Telefon numarası ve adres içeren kayıtlar var. Paylaşım
+  politikası (şu an "maskelendikten sonra istek üzerine") ve gerekiyorsa etik kurul / KVKK
+  değerlendirmesi sizin kararınız.
 - [ ] **ORCID numaraları ve sorumlu yazar** (başlık altındaki yer tutucu, P5) — sonra.
 - [ ] **Hedef dergi** — seçilince biçim (kaynak stili, sayfa sınırı, çift kör başlık
   sayfası) ayarlanır.
@@ -131,14 +151,13 @@ bugün düzeltme öncesi hatla ölçülmüş diye yazılı; tam koşu bu notu ka
 - [ ] **B6 — Ham sonuçları depoya koy:** B0'daki `sonuc_*.json` ve `tatbikat_ozet.json`
   `benchmark/reports/` altına (birleştirici artık depoda: `araclar_tatbikat_ozet.py`).
 
-### C. 🟡 Ekip içi / GPU
+### C. 🟡 Ekip içi / GPU — hazır ayarlar: `makale/analiz_arsivi/GPU_IS_PAKETI_2026-09-28.md`
 - [ ] **İl-ayrık genelleme (isteğe bağlı):** yapılırsa §4.4'e tablo olarak geri eklenir;
   Furkan'ın 25 Eylül iş paketindeki "İŞ 2" (veri il etiketiyle yeniden bölünmeli).
 - [ ] **Çoklu tohum:** Tablo 12'deki on mimari tek tohumlu; en az 3 tohum sınırlılık
   (o)'yu kapatır.
-- [ ] **YOLO mAP ve metin F₁:** etiketli saha/metin kümesi olmadan ölçülemiyor (Tablo 22).
-  Metin katmanı düzeltildi (J-111/J-116); F₁ 13 etiket düzeyinde ve 5 üst kategori
-  düzeyinde ayrı ölçülmeli. Aynı kümede yol kapanması örneği sayısına bakılmalı (J-123).
+- [x] **YOLO mAP ve metin F₁:** metin üst kategori F₁ ölçüldü; YOLO için eğitim doğrulama
+  bölmesindeki mAP girdi. Kalan: bağımsız saha sınama kümesi (etiketli fotoğraf) — insan işi.
 
 ### D. ⚪ Gönderim öncesi
 - [x] Sayfa düzeni okuması (revize9, 27 Eylül). Kalan: Tablo 15'in sütun genişlikleri

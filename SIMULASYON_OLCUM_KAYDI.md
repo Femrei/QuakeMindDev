@@ -811,3 +811,32 @@ kullanıldı, yani ANA satırı Tablo 15'in tohum 42 değeridir.
 - Şekil 11 ve 12 (`sekil_kiyas_kollari`, `sekil_duyarlilik`, `sekil_kesif_kazanc`):
   `araclar_makale_sekilleri.py` artık sayıları elle yazılmış sabitlerden değil,
   doğrudan `tatbikat_b0` JSON'larından okuyor.
+
+## 19. Eksiklerin kapatılması (28 Eylül 2026)
+
+### 19.1 Kalan sekiz alan, düzeltilmiş kodla (üç model × beş tohum)
+
+Çıktılar `tatbikat_b0/sekiz_alan_*.json`, günlük `sekiz_alan_gunluk.txt`. Eski cümle ("kalan
+sekizinde kollar ayrışmadı") düzeltilmiş kodla **doğrulanmadı**:
+
+| Alan | Ayrışma |
+|---|---|
+| Narlıca (ortaokul), Narlıca, Mansurlu, Şekeroba kuzeybatı, Gökçedere | Hiçbir modelde yok. Model ya kapanma bulmadı ya da bulduğu kapanmalar rotalara düşmedi; bazı model–alan eşlerinde hasar blobu da yok. |
+| Kahramanmaraş Şubat Stadyumu çevresi | Yalnız MiT-B2: %40,4 ± 7,6 (5/5 küme) |
+| Kahramanmaraş Şekeroba orta | Yalnız MiT-B2: %13,7 ± 12,5 (5/5 küme) |
+| Hatay Türünçlü | Yalnız U-Net: tek ortak görevde %32,5 |
+
+Makaleye giren üç alan, kolların **en az iki modelde** ayrıştığı alanlar. Tek modelde ayrışan
+üç alanın kazancı raporlanan bandın (%8–60) içinde kalıyor.
+
+### 19.2 A* bağımsız çapraz doğrulama
+
+Aracı `araclar_astar_capraz.py`, çıktısı `tatbikat_b0/astar_capraz.json`. Üç alan × beş tohum
+× bütün çiftler, kapanmasız ve kapanmalı görünüm: 248 ayrı sorgu. Karşılaştırılan iki yöntem:
+A* (`donus.en_kisa_yol`) ve açıkça kurulan kenar grafiği üzerinde `networkx` Dijkstra.
+
+- Ulaşılabilir 240 sorguda aynı süre; en büyük fark 5,7·10⁻¹⁴ sn.
+- 8 sorguda iki yöntem de yol bulamadı.
+- Uyumsuz sorgu yok.
+- Mahalle çizgelerinde en yüksek kenar hızı 45–70 km/sa. Eski sabit 80 km/sa sezgiseli bu
+  alanlarda da kabul edilebilir kalıyordu; J-114'ün etkisi sıfır.
