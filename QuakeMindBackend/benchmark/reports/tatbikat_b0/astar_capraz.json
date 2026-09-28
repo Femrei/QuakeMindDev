@@ -1,0 +1,41 @@
+[
+ {
+  "alan": "Defne / Elektrik Mah.",
+  "vmaxMs": 19.44,
+  "vmaxKmh": 70.0,
+  "kenarHizUstuEskiSabit": 0,
+  "cift": 18,
+  "ayni": 15,
+  "enBuyukFarkSn": 0.0,
+  "ulasilamazUyumlu": 3,
+  "uyumsuz": [],
+  "eskiSezgiselFarkli": 0,
+  "eskiSezgiselEnBuyukKayipSn": 0.0
+ },
+ {
+  "alan": "İslahiye",
+  "vmaxMs": 12.5,
+  "vmaxKmh": 45.0,
+  "kenarHizUstuEskiSabit": 0,
+  "cift": 90,
+  "ayni": 85,
+  "enBuyukFarkSn": 1.4210854715202004e-14,
+  "ulasilamazUyumlu": 5,
+  "uyumsuz": [],
+  "eskiSezgiselFarkli": 0,
+  "eskiSezgiselEnBuyukKayipSn": 0.0
+ },
+ {
+  "alan": "Nurdağı",
+  "vmaxMs": 19.44,
+  "vmaxKmh": 70.0,
+  "kenarHizUstuEskiSabit": 0,
+  "cift": 140,
+  "ayni": 140,
+  "enBuyukFarkSn": 5.684341886080802e-14,
+  "ulasilamazUyumlu": 0,
+  "uyumsuz": [],
+  "eskiSezgiselFarkli": 0,
+  "eskiSezgiselEnBuyukKayipSn": 0.0
+ }
+]

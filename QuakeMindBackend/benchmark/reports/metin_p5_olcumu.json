@@ -1,0 +1,466 @@
+{
+ "kume": "deprem-private/intent_test_v13_anonymized",
+ "bolme": "tohum 42; 1418/305/305",
+ "siniflar": [
+  "Acil Yardım İhtiyacı",
+  "Enkaz Bildirimi",
+  "Lojistik (birleşik)",
+  "Alakasız"
+ ],
+ "modeller": {
+  "berturk": {
+   "yol": "D:/lastdance/QuakeMind/model_benchmarks/04_turkce_metin/local_run/model_berturk",
+   "sinama": {
+    "model": {
+     "siniflar": {
+      "Acil Yardım İhtiyacı": {
+       "kesinlik": 0.9697,
+       "duyarlilik": 0.3516,
+       "f1": 0.5161,
+       "destek": 91
+      },
+      "Enkaz Bildirimi": {
+       "kesinlik": 0.8732,
+       "duyarlilik": 0.9612,
+       "f1": 0.9151,
+       "destek": 129
+      },
+      "Lojistik (birleşik)": {
+       "kesinlik": 0.9481,
+       "duyarlilik": 0.7849,
+       "f1": 0.8588,
+       "destek": 93
+      },
+      "Alakasız": {
+       "kesinlik": 0.9245,
+       "duyarlilik": 0.8033,
+       "f1": 0.8596,
+       "destek": 61
+      }
+     },
+     "mikroF1": 0.8189,
+     "makroF1": 0.7874,
+     "dogruluk": 0.9115,
+     "cekimser": 0,
+     "n": 305
+    },
+    "yeni": {
+     "siniflar": {
+      "Acil Yardım İhtiyacı": {
+       "kesinlik": 0.8205,
+       "duyarlilik": 0.3516,
+       "f1": 0.4923,
+       "destek": 91
+      },
+      "Enkaz Bildirimi": {
+       "kesinlik": 0.8921,
+       "duyarlilik": 0.9612,
+       "f1": 0.9254,
+       "destek": 129
+      },
+      "Lojistik (birleşik)": {
+       "kesinlik": 0.9231,
+       "duyarlilik": 0.7742,
+       "f1": 0.8421,
+       "destek": 93
+      },
+      "Alakasız": {
+       "kesinlik": 0.9111,
+       "duyarlilik": 0.6721,
+       "f1": 0.7736,
+       "destek": 61
+      }
+     },
+     "mikroF1": 0.797,
+     "makroF1": 0.7583,
+     "dogruluk": 0.882,
+     "cekimser": 4,
+     "n": 305
+    },
+    "eski": {
+     "siniflar": {
+      "Acil Yardım İhtiyacı": {
+       "kesinlik": 0.5949,
+       "duyarlilik": 0.5165,
+       "f1": 0.5529,
+       "destek": 91
+      },
+      "Enkaz Bildirimi": {
+       "kesinlik": 0.8739,
+       "duyarlilik": 0.8062,
+       "f1": 0.8387,
+       "destek": 129
+      },
+      "Lojistik (birleşik)": {
+       "kesinlik": 0.8871,
+       "duyarlilik": 0.5914,
+       "f1": 0.7097,
+       "destek": 93
+      },
+      "Alakasız": {
+       "kesinlik": 0.9048,
+       "duyarlilik": 0.623,
+       "f1": 0.7379,
+       "destek": 61
+      }
+     },
+     "mikroF1": 0.7219,
+     "makroF1": 0.7098,
+     "dogruluk": 0.8,
+     "cekimser": 3,
+     "n": 305
+    },
+    "yeniKatmanKarariVeren": {
+     "model": 291,
+     "anahtar_sozcuk": 10,
+     "belirsiz": 4
+    },
+    "altEtiketMikroF1": 0.8278
+   },
+   "egitim": {
+    "model": {
+     "siniflar": {
+      "Acil Yardım İhtiyacı": {
+       "kesinlik": 0.9704,
+       "duyarlilik": 0.453,
+       "f1": 0.6177,
+       "destek": 362
+      },
+      "Enkaz Bildirimi": {
+       "kesinlik": 0.9675,
+       "duyarlilik": 0.9571,
+       "f1": 0.9623,
+       "destek": 653
+      },
+      "Lojistik (birleşik)": {
+       "kesinlik": 0.9827,
+       "duyarlilik": 0.8629,
+       "f1": 0.9189,
+       "destek": 394
+      },
+      "Alakasız": {
+       "kesinlik": 0.9611,
+       "duyarlilik": 0.9427,
+       "f1": 0.9518,
+       "destek": 262
+      }
+     },
+     "mikroF1": 0.8909,
+     "makroF1": 0.8627,
+     "dogruluk": 0.9704,
+     "cekimser": 0,
+     "n": 1418
+    },
+    "yeni": {
+     "siniflar": {
+      "Acil Yardım İhtiyacı": {
+       "kesinlik": 0.8939,
+       "duyarlilik": 0.442,
+       "f1": 0.5915,
+       "destek": 362
+      },
+      "Enkaz Bildirimi": {
+       "kesinlik": 0.9542,
+       "duyarlilik": 0.9571,
+       "f1": 0.9557,
+       "destek": 653
+      },
+      "Lojistik (birleşik)": {
+       "kesinlik": 0.9469,
+       "duyarlilik": 0.8604,
+       "f1": 0.9016,
+       "destek": 394
+      },
+      "Alakasız": {
+       "kesinlik": 0.9765,
+       "duyarlilik": 0.7939,
+       "f1": 0.8758,
+       "destek": 262
+      }
+     },
+     "mikroF1": 0.8661,
+     "makroF1": 0.8311,
+     "dogruluk": 0.9394,
+     "cekimser": 13,
+     "n": 1418
+    },
+    "eski": {
+     "siniflar": {
+      "Acil Yardım İhtiyacı": {
+       "kesinlik": 0.5387,
+       "duyarlilik": 0.5387,
+       "f1": 0.5387,
+       "destek": 362
+      },
+      "Enkaz Bildirimi": {
+       "kesinlik": 0.9305,
+       "duyarlilik": 0.8407,
+       "f1": 0.8833,
+       "destek": 653
+      },
+      "Lojistik (birleşik)": {
+       "kesinlik": 0.8513,
+       "duyarlilik": 0.5812,
+       "f1": 0.6908,
+       "destek": 394
+      },
+      "Alakasız": {
+       "kesinlik": 0.9784,
+       "duyarlilik": 0.6908,
+       "f1": 0.8098,
+       "destek": 262
+      }
+     },
+     "mikroF1": 0.7501,
+     "makroF1": 0.7307,
+     "dogruluk": 0.8138,
+     "cekimser": 12,
+     "n": 1418
+    },
+    "yeniKatmanKarariVeren": {
+     "model": 1364,
+     "belirsiz": 13,
+     "anahtar_sozcuk": 41
+    },
+    "altEtiketMikroF1": 0.9027
+   }
+  },
+  "2kveri": {
+   "yol": "apps/disaster_nlp/models/2kveri",
+   "sinama": {
+    "model": {
+     "siniflar": {
+      "Acil Yardım İhtiyacı": {
+       "kesinlik": 0.9722,
+       "duyarlilik": 0.3846,
+       "f1": 0.5512,
+       "destek": 91
+      },
+      "Enkaz Bildirimi": {
+       "kesinlik": 0.9692,
+       "duyarlilik": 0.9767,
+       "f1": 0.973,
+       "destek": 129
+      },
+      "Lojistik (birleşik)": {
+       "kesinlik": 0.9487,
+       "duyarlilik": 0.7957,
+       "f1": 0.8655,
+       "destek": 93
+      },
+      "Alakasız": {
+       "kesinlik": 0.9672,
+       "duyarlilik": 0.9672,
+       "f1": 0.9672,
+       "destek": 61
+      }
+     },
+     "mikroF1": 0.866,
+     "makroF1": 0.8392,
+     "dogruluk": 0.9639,
+     "cekimser": 0,
+     "n": 305
+    },
+    "yeni": {
+     "siniflar": {
+      "Acil Yardım İhtiyacı": {
+       "kesinlik": 0.814,
+       "duyarlilik": 0.3846,
+       "f1": 0.5224,
+       "destek": 91
+      },
+      "Enkaz Bildirimi": {
+       "kesinlik": 0.9403,
+       "duyarlilik": 0.9767,
+       "f1": 0.9582,
+       "destek": 129
+      },
+      "Lojistik (birleşik)": {
+       "kesinlik": 0.9367,
+       "duyarlilik": 0.7957,
+       "f1": 0.8605,
+       "destek": 93
+      },
+      "Alakasız": {
+       "kesinlik": 0.9792,
+       "duyarlilik": 0.7705,
+       "f1": 0.8624,
+       "destek": 61
+      }
+     },
+     "mikroF1": 0.8319,
+     "makroF1": 0.8009,
+     "dogruluk": 0.9246,
+     "cekimser": 1,
+     "n": 305
+    },
+    "eski": {
+     "siniflar": {
+      "Acil Yardım İhtiyacı": {
+       "kesinlik": 0.5823,
+       "duyarlilik": 0.5055,
+       "f1": 0.5412,
+       "destek": 91
+      },
+      "Enkaz Bildirimi": {
+       "kesinlik": 0.9153,
+       "duyarlilik": 0.8372,
+       "f1": 0.8745,
+       "destek": 129
+      },
+      "Lojistik (birleşik)": {
+       "kesinlik": 0.8889,
+       "duyarlilik": 0.6022,
+       "f1": 0.7179,
+       "destek": 93
+      },
+      "Alakasız": {
+       "kesinlik": 0.9773,
+       "duyarlilik": 0.7049,
+       "f1": 0.819,
+       "destek": 61
+      }
+     },
+     "mikroF1": 0.7463,
+     "makroF1": 0.7382,
+     "dogruluk": 0.8295,
+     "cekimser": 1,
+     "n": 305
+    },
+    "yeniKatmanKarariVeren": {
+     "model": 291,
+     "anahtar_sozcuk": 13,
+     "belirsiz": 1
+    },
+    "altEtiketMikroF1": 0.9157
+   },
+   "egitim": {
+    "model": {
+     "siniflar": {
+      "Acil Yardım İhtiyacı": {
+       "kesinlik": 0.9835,
+       "duyarlilik": 0.4945,
+       "f1": 0.6581,
+       "destek": 362
+      },
+      "Enkaz Bildirimi": {
+       "kesinlik": 0.9504,
+       "duyarlilik": 0.9387,
+       "f1": 0.9445,
+       "destek": 653
+      },
+      "Lojistik (birleşik)": {
+       "kesinlik": 0.979,
+       "duyarlilik": 0.8274,
+       "f1": 0.8968,
+       "destek": 394
+      },
+      "Alakasız": {
+       "kesinlik": 0.9186,
+       "duyarlilik": 0.9046,
+       "f1": 0.9115,
+       "destek": 262
+      }
+     },
+     "mikroF1": 0.8773,
+     "makroF1": 0.8527,
+     "dogruluk": 0.9556,
+     "cekimser": 0,
+     "n": 1418
+    },
+    "yeni": {
+     "siniflar": {
+      "Acil Yardım İhtiyacı": {
+       "kesinlik": 0.9124,
+       "duyarlilik": 0.489,
+       "f1": 0.6367,
+       "destek": 362
+      },
+      "Enkaz Bildirimi": {
+       "kesinlik": 0.9402,
+       "duyarlilik": 0.9387,
+       "f1": 0.9395,
+       "destek": 653
+      },
+      "Lojistik (birleşik)": {
+       "kesinlik": 0.9395,
+       "duyarlilik": 0.8274,
+       "f1": 0.8799,
+       "destek": 394
+      },
+      "Alakasız": {
+       "kesinlik": 0.922,
+       "duyarlilik": 0.7672,
+       "f1": 0.8375,
+       "destek": 262
+      }
+     },
+     "mikroF1": 0.8546,
+     "makroF1": 0.8234,
+     "dogruluk": 0.9288,
+     "cekimser": 7,
+     "n": 1418
+    },
+    "eski": {
+     "siniflar": {
+      "Acil Yardım İhtiyacı": {
+       "kesinlik": 0.544,
+       "duyarlilik": 0.547,
+       "f1": 0.5455,
+       "destek": 362
+      },
+      "Enkaz Bildirimi": {
+       "kesinlik": 0.9169,
+       "duyarlilik": 0.8285,
+       "f1": 0.8705,
+       "destek": 653
+      },
+      "Lojistik (birleşik)": {
+       "kesinlik": 0.8487,
+       "duyarlilik": 0.5838,
+       "f1": 0.6917,
+       "destek": 394
+      },
+      "Alakasız": {
+       "kesinlik": 0.9305,
+       "duyarlilik": 0.6641,
+       "f1": 0.7751,
+       "destek": 262
+      }
+     },
+     "mikroF1": 0.7415,
+     "makroF1": 0.7207,
+     "dogruluk": 0.8061,
+     "cekimser": 6,
+     "n": 1418
+    },
+    "yeniKatmanKarariVeren": {
+     "model": 1371,
+     "anahtar_sozcuk": 40,
+     "belirsiz": 7
+    },
+    "altEtiketMikroF1": 0.9124
+   }
+  }
+ },
+ "j123": {
+  "toplamKayit": 2028,
+  "lojistikEtiketli": 38,
+  "lojistikEtiketliVeUlasimSozcuklu": 3,
+  "ulasimSozcukluKayit": 69,
+  "ulasimSozcukluKayitlarinEtiketDagilimi": {
+   "Enkaz Kaldirma": 20,
+   "Barınma": 19,
+   "Alakasiz": 18,
+   "Isinma": 10,
+   "Yemek": 8,
+   "Giysi": 6,
+   "Saglik": 6,
+   "Lojistik": 3,
+   "Su": 3,
+   "Arama Ekipmani": 2,
+   "Elektrik Kaynagi": 1
+  },
+  "not": "Ornek metinler rapora yazilmaz: kume ozeldir ve 'anonymized' adina karsin telefon numarasi ve acik adres iceren kayitlar vardir. Nitel ozet: 'Lojistik' etiketli kayitlar yakit, tahliye, is makinesi gibi tasima ihtiyaclarini anlatir; ulasim sozcugu gecen kayitlarin cogunda sozcuk adresin parcasidir ('... yolu')."
+ }
+}

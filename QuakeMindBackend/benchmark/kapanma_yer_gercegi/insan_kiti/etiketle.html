@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kapanma etiketleme</title>
+<style>
+  :root { --zemin:#f7f7f5; --yazi:#1a1a1a; --soluk:#666; --cizgi:#d9d9d4; --vurgu:#1f6feb; }
+  body { margin:0; background:var(--zemin); color:var(--yazi); font:15px/1.5 system-ui, sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .olcut { background:#fff; border:1px solid var(--cizgi); border-radius:8px; padding:12px 16px; margin:12px 0 20px; }
+  .olcut b { display:inline-block; min-width:78px; }
+  .ilerleme { color:var(--soluk); margin-bottom:12px; }
+  .kart { background:#fff; border:1px solid var(--cizgi); border-radius:8px; padding:12px; margin-bottom:16px; }
+  .kart img { width:100%; max-width:100%; border-radius:4px; display:block; }
+  .satir { display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+  .kod { font-weight:600; margin-right:auto; }
+  button { font:inherit; padding:8px 14px; border-radius:6px; border:1px solid var(--cizgi); background:#fff; cursor:pointer; }
+  button.secili { background:var(--vurgu); color:#fff; border-color:var(--vurgu); }
+  input[type=text] { font:inherit; padding:8px; border:1px solid var(--cizgi); border-radius:6px; width:260px; max-width:100%; }
+  textarea { width:100%; min-height:180px; font:12px/1.4 ui-monospace, monospace; box-sizing:border-box; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Kapanma yer gerçeği — kör etiketleme</h1>
+  <p>Hatay / Defne – Elektrik Mah., Help.NGO drone ortofotosu (9 Şubat 2023). Her kesitte ince, yarı saydam
+     bir çizgi ve iki ucunda dik işaretler bir yol parçasını gösterir. <b>Modelin ne dediğini bilmeden</b>,
+     yalnız görüntüye bakarak karar verin. Cevap anahtarını (üst klasördeki <code>anahtar_tam_*.json</code>)
+     etiketleme bitmeden açmayın.</p>
+  <div class="olcut">
+    <div><b>kapalı</b> parçanın belirgin bir bölümünü moloz / enkaz kütlesi örtüyor</div>
+    <div><b>açık</b> boyunca sürekli ve geçilebilir bir koridor görülüyor (asfalt, toprak, araç)</div>
+    <div><b>kararsız</b> gölge, çözünürlük ya da çizgi görünür bir sokağı takip etmiyor</div>
+  </div>
+  <div class="satir"><label>Etiketleyen: <input type="text" id="ad" placeholder="ad soyad"></label></div>
+  <p class="ilerleme" id="ilerleme"></p>
+  <div id="kartlar"></div>
+  <h2 style="font-size:17px">Sonuç</h2>
+  <p>33 kesitin hepsi bitince aşağıdaki metni <code>etiketler_&lt;ad&gt;.json</code> adıyla bu klasörün bir
+     üstüne kaydedin (ya da "İndir"e basın), sonra <code>araclar_kapanma_uyum.py</code> ile ölçün.</p>
+  <textarea id="cikti" readonly></textarea>
+  <div class="satir"><button id="kopyala">Kopyala</button><button id="indir">İndir</button></div>
+</main>
+<script>
+const KODLAR = Array.from({length: 33}, (_, i) => "P" + String(i + 1).padStart(3, "0"));
+const SECENEK = [["kapali", "kapalı"], ["acik", "açık"], ["kararsiz", "kararsız"]];
+const ANAHTAR = "kapanma-etiket-defne";
+let durum = {};
+try { durum = JSON.parse(localStorage.getItem(ANAHTAR) || "{}"); } catch (e) { durum = {}; }
+const ad = document.getElementById("ad");
+ad.value = durum.__ad || "";
+function kaydet() { try { localStorage.setItem(ANAHTAR, JSON.stringify(durum)); } catch (e) {} guncelle(); }
+function guncelle() {
+  const n = KODLAR.filter(k => durum[k]).length;
+  document.getElementById("ilerleme").textContent = `${n} / ${KODLAR.length} kesit etiketlendi`;
+  const etiket = {};
+  KODLAR.forEach(k => { if (durum[k]) etiket[k] = durum[k]; });
+  document.getElementById("cikti").value = JSON.stringify({
+    etiketleyen: (ad.value || "").trim() + " (insan, kor - model tahmini gorulmeden)",
+    tarih: new Date().toISOString().slice(0, 10),
+    olcut: {kapali: "parcanin belirgin bir bolumunu moloz/enkaz kutlesi ortuyor",
+            acik: "boyunca surekli ve gecilebilir bir koridor goruluyor (asfalt/toprak, arac)",
+            kararsiz: "golge, cozunurluk ya da GEOMETRI: cizgi gorunur bir sokagi takip etmiyor"},
+    etiket
+  }, null, 1);
+}
+ad.addEventListener("input", () => { durum.__ad = ad.value; kaydet(); });
+const kap = document.getElementById("kartlar");
+KODLAR.forEach(k => {
+  const kart = document.createElement("div"); kart.className = "kart";
+  const img = document.createElement("img"); img.src = `kesit/${k}.jpg`; img.alt = k; img.loading = "lazy";
+  const satir = document.createElement("div"); satir.className = "satir";
+  const kod = document.createElement("span"); kod.className = "kod"; kod.textContent = k;
+  satir.appendChild(kod);
+  SECENEK.forEach(([deger, yazi]) => {
+    const b = document.createElement("button"); b.textContent = yazi;
+    if (durum[k] === deger) b.classList.add("secili");
+    b.addEventListener("click", () => {
+      durum[k] = deger; kaydet();
+      satir.querySelectorAll("button").forEach(x => x.classList.toggle("secili", x === b));
+    });
+    satir.appendChild(b);
+  });
+  kart.appendChild(img); kart.appendChild(satir); kap.appendChild(kart);
+});
+document.getElementById("kopyala").addEventListener("click", () => {
+  const t = document.getElementById("cikti"); t.select();
+  try { navigator.clipboard.writeText(t.value); } catch (e) { document.execCommand("copy"); }
+});
+document.getElementById("indir").addEventListener("click", () => {
+  const blob = new Blob([document.getElementById("cikti").value], {type: "application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = "etiketler_" + ((ad.value || "insan").trim().toLowerCase().replace(/\s+/g, "_")) + ".json";
+  a.click();
+});
+guncelle();
+</script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+=== segformer_mitb0_p2_t42 11:32:01
+model : segformer_mitb0_p2_t42
+alan  : 8
+
+--- Hatay / Antakya / Narlıca (ortaokul çevresi) ---
+Yol agi yerel bolge dosyasindan (262 dugum).
+Yol agi yerel bolge dosyasindan (500 dugum).
+    hasar %0.65 (gecerli piksel) | yol 547 acik / 3 kapali | graf 500 dugum, 4 kapali kenar | kapsama %12.3
+      Kapanmayı bilmeyen ekip      2/4 ulasti | ort 2.025 dk | sol 5 sag 7 U 0
+      Telsizle paylaşan filo       2/4 ulasti | ort 2.025 dk | sol 5 sag 7 U 0
+      QuakeMind                    2/4 ulasti | ort 2.025 dk | sol 5 sag 7 U 0
+--- Hatay / Antakya / Narlıca ---
+Yol agi yerel bolge dosyasindan (250 dugum).
+Yol agi yerel bolge dosyasindan (424 dugum).
+    hasar %0.46 (gecerli piksel) | yol 506 acik / 0 kapali | graf 424 dugum, 0 kapali kenar | kapsama %27.4
+      Kapanmayı bilmeyen ekip      1/1 ulasti | ort 0.77 dk | sol 2 sag 1 U 0
+      Telsizle paylaşan filo       1/1 ulasti | ort 0.77 dk | sol 2 sag 1 U 0
+      QuakeMind                    1/1 ulasti | ort 0.77 dk | sol 2 sag 1 U 0
+--- Hatay / Antakya / Mansurlu ---
+Yol agi yerel bolge dosyasindan (173 dugum).
+Yol agi yerel bolge dosyasindan (335 dugum).
+    hasar %0.01 (gecerli piksel) | yol 340 acik / 0 kapali | graf 335 dugum, 0 kapali kenar | kapsama %32.0
+      Kapanmayı bilmeyen ekip      1/1 ulasti | ort 1.82 dk | sol 2 sag 1 U 0
+      Telsizle paylaşan filo       1/1 ulasti | ort 1.82 dk | sol 2 sag 1 U 0
+      QuakeMind                    1/1 ulasti | ort 1.82 dk | sol 2 sag 1 U 0
+--- Hatay / Antakya / Türünçlü – Akdeniz – Armutlu ---
+Yol agi yerel bolge dosyasindan (288 dugum).
+Yol agi yerel bolge dosyasindan (673 dugum).
+    hasar %0.04 (gecerli piksel) | yol 547 acik / 0 kapali | graf 673 dugum, 0 kapali kenar | kapsama %15.6
+      Kapanmayı bilmeyen ekip      1/1 ulasti | ort 0.12 dk | sol 0 sag 0 U 0
+      Telsizle paylaşan filo       1/1 ulasti | ort 0.12 dk | sol 0 sag 0 U 0
+      QuakeMind                    1/1 ulasti | ort 0.12 dk | sol 0 sag 0 U 0
+--- Kahramanmaraş / Şekeroba (kuzeybatı) ---
+Yol agi yerel bolge dosyasindan (237 dugum).
+Yol agi yerel bolge dosyasindan (511 dugum).
+    hasar %0.09 (gecerli piksel) | yol 526 acik / 0 kapali | graf 511 dugum, 0 kapali kenar | kapsama %39.0
+      Kapanmayı bilmeyen ekip      4/4 ulasti | ort 1.125 dk | sol 7 sag 5 U 0
+      Telsizle paylaşan filo       4/4 ulasti | ort 1.125 dk | sol 7 sag 5 U 0
+      QuakeMind                    4/4 ulasti | ort 1.125 dk | sol 7 sag 5 U 0
+--- Kahramanmaraş / Şekeroba (orta) ---
+Yol agi yerel bolge dosyasindan (187 dugum).
+Yol agi yerel bolge dosyasindan (439 dugum).
+    hasar %0.30 (gecerli piksel) | yol 419 acik / 0 kapali | graf 439 dugum, 0 kapali kenar | kapsama %41.2
+      Kapanmayı bilmeyen ekip      16/16 ulasti | ort 1.283 dk | sol 23 sag 27 U 0
+      Telsizle paylaşan filo       16/16 ulasti | ort 1.283 dk | sol 23 sag 27 U 0
+      QuakeMind                    16/16 ulasti | ort 1.283 dk | sol 23 sag 27 U 0
+--- Gaziantep / Gökçedere ---
+Yol agi yerel bolge dosyasindan (93 dugum).
+Yol agi yerel bolge dosyasindan (156 dugum).
+    hasar %1.57 (gecerli piksel) | yol 198 acik / 0 kapali | graf 156 dugum, 0 kapali kenar | kapsama %21.3
+      Kapanmayı bilmeyen ekip      4/4 ulasti | ort 1.165 dk | sol 2 sag 3 U 0
+      Telsizle paylaşan filo       4/4 ulasti | ort 1.165 dk | sol 2 sag 3 U 0
+      QuakeMind                    4/4 ulasti | ort 1.165 dk | sol 2 sag 3 U 0
+--- Kahramanmaraş / Merkez / Şubat Stadyumu çevresi ---
+Yol agi yerel bolge dosyasindan (218 dugum).
+Yol agi yerel bolge dosyasindan (498 dugum).
+    hasar %0.03 (gecerli piksel) | yol 411 acik / 0 kapali | graf 498 dugum, 0 kapali kenar | kapsama %26.9
+      Kapanmayı bilmeyen ekip      1/1 ulasti | ort 1.3 dk | sol 1 sag 0 U 0
+      Telsizle paylaşan filo       1/1 ulasti | ort 1.3 dk | sol 1 sag 0 U 0
+      QuakeMind                    1/1 ulasti | ort 1.3 dk | sol 1 sag 0 U 0
+
+8 alan -> benchmark/reports/tatbikat_b0/sekiz_alan_segformer_mitb0.json
+=== segformer_mitb0_p2_t42 bitti cikis 0 11:33:30
+=== segformer_mitb2_p2_t42 11:33:30
+model : segformer_mitb2_p2_t42
+alan  : 8
+
+--- Hatay / Antakya / Narlıca (ortaokul çevresi) ---
+Yol agi yerel bolge dosyasindan (262 dugum).
+Yol agi yerel bolge dosyasindan (500 dugum).
+    hasar %0.32 (gecerli piksel) | yol 548 acik / 0 kapali | graf 500 dugum, 0 kapali kenar | kapsama %12.3
+      Kapanmayı bilmeyen ekip      1/1 ulasti | ort 2.12 dk | sol 2 sag 4 U 0
+      Telsizle paylaşan filo       1/1 ulasti | ort 2.12 dk | sol 2 sag 4 U 0
+      QuakeMind                    1/1 ulasti | ort 2.12 dk | sol 2 sag 4 U 0
+--- Hatay / Antakya / Narlıca ---
+Yol agi yerel bolge dosyasindan (250 dugum).
+Yol agi yerel bolge dosyasindan (424 dugum).
+    HATA: afetzede bulunamadi (hasar blobu yok)
+--- Hatay / Antakya / Mansurlu ---
+Yol agi yerel bolge dosyasindan (173 dugum).
+Yol agi yerel bolge dosyasindan (335 dugum).
+    hasar %0.59 (gecerli piksel) | yol 340 acik / 0 kapali | graf 335 dugum, 0 kapali kenar | kapsama %32.0
+      Kapanmayı bilmeyen ekip      4/4 ulasti | ort 2.855 dk | sol 4 sag 8 U 0
+      Telsizle paylaşan filo       4/4 ulasti | ort 2.855 dk | sol 4 sag 8 U 0
+      QuakeMind                    4/4 ulasti | ort 2.855 dk | sol 4 sag 8 U 0
+--- Hatay / Antakya / Türünçlü – Akdeniz – Armutlu ---
+Yol agi yerel bolge dosyasindan (288 dugum).
+Yol agi yerel bolge dosyasindan (673 dugum).
+    HATA: afetzede bulunamadi (hasar blobu yok)
+--- Kahramanmaraş / Şekeroba (kuzeybatı) ---
+Yol agi yerel bolge dosyasindan (237 dugum).
+Yol agi yerel bolge dosyasindan (511 dugum).
+    hasar %0.13 (gecerli piksel) | yol 526 acik / 0 kapali | graf 511 dugum, 0 kapali kenar | kapsama %39.0
+      Kapanmayı bilmeyen ekip      4/4 ulasti | ort 0.41 dk | sol 1 sag 3 U 0
+      Telsizle paylaşan filo       4/4 ulasti | ort 0.41 dk | sol 1 sag 3 U 0
+      QuakeMind                    4/4 ulasti | ort 0.41 dk | sol 1 sag 3 U 0
+--- Kahramanmaraş / Şekeroba (orta) ---
+Yol agi yerel bolge dosyasindan (187 dugum).
+Yol agi yerel bolge dosyasindan (439 dugum).
+    hasar %1.05 (gecerli piksel) | yol 421 acik / 2 kapali | graf 439 dugum, 2 kapali kenar | kapsama %41.2
+      Kapanmayı bilmeyen ekip      25/25 ulasti | ort 1.577 dk | sol 38 sag 50 U 2
+      Telsizle paylaşan filo       25/25 ulasti | ort 1.468 dk | sol 40 sag 49 U 1
+      QuakeMind                    25/25 ulasti | ort 1.217 dk | sol 36 sag 38 U 0
+--- Gaziantep / Gökçedere ---
+Yol agi yerel bolge dosyasindan (93 dugum).
+Yol agi yerel bolge dosyasindan (156 dugum).
+    hasar %1.55 (gecerli piksel) | yol 200 acik / 2 kapali | graf 156 dugum, 2 kapali kenar | kapsama %21.3
+      Kapanmayı bilmeyen ekip      6/9 ulasti | ort 1.07 dk | sol 4 sag 5 U 0
+      Telsizle paylaşan filo       6/9 ulasti | ort 1.07 dk | sol 4 sag 5 U 0
+      QuakeMind                    6/9 ulasti | ort 1.07 dk | sol 4 sag 5 U 0
+--- Kahramanmaraş / Merkez / Şubat Stadyumu çevresi ---
+Yol agi yerel bolge dosyasindan (218 dugum).
+Yol agi yerel bolge dosyasindan (498 dugum).
+    hasar %3.23 (gecerli piksel) | yol 420 acik / 12 kapali | graf 498 dugum, 12 kapali kenar | kapsama %26.9
+      Kapanmayı bilmeyen ekip      6/16 ulasti | ort 2.467 dk | sol 4 sag 17 U 2
+      Telsizle paylaşan filo       6/16 ulasti | ort 1.93 dk | sol 2 sag 15 U 2
+      QuakeMind                    8/16 ulasti | ort 1.34 dk | sol 3 sag 11 U 0
+
+8 alan -> benchmark/reports/tatbikat_b0/sekiz_alan_segformer_mitb2.json
+=== segformer_mitb2_p2_t42 bitti cikis 0 11:35:45
+=== unet_mitb4_p2_t42 11:35:45
+model : unet_mitb4_p2_t42
+alan  : 8
+
+--- Hatay / Antakya / Narlıca (ortaokul çevresi) ---
+Yol agi yerel bolge dosyasindan (262 dugum).
+Yol agi yerel bolge dosyasindan (500 dugum).
+    HATA: afetzede bulunamadi (hasar blobu yok)
+--- Hatay / Antakya / Narlıca ---
+Yol agi yerel bolge dosyasindan (250 dugum).
+Yol agi yerel bolge dosyasindan (424 dugum).
+    HATA: afetzede bulunamadi (hasar blobu yok)
+--- Hatay / Antakya / Mansurlu ---
+Yol agi yerel bolge dosyasindan (173 dugum).
+Yol agi yerel bolge dosyasindan (335 dugum).
+    HATA: afetzede bulunamadi (hasar blobu yok)
+--- Hatay / Antakya / Türünçlü – Akdeniz – Armutlu ---
+Yol agi yerel bolge dosyasindan (288 dugum).
+Yol agi yerel bolge dosyasindan (673 dugum).
+    hasar %0.19 (gecerli piksel) | yol 548 acik / 2 kapali | graf 673 dugum, 2 kapali kenar | kapsama %15.6
+      Kapanmayı bilmeyen ekip      1/1 ulasti | ort 3.08 dk | sol 0 sag 4 U 0
+      Telsizle paylaşan filo       1/1 ulasti | ort 3.08 dk | sol 0 sag 4 U 0
+      QuakeMind                    1/1 ulasti | ort 2.08 dk | sol 0 sag 4 U 0
+--- Kahramanmaraş / Şekeroba (kuzeybatı) ---
+Yol agi yerel bolge dosyasindan (237 dugum).
+Yol agi yerel bolge dosyasindan (511 dugum).
+    hasar %0.10 (gecerli piksel) | yol 526 acik / 0 kapali | graf 511 dugum, 0 kapali kenar | kapsama %39.0
+      Kapanmayı bilmeyen ekip      1/1 ulasti | ort 0.73 dk | sol 1 sag 0 U 0
+      Telsizle paylaşan filo       1/1 ulasti | ort 0.73 dk | sol 1 sag 0 U 0
+      QuakeMind                    1/1 ulasti | ort 0.73 dk | sol 1 sag 0 U 0
+--- Kahramanmaraş / Şekeroba (orta) ---
+Yol agi yerel bolge dosyasindan (187 dugum).
+Yol agi yerel bolge dosyasindan (439 dugum).
+    hasar %0.66 (gecerli piksel) | yol 419 acik / 6 kapali | graf 439 dugum, 8 kapali kenar | kapsama %41.2
+      Kapanmayı bilmeyen ekip      25/25 ulasti | ort 1.252 dk | sol 33 sag 44 U 0
+      Telsizle paylaşan filo       25/25 ulasti | ort 1.252 dk | sol 33 sag 44 U 0
+      QuakeMind                    25/25 ulasti | ort 1.252 dk | sol 33 sag 44 U 0
+--- Gaziantep / Gökçedere ---
+Yol agi yerel bolge dosyasindan (93 dugum).
+Yol agi yerel bolge dosyasindan (156 dugum).
+    hasar %1.10 (gecerli piksel) | yol 198 acik / 0 kapali | graf 156 dugum, 0 kapali kenar | kapsama %21.3
+      Kapanmayı bilmeyen ekip      4/4 ulasti | ort 1.165 dk | sol 2 sag 3 U 0
+      Telsizle paylaşan filo       4/4 ulasti | ort 1.165 dk | sol 2 sag 3 U 0
+      QuakeMind                    4/4 ulasti | ort 1.165 dk | sol 2 sag 3 U 0
+--- Kahramanmaraş / Merkez / Şubat Stadyumu çevresi ---
+Yol agi yerel bolge dosyasindan (218 dugum).
+Yol agi yerel bolge dosyasindan (498 dugum).
+    hasar %0.40 (gecerli piksel) | yol 411 acik / 2 kapali | graf 498 dugum, 2 kapali kenar | kapsama %26.9
+      Kapanmayı bilmeyen ekip      0/1 ulasti | ort None dk | sol 0 sag 0 U 0
+      Telsizle paylaşan filo       0/1 ulasti | ort None dk | sol 0 sag 0 U 0
+      QuakeMind                    0/1 ulasti | ort None dk | sol 0 sag 0 U 0
+
+8 alan -> benchmark/reports/tatbikat_b0/sekiz_alan_unet_mitb4.json
+=== unet_mitb4_p2_t42 bitti cikis 0 11:40:45
