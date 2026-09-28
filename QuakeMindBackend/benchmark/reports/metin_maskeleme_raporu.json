@@ -1,0 +1,41 @@
+{
+ "adresNumarasiMaskelendi": false,
+ "bolmeler": {
+  "train": {
+   "kayit": 1418,
+   "telefonluKayitOnce": 702,
+   "telefonluKayitSonra": 0,
+   "maskeSayisi": {
+    "[EPOSTA]": 0,
+    "[URL]": 164,
+    "[KULLANICI]": 1963,
+    "[TELEFON]": 844
+   },
+   "adresIziKalanKayit": 1365
+  },
+  "val": {
+   "kayit": 305,
+   "telefonluKayitOnce": 145,
+   "telefonluKayitSonra": 0,
+   "maskeSayisi": {
+    "[EPOSTA]": 0,
+    "[URL]": 41,
+    "[KULLANICI]": 384,
+    "[TELEFON]": 164
+   },
+   "adresIziKalanKayit": 297
+  },
+  "test": {
+   "kayit": 305,
+   "telefonluKayitOnce": 152,
+   "telefonluKayitSonra": 0,
+   "maskeSayisi": {
+    "[EPOSTA]": 0,
+    "[URL]": 20,
+    "[KULLANICI]": 428,
+    "[TELEFON]": 177
+   },
+   "adresIziKalanKayit": 296
+  }
+ }
+}
