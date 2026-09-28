@@ -4,6 +4,10 @@ Makale §4.3 / Tablo 13'teki kör etiketleme bugüne kadar **yalnız bir yapay z
 (Claude)** tarafından yapıldı (`../etiketler_defne_elektrik.json`). Bu kit, aynı 33 kesiti
 bir insanın etiketlemesi ve iki etiketleyici arasındaki uyumun ölçülmesi için hazırlandı.
 
+**Durum (28 Eylül 2026):** bir yazar etiketledi (`../etiketler_insan_1.json`), uyum
+`../uyum.json`'da. Makale artık insan etiketini esas alıyor (kesinlik 4/5, duyarlılık ≈%9);
+Claude ikinci görüş (κ = 0,13). Yeni bir etiketleyici eklemek için aşağıdaki adımlar geçerli.
+
 ## Nasıl etiketlenir (yaklaşık 20 dakika)
 
 1. `etiketle.html` dosyasını tarayıcıda açın (çift tıklayın). İnternet gerekmez.

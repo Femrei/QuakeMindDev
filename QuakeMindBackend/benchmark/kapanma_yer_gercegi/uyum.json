@@ -1,0 +1,63 @@
+{
+ "alan": "Hatay / Defne / Elektrik Mah.",
+ "model": "unet_mitb4_p2_t42",
+ "etiketleyiciler": {
+  "Claude (tek etiketleyici), kor - model tahmini gorulmeden": {
+   "modelKapali": {
+    "kapali": 3,
+    "acik": 0,
+    "kararsiz": 2
+   },
+   "modelAcikOrnek": {
+    "kapali": 6,
+    "acik": 14,
+    "kararsiz": 8
+   },
+   "kesinlik": 1.0,
+   "kesinlikWilson95": [
+    0.43849391955098227,
+    1.0
+   ],
+   "kesinlikKararsizHata": 0.6,
+   "kacirilanKestirim": 24.213075060532688,
+   "gercekKapanmaKestirim": 27.213075060532688,
+   "gercekKapanmaOrani": 0.23061928017400582,
+   "duyarlilikKestirim": 0.11024112465521843,
+   "yargilanamayan": 0.30303030303030304
+  },
+  "Insan etiketleyici 1 (ad girilmedi), kor - model tahmini gorulmeden": {
+   "modelKapali": {
+    "kapali": 4,
+    "acik": 1,
+    "kararsiz": 0
+   },
+   "modelAcikOrnek": {
+    "kapali": 10,
+    "acik": 13,
+    "kararsiz": 5
+   },
+   "kesinlik": 0.8,
+   "kesinlikWilson95": [
+    0.3755282641185388,
+    0.9637768390302125
+   ],
+   "kesinlikKararsizHata": 0.8,
+   "kacirilanKestirim": 40.35512510088781,
+   "gercekKapanmaKestirim": 44.35512510088781,
+   "gercekKapanmaOrani": 0.3758908906854899,
+   "duyarlilikKestirim": 0.09018123589780916,
+   "yargilanamayan": 0.15151515151515152
+  }
+ },
+ "uyum": [
+  {
+   "a": "Claude (tek etiketleyici), kor - model tahmini gorulmeden",
+   "b": "Insan etiketleyici 1 (ad girilmedi), kor - model tahmini gorulmeden",
+   "kesit": 33,
+   "ayniEtiket": 14,
+   "kappa3": 0.12552301255230125,
+   "kappa2KararsizHaric": 0.36666666666666686,
+   "ikiliKesit": 19
+  }
+ ]
+}

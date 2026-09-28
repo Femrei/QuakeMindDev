@@ -1,0 +1,11 @@
+{
+ "etiketleyen": "Insan etiketleyici 1 (ad girilmedi), kor - model tahmini gorulmeden",
+ "tarih": "2026-09-28",
+ "yontem": "insan_kiti/etiketle.html; 127.0.0.1 uzerinden kullanicinin Chrome'unda; etiketler sayfadan okundu",
+ "olcut": {
+  "kapali": "parcanin belirgin bir bolumunu moloz/enkaz kutlesi ortuyor",
+  "acik": "boyunca surekli ve gecilebilir bir koridor goruluyor (asfalt/toprak, arac)",
+  "kararsiz": "golge, cozunurluk ya da GEOMETRI: cizgi gorunur bir sokagi takip etmiyor"
+ },
+ "etiket": {"P001":"acik","P002":"kapali","P003":"kapali","P004":"kapali","P005":"kararsiz","P006":"acik","P007":"acik","P008":"kapali","P009":"kapali","P010":"acik","P011":"kararsiz","P012":"kapali","P013":"acik","P014":"kapali","P015":"kapali","P016":"acik","P017":"acik","P018":"acik","P019":"kapali","P020":"kapali","P021":"acik","P022":"kararsiz","P023":"acik","P024":"kararsiz","P025":"acik","P026":"acik","P027":"acik","P028":"kararsiz","P029":"acik","P030":"kapali","P031":"kapali","P032":"kapali","P033":"kapali"}
+}
