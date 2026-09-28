@@ -71,7 +71,7 @@ def _tohum_kazanci(dosya, tohum="42"):
 
 OZET = _ozet()
 
-# --- Sekil 1: kiyas kollari (ana kosu, En iyi model, 25 cift) ---------------
+# --- Sekil 1: kiyas kollari (ana kosu, buyuk model, 25 cift) ---------------
 def sekil_kollar():
     kol = ["Kapanmayı bilmeyen\nekip", "Telsizle paylaşan\nfilo", "QuakeMind"]
     veri = {a: [OZET[(a, "U-Net MiT-B4")][k][0] for k in ("bilmeyen", "telsiz", "quakemind")]
@@ -123,7 +123,7 @@ def sekil_duyarlilik():
 
 # --- Sekil 3: model secimi, sure - dogruluk - operasyonel kazanc ------------
 def sekil_model():
-    ad = ["Hızlı\nMiT-B0", "Dengeli\nMiT-B2", "En iyi\nU-Net MiT-B4"]
+    ad = ["Hızlı\nMiT-B0", "Dengeli\nMiT-B2", "Büyük\nU-Net MiT-B4"]
     sure = [1.91, 4.71, 10.50]
     iou = [0.382, 0.409, 0.433]
     kazanc = {a: [(OZET[(a, m)]["kazanc"][0]
@@ -176,7 +176,7 @@ def sekil_sure():
     f.savefig(CIK / "sekil_sure_dagilimi.png"); plt.close(f)
 
 
-# --- Sekil 5: kesif sayisi - kazanc (Tablo 17'nin sekiz satiri) -------------
+# --- Sekil 12: kesif sayisi - kazanc (Tablo 16'nin sekiz satiri) -----------
 def sekil_kesif():
     # (alan, model, kesif [kapanmayi bilmeyen ekip], kazanc %, s.s. %, kume)
     satir = []
@@ -211,7 +211,7 @@ def sekil_kesif():
             yazi, kay = ETIKET_KESIF.get((a, x[1]), (x[1], (6, 4)))
             ax.annotate(yazi, (x[2], x[3]), textcoords="offset points", xytext=kay,
                         fontsize=6.8, color="#374151")
-    ax.set_xlabel("Keşif sayısı, kapanmayı bilmeyen ekip (makale Tablo 15)")
+    ax.set_xlabel("Keşif sayısı, kapanmayı bilmeyen ekip (makale Tablo 16)")
     ax.set_ylabel("QuakeMind kolunun kazancı (%)")
     ax.set_xlim(-1, 50); ax.set_ylim(0, 80)
     ax.set_title("Kazanç, kapanmaların ekip rotalarına düşme sıklığını izler\n"

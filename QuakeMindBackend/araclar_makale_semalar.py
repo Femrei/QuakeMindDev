@@ -167,7 +167,7 @@ def sekil_protokol():
     kutular = [
         (0.80, "#eaf1fb", MAVI, "(i) Bileşen düzeyi",
          "Her model kendi ölçütüyle, kendi ayrık sınama kümesinde değerlendirilir: bölütleme IoU_hasar\n"
-         "(Tablo 12), metin sınıflandırma mikro/makro-F₁ (Tablo 20), risk skorlaması PR-AUC (Tablo 21)."),
+         "(Tablo 12), metin sınıflandırma mikro/makro-F₁ (Tablo 21), risk skorlaması PR-AUC (Tablo 22)."),
         (0.57, "#fbeee6", "#e07a3f", "(ii) Kapanma düzeyi",
          "Kapanma katmanı, drone ortofotosu üzerinde kör olarak elle işaretlenen yol parçalarıyla\n"
          "karşılaştırılır (Bölüm 4.3): kesinlik ve duyarlılık; yargılanamayan parçalar ayrıca sayılır."),
