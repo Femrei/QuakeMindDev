@@ -72,8 +72,10 @@ class Duzenleyici:
             t = runs[kb].text
             runs[kb].text = t[:ob] + yeni + t[os_:]
         else:
-            runs[kb].text = runs[kb].text[:ob] + yeni + runs[ks].text[os_:]
-            for k in range(kb + 1, ks + 1):
+            # kalan metin son run'da, kendi biciminde kalir (kalin baslik run'ina tasinmaz)
+            runs[kb].text = runs[kb].text[:ob] + yeni
+            runs[ks].text = runs[ks].text[os_:]
+            for k in range(kb + 1, ks):
                 runs[k].text = ''
 
     def yaz(self, sub, yeni, nth=0):
