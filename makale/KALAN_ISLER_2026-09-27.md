@@ -1,25 +1,51 @@
-# Kalan İşler — makale (28 Eylül 2026, 6. tur sonrası)
+# Kalan İşler — makale (28 Eylül 2026, 8. tur sonrası)
 
 Bu dosya makalenin **gönderilebilir hâle gelmesi için kalan** işleri tutar. Bu
 makinede yapılabilen her şey yapıldı; aşağıdakiler karar, başka makine ya da
-başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-123,
+başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-128,
 `SIMULASYON_OLCUM_KAYDI.md`.
 
+**Devir (28 Eylül 23:20):** iş Furkan'a devredildi; kaldığı yer ve adımlar `makale/YAPILACAKLAR_FURKAN_2026-09-28.md`'de.
+
 **Güncel dosya:** `makale/QuakeMind_Makale_Taslak_2026-09-16_sekillieklendi_v3_LOCAL_2026-09-21.docx`
-(71 sayfa · 23 şekil · 22 tablo · 68 kaynak · 17 denklem; bütün atıflar çözülüyor)
+(72 sayfa · 23 şekil · 23 tablo · 68 kaynak · 17 denklem; bütün atıflar çözülüyor)
 
 **Yedekler (`makale/arsiv/`, yalnız yerel — depoda değil):** `..._pre_simulasyon_revizyonu_...` (1. tur öncesi) ·
 `..._pre_tarama_revizyonu_...` (2. tur öncesi) · `..._pre_revize3/4/5_...` (3. tur adımları) ·
-`..._pre_revize6/7/8/9_...` (4. tur) · `..._pre_revize10/11_...` (5. tur) · `..._pre_revize12_...` (6. tur)
+`..._pre_revize6/7/8/9_...` (4. tur) · `..._pre_revize10/11_...` (5. tur) · `..._pre_revize12/13_...` (6. tur) · `..._pre_revize14_...` (7. tur) · `..._pre_revize15/16_...` (8. tur)
 
-**Betikler (`makale/analiz_arsivi/`):** `revize2*.py`, `revize3.py` … `revize12.py`,
+**Betikler (`makale/analiz_arsivi/`):** `revize2*.py`, `revize3.py` … `revize16.py`,
 `yardimci.py` — her biri kendi yedeğinden başlar, yeniden çalıştırılabilir
 (yollar oturumun scratchpad'ine göre yazılı; başka yerde çalıştırmak için `sys.path` ve
 `SRC/DST` satırlarını düzeltin).
 
 ---
 
-## Bu turda yapılanlar (6. tur, 28 Eylül) — ölçülmemiş eksiklerin kapatılması (revize12)
+## Bu turda yapılanlar (8. tur, 28 Eylül akşamı) — GPU paketi: genelleme ve çoklu tohum (revize15, revize16)
+
+- **Kaggle'da dört oturum koşuldu** (Chrome'dan; kayıtlar `makale/analiz_arsivi/kaggle/sonuclar/`, günlükten
+  `gunluk_ayikla.py` ile çıkarılıyor; çıktı indirilmiyor).
+- **§4.4 bölgeler arası genelleme ölçüldü, yeni Tablo 14:** görülmemiş ilde IoU_hasar 0,05–0,10 düşük; dört
+  koşunun üçünde yalnız çıkarılan il düşüyor. Eski Tablo 14–22 artık 15–23.
+- **Çoklu tohum:** üç mimari × üç tohum. Tohum oynaması ±0,02 değil, SS 0,024–0,043 (EKSIKLER J-131).
+  Mimari sıralaması, kodlayıcı iddiası ve "bölütlemeyi artırmak kazancı artırmıyor" yorumu ölçüye göre
+  yeniden yazıldı; tatbikattaki U-Net etiketi "En iyi" → "Büyük".
+- **Hâlâ koşan:** il dışarıda bırakma deneyi iki ek tohumla (oturum 5 U-Net, oturum 6 SegFormer; ~02:30).
+  Bitince `revize15.py` çoklu tohumlu tabloya genişletilip §4.4 kesinleştirilecek.
+- 72 sayfa · 23 şekil · 23 tablo · 68 kaynak · 17 denklem; atıf ve sayfa düzeni denetimi temiz.
+
+## Önceki tur (7. tur, 28 Eylül) — kapanma yer gerçeği insan etiketiyle (revize14)
+
+- **J-126 kapandı.** Bir yazar 33 kesiti kör etiketledi. İnsan etiketi esas, Claude ikinci görüş:
+  kesinlik **4/5** (Wilson %38–96), duyarlılık **≈%9**, yargılanamayan %15. Claude 3/3, ≈%11, %30.
+- **Uyum zayıf:** 33 kesitin 14'ü aynı; Cohen κ 0,13 (üç sınıf), 0,37 (kararsız hariç).
+- **Makaledeki bir cümle değişti:** "model yanlış alarm üretmiyor" → "az yanlış alarm üretiyor"
+  (kapalı dediği beş parçanın biri insana göre açık). Tablo 13 iki etiketleyici sütunu ve uyum
+  satırıyla yeniden kuruldu; ÖZ, Abstract, §4.1, §4.3, §5.1, §5.3, §5.4, §6, Tablo 22 güncellendi.
+- 71 sayfa korundu; atıf, tablo, şekil ve denklem denetimi temiz. Gönderim kopyası
+  (`QuakeMind_Makale_GONDERIM_vurgusuz.docx`) yeniden üretildi.
+
+## Önceki tur (6. tur, 28 Eylül) — ölçülmemiş eksiklerin kapatılması (revize12)
 
 - **A\* çapraz doğrulandı:** 248 sorguda bağımsız Dijkstra ile aynı (`araclar_astar_capraz.py`).
 - **Kalan sekiz alan koşuldu:** eski "ayrışmadı" cümlesi yanlıştı; üç alan tek modelde ayrışıyor.
@@ -32,7 +58,7 @@ başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-123
 - **İki ciddi bulgu makaleye yazıldı:** kapanma etiketlerini Claude yapmış (J-126); metin kümesinde
   telefon numarası ve adres var (J-127). Etik ve Veri Erişilebilirliği düzeltildi.
 
-## Önceki tur (5. tur, 28 Eylül)
+## Daha önceki tur (5. tur, 28 Eylül)
 
 - **B0 yeniden koşusu bu makinede tamamlandı.** Ağırlıklar Kaggle'dan, SHA-256 doğrulandı; yol
   verisi PBF'ten yeniden üretildi. Bütün tatbikat sayıları düzeltilmiş kodla yeniden üretildi
@@ -122,13 +148,10 @@ başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-123
 ## KALAN İŞLER
 
 ### A. 🔴 Sizin karar ya da bilgi vermeniz gerekenler
-- [ ] **Kapanma etiketlemesini bir yazar yapmalı (J-126).** Bugünkü "yer gerçeği" Claude'un etiketi.
-  Kit hazır: `QuakeMindBackend/benchmark/kapanma_yer_gercegi/insan_kiti/etiketle.html` (33 kesit,
-  yaklaşık 20 dk; nasıl yapılacağı `BENIOKU.md`'de). Etiket dosyası gelince `araclar_kapanma_uyum.py` ile
-  ölçer, makaledeki "yapay zekâ etiketleyici" notlarını insan sonucuyla değiştiririm.
-- [ ] **Metin kümesinde kişisel veri (J-127).** Telefon numarası ve adres içeren kayıtlar var. Paylaşım
-  politikası (şu an "maskelendikten sonra istek üzerine") ve gerekiyorsa etik kurul / KVKK
-  değerlendirmesi sizin kararınız.
+- [ ] **Metin kümesinde kişisel veri (J-127).** Kayıtların %49'unda telefon numarası, %97'sinde adres var.
+  Maskeli yerel kopya hazır (telefon, kullanıcı adı ve URL maskeli; adresler duruyor):
+  `C:/Users/utkuc/quakemind_ozel/intent_test_v13_maskeli/`. Paylaşımda bu kopyanın kullanılması,
+  adreslerin de maskelenmesi ve gerekiyorsa etik kurul / KVKK değerlendirmesi sizin kararınız.
 - [ ] **ORCID numaraları ve sorumlu yazar** (başlık altındaki yer tutucu, P5) — sonra.
 - [ ] **Hedef dergi** — seçilince biçim (kaynak stili, sayfa sınırı, çift kör başlık
   sayfası) ayarlanır.
@@ -148,14 +171,16 @@ bugün düzeltme öncesi hatla ölçülmüş diye yazılı; tam koşu bu notu ka
 - [ ] **B2 — Tablo 11 sürümleri:** `pip freeze` ile Python/PyTorch/Ultralytics/Transformers
   sürümlerini doğrula (makaledeki sürümler bu makinedeki ortamla ve ölçüm kaydıyla
   tutmuyor; J-118).
-- [ ] **B6 — Ham sonuçları depoya koy:** B0'daki `sonuc_*.json` ve `tatbikat_ozet.json`
-  `benchmark/reports/` altına (birleştirici artık depoda: `araclar_tatbikat_ozet.py`).
+- [x] **B6 — Ham sonuçlar depoda:** `QuakeMindBackend/benchmark/reports/tatbikat_b0/` (17 dosya:
+  `sonuc_*.json`, `duy_*.json`, `tatbikat_ozet.json`, `pip_freeze.txt`, günlük).
 
 ### C. 🟡 Ekip içi / GPU — hazır ayarlar: `makale/analiz_arsivi/GPU_IS_PAKETI_2026-09-28.md`
-- [ ] **İl-ayrık genelleme (isteğe bağlı):** yapılırsa §4.4'e tablo olarak geri eklenir;
-  Furkan'ın 25 Eylül iş paketindeki "İŞ 2" (veri il etiketiyle yeniden bölünmeli).
-- [ ] **Çoklu tohum:** Tablo 12'deki on mimari tek tohumlu; en az 3 tohum sınırlılık
-  (o)'yu kapatır.
+**28 Eylül 15:02 ve 15:15'te Kaggle'da başlatıldı** (Chrome'dan, GPU T4 ×2, internet açık, veri paketi
+bağlı): `kaggle.com/code/furkanemrence/03-kaggle-protokol-oturum1-coklu-tohum` ve
+`.../03-kaggle-protokol-oturum2-bolgeler-arasi`, her ikisinde sürüm 2. Tahmini bitiş 1. oturum ~21:30,
+2. oturum ~19:45. Bitince Output'tan `QuakeMind_egitim/` indirilip `tohum_*/sonuc.json` makaleye işlenecek.
+- [x] **İl dışarıda bırakma genellemesi:** ölçüldü, §4.4 ve Tablo 14 (revize15); iki ek tohumla yineleme sürüyor (oturum 5, 6).
+- [x] **Çoklu tohum:** üç mimaride üç tohum (revize16); oynama büyük çıktı, iddialar buna göre yazıldı (J-131).
 - [x] **YOLO mAP ve metin F₁:** metin üst kategori F₁ ölçüldü; YOLO için eğitim doğrulama
   bölmesindeki mAP girdi. Kalan: bağımsız saha sınama kümesi (etiketli fotoğraf) — insan işi.
 
