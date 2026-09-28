@@ -1,0 +1,16 @@
+{
+  "id": "furkanemrence/quakemind-oturum2-bolgeler-arasi",
+  "title": "quakemind-oturum2-bolgeler-arasi",
+  "code_file": "03_kaggle_protokol_oturum2_bolgeler_arasi.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "dataset_sources": ["furkanemrence/quakemind-veri-paketi"],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

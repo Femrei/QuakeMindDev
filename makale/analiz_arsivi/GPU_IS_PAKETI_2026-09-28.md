@@ -24,6 +24,50 @@ Makale tarafını ben güncellerim.
 İkisinde de `AGIRLIK_SAKLA = False` ve `GORSEL = False`; yalnız ölçüm gerektiği için çıktı
 küçük kalır.
 
+**Durum (28 Eylül):** iki oturum da başlatıldı (sürüm 2; oturum 1 15:02, oturum 2 15:15).
+Tarayıcıdan içe aktarımda işe yarayan yol: defterin `metadata.kaggle` alanına
+`{"accelerator": "nvidiaTeslaT4", "dataSources": [{"sourceType": "datasetVersion", "sourceId": 19876899}],
+"isInternetEnabled": true}` yazılınca veri paketi kendiliğinden bağlanıyor; hızlandırıcı yine de
+düzenleyicideki Session options'tan GPU T4 ×2 seçilmeli. İçe aktarırken Advanced Settings →
+Quick Save seçilirse defter koşmadan kaydolur.
+
+**Kuyruk uyarısı (28 Eylül, 2. oturum günlüğünden).** Kuyruk hücresi (9) her deneyde 0. hücreyi değil,
+deftere gömülü eski ayar kaynağını (`_KAYNAK["ayar"]`) yeniden çalıştırıyor. O kaynağın sonunda
+`MODEL_ADI = "unet_mitb4"` var; `TOHUMLAR = [42]`, `BOLGE_EGITIMI = None`, `AGIRLIK_SAKLA = True`,
+`GORSEL = True` da oradan gelir. 0. hücreye eklenen oturum ayarları yalnız ilk koşuya uygulanır. Bu
+yüzden 2. oturumda `dict(BOLGE_EGITIMI="haric:Kahramanmaraş")` SegFormer yerine U-Net koştu; son öğe
+aynı deney olduğu için atlandı. 1. oturumun kuyruk öğeleri modeli ve tohumları açıkça verdiği için
+etkilenmedi (yalnız ağırlık ve görsel de yazılıyor). Kuyruğa her öğeyi bütün farklı ayarlarıyla yazın.
+
+**2. oturum sonucu (bitti, 9 946 sn, GPU T4).** Sınama IoU_hasar (Hatay 34, Kahramanmaraş 32 karo):
+
+| Model | Eğitim (karo) | Hatay | Kahramanmaraş | Tümü (91) |
+|---|---|---|---|---|
+| U-Net MiT-B4 | birleşik (1 013) | 0,366 | 0,456 | 0,433 |
+| U-Net MiT-B4 | Hatay hariç (521) | 0,315 | 0,401 | 0,367 |
+| U-Net MiT-B4 | Kahramanmaraş hariç (798) | 0,364 | 0,381 | 0,388 |
+| SegFormer MiT-B4 | birleşik (1 013) | 0,387 | 0,399 | 0,407 |
+| SegFormer MiT-B4 | Hatay hariç (521) | 0,289 | 0,395 | 0,374 |
+
+Birleşik değerler rapor paketindeki `kosu_kayitlari/kaggle/P2/*/tohum_42.json`'dan; SegFormer için Tablo 12 ile aynı, artırım tohumlu `tohum_42__2` kaydı (ilk `tohum_42` eski kodla koşmuştu, 0,426). SegFormer
+Kahramanmaraş hariç koşulmadı (yukarıdaki kuyruk sorunu). Tek tohum.
+
+**Ek oturumlar (28 Eylül akşamı).** Tek deneylik defterler, kuyruk yok (`KUYRUK = []`):
+- `kaggle/oturum3_segformer_haric_maras/` — SegFormer-B4, Kahramanmaraş dışarıda (2. oturumda kuyruk
+  sorunu yüzünden koşmayan deney). 19:04'te başladı.
+- `kaggle/oturum4_segformer_tohum7/` — SegFormer-B4 tohum 7, yeni kodla (artırım tohumlu). Eski
+  `tohum_7` kaydı eski kodla koşmuştu (EKSIKLER J-130). Kaggle aynı anda en çok iki GPU koşusuna izin
+  veriyor ("Maximum batch GPU session count of 2").
+- **Durum (22:50):** oturum 1–4 bitti, sonuçlar `sonuclar/` altında ve makalede (revize15, revize16).
+- `kaggle/oturum5_unet_haric_tohumlar/`, `kaggle/oturum6_segformer_haric_tohumlar/` — il dışarıda bırakma,
+  tohum 7 ve 2026 (kuyruk öğesinde bütün ayarlar açık). 22:27 ve 22:47'de başladı; tahmini bitiş ~02:15 ve
+  ~02:30. Kaggle adresi 6. oturumda kısaltılmış: `03-kaggle-protokol-oturum6-segformer-haric-tohumla`.
+
+**Sonuçların alınması.** Çıktı (ağırlıklarla yüzlerce MB) indirilmez; defter her sonucu günlüğe de
+bastığı için yalnız günlük indirilir (Logs → Download Logs) ve `kaggle/gunluk_ayikla.py gunluk.txt
+<klasör>` ile `<deney>__<model>__tohum_<n>.json` dosyaları çıkarılır. Kayıtlar `kaggle/sonuclar/`
+altında; birleşik eğitim tabanı `sonuclar/birlesik_P2/` (rapor paketi v2'den kopya).
+
 Adımlar (her oturum için):
 1. Kaggle → Create → New Notebook → File → Import Notebook ile ilgili `.ipynb` dosyasını yükleyin.
 2. Add Input bölümünden `furkanemrence/quakemind-veri-paketi` veri setini ekleyin.
