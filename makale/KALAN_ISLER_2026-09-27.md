@@ -193,6 +193,13 @@ olanlar: A'daki beş madde ve B'deki yazar okuması.
   - etik kurul / KVKK değerlendirmesi gerekiyor mu.
 
   Maskeli yerel kopya hazır: `C:/Users/utkuc/quakemind_ozel/intent_test_v13_maskeli/`.
+- [ ] **İntihal taraması (iThenticate / Turnitin).** Gönderimden önce şart. KTO Karatay aboneliğinden
+  (kütüphane ya da enstitü) yapılmalı; Claude'un erişimi yok.
+  - Belge **içi** tekrar taraması 29 Eylül'de yapıldı ve temiz çıktı (`makale/analiz_arsivi/tekrar.py`;
+    784 cümlede 3 birebir tekrar, hepsi meşru). **Bu intihal taraması değildir**, dışarıdan kopyalanan
+    metni bulmaz — yalnızca belge içi tekrarı gösterir.
+  - Tarama sonucu gelince: eşleşme oranı ve kaynak listesi değerlendirilmeli; kendi önceki
+    yayınlarımızla örtüşme varsa (öz-intihal) atıfla belirtilmeli.
 - [ ] **ORCID numaraları ve sorumlu yazar** (başlıktaki yer tutucu).
 - [ ] **Hedef dergi.** Seçilince kaynak stili, sayfa sınırı ve kör hakem başlığı ayarlanır. Makale 72
   sayfa; en büyük iş muhtemelen kısaltma.
