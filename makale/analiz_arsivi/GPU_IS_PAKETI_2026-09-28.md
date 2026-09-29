@@ -60,8 +60,8 @@ Kahramanmaraş hariç koşulmadı (yukarıdaki kuyruk sorunu). Tek tohum.
   veriyor ("Maximum batch GPU session count of 2").
 - **Durum (22:50):** oturum 1–4 bitti, sonuçlar `sonuclar/` altında ve makalede (revize15, revize16).
 - `kaggle/oturum5_unet_haric_tohumlar/`, `kaggle/oturum6_segformer_haric_tohumlar/` — il dışarıda bırakma,
-  tohum 7 ve 2026 (kuyruk öğesinde bütün ayarlar açık). 22:27 ve 22:47'de başladı; tahmini bitiş ~02:15 ve
-  ~02:30. Kaggle adresi 6. oturumda kısaltılmış: `03-kaggle-protokol-oturum6-segformer-haric-tohumla`.
+  tohum 7 ve 2026 (kuyruk öğesinde bütün ayarlar açık). 22:27 ve 22:47'de başladı; ikisi de başarıyla bitti (14 319 ve 12 787 sn),
+  sonuçlar `sonuclar/oturum5_*`, `oturum6_*` ve makalede (revize17). Kaggle adresi 6. oturumda kısaltılmış: `03-kaggle-protokol-oturum6-segformer-haric-tohumla`.
 
 **Sonuçların alınması.** Çıktı (ağırlıklarla yüzlerce MB) indirilmez; defter her sonucu günlüğe de
 bastığı için yalnız günlük indirilir (Logs → Download Logs) ve `kaggle/gunluk_ayikla.py gunluk.txt
