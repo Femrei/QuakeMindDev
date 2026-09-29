@@ -168,7 +168,8 @@ görsel olarak kullanılabilir ama makaleye giren bu.
 > noktalardan birinin gerçek fotoğrafı ve modelin üzerinde bulduğu kutulardır.
 > Görüntü, fotoğraflar ve bütün model çıktıları gerçektir; ihbar metinleri ile
 > kamera ve metin kayıtlarının harita konumları üretilmiştir. Fotoğraflar aynı
-> depremin (6 Şubat 2023) Hatay ve Adıyaman'dan çekilmiş kareleridir, gösterilen
+> depremlerin ardından çekilmiş gerçek kareleridir (dokuzu Hatay/Antakya'da,
+> dördünün ili kaynakta belirtilmemiş), gösterilen
 > mahallenin fotoğrafı değildir.
 
 **Neden bu şekil gerekli:** §1'de "yazında hasar algılama, yol erişilebilirliği
