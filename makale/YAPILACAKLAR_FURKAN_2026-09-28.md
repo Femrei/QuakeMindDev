@@ -1,5 +1,13 @@
 # Yapılacaklar: Furkan'a devir (28 Eylül 2026, 23:20)
 
+> **Güncelleme (29 Eylül):** Bölüm 2 ve 3 tamamlandı. Oturum 5 ve 6 bitti, sonuçları alındı ve §4.4 üç
+> tohumla kesinleştirildi (`makale/analiz_arsivi/revize17.py`). Görülmemiş ilde IoU_hasar üç tohum
+> ortalamasında 0,04–0,08 düşük; düşüş 12 eşleşmenin 11'inde. Makalede ölçülebilir eksik kalmadı. Senden
+> beklenen yalnız Bölüm 5'teki karar ve insan işleri.
+> **Güncel kalan işler listesi:** `makale/KALAN_ISLER_2026-09-27.md` → "KALAN İŞLER (29 Eylül)". Bölüm 5
+> onun özetidir. `makale/arsiv/` yedekleri 29 Eylül'de temizlendi; betiği yeniden koşmak için güncel docx'i
+> yedek olarak kopyala.
+
 Bu dosya, Utku'nun Claude Code oturumunda yarıda kalan işin devridir. Oturum burada durduruldu.
 Aşağıdaki sırayla ilerlenirse kaldığı yerden devam edilir. Her sayının kaynağı dosya yoluyla verildi.
 Kural gereği hiçbir sayı kestirimle doldurulmaz (CLAUDE.md §1, §8).
@@ -19,8 +27,8 @@ Kural gereği hiçbir sayı kestirimle doldurulmaz (CLAUDE.md §1, §8).
 | Kapanma yer gerçeği insan etiketiyle (§4.3, Tablo 13; revize14) | ✅ bitti |
 | Bölgeler arası genelleme, tek tohum (§4.4, yeni Tablo 14; revize15) | ✅ makalede |
 | Çoklu tohum, üç mimari × üç tohum (Tablo 12 dipnotu, sınırlılık o; revize16) | ✅ makalede |
-| Genellemenin çoklu tohumla yinelenmesi (Kaggle oturum 5, 6) | ⏳ **koşuyor, ~02:40'ta biter**: sonuçları alıp §4.4'ü kesinleştirmek sende (Bölüm 2–3) |
-| Commit / push | ❌ **yapılmadı**: değişiklikler yalnız Utku'nun makinesinde (Bölüm 1) |
+| Genellemenin çoklu tohumla yinelenmesi (Kaggle oturum 5, 6) | ✅ bitti, §4.4 ve Tablo 14 üç tohumlu (revize17, 29 Eylül) |
+| Commit / push | ✅ 28 Eylül işleri `makale` dalında (68a1cf3); 29 Eylül (revize17) işleri ayrıca push'lanacak |
 
 ---
 

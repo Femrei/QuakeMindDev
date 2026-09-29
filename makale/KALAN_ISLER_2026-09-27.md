@@ -1,8 +1,8 @@
-# Kalan İşler — makale (28 Eylül 2026, 8. tur sonrası)
+# Kalan İşler — makale (29 Eylül 2026, 9. tur sonrası)
 
 Bu dosya makalenin **gönderilebilir hâle gelmesi için kalan** işleri tutar. Bu
 makinede yapılabilen her şey yapıldı; aşağıdakiler karar, başka makine ya da
-başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-128,
+başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-131,
 `SIMULASYON_OLCUM_KAYDI.md`.
 
 **Devir (28 Eylül 23:20):** iş Furkan'a devredildi; kaldığı yer ve adımlar `makale/YAPILACAKLAR_FURKAN_2026-09-28.md`'de.
@@ -10,18 +10,25 @@ başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-128
 **Güncel dosya:** `makale/QuakeMind_Makale_Taslak_2026-09-16_sekillieklendi_v3_LOCAL_2026-09-21.docx`
 (72 sayfa · 23 şekil · 23 tablo · 68 kaynak · 17 denklem; bütün atıflar çözülüyor)
 
-**Yedekler (`makale/arsiv/`, yalnız yerel — depoda değil):** `..._pre_simulasyon_revizyonu_...` (1. tur öncesi) ·
-`..._pre_tarama_revizyonu_...` (2. tur öncesi) · `..._pre_revize3/4/5_...` (3. tur adımları) ·
-`..._pre_revize6/7/8/9_...` (4. tur) · `..._pre_revize10/11_...` (5. tur) · `..._pre_revize12/13_...` (6. tur) · `..._pre_revize14_...` (7. tur) · `..._pre_revize15/16_...` (8. tur)
+**Yedekler:** `makale/arsiv/` altındaki yerel revizyon yedekleri (~440 MB) ve eski makale sürümleri 29 Eylül'de
+temizlendi. Yedekler Geri Dönüşüm Kutusu'nda; commit'lenmiş sürümler git geçmişinde (ör. `68a1cf3` = revize16
+sonrası, bu turun commit'i = revize17 sonrası).
 
-**Betikler (`makale/analiz_arsivi/`):** `revize2*.py`, `revize3.py` … `revize16.py`,
-`yardimci.py` — her biri kendi yedeğinden başlar, yeniden çalıştırılabilir
-(yollar oturumun scratchpad'ine göre yazılı; başka yerde çalıştırmak için `sys.path` ve
-`SRC/DST` satırlarını düzeltin).
+**Betikler (`makale/analiz_arsivi/`):** `revize2*.py`, `revize3.py` … `revize17.py`,
+`yardimci.py`, `cikar.py`, `atif.py`. Yedekler temizlendiği için bir betiği yeniden çalıştırmak üzere
+güncel docx'in kopyasını `SRC` olarak verin; revize13–16'da `sys.path` Utku'nun geçici klasörüne göre yazılı,
+`revize17.py` depo içi yollarla çalışır.
 
 ---
 
-## Bu turda yapılanlar (8. tur, 28 Eylül akşamı) — GPU paketi: genelleme ve çoklu tohum (revize15, revize16)
+## Bu turda yapılanlar (9. tur, 29 Eylül) — genelleme üç tohumla (revize17)
+
+- Kaggle oturum 5 ve 6 bitti (il dışarıda bırakma, tohum 7 ve 2026). Tablo 14 artık üç tohumun ortalama ± SS'si.
+- Görülmemiş ilde IoU_hasar 0,04–0,08 düşük (%9–22); düşüş 12 eşleşmenin 11'inde. ÖZ, Abstract, §4.4,
+  Tablo 23 ve "tek tohumla" diyen cümleler güncellendi. 72 sayfa; atıf ve sayfa düzeni denetimi temiz.
+- `YAPILACAKLAR_FURKAN_2026-09-28.md`'nin 2. ve 3. bölümleri tamamlandı; kalanlar 5. bölümdeki karar ve insan işleri.
+
+## Önceki tur (8. tur, 28 Eylül akşamı) — GPU paketi: genelleme ve çoklu tohum (revize15, revize16)
 
 - **Kaggle'da dört oturum koşuldu** (Chrome'dan; kayıtlar `makale/analiz_arsivi/kaggle/sonuclar/`, günlükten
   `gunluk_ayikla.py` ile çıkarılıyor; çıktı indirilmiyor).
@@ -30,8 +37,7 @@ başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-128
 - **Çoklu tohum:** üç mimari × üç tohum. Tohum oynaması ±0,02 değil, SS 0,024–0,043 (EKSIKLER J-131).
   Mimari sıralaması, kodlayıcı iddiası ve "bölütlemeyi artırmak kazancı artırmıyor" yorumu ölçüye göre
   yeniden yazıldı; tatbikattaki U-Net etiketi "En iyi" → "Büyük".
-- **Hâlâ koşan:** il dışarıda bırakma deneyi iki ek tohumla (oturum 5 U-Net, oturum 6 SegFormer; ~02:30).
-  Bitince `revize15.py` çoklu tohumlu tabloya genişletilip §4.4 kesinleştirilecek.
+- İl dışarıda bırakmanın iki ek tohumla yinelenmesi (oturum 5, 6) 9. turda işlendi (revize17).
 - 72 sayfa · 23 şekil · 23 tablo · 68 kaynak · 17 denklem; atıf ve sayfa düzeni denetimi temiz.
 
 ## Önceki tur (7. tur, 28 Eylül) — kapanma yer gerçeği insan etiketiyle (revize14)
@@ -145,56 +151,68 @@ başka kişi gerektiriyor. Ayrıntılar: `EKSIKLER_VE_SORUNLAR.md` J-111…J-128
 
 ---
 
-## KALAN İŞLER
+## KALAN İŞLER (29 Eylül, güncel liste)
 
-### A. 🔴 Sizin karar ya da bilgi vermeniz gerekenler
-- [ ] **Metin kümesinde kişisel veri (J-127).** Kayıtların %49'unda telefon numarası, %97'sinde adres var.
-  Maskeli yerel kopya hazır (telefon, kullanıcı adı ve URL maskeli; adresler duruyor):
-  `C:/Users/utkuc/quakemind_ozel/intent_test_v13_maskeli/`. Paylaşımda bu kopyanın kullanılması,
-  adreslerin de maskelenmesi ve gerekiyorsa etik kurul / KVKK değerlendirmesi sizin kararınız.
-- [ ] **ORCID numaraları ve sorumlu yazar** (başlık altındaki yer tutucu, P5) — sonra.
-- [ ] **Hedef dergi** — seçilince biçim (kaynak stili, sayfa sınırı, çift kör başlık
-  sayfası) ayarlanır.
+Makalede ölçülebilir bir eksik kalmadı. Kalanlar karar ya da insan işi. Gönderim için şart
+olanlar: A'daki beş madde ve B'deki yazar okuması.
 
-### B0. ✅ Yeniden koşu — TAMAMLANDI (28 Eylül, ikinci makine)
-Tek komut: `bash QuakeMindBackend/araclar_b0_kos.sh` (çıktılar `benchmark/reports/tatbikat_b0/`).
-Önkoşullar: P2 ağırlıkları (`apps/road_damage/models/*_p2_t42.pth`; Kaggle
-`furkanemrence/quakemind-modeller`: `segformer_mitb0.pth`, `segformer_mitb2.pth`, `unet_mitb4.pth`,
-künye adlarıyla) ve `roads.gpkg` (`araclar_yerel_osm_kur.py --pbf ...`; `pyrosm` gerekir).
-Tablo 17 için ayrıca: `araclar_tatbikat_kos.py --sec Nurdagi --model unet_mitb4_p2_t42 --tohum 42
---guzergah`. Şekiller: `araclar_makale_sekilleri.py` (JSON'dan okur).
+### A. 🔴 Ekip kararı (gönderimden önce şart)
+- [ ] **Kişisel veri (J-127).** Metin kümesinde telefon numarası (%49) ve adres (%97) var. Karar verilecekler:
+  - paylaşımda maskeli kopya mı kullanılacak;
+  - adresler de maskelenecek mi;
+  - etik kurul / KVKK değerlendirmesi gerekiyor mu.
 
-Kalan (isteğe bağlı): i7'de `python araclar_kanal_olc.py` — Tablo 14'teki metin gecikmesi
-bugün düzeltme öncesi hatla ölçülmüş diye yazılı; tam koşu bu notu kaldırır.
+  Maskeli yerel kopya hazır: `C:/Users/utkuc/quakemind_ozel/intent_test_v13_maskeli/`.
+- [ ] **ORCID numaraları ve sorumlu yazar** (başlıktaki yer tutucu).
+- [ ] **Hedef dergi.** Seçilince kaynak stili, sayfa sınırı ve kör hakem başlığı ayarlanır. Makale 72
+  sayfa; en büyük iş muhtemelen kısaltma.
+- [ ] **GitHub deposunun görünürlüğü.** Veri Erişilebilirliği'ndeki bağlantı, depo özel olduğu için açılmıyor.
+- [ ] **Roboflow API anahtarının iptali ve yenilenmesi.** Git geçmişinde açıkta (`9d4cc22`, `55a50d1`).
+  Güvenlik sorunu.
 
-### B. 🟠 Aynı makinede ek işler
-- [ ] **B2 — Tablo 11 sürümleri:** `pip freeze` ile Python/PyTorch/Ultralytics/Transformers
-  sürümlerini doğrula (makaledeki sürümler bu makinedeki ortamla ve ölçüm kaydıyla
-  tutmuyor; J-118).
-- [x] **B6 — Ham sonuçlar depoda:** `QuakeMindBackend/benchmark/reports/tatbikat_b0/` (17 dosya:
-  `sonuc_*.json`, `duy_*.json`, `tatbikat_ozet.json`, `pip_freeze.txt`, günlük).
+### B. 🟠 İnsan işi
+- [ ] **İkinci insan etiketleyici (önerilir).** Utku dışında bir yazar aynı 33 kapanma kesitini etiketlesin
+  (~20 dk); insanlar arası κ ölçülür, §4.3 güçlenir.
+  - Kit: `QuakeMindBackend/benchmark/kapanma_yer_gercegi/insan_kiti/etiketle.html`
+  - Ölçüm: `araclar_kapanma_uyum.py`
+- [ ] **Yazar okuması.** Bütün makale baştan sona okunmalı. Sarı vurgulu revizyon cümlelerinin (204 vurgu)
+  iç tutarlılığı da bu okumada denetlenmeli; eski listelerdeki "sarı vurgu tutarlılık taraması" maddesi budur.
 
-### C. 🟡 Ekip içi / GPU — hazır ayarlar: `makale/analiz_arsivi/GPU_IS_PAKETI_2026-09-28.md`
-**28 Eylül 15:02 ve 15:15'te Kaggle'da başlatıldı** (Chrome'dan, GPU T4 ×2, internet açık, veri paketi
-bağlı): `kaggle.com/code/furkanemrence/03-kaggle-protokol-oturum1-coklu-tohum` ve
-`.../03-kaggle-protokol-oturum2-bolgeler-arasi`, her ikisinde sürüm 2. Tahmini bitiş 1. oturum ~21:30,
-2. oturum ~19:45. Bitince Output'tan `QuakeMind_egitim/` indirilip `tohum_*/sonuc.json` makaleye işlenecek.
-- [x] **İl dışarıda bırakma genellemesi:** ölçüldü, §4.4 ve Tablo 14 (revize15); iki ek tohumla yineleme sürüyor (oturum 5, 6).
-- [x] **Çoklu tohum:** üç mimaride üç tohum (revize16); oynama büyük çıktı, iddialar buna göre yazıldı (J-131).
-- [x] **YOLO mAP ve metin F₁:** metin üst kategori F₁ ölçüldü; YOLO için eğitim doğrulama
-  bölmesindeki mAP girdi. Kalan: bağımsız saha sınama kümesi (etiketli fotoğraf) — insan işi.
+### C. 🟡 İsteğe bağlı (makaleyi güçlendirir, şart değil)
+- [ ] **i7 makinesi:**
+  - `pip freeze` ile Tablo 11 yazılım sürümlerinin doğrulanması (J-118);
+  - `python araclar_kanal_olc.py` ile Tablo 15 metin gecikmesinin yeniden ölçülmesi.
+- [ ] **YOLO bağımsız saha sınama kümesi** (etiketli fotoğraf). Makalede şimdilik eğitim doğrulama değeri
+  var ve iyimser olduğu yazılı.
+- [ ] **Veri miktarıyla eşlenmiş genelleme kıyası.** Birleşik eğitimden aynı sayıda karo rastgele
+  çıkarılır; böylece "U-Net, Hatay hariç" durumunda veri azlığı ile görülmemiş il etkisi ayrılır. ~2–3 GPU
+  saati; §4.4'te gelecek çalışma olarak yazılı.
 
-### D. ⚪ Gönderim öncesi
-- [x] Sayfa düzeni okuması (revize9, 27 Eylül). Kalan: Tablo 15'in sütun genişlikleri
-  yeniden koşudan sonra ayarlanacak (sütunlar değişecek: keşif iki kola ayrılıyor, ceza payı
-  ekleniyor); yazar gözüyle içerik okuması sizde.
-- [x] Şekil 1 eksen çakışması — şekil kaynağa bağlı olarak yeniden çizildi (J-124).
-- [ ] Roboflow API anahtarı iptali + yenileme (git geçmişinde açık: `9d4cc22`/`55a50d1`).
-- [x] J-119 güvenlik: eski kayıt/giriş uçları rolü istemciden almıyor, varsayılan kapalı
-  (27 Eylül). Kalan: eski `/api/auth/me` belirteci URL'de taşıyor — eski web kalkınca
-  uçla birlikte kaldırılacak.
-- [x] Yeni sürüm GitHub'da (`makale` dalı) — Drive yerine GitHub kullanılıyor (kullanıcı
-  kararı, 27 Eylül).
-- [x] Değişiklikler konu başına commit'lendi ve `makale` dalı push edildi (27 Eylül).
-  Revizyon yedekleri (`makale/arsiv/..._pre_revize*`, toplam ~240 MB) depoya girmedi,
-  yalnız bu makinede; aynı sürümler git geçmişinde.
+### D. ⚪ Makale dışı (ürün kodu; sınırlılık olarak makalede yazılı)
+- [ ] **J-129:** Kaggle defter üretecindeki kuyruk sorunu kalıcı düzeltilmeli
+  (`QuakeMind_veri/araclar/defter_dokuz_model.py`).
+- [ ] **J-115:** Kamera eşiği kodda 0,20, fiilen 0,25 (makalede doğrusu yazılı, kod düzeltilmedi).
+- [ ] **J-123 ve J-128:** Metin modeli yol kapanması ihbarlarıyla yeniden eğitilmeli; üretim ağırlığındaki
+  sınama sızıntısı giderilmeli.
+- [ ] **Güvenlik:**
+  - üretim dağıtımında `QUAKEMIND_DEMO_TOKEN=false` (eski DURUM B-1/3);
+  - eski `/api/auth/me` belirteci URL'de taşıyor, eski web kalkınca uçla birlikte kaldırılacak (J-119 kalıntısı).
+- [ ] **Kaggle hesabı:** Boş `notebook2195d8897c` taslağı silinebilir.
+
+### E. Doğrulanacak (eski listelerden devralındı)
+- [ ] **TE23D / TUE-CD lisans teyidi.** Makale bu iki kümeyi yalnız yazında atıfla anıyor, verilerini
+  kullanmıyor. E-postanın hâlâ gerekip gerekmediği değerlendirilsin. Taslaklar: `makale/lisans_epostalari_taslak.md`.
+
+### Tamamlananlar (özet)
+Yukarıdaki tur özetlerinde ayrıntılı:
+- B0 yeniden koşu ve ham sonuçlar;
+- kapanma yer gerçeği insan etiketiyle (J-126);
+- il dışarıda bırakma genellemesi (üç tohum);
+- üç mimaride çoklu tohum (J-131);
+- YOLO doğrulama mAP'ı ve metin F₁;
+- sayfa düzeni, Şekil 1, J-119;
+- `makale` dalına push.
+
+Eski listelerdeki öteki açık maddeler bu turlarda kapandı ya da geçersiz kaldı:
+- LinkNet/PSPNet eğitimi, Haiti/Noto dış sınaması ve tatbikattaki P232/P333 cümleleri makalede artık yok;
+- tohum çelişkisi ile il-ayrık deney ölçüldü.
