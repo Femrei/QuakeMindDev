@@ -28,6 +28,7 @@ detekt = "1.23.8"
 benchmark = "1.4.1"
 testRunner = "1.7.0"
 uiautomator = "2.3.0"
+openMapView = "0.30.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -77,6 +78,7 @@ turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 androidx-benchmark-macro = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "benchmark" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "testRunner" }
 androidx-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
+openmapview-compose = { module = "de.afarber:openmapview-compose", version.ref = "openMapView" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

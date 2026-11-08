@@ -23,7 +23,7 @@ QuakeMind mimarisi, gerçek afet koşullarında yüksek veri hacmi, düşük/kes
 ```
 QuakeApp/
 ├── app/                                        # Application shell, DI root, Activity, Navigation orkestrasyonu
-│   └── src/main/kotlin/com/quakemind/
+│   └── src/main/kotlin/com/mobile/
 │       ├── MainActivity.kt                     # Single Activity, edge-to-edge
 │       ├── QuakeMindApplication.kt             # Hilt Application, WorkManager konfigürasyonu
 │       ├── App.kt                              # Stateless root shell (AppNavHost + BottomNav)

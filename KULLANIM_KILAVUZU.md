@@ -339,7 +339,7 @@ curl -X POST http://10.42.0.1:8000/api/road_damage/analyze \
 
 ```
 QuakeMinds/
-├── backend/                       # Python backend
+├── backend/              # Python backend
 │   ├── fastapi_app.py             # Ana API sunucusu
 │   ├── requirements.txt           # Python bagimliliklari
 │   └── apps/
@@ -348,7 +348,7 @@ QuakeMinds/
 │       ├── road_damage/           # Segformer uydu analizi
 │       └── camera_detection/      # YOLO kamera tespiti
 │
-└── mobile/                        # Kotlin/Compose Android uygulama
+└── mobile/                     # Kotlin/Compose Android uygulama
     ├── app/                       # Activity, ekranlar ve ViewModel'ler
     ├── core/network/              # HTTP servis sozlesmeleri ve istemci
     ├── core/data/                 # Veri kaynaklari / repository

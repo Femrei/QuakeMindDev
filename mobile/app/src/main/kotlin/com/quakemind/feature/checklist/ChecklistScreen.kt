@@ -99,7 +99,7 @@ fun ChecklistScreen(
                 .weight(1f)
                 .testTag("checklist_lazy_column"),
             state = listState,
-            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 6.dp, bottom = 100.dp),
+            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 6.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
 

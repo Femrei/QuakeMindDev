@@ -52,7 +52,7 @@ Proje, **Clean Architecture**, **Unidirectional Data Flow (UDF)** ve katı modü
 ```
 QuakeApp/
 ├── app/                                        # Application Shell, Feature Screens, Navigation & ViewModels
-│   └── src/main/kotlin/com/quakemind/
+│   └── src/main/kotlin/com/mobile/
 │       ├── MainActivity.kt                     # Single Activity (Edge-to-edge)
 │       ├── navigation/                         # Type-safe (@Serializable) Navigation Compose
 │       └── feature/                            # Feature-first Scoped UI Modülleri

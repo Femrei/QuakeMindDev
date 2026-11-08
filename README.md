@@ -1,4 +1,4 @@
-# 🛸 QuakeMinds — Afet İkaz, Karar Destek & Yapay Zeka Platformu
+# 🛸 QuakeMind — Afet İkaz, Karar Destek & Yapay Zeka Platformu
 
 QuakeMind; deprem ve afet anlarında **internetli veya internetsiz (WiFi Hotspot / P2P Mesh)** ortamlarda çalışabilen, uydu görüntülerinden yol hasarını tespit eden, sosyal medya/saha ihbarlarından adres ve aciliyet çıkaran, deprem risk skorlarını hesaplayan ve SOS sinyallerini arama-kurtarma ekiplerine ileten bütünleşik bir afet yönetim ekosistemidir.
 
@@ -10,7 +10,7 @@ Proje üç ana bileşenden oluşur:
 | **AI Backend** | `backend/` | FastAPI (Python) | NLP, risk skorlama, uydu analizi ve kamera tespiti servisleri |
 | **Mobil Uygulama** | `mobile/` | Kotlin + Jetpack Compose | Room/WorkManager kullanan Android istemcisi |
 
-Ayrıca `backend/main.py` ve `backend/apps/` altında, backend modüllerinin tek tek Streamlit arayüzleriyle de çalıştırılabildiği bağımsız bir sürüm bulunur (geliştirme/deneme amaçlı).
+Ayrıca `backend/main.py` ve `apps/` altında, backend modüllerinin tek tek Streamlit arayüzleriyle de çalıştırılabildiği bağımsız bir sürüm bulunur (geliştirme/deneme amaçlı).
 
 ---
 
@@ -83,7 +83,7 @@ Ayrıca `backend/main.py` ve `backend/apps/` altında, backend modüllerinin tek
 ## 📁 Repo Yapısı
 
 ```text
-QuakeMinds/
+QuakeMind/
 ├── start.sh                       # Backend + frontend'i tek komutla başlatan script
 ├── HANDOFF.md                     # Proje bağlam/devir dokümanı
 ├── KULLANIM_KILAVUZU.md           # Detaylı kullanım kılavuzu (hotspot, mobil vb.)
@@ -109,7 +109,7 @@ QuakeMinds/
 │   ├── package.json
 │   └── tailwind.config.js
 │
-├── backend/                        # FastAPI AI backend
+├── backend/               # FastAPI AI backend
 │   ├── fastapi_app.py             # Ana API sunucusu (tüm endpoint'ler burada)
 │   ├── main.py                    # Bağımsız Streamlit giriş noktası
 │   ├── requirements.txt
@@ -119,7 +119,7 @@ QuakeMinds/
 │       ├── road_damage/           # Segformer uydu segmentasyonu
 │       └── camera_detection/      # YOLO (catlak.pt, bina.pt) kamera tespiti
 │
-└── mobile/                         # Kotlin/Jetpack Compose Android uygulaması
+└── mobile/                      # Kotlin/Jetpack Compose Android uygulaması
     ├── app/                        # Android Activity, Compose ekranları ve ViewModel'ler
     ├── core/network/               # FastAPI istemcisi ve servis sözleşmeleri
     ├── core/data/                  # Repository'ler ve veri kaynakları

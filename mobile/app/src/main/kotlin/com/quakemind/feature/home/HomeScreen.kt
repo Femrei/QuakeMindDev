@@ -1,5 +1,6 @@
 package com.quakemind.feature.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,21 +8,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,26 +26,27 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Directions
 import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.MyLocation
 import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Warning
-import com.quakemind.core.model.AlertSeverity
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Report
+import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -56,17 +54,38 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import com.quakemind.core.designsystem.*
 import com.quakemind.core.model.Alert
+import com.quakemind.core.model.AlertSeverity
 import com.quakemind.core.model.Earthquake
+import com.quakemind.core.model.GeoPoint
 import com.quakemind.core.ui.state.AppUiState
+import java.util.Locale
+import kotlin.math.asin
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
+
+private val HOME_FILTERS = listOf("Tümü", "M ≥ 4.0", "M ≥ 3.5", "Yakındakiler")
+private val HomeBackground = Color(0xFFF5F6F8)
+private val TurkishLocale = Locale.forLanguageTag("tr-TR")
+private val HeroCrimson = Color(0xFF72161D)
+private val HeroCrimsonDark = Color(0xFF521016)
+private val HeroWhiteMuted = Color(0xFFEFDDE0)
+private val CardShape = RoundedCornerShape(20.dp)
 
 @Composable
 fun HomeScreen(
@@ -84,6 +103,7 @@ fun HomeScreen(
     onOperations: () -> Unit,
     onProfile: () -> Unit,
     onIncident: (String) -> Unit,
+    onRequestLocation: () -> Unit = {},
 ) {
     HomeScreen(
         state = HomeUiState(
@@ -106,10 +126,9 @@ fun HomeScreen(
         onOperations = onOperations,
         onProfile = onProfile,
         onIncident = onIncident,
+        onRequestLocation = onRequestLocation,
     )
 }
-
-private val EARTHQUAKE_FILTERS = listOf("Tümü", "M ≥ 4.0", "M ≥ 3.5", "Yakındakiler")
 
 @Composable
 fun HomeScreen(
@@ -127,127 +146,241 @@ fun HomeScreen(
     onOperations: () -> Unit,
     onProfile: () -> Unit,
     onIncident: (String) -> Unit,
+    onRequestLocation: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
-    val latestEarthquake = remember(state.earthquakes) { state.earthquakes.firstOrNull() }
+    val headerCollapsed by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 48 } }
+    val headerMargin by animateDpAsState(if (headerCollapsed) 0.dp else 16.dp, label = "headerMargin")
+    val headerRadius by animateDpAsState(if (headerCollapsed) 0.dp else 18.dp, label = "headerRadius")
+    val statusInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val headerTop by animateDpAsState(if (headerCollapsed) 0.dp else statusInset + 8.dp, label = "headerTop")
+    val headerInnerTop by animateDpAsState(if (headerCollapsed) statusInset + 8.dp else 8.dp, label = "headerInnerTop")
     var earthquakeFilter by rememberSaveable { mutableStateOf("Tümü") }
-    val filteredEarthquakes = remember(earthquakeFilter, state.earthquakes) {
-        when (earthquakeFilter) {
-            "M ≥ 4.0" -> state.earthquakes.filter { it.magnitude >= 4.0 }
-            "M ≥ 3.5" -> state.earthquakes.filter { it.magnitude >= 3.5 }
-            "Yakındakiler" -> state.earthquakes.filter { it.distanceKm <= 350 }
-            else -> state.earthquakes
+    var showAllEarthquakes by rememberSaveable { mutableStateOf(false) }
+
+    val earthquakesWithDistance = remember(state.earthquakes, state.deviceLocation) {
+        val origin = state.deviceLocation
+        if (origin == null) state.earthquakes
+        else state.earthquakes.map { quake ->
+            quake.copy(distanceKm = haversineKm(origin, GeoPoint(quake.latitude, quake.longitude)))
         }
+    }
+    val nearestEarthquake = remember(earthquakesWithDistance, state.deviceLocation) {
+        if (state.deviceLocation == null) earthquakesWithDistance.firstOrNull()
+        else earthquakesWithDistance.minByOrNull(Earthquake::distanceKm)
+    }
+    val filteredEarthquakes = remember(earthquakeFilter, earthquakesWithDistance, state.deviceLocation) {
+        when (earthquakeFilter) {
+            "M ≥ 4.0" -> earthquakesWithDistance.filter { it.magnitude >= 4.0 }
+            "M ≥ 3.5" -> earthquakesWithDistance.filter { it.magnitude >= 3.5 }
+            "Yakındakiler" -> if (state.deviceLocation == null) emptyList()
+                else earthquakesWithDistance.filter { it.distanceKm <= 350.0 }.sortedBy(Earthquake::distanceKm)
+            else -> earthquakesWithDistance
+        }
+    }
+    val visibleEarthquakes = remember(filteredEarthquakes, showAllEarthquakes) {
+        if (showAllEarthquakes) filteredEarthquakes else filteredEarthquakes.take(8)
     }
     val hasUnreadAlerts = remember(state.alerts) { state.alerts.any { !it.isRead } }
     val recentAlerts = remember(state.alerts) { state.alerts.take(2) }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .testTag("home_lazy_column"),
-        state = listState,
-        contentPadding = PaddingValues(bottom = 110.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
+    Box(Modifier.fillMaxSize().background(HomeBackground)) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .testTag("home_lazy_column"),
+            state = listState,
+            contentPadding = PaddingValues(start = 16.dp, top = statusInset + 92.dp, end = 16.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
 
-        // 1. ULTRA-MODERN SHADCN APP HEADER (Clean Logo + Profile Icon + Notifications)
-        item(key = "home_app_header", contentType = "header") {
-            ModernAppHeader(
-                userName = state.session?.displayName ?: "Kullanıcı",
-                hasUnreadAlerts = hasUnreadAlerts,
-                onAlerts = onAlerts,
-                onProfile = onProfile,
-            )
-        }
-
-        // 2. OFFLINE QUEUE BANNER (IF ANY)
         if (!state.online || state.pendingCount > 0) {
             item(key = "home_offline_banner", contentType = "banner") {
-                Box(Modifier.padding(horizontal = 18.dp)) {
-                    OfflineModeBanner(pendingCount = state.pendingCount)
-                }
+                OfflineModeBanner(pendingCount = state.pendingCount)
             }
         }
 
-        // 3. LOCATION BAR (PLACED DIRECTLY ABOVE LATEST EARTHQUAKE CARD)
-        item(key = "home_location_bar", contentType = "location_bar") {
-            LocationContextBar(
-                city = state.session?.city?.takeIf { it.isNotBlank() } ?: "Bölge bilgisi yok",
-                stationName = latestEarthquake?.source?.takeIf { it.isNotBlank() }
-                    ?: "Deprem kaynağı bekleniyor",
+        item(key = "home_location", contentType = "location") {
+            HomeLocationCard(
+                location = state.deviceLocation,
+                accuracyMetres = state.accuracyMetres,
+                isLocating = state.isLocating,
+                error = state.locationError,
+                onRequestLocation = onRequestLocation,
             )
         }
 
-        // 4. LATEST EARTHQUAKE HERO (#800E13 Crimson typography, clean editorial aesthetic)
-        if (latestEarthquake != null) {
-            item(key = "home_latest_earthquake", contentType = "hero") {
-                Box(Modifier.padding(horizontal = 18.dp)) {
-                    ElegantEarthquakeHero(
-                        earthquake = latestEarthquake,
-                        onMap = onMap,
-                        onRisk = onRisk,
-                    )
-                }
+        if (nearestEarthquake != null) {
+            item(key = "home_nearby_earthquake", contentType = "earthquake_hero") {
+                NearbyEarthquakeHero(
+                    earthquake = nearestEarthquake,
+                    hasLocation = state.deviceLocation != null,
+                    onMap = onMap,
+                    onRisk = onRisk,
+                )
+            }
+        } else {
+            item(key = "home_earthquake_empty", contentType = "empty_state") {
+                EarthquakeEmptyCard(onMap = onMap)
             }
         }
 
-        // 5. REGIONAL ALERTS (PLACED DIRECTLY UNDER LATEST EARTHQUAKE CARD)
         if (recentAlerts.isNotEmpty()) {
-            item(key = "home_regional_alerts", contentType = "regional_alerts") {
-                Box(Modifier.padding(horizontal = 18.dp)) {
-                    RegionalAlertsSection(
-                        alerts = recentAlerts,
-                        onAlerts = onAlerts,
-                        onSelectAlert = onIncident,
-                    )
-                }
-            }
-        }
-
-        // 6. QUICK ACTIONS 2x2 GRID
-        item(key = "home_quick_actions", contentType = "quick_actions") {
-            Box(Modifier.padding(horizontal = 18.dp)) {
-                HomeQuickActionsGrid(
-                    onReport = onReport,
-                    onSafety = onSafety,
-                    onRouting = onRouting,
-                    onChecklist = onChecklist,
+            item(key = "home_alerts", contentType = "alerts") {
+                RegionalAlertsCard(
+                    alerts = recentAlerts,
+                    onAlerts = onAlerts,
+                    onSelectAlert = onIncident,
                 )
             }
         }
 
-        // 7. LIVE EARTHQUAKE LIST HEADER WITH TABS
-        item(key = "home_earthquakes_section_header", contentType = "earthquakes_header") {
-            EarthquakeFilterSection(
+        item(key = "home_quick_actions", contentType = "quick_actions") {
+            QuickActionsGrid(
+                onReport = onReport,
+                onSafety = onSafety,
+                onRouting = onRouting,
+                onChecklist = onChecklist,
+            )
+        }
+
+        item(key = "home_earthquakes_header", contentType = "section_header") {
+            EarthquakeSectionHeader(
                 selectedFilter = earthquakeFilter,
-                onSelectFilter = { earthquakeFilter = it },
+                onSelectFilter = {
+                    earthquakeFilter = it
+                    showAllEarthquakes = false
+                },
+                availableCount = filteredEarthquakes.size,
+                shownCount = visibleEarthquakes.size,
+                showAll = showAllEarthquakes,
+                onToggleShowAll = { showAllEarthquakes = !showAllEarthquakes },
                 onMap = onMap,
             )
         }
 
-        // 8. LIVE EARTHQUAKE LAZY ROWS (Lazy recycled items with stable ID key)
-        items(
-            items = filteredEarthquakes,
-            key = { it.id },
-            contentType = { "earthquake_row" },
-        ) { eq ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 18.dp),
-            ) {
-                HomeEarthquakeRow(earthquake = eq, onClick = onMap)
+        if (visibleEarthquakes.isEmpty()) {
+            item(key = "home_earthquakes_empty", contentType = "empty_state") {
+                EarthquakeListEmpty(
+                    needsLocation = earthquakeFilter == "Yakındakiler" && state.deviceLocation == null,
+                    onRequestLocation = onRequestLocation,
+                )
+            }
+        } else {
+            items(
+                items = visibleEarthquakes,
+                key = { it.id },
+                contentType = { "earthquake_row" },
+            ) { earthquake ->
+                EarthquakeRow(
+                    earthquake = earthquake,
+                    showDistance = state.deviceLocation != null,
+                    onClick = onMap,
+                )
             }
         }
 
-        // 9. AI TOOLS MINIMALIST CARD
-        item(key = "home_ai_tools", contentType = "ai_tools") {
-            Box(Modifier.padding(horizontal = 18.dp)) {
-                HomeAiToolsCard(
-                    onDamage = onDamage,
-                    onNlp = onNlp,
+        item(key = "home_analysis_tools", contentType = "analysis_tools") {
+            AnalysisToolsCard(onDamage = onDamage, onNlp = onNlp, onOperations = onOperations)
+        }
+        }
+
+        HomeHeader(
+            userName = state.session?.displayName?.takeIf(String::isNotBlank),
+            hasUnreadAlerts = hasUnreadAlerts,
+            onAlerts = onAlerts,
+            onProfile = onProfile,
+            collapsed = headerCollapsed,
+            cornerRadius = headerRadius,
+            innerTop = headerInnerTop,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .padding(horizontal = headerMargin)
+                .padding(top = headerTop),
+        )
+    }
+}
+
+@Composable
+private fun HomeHeader(
+    userName: String?,
+    hasUnreadAlerts: Boolean,
+    onAlerts: () -> Unit,
+    onProfile: () -> Unit,
+    collapsed: Boolean,
+    cornerRadius: androidx.compose.ui.unit.Dp,
+    innerTop: androidx.compose.ui.unit.Dp,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.shadow(elevation = if (collapsed) 4.dp else 8.dp, shape = RoundedCornerShape(cornerRadius)),
+        shape = RoundedCornerShape(cornerRadius),
+        color = Color.White,
+        border = BorderZinc200,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 12.dp, top = innerTop, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            AfetLogoMark(size = 36.dp, color = AfetCrimson)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(
+                    text = "QuakeMind",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Zinc900,
+                    maxLines = 1,
+                )
+                userName?.takeIf(String::isNotBlank)?.let { name ->
+                    Text(
+                        text = "Merhaba, $name",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Zinc600,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            HeaderIconButton(
+                icon = Icons.Outlined.Notifications,
+                label = if (hasUnreadAlerts) "Okunmamış uyarılar" else "Uyarılar",
+                onClick = onAlerts,
+                showDot = hasUnreadAlerts,
+            )
+            HeaderIconButton(icon = Icons.Outlined.Person, label = "Profil", onClick = onProfile)
+        }
+    }
+}
+
+@Composable
+private fun HeaderIconButton(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    showDot: Boolean = false,
+) {
+    Surface(
+        modifier = Modifier
+            .size(48.dp)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = label },
+        shape = RoundedCornerShape(13.dp),
+        color = Color.White,
+        border = BorderZinc200,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(icon, contentDescription = null, tint = Zinc700, modifier = Modifier.size(19.dp))
+            if (showDot) {
+                Box(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(7.dp)
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(AfetCrimson),
                 )
             }
         }
@@ -255,57 +388,352 @@ fun HomeScreen(
 }
 
 @Composable
-private fun EarthquakeFilterSection(
-    selectedFilter: String,
-    onSelectFilter: (String) -> Unit,
-    onMap: () -> Unit,
-    modifier: Modifier = Modifier,
+private fun HomeLocationCard(
+    location: GeoPoint?,
+    accuracyMetres: Float?,
+    isLocating: Boolean,
+    error: String?,
+    onRequestLocation: () -> Unit,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        border = BorderZinc200,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Column {
+            Surface(shape = CircleShape, color = AfetCrimsonMuted) {
+                Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Outlined.MyLocation, contentDescription = null, tint = AfetCrimson, modifier = Modifier.size(16.dp))
+                }
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text(
-                    text = "Son Depremler",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Zinc950,
-                )
-                Text(
-                    text = "Doğrulanmış resmi kayıtlar",
+                    text = when {
+                        isLocating -> "Konum alınıyor…"
+                        location != null -> "Konum hazır${accuracyMetres?.let { " · ±${it.toInt()} m" }.orEmpty()}"
+                        else -> "Konumunu bul"
+                    },
                     fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (error == null) Zinc800 else AfetCrimson,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (error != null) {
+                    Text(error, fontSize = 10.sp, color = AfetCrimson, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            IconButton(onClick = onRequestLocation, enabled = !isLocating, modifier = Modifier.size(48.dp)) {
+                Icon(
+                    imageVector = Icons.Outlined.Refresh,
+                    contentDescription = if (location == null) "Konumu bul" else "Konumu yenile",
+                    tint = AfetCrimson,
+                    modifier = Modifier.size(19.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NearbyEarthquakeHero(
+    earthquake: Earthquake,
+    hasLocation: Boolean,
+    onMap: () -> Unit,
+    onRisk: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = HeroCrimson,
+        shadowElevation = 4.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Yakındaki depremler", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(
+                        if (hasLocation) "Konumuna en yakın kayıt" else "Son kaydedilen deprem",
+                        fontSize = 11.sp,
+                        color = HeroWhiteMuted,
+                    )
+                }
+                Surface(color = Color.White.copy(alpha = 0.12f), shape = RoundedCornerShape(30.dp)) {
+                    Text(
+                        earthquake.source.ifBlank { "Deprem kataloğu" },
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(
+                    text = magnitudeLabel(earthquake.magnitude),
+                    fontSize = 30.sp,
+                    lineHeight = 34.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-1).sp,
+                    color = Color.White,
+                )
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Text(
+                        earthquake.epicenter,
+                        fontSize = 15.sp,
+                        lineHeight = 19.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = if (hasLocation) distanceLabel(earthquake.distanceKm) else "Konum açılınca mesafe gösterilir",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = HeroWhiteMuted,
+                    )
+                }
+            }
+
+            HorizontalDivider(color = Color.White.copy(alpha = 0.18f))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                HeroMeta(Modifier.weight(1f), Icons.Outlined.LocationOn, "Derinlik", "${earthquake.depthKm.toInt()} km")
+                HeroMeta(Modifier.weight(1f), Icons.Outlined.Notifications, "Zaman", compactTimestamp(earthquake.occurredAt))
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = onMap,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(13.dp),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.45f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                ) {
+                    Text("Haritada aç", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Button(
+                    onClick = onRisk,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(13.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = HeroCrimsonDark),
+                ) {
+                    Text("Zemin analizine bak", fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroMeta(modifier: Modifier, icon: ImageVector, label: String, value: String) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = HeroWhiteMuted, modifier = Modifier.size(14.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(label, fontSize = 9.sp, color = HeroWhiteMuted)
+            Text(value, fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold, color = Color.White, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun EarthquakeEmptyCard(onMap: () -> Unit) {
+    Surface(shape = CardShape, color = Color.White, border = BorderZinc200) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(Icons.Outlined.LocationOn, contentDescription = null, tint = AfetCrimson, modifier = Modifier.size(24.dp))
+            Text("Deprem kaydı henüz alınmadı", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Zinc950)
+            Text("Bağlantı geldiğinde güncel katalog burada görünecek.", fontSize = 12.sp, color = Zinc500)
+            TextButton(onClick = onMap) { Text("Haritayı aç", color = AfetCrimson) }
+        }
+    }
+}
+
+@Composable
+private fun RegionalAlertsCard(
+    alerts: List<Alert>,
+    onAlerts: () -> Unit,
+    onSelectAlert: (String) -> Unit,
+) {
+    Surface(shape = CardShape, color = Color.White, border = BorderZinc200) {
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Bölgesel uyarılar", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Zinc950)
+                    Text("Güncel ve doğrulanmış bildirimler", fontSize = 11.sp, color = Zinc500)
+                }
+                TextButton(onClick = onAlerts, contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp)) {
+                    Text("Tümünü gör", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AfetCrimson)
+                    Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = AfetCrimson, modifier = Modifier.size(15.dp))
+                }
+            }
+            alerts.forEachIndexed { index, alert ->
+                if (index > 0) HorizontalDivider(color = Zinc100)
+                AlertPreview(alert = alert, onClick = { onSelectAlert(alert.id) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun AlertPreview(alert: Alert, onClick: () -> Unit) {
+    val accent = when (alert.severity) {
+        AlertSeverity.CRITICAL -> AfetCrimson
+        AlertSeverity.WARNING -> AfetAmber
+        AlertSeverity.INFO -> AfetBlue
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(Modifier.size(8.dp).clip(CircleShape).background(accent))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(alert.title, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Zinc900, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("${alert.category} · ${alert.location}", fontSize = 10.5.sp, color = Zinc500, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Text(alert.occurredAt, fontSize = 10.sp, color = Zinc400, maxLines = 1)
+        Icon(Icons.Outlined.ChevronRight, contentDescription = "Uyarı ayrıntısı", tint = Zinc400, modifier = Modifier.size(16.dp))
+    }
+}
+
+@Composable
+private fun QuickActionsGrid(
+    onReport: () -> Unit,
+    onSafety: () -> Unit,
+    onRouting: () -> Unit,
+    onChecklist: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("Hızlı erişim", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Zinc950)
+                Text("Acil durumda ihtiyaç duyacağın araçlar", fontSize = 11.sp, color = Zinc500)
+            }
+            Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = Zinc400, modifier = Modifier.size(17.dp))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            QuickActionCard("İhbar oluştur", "Durumu bildir", Icons.Outlined.Report, AfetCrimson, onReport, Modifier.weight(1f))
+            QuickActionCard("Güvendeyim", "Durumunu paylaş", Icons.Outlined.CheckCircle, Zinc700, onSafety, Modifier.weight(1f))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            QuickActionCard("Güvenli rota", "Yaya güzergâhı", Icons.Outlined.Directions, Zinc700, onRouting, Modifier.weight(1f))
+            QuickActionCard("Afet çantası", "Hazırlık listesi", Icons.Outlined.Inventory2, Zinc700, onChecklist, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun QuickActionCard(
+    title: String,
+    detail: String,
+    icon: ImageVector,
+    accent: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier
+            .height(92.dp)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = "$title. $detail" },
+        shape = RoundedCornerShape(17.dp),
+        color = Color.White,
+        border = BorderZinc200,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Surface(shape = RoundedCornerShape(12.dp), color = accent.copy(alpha = 0.10f)) {
+                Box(Modifier.size(38.dp), contentAlignment = Alignment.Center) {
+                    Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(20.dp))
+                }
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(title, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Zinc900, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(detail, fontSize = 9.5.sp, color = Zinc500, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+@Composable
+private fun EarthquakeSectionHeader(
+    selectedFilter: String,
+    onSelectFilter: (String) -> Unit,
+    availableCount: Int,
+    shownCount: Int,
+    showAll: Boolean,
+    onToggleShowAll: () -> Unit,
+    onMap: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("Son depremler", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Zinc950)
+                Text(
+                    if (showAll) "$shownCount kayıt gösteriliyor" else "En son 8 kayıt · Resmî katalog",
+                    fontSize = 11.sp,
                     color = Zinc500,
                 )
             }
-            TextButton(onClick = onMap) {
-                Text("Tümü ↗", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = AfetCrimson)
+            when {
+                availableCount > 8 -> TextButton(
+                    onClick = onToggleShowAll,
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+                ) {
+                    Text(
+                        if (showAll) "Daha az göster" else "Tümünü gör",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AfetCrimson,
+                    )
+                    Icon(
+                        Icons.Outlined.ChevronRight,
+                        contentDescription = null,
+                        tint = AfetCrimson,
+                        modifier = Modifier.size(15.dp),
+                    )
+                }
+                else -> TextButton(onClick = onMap, contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)) {
+                    Text("Haritayı aç", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AfetCrimson)
+                }
             }
         }
 
-        // Filter chips
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            items(
-                items = EARTHQUAKE_FILTERS,
-                key = { it },
-                contentType = { "filter_chip" },
-            ) { filter ->
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            items(items = HOME_FILTERS, key = { it }, contentType = { "earthquake_filter" }) { filter ->
                 FilterChip(
                     selected = selectedFilter == filter,
                     onClick = { onSelectFilter(filter) },
-                    label = { Text(filter, fontSize = 12.sp, fontWeight = FontWeight.Medium) },
-                    shape = RoundedCornerShape(6.dp),
+                    label = { Text(filter, fontSize = 11.sp, fontWeight = FontWeight.Medium) },
+                    shape = RoundedCornerShape(30.dp),
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = AfetCrimson,
                         selectedLabelColor = Color.White,
-                        containerColor = Zinc50,
+                        containerColor = Color.White,
                         labelColor = Zinc700,
                     ),
                     border = FilterChipDefaults.filterChipBorder(
@@ -320,729 +748,134 @@ private fun EarthquakeFilterSection(
     }
 }
 
-// ---------------------------------------------------------------------------
-// 1. ULTRA-MODERN APP HEADER (Clean Logo + Profile Icon + Notifications)
-// ---------------------------------------------------------------------------
-
 @Composable
-private fun ModernAppHeader(
-    userName: String,
-    hasUnreadAlerts: Boolean,
-    onAlerts: () -> Unit,
-    onProfile: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = Color.White,
-        border = BorderZinc100,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 18.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Left: Geometric Brand Logo Mark
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                AfetLogoMark(size = 32.dp, color = AfetCrimson)
-                Column {
-                    Text(
-                        text = "AFET",
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Zinc950,
-                        letterSpacing = 1.5.sp,
-                    )
-                    Text(
-                        text = "Acil Destek Ağı",
-                        fontSize = 10.5.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Zinc400,
-                    )
-                }
-            }
-
-            // Right: Clean Outline Action Buttons (Notifications + Profile Icon)
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                // Notifications Bell
-                Surface(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clickable(onClick = onAlerts),
-                    shape = Shape9dp,
-                    color = Color.White,
-                    border = BorderZinc200,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Outlined.Notifications,
-                            contentDescription = "Bildirimler",
-                            tint = Zinc800,
-                            modifier = Modifier.size(19.dp),
-                        )
-                        if (hasUnreadAlerts) {
-                            Box(
-                                Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(7.dp)
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(AfetCrimson),
-                            )
-                        }
-                    }
-                }
-
-                // Profile Avatar Icon Button
-                Surface(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clickable(onClick = onProfile),
-                    shape = Shape9dp,
-                    color = Zinc50,
-                    border = BorderZinc200,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Outlined.Person,
-                            contentDescription = "Profil",
-                            tint = Zinc900,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// 2. LOCATION BAR (Above Son Deprem)
-// ---------------------------------------------------------------------------
-
-@Composable
-private fun LocationContextBar(
-    city: String,
-    stationName: String,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 18.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Icon(
-                Icons.Outlined.LocationOn,
-                contentDescription = null,
-                tint = AfetCrimson,
-                modifier = Modifier.size(16.dp),
-            )
-            Text(
-                text = city,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = Zinc950,
-            )
-            Icon(
-                Icons.Outlined.KeyboardArrowDown,
-                contentDescription = null,
-                tint = Zinc400,
-                modifier = Modifier.size(15.dp),
-            )
-        }
-
-        Surface(
-            shape = Shape6dp,
-            color = Zinc50,
-            border = BorderZinc200,
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-            ) {
-                Box(Modifier.size(5.dp).background(AfetGreen, CircleShape))
-                Text(
-                    text = stationName,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Zinc600,
-                )
-            }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// 3. ELEGANT EDITORIAL LATEST EARTHQUAKE HERO
-// ---------------------------------------------------------------------------
-
-@Composable
-private fun ElegantEarthquakeHero(
+private fun EarthquakeRow(
     earthquake: Earthquake,
-    onMap: () -> Unit,
-    onRisk: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = Shape12dp,
-        color = Color.White,
-        border = BorderZinc200,
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            // Header Row: Label + Source
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "SON DEPREM BİLGİSİ",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Zinc500,
-                    letterSpacing = 1.sp,
-                )
-                Text(
-                    text = earthquake.source,
-                    fontSize = 11.5.sp,
-                    color = Zinc400,
-                    fontWeight = FontWeight.Medium,
-                )
-            }
-
-            // Main Typographic Section: Large Magnitude + Epicenter
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                // Large Elegant Magnitude (#800E13)
-                Text(
-                    text = earthquake.magnitude.formatMagnitude(),
-                    fontSize = 42.sp,
-                    fontWeight = FontWeight.Black,
-                    color = AfetCrimson,
-                    letterSpacing = (-1).sp,
-                )
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = earthquake.epicenter,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Zinc950,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(Modifier.height(3.dp))
-                    Text(
-                        text = "Derinlik: ${earthquake.depthKm} km · ${earthquake.distanceKm} km uzakta",
-                        fontSize = 12.5.sp,
-                        color = Zinc500,
-                    )
-                    Text(
-                        text = "${earthquake.occurredAt} · ${earthquake.feltCount} kişi hissetti",
-                        fontSize = 11.5.sp,
-                        color = Zinc400,
-                    )
-                }
-            }
-
-            HorizontalDivider(color = Zinc100)
-
-            // Actions: Simple, refined buttons
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(
-                    onClick = onMap,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(38.dp),
-                    shape = Shape8dp,
-                    border = BorderZinc200,
-                ) {
-                    Text("Haritada Göster", fontSize = 12.5.sp, fontWeight = FontWeight.Medium, color = Zinc900)
-                }
-
-                Button(
-                    onClick = onRisk,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(38.dp),
-                    shape = Shape8dp,
-                    colors = ButtonDefaults.buttonColors(containerColor = AfetCrimson),
-                ) {
-                    Text("Zemin Analizi", fontSize = 12.5.sp, fontWeight = FontWeight.Medium)
-                }
-            }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// 4. REGIONAL ALERTS SECTION (Placed directly below Son Deprem)
-// ---------------------------------------------------------------------------
-
-@Composable
-private fun RegionalAlertsSection(
-    alerts: List<Alert>,
-    onAlerts: () -> Unit,
-    onSelectAlert: (String) -> Unit,
-) {
-    val configuration = LocalConfiguration.current
-    val screenHeight = configuration.screenHeightDp.dp
-    // Responsive bounded max height to guarantee 4-button quick actions remain above Tab Bar on all screens
-    val maxAlertsHeight = (screenHeight - 570.dp).coerceIn(84.dp, 210.dp)
-    val hasCritical = alerts.any { it.severity == AlertSeverity.CRITICAL }
-    val alertsScrollState = rememberScrollState()
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = maxAlertsHeight),
-        shape = Shape12dp,
-        color = Color.White,
-        border = if (hasCritical) BorderAfetCrimsonBorder else BorderZinc200,
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-        ) {
-            // Header Row: Status Icon + Title + Count Pill + All Action Button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Surface(
-                        shape = Shape6dp,
-                        color = if (hasCritical) AfetCrimsonMuted else Zinc100,
-                        border = if (hasCritical) BorderAfetCrimsonBorder else BorderZinc200,
-                        modifier = Modifier.size(26.dp),
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = if (hasCritical) Icons.Outlined.Warning else Icons.Outlined.Notifications,
-                                contentDescription = null,
-                                tint = if (hasCritical) AfetCrimson else Zinc700,
-                                modifier = Modifier.size(15.dp),
-                            )
-                        }
-                    }
-
-                    Text(
-                        text = "Bölgesel Uyarılar",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.5.sp,
-                        color = Zinc950,
-                    )
-
-                    Surface(
-                        shape = Shape4dp,
-                        color = if (hasCritical) AfetCrimsonMuted else Zinc100,
-                        border = if (hasCritical) BorderAfetCrimsonBorder else BorderZinc200,
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Box(
-                                Modifier
-                                    .size(5.dp)
-                                    .background(if (hasCritical) AfetCrimson else Zinc500, CircleShape)
-                            )
-                            Text(
-                                text = "${alerts.size} Aktif",
-                                fontSize = 10.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (hasCritical) AfetCrimson else Zinc600,
-                            )
-                        }
-                    }
-                }
-
-                Row(
-                    modifier = Modifier
-                        .clip(Shape6dp)
-                        .clickable(onClick = onAlerts)
-                        .padding(horizontal = 6.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    Text(
-                        text = "Tümü",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = AfetCrimson,
-                    )
-                    Icon(
-                        imageVector = Icons.Outlined.ChevronRight,
-                        contentDescription = "Tümü",
-                        tint = AfetCrimson,
-                        modifier = Modifier.size(14.dp),
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            // Scrollable Alerts List if content exceeds responsive bounded height
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f, fill = false)
-                    .verticalScroll(alertsScrollState),
-            ) {
-                alerts.forEachIndexed { index, alert ->
-                    if (index > 0) {
-                        HorizontalDivider(
-                            color = Zinc100,
-                            modifier = Modifier.padding(vertical = 6.dp),
-                        )
-                    }
-
-                    val (badgeBg, badgeText, badgeBorder) = when (alert.severity) {
-                        AlertSeverity.CRITICAL -> Triple(AfetCrimsonMuted, AfetCrimson, AfetCrimsonBorder)
-                        AlertSeverity.WARNING -> Triple(AfetAmberMuted, AfetAmber, AfetAmberBorder)
-                        AlertSeverity.INFO -> Triple(AfetBlueMuted, AfetBlue, AfetBlueBorder)
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(Shape8dp)
-                            .clickable { onSelectAlert(alert.id) }
-                            .padding(vertical = 3.dp, horizontal = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(3.dp),
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            ) {
-                                Surface(
-                                    shape = Shape4dp,
-                                    color = badgeBg,
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, badgeBorder),
-                                ) {
-                                    Text(
-                                        text = alert.category.uppercase(),
-                                        fontSize = 9.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = badgeText,
-                                        letterSpacing = 0.4.sp,
-                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp),
-                                    )
-                                }
-
-                                Text(
-                                    text = "·",
-                                    fontSize = 12.sp,
-                                    color = Zinc300,
-                                    fontWeight = FontWeight.Bold,
-                                )
-
-                                Text(
-                                    text = alert.occurredAt,
-                                    fontSize = 11.sp,
-                                    color = Zinc400,
-                                )
-                            }
-
-                            Text(
-                                text = alert.title,
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Zinc900,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(3.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.LocationOn,
-                                    contentDescription = null,
-                                    tint = Zinc400,
-                                    modifier = Modifier.size(11.dp),
-                                )
-                                Text(
-                                    text = alert.location,
-                                    fontSize = 11.sp,
-                                    color = Zinc500,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        }
-
-                        Icon(
-                            imageVector = Icons.Outlined.ChevronRight,
-                            contentDescription = "Detay",
-                            tint = Zinc400,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// 5. QUICK ACTIONS GRID
-// ---------------------------------------------------------------------------
-
-@Composable
-private fun HomeQuickActionsGrid(
-    onReport: () -> Unit,
-    onSafety: () -> Unit,
-    onRouting: () -> Unit,
-    onChecklist: () -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            QuickActionTile(
-                title = "Acil İhbar Bildir",
-                subtitle = "Enkaz, yangın, hasar",
-                icon = Icons.Outlined.Report,
-                onClick = onReport,
-                modifier = Modifier.weight(1f),
-            )
-            QuickActionTile(
-                title = "Güvendeyim",
-                subtitle = "Aile ağına bildir",
-                icon = Icons.Outlined.CheckCircle,
-                onClick = onSafety,
-                modifier = Modifier.weight(1f),
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            QuickActionTile(
-                title = "Toplanma Alanı",
-                subtitle = "Güvenli tahliye rotası",
-                icon = Icons.Outlined.Directions,
-                onClick = onRouting,
-                modifier = Modifier.weight(1f),
-            )
-            QuickActionTile(
-                title = "Afet Çantası",
-                subtitle = "Hazırlık kontrol listesi",
-                icon = Icons.Outlined.Inventory2,
-                onClick = onChecklist,
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Composable
-private fun QuickActionTile(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
+    showDistance: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier
-            .height(76.dp)
-            .clickable(onClick = onClick),
-        shape = Shape12dp,
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(17.dp),
         color = Color.White,
         border = BorderZinc200,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 13.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(11.dp),
         ) {
-            Surface(
-                modifier = Modifier.size(36.dp),
-                shape = Shape8dp,
-                color = AfetCrimsonMuted,
-                border = BorderAfetCrimsonBorder,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = AfetCrimson,
-                        modifier = Modifier.size(19.dp),
-                    )
+            val severityColor = if (earthquake.magnitude >= 4.0) AfetCrimson else AfetAmber
+            Surface(shape = RoundedCornerShape(12.dp), color = severityColor.copy(alpha = 0.10f)) {
+                Column(
+                    modifier = Modifier.width(55.dp).padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(1.dp),
+                ) {
+                    Text("M", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = severityColor)
+                    Text(magnitudeLabel(earthquake.magnitude), fontSize = 17.sp, fontWeight = FontWeight.Black, color = severityColor)
                 }
             }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center,
-            ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
+                    earthquake.epicenter,
                     fontSize = 12.5.sp,
-                    color = Zinc950,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Zinc900,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    letterSpacing = (-0.2).sp,
                 )
-                Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = subtitle,
+                    "${compactTimestamp(earthquake.occurredAt)} · ${earthquake.depthKm.toInt()} km derinlik",
                     fontSize = 10.5.sp,
                     color = Zinc500,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            if (showDistance) {
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Icon(Icons.Outlined.LocationOn, contentDescription = null, tint = AfetCrimson, modifier = Modifier.size(15.dp))
+                    Text(distanceLabel(earthquake.distanceKm), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Zinc700)
+                }
+            }
+            Icon(Icons.Outlined.ChevronRight, contentDescription = "Haritada göster", tint = Zinc400, modifier = Modifier.size(17.dp))
         }
     }
 }
 
 @Composable
-private fun HomeEarthquakeRow(
-    earthquake: Earthquake,
-    onClick: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = Shape8dp,
-        color = Color.White,
-        border = BorderZinc100,
-    ) {
+private fun EarthquakeListEmpty(needsLocation: Boolean, onRequestLocation: () -> Unit) {
+    Surface(shape = RoundedCornerShape(17.dp), color = Color.White, border = BorderZinc200) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(15.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            SeismicMagnitudeBadge(magnitude = earthquake.magnitude, size = 44.dp)
-
-            Column(modifier = Modifier.weight(1f)) {
+            Icon(Icons.Outlined.LocationOn, contentDescription = null, tint = AfetCrimson, modifier = Modifier.size(20.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(
-                    text = earthquake.epicenter,
+                    if (needsLocation) "Yakınındaki depremler için konum gerekli" else "Bu filtrede deprem yok",
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.5.sp,
-                    color = Zinc950,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    color = Zinc900,
                 )
                 Text(
-                    text = "${earthquake.distanceKm} km uzakta · Derinlik: ${earthquake.depthKm} km",
-                    fontSize = 11.5.sp,
+                    if (needsLocation) "Konumunu alıp yakınlık hesabını yapalım." else "Başka bir filtre deneyebilirsin.",
+                    fontSize = 10.5.sp,
                     color = Zinc500,
                 )
             }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = earthquake.occurredAt,
-                    fontSize = 11.sp,
-                    color = Zinc400,
-                )
-                Text(
-                    text = earthquake.source.take(8),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Zinc500,
-                )
-            }
+            if (needsLocation) TextButton(onClick = onRequestLocation) { Text("Konumu aç", color = AfetCrimson, fontSize = 11.sp) }
         }
     }
 }
 
 @Composable
-private fun HomeAiToolsCard(
-    onDamage: () -> Unit,
-    onNlp: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = Shape10dp,
-        color = Zinc950,
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+private fun AnalysisToolsCard(onDamage: () -> Unit, onNlp: () -> Unit, onOperations: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text("Analiz ve saha", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Zinc950)
+            Text("İhtiyaç duyduğunda araçlara buradan ulaş", fontSize = 11.sp, color = Zinc500)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            QuickActionCard("Hasar analizi", "Fotoğrafla incele", Icons.Outlined.Warning, AfetAmber, onDamage, Modifier.weight(1f))
+            QuickActionCard("Metin analizi", "Yardım çağrılarını tara", Icons.Outlined.Report, AfetBlue, onNlp, Modifier.weight(1f))
+        }
+        Surface(
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onOperations),
+            shape = RoundedCornerShape(15.dp),
+            color = Color.White,
+            border = BorderZinc200,
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
             ) {
-                Text(
-                    text = "Yapay Zekâ Hasar Analizi",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                )
-                ShadcnBadge(
-                    text = "v2.4",
-                    backgroundColor = Color(0xFF27272A),
-                    textColor = Color.White,
-                    borderColor = Color(0xFF3F3F46),
-                )
-            }
-
-            Text(
-                text = "Fotoğraf yükleyerek bina çatlaklarını analiz edin veya acil yardım metnini otomatik ayrıştırın.",
-                fontSize = 12.sp,
-                color = Zinc400,
-                lineHeight = 17.sp,
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = onDamage,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(36.dp),
-                    shape = Shape6dp,
-                    colors = ButtonDefaults.buttonColors(containerColor = AfetCrimson, contentColor = Color.White),
-                ) {
-                    Text("Hasar Tespiti", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                }
-                OutlinedButton(
-                    onClick = onNlp,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(36.dp),
-                    shape = Shape6dp,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF3F3F46)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                ) {
-                    Text("Metin Ayrıştır", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                }
+                Icon(Icons.Outlined.Report, contentDescription = null, tint = AfetCrimson, modifier = Modifier.size(18.dp))
+                Text("Saha operasyonlarını görüntüle", fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = Zinc800, modifier = Modifier.weight(1f))
+                Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = Zinc400, modifier = Modifier.size(16.dp))
             }
         }
     }
+}
+
+private fun magnitudeLabel(magnitude: Double): String = String.format(Locale.ROOT, "%.1f", magnitude)
+
+private fun distanceLabel(distanceKm: Double): String =
+    if (distanceKm < 1.0) "${(distanceKm * 1_000).toInt()} m" else String.format(TurkishLocale, "%.1f km", distanceKm)
+
+private fun compactTimestamp(value: String): String = value
+    .replace('T', ' ')
+    .removeSuffix("Z")
+    .take(16)
+
+private fun haversineKm(from: GeoPoint, to: GeoPoint): Double {
+    val lat1 = Math.toRadians(from.latitude)
+    val lat2 = Math.toRadians(to.latitude)
+    val dLat = lat2 - lat1
+    val dLon = Math.toRadians(to.longitude - from.longitude)
+    val a = sin(dLat / 2).let { it * it } + cos(lat1) * cos(lat2) * sin(dLon / 2).let { it * it }
+    return 6_371.0 * 2 * asin(sqrt(a.coerceIn(0.0, 1.0)))
 }

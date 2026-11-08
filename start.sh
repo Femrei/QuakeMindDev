@@ -72,8 +72,7 @@ elif [ -x "$ROOT_DIR/.venv/bin/python" ]; then
   PYTHON_BIN="$ROOT_DIR/.venv/bin/python"
 else
   echo "HATA: Backend Python sanal ortami bulunamadi. Once kurulum yapin:"
-  echo "  Windows: cd backend && python -m venv venv && venv/Scripts/python -m pip install -r requirements.txt"
-  echo "  Linux/macOS: cd backend && python3 -m venv venv && venv/bin/python -m pip install -r requirements.txt"
+  echo "  python -m venv .venv && .venv/Scripts/python -m pip install -r backend/requirements.txt"
   exit 1
 fi
 "$PYTHON_BIN" fastapi_app.py > "$LOG_DIR/backend.log" 2>&1 &

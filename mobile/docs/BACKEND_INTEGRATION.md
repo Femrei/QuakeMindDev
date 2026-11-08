@@ -5,12 +5,13 @@ gerçek REST servislerini kullanır. Önceki DevService örnekleri uygulamaya ba
 
 ## Backend'i yerelde başlatma
 
-Repo kökünden `backend` klasörüne geçip sanal ortamı etkinleştir:
+Repo kökünde sanal ortamı bir kez oluşturup backend bağımlılıklarını yükle:
 
 ```powershell
-cd backend
-.\venv\Scripts\Activate.ps1
-python fastapi_app.py
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+Set-Location backend
+..\.venv\Scripts\python.exe fastapi_app.py
 ```
 
 Sunucu `0.0.0.0:8000` üzerinde dinler; bilgisayarda `http://127.0.0.1:8000/docs`
@@ -23,17 +24,15 @@ ver.
 Emülatörde debug varsayılanı: http://10.0.2.2:8000/
 
 Fiziksel telefonda bilgisayarın yerel ağ IP adresini bul, telefon ve bilgisayarın
-birbirine erişebildiğini doğrula. Ayrı bir terminalde depo kökünden mobil modüle
-geçip derlemeyi çalıştır:
+birbirine erişebildiğini doğrula ve şu komutu çalıştır:
 
-    cd mobile
     .\gradlew.bat :app:assembleDebug -PquakemindApiBaseUrl=http://192.168.1.50:8000/
 
 192.168.1.50 yerine gerçek bilgisayar IP adresini yaz. QUAKEMIND_API_BASE_URL
 ortam değişkeni de desteklenir; Gradle özelliği önceliklidir. Sunucunun ağ
 arayüzünde dinlemesi gerekir. Debug yapıda HTTP açık, release yapıda HTTP
 kapalıdır. Release'in varsayılan URL'si kasıtlı olarak çalışmayan
-https://quakemind.invalid/ adresidir; yayımlamadan önce HTTPS sunucu adresi
+https://mobile.invalid/ adresidir; yayımlamadan önce HTTPS sunucu adresi
 verilmelidir. Kullanıcı parolaları veya tokenları Gradle dosyalarına yazılmamalıdır.
 
 Windows'ta çalışma klasöründe Türkçe karakter olabildiği için

@@ -8,6 +8,7 @@ import com.quakemind.core.model.Alert
 import com.quakemind.core.model.Earthquake
 import com.quakemind.core.model.UserSession
 import com.quakemind.core.network.monitor.NetworkMonitor
+import com.quakemind.feature.location.DeviceLocationProvider
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,7 @@ class HomeViewModelTest {
     private val alertRepo = mockk<AlertRepository>()
     private val incidentRepo = mockk<IncidentRepository>()
     private val networkMonitor = mockk<NetworkMonitor>()
+    private val deviceLocationProvider = mockk<DeviceLocationProvider>()
 
     @Before
     fun setUp() {
@@ -70,6 +72,7 @@ class HomeViewModelTest {
             alertRepository = alertRepo,
             incidentRepository = incidentRepo,
             networkMonitor = networkMonitor,
+            deviceLocationProvider = deviceLocationProvider,
         )
 
         // Verify initial state is populated synchronously (Frame 0 data)

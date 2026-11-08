@@ -25,14 +25,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Inventory2
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Backpack
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.PhoneInTalk
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Backpack
+import androidx.compose.material.icons.outlined.Map
+import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -42,11 +42,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,8 +82,8 @@ private val STATIC_BOTTOM_DESTINATIONS: List<BottomDestination> = listOf(
     ) { it?.hasRoute<HomeRoute>() == true },
     BottomDestination(
         label = "Harita",
-        activeIcon = Icons.Filled.LocationOn,
-        inactiveIcon = Icons.Outlined.LocationOn,
+        activeIcon = Icons.Filled.Map,
+        inactiveIcon = Icons.Outlined.Map,
         route = MapRoute(),
     ) { it?.hasRoute<MapRoute>() == true },
     BottomDestination(
@@ -92,30 +95,21 @@ private val STATIC_BOTTOM_DESTINATIONS: List<BottomDestination> = listOf(
     ) { it?.hasRoute<SosRoute>() == true },
     BottomDestination(
         label = "Uyarılar",
-        activeIcon = Icons.Filled.Notifications,
-        inactiveIcon = Icons.Outlined.Notifications,
+        activeIcon = Icons.Filled.NotificationsActive,
+        inactiveIcon = Icons.Outlined.NotificationsActive,
         route = AlertsRoute,
     ) { it?.hasRoute<AlertsRoute>() == true },
     BottomDestination(
         label = "Çanta",
-        activeIcon = Icons.Filled.Inventory2,
-        inactiveIcon = Icons.Outlined.Inventory2,
+        activeIcon = Icons.Filled.Backpack,
+        inactiveIcon = Icons.Outlined.Backpack,
         route = ChecklistRoute,
     ) { it?.hasRoute<ChecklistRoute>() == true },
 )
 
 fun defaultBottomDestinations(): List<BottomDestination> = STATIC_BOTTOM_DESTINATIONS
 
-private val SosRedGradient = Brush.verticalGradient(
-    colors = listOf(
-        Color(0xFFA61C1C),
-        Color(0xFF6E0C0C),
-    )
-)
-
-private val ShapeTop20dp = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-private val BorderBottomBar = BorderStroke(1.dp, Zinc200.copy(alpha = 0.7f))
-private val BorderSosButton = BorderStroke(3.5.dp, Color.White)
+private val DockShape = RoundedCornerShape(22.dp)
 
 @Composable
 fun SolidPureWhiteBottomNavBar(
@@ -124,57 +118,31 @@ fun SolidPureWhiteBottomNavBar(
     onNavigate: (Any) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier.fillMaxWidth(),
-        contentAlignment = Alignment.BottomCenter,
+    Surface(
+        modifier = modifier.fillMaxWidth().navigationBarsPadding()
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .shadow(12.dp, DockShape),
+        shape = DockShape,
+        color = Color.White,
+        border = BorderStroke(1.dp, Zinc200),
     ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(
-                    elevation = 6.dp,
-                    shape = ShapeTop20dp,
-                    ambientColor = Color.Black.copy(alpha = 0.05f),
-                    spotColor = Color.Black.copy(alpha = 0.10f),
-                ),
-            shape = ShapeTop20dp,
-            color = Color.White,
-            border = BorderBottomBar,
+        Row(
+            modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 6.dp, vertical = 5.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .height(56.dp)
-                    .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                items.forEach { item ->
-                    if (item.isSos) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    } else {
-                        val selected = item.matches(destination)
-                        BottomNavItemView(
-                            item = item,
-                            selected = selected,
-                            onNavigate = onNavigate,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
+            items.forEach { item ->
+                if (item.isSos) {
+                    SosFloatingButton(item = item, onNavigate = onNavigate, modifier = Modifier.weight(1f))
+                } else {
+                    BottomNavItemView(
+                        item = item,
+                        selected = item.matches(destination),
+                        onNavigate = onNavigate,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
-        }
-
-        val sosItem = items.find { it.isSos }
-        if (sosItem != null) {
-            SosFloatingButton(
-                item = sosItem,
-                onNavigate = onNavigate,
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .padding(bottom = 6.dp),
-            )
         }
     }
 }
@@ -212,16 +180,14 @@ private fun SosFloatingButton(
         contentAlignment = Alignment.Center,
     ) {
         Surface(
-            modifier = Modifier.size(64.dp),
-            shape = CircleShape,
-            color = Color.Transparent,
-            border = BorderSosButton,
-            shadowElevation = 8.dp,
+            modifier = Modifier.size(width = 50.dp, height = 50.dp),
+            shape = RoundedCornerShape(15.dp),
+            color = AfetCrimson,
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(SosRedGradient, CircleShape),
+                    .background(AfetCrimson, RoundedCornerShape(15.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(
@@ -232,15 +198,14 @@ private fun SosFloatingButton(
                         imageVector = Icons.Filled.PhoneInTalk,
                         contentDescription = "SOS",
                         tint = Color.White,
-                        modifier = Modifier.size(23.dp),
+                        modifier = Modifier.size(20.dp),
                     )
                     Spacer(Modifier.height(1.dp))
                     Text(
                         text = "SOS",
                         color = Color.White,
                         fontWeight = FontWeight.Black,
-                        fontSize = 11.5.sp,
-                        letterSpacing = 0.8.sp,
+                        fontSize = 10.sp,
                     )
                 }
             }
@@ -284,6 +249,10 @@ private fun BottomNavItemView(
         modifier = modifier
             .fillMaxHeight()
             .testTag(tabTag)
+            .semantics {
+                role = Role.Tab
+                this.selected = selected
+            }
             .graphicsLayer {
                 scaleX = buttonScale
                 scaleY = buttonScale
@@ -298,18 +267,23 @@ private fun BottomNavItemView(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(top = 2.dp),
+            modifier = Modifier.padding(top = 1.dp),
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = item.label,
-                modifier = Modifier.size(22.dp),
-                tint = contentColor,
-            )
-            Spacer(Modifier.height(2.dp))
+            Surface(
+                shape = RoundedCornerShape(11.dp),
+                color = if (selected) AfetCrimson.copy(alpha = 0.10f) else Color.Transparent,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(width = 42.dp, height = 27.dp).padding(vertical = 3.dp),
+                    tint = contentColor,
+                )
+            }
+            Spacer(Modifier.height(1.dp))
             Text(
                 text = item.label,
-                fontSize = 10.5.sp,
+                fontSize = 10.sp,
                 color = contentColor,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
                 maxLines = 1,

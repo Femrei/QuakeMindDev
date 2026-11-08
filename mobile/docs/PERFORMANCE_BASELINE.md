@@ -88,7 +88,7 @@ Aşağıdaki maddeler, sonraki fazlarda giderilecek kritik mimari ve render darb
 - **Risk:** `coreFlow` (session, earthquakes, incidents, alerts, pendingCount) ve `featureFlow` (mapPoints, familyMembers, checklistItems) birleştirilerek tek bir monolitik `AppUiState` üretilmektedir. Örneğin kullanıcı bir çanta maddesini işaretlediğinde deprem listesi ve harita noktaları da gereksiz yere flow tetiklenmesine maruz kalmaktadır.
 
 ### 3. `core:model` Modellerinin Compose Stability Etkisi
-- **Konum:** `core/model/src/main/kotlin/com/quakemind/core/model/Models.kt`
+- **Konum:** `core/model/src/main/kotlin/com/mobile/core/model/Models.kt`
 - **Risk:** Modeller standart Kotlin `List<Earthquake>`, `List<Incident>`, `List<Alert>`, `Set<String>` tiplerini kullanmaktadır. Compose derleyicisi standart `List` ve `Set` arayüzlerini kararsız (unstable) kabul eder. Bu durum parametre olarak `List<T>` alan Composable fonksiyonların "skippable" özelliğini kaybetmesine yol açar.
 
 ### 4. `HomeScreen` Filtreleme ve LazyColumn İçinde Eager `forEach`
@@ -118,8 +118,8 @@ Aşağıdaki maddeler, sonraki fazlarda giderilecek kritik mimari ve render darb
 ### 10. Compose Compiler Raporu Çıktıları (Empirik Doğrulama)
 - **Rapor Dosyaları:** `app/build/compose_reports/app-classes.txt` ve `app-composables.txt`
 - **Resmi Derleyici Bulguları:**
-  - `unstable class com.quakemind.AppUiState` (`<runtime stability> = Unstable`)
-  - `unstable class com.quakemind.AppViewModel` (`<runtime stability> = Unstable`)
+  - `unstable class com.mobile.AppUiState` (`<runtime stability> = Unstable`)
+  - `unstable class com.mobile.AppViewModel` (`<runtime stability> = Unstable`)
   - `HomeScreen(unstable state: AppUiState)`
   - `AlertsScreen(unstable state: AppUiState)`
   - `AlertDetailScreen(unstable state: AppUiState)`
@@ -163,7 +163,7 @@ Görsel değişikliklerin engellendiğini doğrulamak için `GoldenScreenshotReg
 
 ```powershell
 # Görsel ve kompozisyon doğrulama testlerini çalıştırma
-.\gradlew.bat :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.quakemind.visual.GoldenScreenshotRegressionTest
+.\gradlew.bat :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.mobile.visual.GoldenScreenshotRegressionTest
 ```
 
 > **Önemli Hatırlatma:** Screenshot ve Compose UI testleri **yalnızca görsel regresyon koruması** sağlar. Uygulamanın çalışma zamanı hızını ve frame sürelerini ölçmek için `:benchmark` modülündeki Macrobenchmark testleri esas alınmalıdır.
