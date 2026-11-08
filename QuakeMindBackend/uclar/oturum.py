@@ -9,6 +9,7 @@ okunur ve yalnizca yonetici degistirebilir (CLAUDE.md kural 5).
 
 from __future__ import annotations
 
+import secrets
 from typing import Optional
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
@@ -18,6 +19,8 @@ import kimlik
 from depo import aktif_depo
 
 yonlendirici = APIRouter(prefix="/api/oturum", tags=["oturum"])
+
+MISAFIR_EPOSTA_ALANI = "guest.quakemind.invalid"
 
 
 class KayitIstegi(BaseModel):
@@ -48,7 +51,32 @@ def _profil(kayit: dict) -> dict:
         # Saha kullanicisinin bagli oldugu ekip (J-54); yalniz gorunum icin,
         # yetkiyi her uc sunucuda kendisi kontrol eder.
         "ekipId": kayit.get("ekip_id"),
+        "misafir": kayit["eposta"].endswith(f"@{MISAFIR_EPOSTA_ALANI}"),
     }
+
+
+@yonlendirici.post("/misafir", status_code=201)
+def misafir(yanit: Response, qm_yenileme: Optional[str] = Cookie(default=None, alias=kimlik.YENILEME_CEREZI)):
+    """Acil mod icin en dusuk yetkili, kalici kimlikli misafir oturumu.
+
+    Gecerli oturum cerezi varsa ayni hesaba erisim jetonu verir. Aksi halde
+    yalniz `afetzede` rolunde yeni bir kayit acar; sifre disari verilmez.
+    Boylece SOS/ihbar sahipligi ve kayit duzeyi yetkilendirme korunur.
+    """
+    mevcut = kimlik.cerezden_kullanici(qm_yenileme)
+    if mevcut is not None:
+        kayit = aktif_depo().kullanici_id(mevcut["id"])
+        return {"erisimJetonu": kimlik.erisim_jetonu_uret(kayit), "kullanici": _profil(kayit)}
+
+    kayit = aktif_depo().kullanici_olustur(
+        eposta=f"misafir-{secrets.token_hex(16)}@{MISAFIR_EPOSTA_ALANI}",
+        ad_soyad="Misafir",
+        # Rastgele sifre yalniz sunucuda olusturulur ve hicbir yere dondurulmez.
+        sifre_ozeti=kimlik.sifre_ozetle(secrets.token_urlsafe(32)),
+        rol=kimlik.VARSAYILAN_ROL,
+    )
+    erisim = kimlik.oturum_baslat(kayit, yanit)
+    return {"erisimJetonu": erisim, "kullanici": _profil(kayit)}
 
 
 @yonlendirici.post("/kayit", status_code=201)

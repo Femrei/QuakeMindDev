@@ -52,7 +52,6 @@ import canli_yayin
 from depo import depo_ac
 RISK_ROOT = APPS_DIR / "earthquake_risk"
 CAMERA_ROOT = APPS_DIR / "camera_detection"
-MOBILE_TOOL_ROOT = BASE_DIR.parent / "quakemind" / "tool"
 
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))

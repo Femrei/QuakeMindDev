@@ -43,6 +43,17 @@ CREATE TABLE IF NOT EXISTS oturumlar (
 );
 CREATE INDEX IF NOT EXISTS ix_oturum_kullanici ON oturumlar(kullanici_id);
 
+-- Mobil "güvendeyim" bildirimi: yalnız hesap sahibinin son seçimi.
+-- SOS değildir, otomatik yardım çağrısı oluşturmaz.
+CREATE TABLE IF NOT EXISTS kullanici_guvenlik_durumlari (
+    kullanici_id TEXT PRIMARY KEY REFERENCES kullanicilar(id) ON DELETE CASCADE,
+    durum TEXT NOT NULL CHECK (durum IN ('SAFE','NEED_HELP','UNKNOWN')),
+    lat REAL,
+    lon REAL,
+    not_metni TEXT,
+    guncellendi REAL NOT NULL
+);
+
 -- Ortak cikti sozlesmesi (CLAUDE.md kural 2):
 -- (konum, hasar/aciliyet skoru, guven, zaman damgasi, kaynak tipi)
 CREATE TABLE IF NOT EXISTS hasar_noktalari (
@@ -196,7 +207,9 @@ CREATE TABLE IF NOT EXISTS ihbarlar (
     ek            TEXT,
     isleyen_id    TEXT,
     isleyen_ad    TEXT,
-    guncellendi   REAL
+    guncellendi   REAL,
+    istemci_anahtari TEXT,
+    istek_ozeti     TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_ihbar_zaman ON ihbarlar(zaman);
 CREATE INDEX IF NOT EXISTS ix_ihbar_kullanici ON ihbarlar(kullanici_id);
@@ -251,12 +264,20 @@ class SqliteDepo:
         with self._kilit:
             self._baglanti.executescript(SEMA)
             self._sutunlari_tamamla()
+            # Eski SQLite dosyalarinda yeni sutunlar _sutunlari_tamamla'dan
+            # sonra var olur. Her kullanicinin tekrar-istek anahtari benzersizdir.
+            self._baglanti.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_ihbar_istemci_anahtari "
+                "ON ihbarlar(kullanici_id, istemci_anahtari) "
+                "WHERE istemci_anahtari IS NOT NULL"
+            )
             self._baglanti.commit()
 
     # Sonradan eklenen sutunlar. `CREATE TABLE IF NOT EXISTS` var olan tabloya
     # sutun eklemez; eski veritabani burada tamamlanir, veri kaybolmaz.
     _SONRADAN_EKLENEN = {
         "kullanicilar": (("ekip_id", "TEXT"),),
+        "ihbarlar": (("istemci_anahtari", "TEXT"), ("istek_ozeti", "TEXT")),
         "ekipler": (
             ("kurum", "TEXT"),
             ("tur", "TEXT"),
@@ -341,6 +362,29 @@ class SqliteDepo:
     def kullanici_sayisi(self) -> int:
         satir = self._tek("SELECT COUNT(*) AS n FROM kullanicilar")
         return int(satir["n"]) if satir else 0
+
+    def guvenlik_durumu_yaz(
+        self, kullanici_id: str, durum: str, lat: float | None = None,
+        lon: float | None = None, not_metni: str | None = None,
+    ) -> dict:
+        """Kullaniciya ozel son beyan; yardim cagrisina donusturmez."""
+        zaman = time.time()
+        self._yaz(
+            """INSERT INTO kullanici_guvenlik_durumlari
+               (kullanici_id, durum, lat, lon, not_metni, guncellendi)
+               VALUES (?,?,?,?,?,?)
+               ON CONFLICT(kullanici_id) DO UPDATE SET
+               durum=excluded.durum, lat=excluded.lat, lon=excluded.lon,
+               not_metni=excluded.not_metni, guncellendi=excluded.guncellendi""",
+            (kullanici_id, durum, lat, lon, not_metni, zaman),
+        )
+        return self.guvenlik_durumu_oku(kullanici_id)
+
+    def guvenlik_durumu_oku(self, kullanici_id: str) -> Optional[dict]:
+        return self._tek(
+            "SELECT * FROM kullanici_guvenlik_durumlari WHERE kullanici_id = ?",
+            (kullanici_id,),
+        )
 
     # ---- oturumlar (yenileme jetonlari) -----------------------------------
 
@@ -1080,7 +1124,8 @@ class SqliteDepo:
     _IHBAR_SUTUNLARI = (
         "i.id, i.tur, i.lon, i.lat, i.zaman, i.durum, i.kullanici_id, i.metin, i.mahalle, "
         "i.etiket, i.skor, i.guven, i.hasar_id, i.ek, i.isleyen_id, i.isleyen_ad, "
-        "i.guncellendi, (f.ihbar_id IS NOT NULL) AS fotograf_var"
+        "i.guncellendi, i.istemci_anahtari, i.istek_ozeti, "
+        "(f.ihbar_id IS NOT NULL) AS fotograf_var"
     )
 
     def ihbar_ekle(
@@ -1099,10 +1144,17 @@ class SqliteDepo:
         fotograf: tuple[bytes, int, int] | None = None,
         zaman: float | None = None,
         ihbar_id: str | None = None,
+        istemci_anahtari: str | None = None,
+        istek_ozeti: str | None = None,
+        hasar_noktasi: dict | None = None,
     ) -> dict:
         """`fotograf`: (JPEG baytlari, en, boy). Ihbar ve fotografi tek
-        islemde yazilir: fotografsiz yarim kayit kalmaz. `ihbar_id` onceden
-        uretilebilir (hasar noktasi ihbara baglanirken)."""
+        islemde yazilir: fotografsiz yarim kayit kalmaz. Varsa hasar noktasi
+        da ayni transaction'a dahil edilir (idempotency yarismasinda artik
+        bir hasar kaydi kalmasin)."""
+        if istemci_anahtari and (not kullanici_id or not istek_ozeti):
+            raise ValueError("Idempotent ihbar icin kullanici ve istek ozeti gerekli.")
+        nokta_id = f"hsr-{uuid.uuid4().hex[:10]}" if hasar_noktasi else hasar_id
         kayit = {
             "id": ihbar_id or yeni_ihbar_kimligi(),
             "tur": tur,
@@ -1116,21 +1168,34 @@ class SqliteDepo:
             "etiket": etiket,
             "skor": skor,
             "guven": guven,
-            "hasar_id": hasar_id,
+            "hasar_id": nokta_id,
             "ek": json.dumps(ek, ensure_ascii=False) if ek else None,
             "isleyen_id": None,
             "isleyen_ad": None,
             "guncellendi": None,
+            "istemci_anahtari": istemci_anahtari,
+            "istek_ozeti": istek_ozeti,
         }
         with self._kilit:
             try:
                 self._baglanti.execute(
                     """INSERT INTO ihbarlar
                        (id, tur, lon, lat, zaman, durum, kullanici_id, metin, mahalle,
-                        etiket, skor, guven, hasar_id, ek, isleyen_id, isleyen_ad, guncellendi)
-                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                        etiket, skor, guven, hasar_id, ek, isleyen_id, isleyen_ad, guncellendi,
+                        istemci_anahtari, istek_ozeti)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                     tuple(kayit.values()),
                 )
+                if hasar_noktasi:
+                    self._baglanti.execute(
+                        """INSERT INTO hasar_noktalari
+                           (id, lon, lat, skor, guven, zaman, kaynak, etiket, bolge, ek)
+                           VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                        (nokta_id, kayit["lon"], kayit["lat"], hasar_noktasi["skor"],
+                         hasar_noktasi["guven"], kayit["zaman"], hasar_noktasi["kaynak"],
+                         hasar_noktasi.get("etiket"), None,
+                         json.dumps({"ihbarId": kayit["id"]}, ensure_ascii=False)),
+                    )
                 if fotograf is not None:
                     veri, en, boy = fotograf
                     self._baglanti.execute(
@@ -1143,6 +1208,15 @@ class SqliteDepo:
                 raise
         kayit["fotograf_var"] = fotograf is not None
         return kayit
+
+    def ihbar_istemci_anahtari(self, kullanici_id: str, anahtar: str) -> Optional[dict]:
+        """Ayni kullanicinin tamamlanmis istegini, tam kayitla birlikte bulur."""
+        return self._tek(
+            f"""SELECT {self._IHBAR_SUTUNLARI} FROM ihbarlar i
+                LEFT JOIN ihbar_fotograflari f ON f.ihbar_id = i.id
+                WHERE i.kullanici_id = ? AND i.istemci_anahtari = ?""",
+            (kullanici_id, anahtar),
+        )
 
     def ihbar_listele(
         self,

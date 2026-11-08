@@ -99,7 +99,7 @@ yeni konsol devralır. Eski web'de yalnız kritik düzeltme yapılır.
 
 ## 9. Dal, commit ve dağıtım
 
-- Depolar: origin `Femrei/QuakeMindDev`, upstream `UtBird/QuakeMind`.
+- Bu çalışma kopyasında `origin` `geniusprr/QuakeMind`, `upstream` `UtBird/QuakeMind`; aktif geliştirme dalı `deha/backend-gelistirme`.
 - İş, konusuna göre ayrı bir dalda yapılır; `main` doğrudan değiştirilmez.
 - **Commit, push ve dağıtım kullanıcı o an açıkça söylemeden yapılmaz.**
 - Ağır model dosyaları depoya girmez, Hugging Face'ten indirilir (bkz. `QuakeMindBackend/README.md`).
@@ -108,6 +108,6 @@ yeni konsol devralır. Eski web'de yalnız kritik düzeltme yapılır.
 
 - Raspberry Pi ve internetsiz çalışma **ertelendi**, ayrı bir iş olarak ele alınacak.
   `QuakeMindBackend/OPTIMIZASYON_ANALIZI.md`'nin Pi/offline bölümleri şu an geçerli değil.
-- Mobil (Flutter) şu an kapsam dışı; odak web + backend.
+- 7 Kasım 2026 itibarıyla eski Flutter klasörü yerini `quakemind/` altındaki Kotlin/Compose Android uygulamasına bıraktı; Android-backend entegrasyonu geliştirme kapsamındadır.
 - `OPTIMIZASYON_ANALIZI.md` içindeki durum alanları bayat (hepsi "Bekliyor" görünüyor ama
   bazıları yapılmış). Oradan madde kullanmadan önce koda bak.

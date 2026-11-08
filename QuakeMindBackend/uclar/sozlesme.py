@@ -89,7 +89,7 @@ def _sos_cikti(k: dict) -> dict:
         # Afetzede ekranindan gelen yapilandirilmis bilgi (yoksa None).
         "kisiSayisi": ek.get("kisiSayisi"),
         "ihtiyaclar": ek.get("ihtiyaclar"),
-        # "gps" ya da "mahalle" (mahalle merkezi, yaklasik konum).
+        # "gps", "manuel" ya da "mahalle" (mahalle merkezi, yaklasik konum).
         "konumKaynagi": ek.get("konumKaynagi"),
         "konumDogrulukM": ek.get("konumDogrulukM"),
         # False: afetzede durum secmeden SOS'a basti (tek dokunus, J-50).
@@ -166,8 +166,8 @@ def sos_ac(istek: SosIstegi, kul: dict = Depends(kimlik.kullanici)):
         raise HTTPException(status_code=422, detail="Oncelik: kritik | yuksek | orta")
     if istek.ihtiyaclar and any(i not in IHTIYACLAR for i in istek.ihtiyaclar):
         raise HTTPException(status_code=422, detail=f"Ihtiyac: {' | '.join(IHTIYACLAR)}")
-    if istek.konumKaynagi not in (None, "gps", "mahalle"):
-        raise HTTPException(status_code=422, detail="konumKaynagi: gps | mahalle")
+    if istek.konumKaynagi not in (None, "gps", "manuel", "mahalle"):
+        raise HTTPException(status_code=422, detail="konumKaynagi: gps | manuel | mahalle")
     ek = {k: v for k, v in {
         "kisiSayisi": istek.kisiSayisi,
         "ihtiyaclar": sorted(set(istek.ihtiyaclar)) if istek.ihtiyaclar else None,

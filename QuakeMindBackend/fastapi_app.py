@@ -6,7 +6,7 @@ yalnizca uygulamayi kurar ve router'lari baglar:
   cekirdek.py        paylasilan durum, yardimcilar, veri modelleri, lifespan
   uclar/*.py         uclar, konuya gore (her biri 400 satirin altinda)
 
-Calistirma degismedi:  uvicorn fastapi_app:app --host 127.0.0.1 --port 8001
+Yerel mobil istemci icin: python fastapi_app.py
 """
 
 import os
@@ -27,6 +27,7 @@ from uclar import (
     genel,
     gorev,
     goruntu,
+    guvenlik,
     hasar_analiz,
     ihbar,
     kamera,
@@ -63,6 +64,7 @@ for modul in (
     altlik,
     yerler,
     ihbar,
+    guvenlik,
     gorev,
     katmanlar,
     simulasyon,
@@ -121,5 +123,15 @@ app.add_middleware(
     allow_origins=KOKENLER,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["authorization", "content-type"],
+    allow_headers=["authorization", "content-type", "idempotency-key"],
 )
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        app,
+        host=os.environ.get("QUAKEMIND_HOST", "0.0.0.0"),
+        port=int(os.environ.get("QUAKEMIND_PORT", "8000")),
+    )

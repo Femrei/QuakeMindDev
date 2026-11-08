@@ -50,7 +50,7 @@ def predict_risk(req: ck.RiskRequest):
         if req.manualLatitude is not None and req.manualLongitude is not None:
             manual_coords = (req.manualLatitude, req.manualLongitude)
         
-        with ck.temporary_sys_path(ck.RISK_ROOT, ck.MOBILE_TOOL_ROOT), ck.temporary_cwd(ck.RISK_ROOT):
+        with ck.temporary_sys_path(ck.RISK_ROOT), ck.temporary_cwd(ck.RISK_ROOT):
             if req.refreshData:
                 from data_manager import fetch_and_update_data
                 fetch_and_update_data()
@@ -170,7 +170,7 @@ def risk_refresh_live_data():
         raise HTTPException(status_code=503, detail="Risk model is not loaded.")
 
     try:
-        with ck.temporary_sys_path(ck.RISK_ROOT, ck.MOBILE_TOOL_ROOT), ck.temporary_cwd(ck.RISK_ROOT):
+        with ck.temporary_sys_path(ck.RISK_ROOT), ck.temporary_cwd(ck.RISK_ROOT):
             from data_manager import fetch_and_update_data
             message = fetch_and_update_data()
 

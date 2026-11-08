@@ -26,14 +26,17 @@ surebilir. Is kuyruguna tasinmasi J-51'de acik madde.
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
+import re
+import sqlite3
 import threading
 import time
 import uuid
 from collections import OrderedDict
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
 import canli_yayin
@@ -49,7 +52,7 @@ yonlendirici = APIRouter(tags=["ihbar"])
 
 TURLER = ("fotograf", "metin", "ihtiyac")
 DURUMLAR = ("yeni", "goruldu", "kapandi")
-KONUM_KAYNAKLARI = ("gps", "mahalle", "metin")
+KONUM_KAYNAKLARI = ("gps", "manuel", "mahalle", "metin")
 
 # Afetzedenin secebildigi model -> kamera kodundaki ad.
 MODELLER = {"catlak": "catlak", "bina": "bina", "ikisi": "hybrid"}
@@ -337,16 +340,40 @@ class IhbarIstegi(BaseModel):
     kisiSayisi: Optional[int] = Field(None, ge=1, le=500)
 
 
+def _tekrar_ihbar(depo, kul: dict, anahtar: str, ozet: str) -> Optional[dict]:
+    kayit = depo.ihbar_istemci_anahtari(kul["id"], anahtar)
+    if kayit is None:
+        return None
+    if kayit["istek_ozeti"] != ozet:
+        raise HTTPException(status_code=409, detail="Bu Idempotency-Key baska bir ihbar icin kullanildi.")
+    return {**_cikti(kayit, afetzede=kul["rol"] == "afetzede"), "gorevler": []}
+
+
 @yonlendirici.post("/api/ihbarlar", status_code=201)
-def ihbar_ac(istek: IhbarIstegi, kul: dict = Depends(kimlik.kullanici)):
+def ihbar_ac(
+    istek: IhbarIstegi,
+    kul: dict = Depends(kimlik.kullanici),
+    idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key"),
+):
     if istek.tur not in TURLER:
         raise HTTPException(status_code=422, detail="Tür: fotograf | metin | ihtiyac")
     if istek.konumKaynagi not in KONUM_KAYNAKLARI:
-        raise HTTPException(status_code=422, detail="konumKaynagi: gps | mahalle | metin")
+        raise HTTPException(status_code=422, detail="konumKaynagi: gps | manuel | mahalle | metin")
     if istek.konumKaynagi == "metin" and istek.tur != "metin":
         raise HTTPException(status_code=422, detail="Metindeki adres yalnız yazılı ihbarda kullanılır.")
 
     depo = aktif_depo()
+    ozet = None
+    if idempotency_key is not None:
+        if not re.fullmatch(r"[A-Za-z0-9._:-]{8,128}", idempotency_key):
+            raise HTTPException(status_code=422, detail="Idempotency-Key 8-128 karakter, harf/rakam/._:- olmali.")
+        # JSON anahtar sirasindan bagimsiz, kullaniciya ozel tekrar kontrolu.
+        icerik = json.dumps(istek.model_dump(exclude_none=True), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        ozet = hashlib.sha256(icerik.encode("utf-8")).hexdigest()
+        onceki = _tekrar_ihbar(depo, kul, idempotency_key, ozet)
+        if onceki is not None:
+            return onceki
+
     son = depo.ihbar_listele(baslangic=time.time() - PENCERE_SN, kullanici_id=kul["id"], sinir=KISI_BASI_SINIR)
     if len(son) >= KISI_BASI_SINIR:
         raise HTTPException(
@@ -425,30 +452,36 @@ def ihbar_ac(istek: IhbarIstegi, kul: dict = Depends(kimlik.kullanici)):
             ek.update(ihtiyaclar=ihtiyaclar, kisiSayisi=istek.kisiSayisi)
             etiket = ", ".join(IHTIYAC_ADI[i] for i in ihtiyaclar)
 
-        hasar_id = None
-        if hasar_kaynagi:
-            hasar = depo.hasar_ekle(
-                lon=lon, lat=lat, skor=skor, guven=guven, kaynak=hasar_kaynagi,
-                etiket=etiket, zaman=zaman, ek={"ihbarId": ihbar_id},
+        try:
+            kayit = depo.ihbar_ekle(
+                ihbar_id=ihbar_id,
+                tur=istek.tur,
+                lon=lon,
+                lat=lat,
+                kullanici_id=kul["id"],
+                metin=metin,
+                mahalle=istek.mahalle if istek.konumKaynagi == "mahalle" else None,
+                etiket=etiket,
+                skor=skor,
+                guven=guven,
+                ek=ek,
+                fotograf=fotograf,
+                zaman=zaman,
+                istemci_anahtari=idempotency_key,
+                istek_ozeti=ozet,
+                hasar_noktasi={"kaynak": hasar_kaynagi, "skor": skor, "guven": guven, "etiket": etiket}
+                if hasar_kaynagi else None,
             )
-            hasar_id = hasar["id"]
-
-        kayit = depo.ihbar_ekle(
-            ihbar_id=ihbar_id,
-            tur=istek.tur,
-            lon=lon,
-            lat=lat,
-            kullanici_id=kul["id"],
-            metin=metin,
-            mahalle=istek.mahalle if istek.konumKaynagi == "mahalle" else None,
-            etiket=etiket,
-            skor=skor,
-            guven=guven,
-            hasar_id=hasar_id,
-            ek=ek,
-            fotograf=fotograf,
-            zaman=zaman,
-        )
+        except sqlite3.IntegrityError:
+            # Baska worker/process ayni anahtari ilk kontrolumuzden sonra
+            # kaydetmis olabilir. Veritabani UNIQUE indeksi son savunmadir.
+            if idempotency_key:
+                tekrar = _tekrar_ihbar(depo, kul, idempotency_key, ozet)
+                if tekrar is not None:
+                    if istek.analizId:
+                        _analizi_birak(istek.analizId, tekrar["id"])
+                    return tekrar
+            raise
     except BaseException:
         if istek.analizId:
             _analizi_birak(istek.analizId, None)
