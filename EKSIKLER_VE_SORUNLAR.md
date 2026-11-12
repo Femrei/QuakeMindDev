@@ -4595,6 +4595,98 @@ hasar %0,58 (geçerli alanda %1,49) · açık yol 333 / **kapalı 30** · önces
 
 ---
 
+## PR #5 incelemesi — Android uygulaması (J-141…J-148)
+
+**Kaynak:** [UtBird/QuakeMind#5](https://github.com/UtBird/QuakeMind/pull/5) (Deha, dal
+`codex/quakeminds-app`, uç `c515203`). **İnceleme tarihi:** 12 Kasım 2026. Bulgular PR'a yorum olarak
+yazıldı; düzeltmeyi PR sahibi yapacak. **Bu maddeler `main`'de değil, PR dalında**; PR birleşmeden
+kapatılırsa birleşme sonrası yeniden denetlenmeli.
+
+**Nasıl sınandı.** PR dalı ayrı çalışma ağacında; backend ayrı SQLite veritabanıyla (`QUAKEMIND_SQLITE`),
+yerel model dosyalarıyla. `:app:assembleDebug` temiz (JDK 21, AGP 9.3, compileSdk 37). Pixel 6 /
+Android 36 emülatörü, debug derlemesi `10.0.2.2:8000`. `backend/tests/test_mobile_*.py` 12/12 geçti.
+Çalışanlar: misafir girişi, deprem listesi, ihbar (201), SOS (GPS ±5 m), "Yardım Gerekli" (SOS
+açmıyor), harita (OSM + 83 yakın yer), risk puanı, Idempotency-Key (aynı içerik → aynı kayıt,
+farklı içerik → 409).
+
+## J-141 🔴 Sunucuya ulaşılamazken eşitleme worker'ı sonsuz döngüye giriyor
+**Durum:** AÇIK (PR #5) · **Ölçüldü**
+
+`mobile/sync/.../IncidentSyncWorker.kt:34` `while (true)` + `IncidentDao.kt:20` `claimPendingBatch`
+`PENDING` **ve** `FAILED` kayıtları çekiyor. Ağ hatasında kayıt `FAILED` yapılıyor, döngü aynı
+çalışmada onu hemen yeniden çekiyor; `Result.retry()` satırına hiç ulaşılmıyor, WorkManager backoff'u
+devreye girmiyor.
+
+**Ölçüm.** Backend durduruldu, 8000 portuna bağlantı sayıp yanıt vermeden kapatan bir dinleyici
+kondu, uygulamadan tek ihbar gönderildi: **80 sn'de ~12 000 bağlantı (~150/sn), uygulama %112 CPU**,
+kendiliğinden durmadı. Afet anında sunucu çöktüğünde pil tükenir, sunucu dönünce de boğulur.
+
+**Çözüm önerisi.** Bir çalışmada yalnız `PENDING` al ya da kurtarılabilir hatada döngüden çıkıp
+`Result.retry()` dön.
+
+## J-142 🟠 İhbar formundaki kategori, aciliyet ve kişi sayıları sunucuya gitmiyor
+**Durum:** AÇIK (PR #5) · **Ölçüldü** · **İlgili:** CLAUDE.md §2
+
+`BackendServices.kt:166` gövdeye yalnız `tur`, `metin`, `lat/lon`, `konumKaynagi` koyuyor. Formda
+"Enkaz / Mahsur · Kritik · 1 mahsur kişi" seçilip gönderildi; veritabanındaki kayıt:
+`tur=metin, etiket="Model incelemedi", ek={"konumKaynagi":"manuel"}`. Konsol bunun kritik enkaz
+ihbarı olduğunu göremez. Çevrimdışı kuyruk yolu da (`IncidentSyncWorker.kt:41`) `IncidentDraft`'ı
+kurarken `urgency`, `peopleCount`, `injuredCount`, `locationSource` alanlarını doldurmuyor →
+varsayılana düşüyor. Backend tarafında da bu alanları taşıyacak yer yok (`IhbarIstegi` yalnız
+`kisiSayisi` ve `ihtiyaclar` biliyor); sözleşme iki tarafta birlikte genişletilmeli.
+
+## J-143 🟠 İhbar formu GPS kullanmıyor; afetzededen koordinat elle isteniyor
+**Durum:** AÇIK (PR #5) · **Emülatörde görüldü** · **İlgili:** afetzede UX kararları
+
+Ana ekran "Konum hazır · ±5 m" derken ve SOS ekranı GPS'i sorunsuz alırken `ReportScreen.kt:210`
+"GPS bu formda otomatik alınmıyor" diyip enlem/boylam istiyor. Alanlar rakam klavyesi değil tam
+QWERTY açıyor (`KeyboardType.Decimal` yok); emülatörde otomatik tamamlama boylama kendiliğinden
+`" ft"` ekledi. GPS varsayılan olmalı, elle giriş yedek kalmalı.
+
+## J-144 🟠 Risk ekranı etkenleri atıyor ve "servis bildirmedi" diyor
+**Durum:** AÇIK (PR #5) · **Ölçüldü** · **İlgili:** CLAUDE.md §1
+
+`BackendServices.kt:408` `factors = emptyList()` sabit. Aynı istekte backend
+`factors: {"Kisa vadeli risk": 0.25, "Uzun vadeli tehlike": 0.43, "Fay etkisi": 1.0}` dönüyor
+(Defne, 36.2021 / 36.1612). Ekranda "Servis bu analiz için ek etken bildirmedi" yazıyor — doğru değil.
+
+## J-145 🟠 `/api/oturum/misafir` sınırsız hesap açıyor; kişi başı ihbar sınırı aşılıyor
+**Durum:** AÇIK (PR #5) · **Ölçüldü** · **İlgili:** CLAUDE.md §5
+
+`backend/uclar/oturum.py:58` kimliksiz, hız sınırsız; her çağrıda yeni `afetzede` hesabı. 30 misafir
+art arda → 30 × 201; her biriyle SOS → 10 × 201. Her misafir yeni "kişi" olduğundan
+`KISI_BASI_SINIR` anlamını yitiriyor; `/api/sos`'ta zaten sınır yok (eski sorun), `/kayit` de
+sınırsız (eski sorun). Sahte SOS yağmuru riski → IP başına hız sınırı gerekli.
+
+## J-146 🟡 Birleştirme sırası, klasör yeniden adlandırma ve mobil kapsamı karar bekliyor
+**Durum:** KARAR BEKLİYOR
+
+- PR `main`'e değil #4'ün dalına (`feat/altlik-hf-otomatik-indirme`) açık: önce #4, sonra taban `main`.
+- `QuakeMindBackend/` → `backend/` (~640 dosya): açık dallar (#3 dahil) ve yerel
+  `QuakeMindBackend/venv` kurulumları etkilenir. Belgelerde yalnız yol değişmiş (denetlendi).
+- CLAUDE.md §10 mobili kapsam dışı sayıyor; PR Flutter uygulamasını cihaz içi `bina.tflite` ve
+  `catlak.tflite` ile siliyor. `PROJE_DOSYASI.md:71` hâlâ "Flutter mobil istemci" diyor.
+
+## J-147 🟡 Mobilde kaynak etiketi ve ölçümsüz iddia eksikleri
+**Durum:** AÇIK (PR #5) · **İlgili:** CLAUDE.md §1, §6, §8
+
+- Ana ekran "Yakındaki depremler" kartı 2026-08-12 tarihli kaydı gösteriyor (inceleme 12 Kasım),
+  kaynak (Kandilli/AFAD) yazmıyor; tanıtım ekranı "saniyeler içinde takip edin" diyor.
+- Haritada lejant ve kaynak yok; kırmızı iğnelerin ne olduğu belirsiz.
+- Koyu kırmızı marka rengi olarak kullanılıyor (kırmızı yalnız hasar/aciliyet için).
+- `mobile/README.md`: "120 FPS", "0 per-frame allocation" kaynaksız; "aile fertlerinin pil/konum
+  takibi" yazıyor ama uygulama "bu sürümde doğrulanamıyor" diyor.
+
+## J-148 ⚪ PR #5 küçük notlar
+**Durum:** AÇIK (PR #5)
+
+- `backend/fastapi_app.py:135` doğrudan çalıştırınca varsayılan `0.0.0.0` (API yerel ağa açılır).
+- `BackendClient.kt:47` yenileme jetonu düz `SharedPreferences`'ta.
+- `start.sh` "konsol klasörü yok" diyor ama denetlediği `quakemind-web`.
+- PR açıklaması "`QuakeMinds/` altında" diyor; klasörler kökte.
+
+---
+
 # DEĞİŞİKLİK GÜNLÜĞÜ
 
 | Tarih | Değişiklik |
@@ -4789,3 +4881,4 @@ hasar %0,58 (geçerli alanda %1,49) · açık yol 333 / **kapalı 30** · önces
 | 11 Ekim 2026 | **J-138 (🟠) bulundu, AÇIK: makale §4'teki TE23D sızıntı sayısı (99/118) kaynaksız ve kendi ölçümümüzle çelişiyor.** Kullanıcı TE23D incelemesini sorunca denetlendi. Makale *"sınama karolarının 99/118'inin eğitimde coğrafi komşusu vardır"* diyor; bizim kendi ölçümümüz (`Furkan--Utku--Model_ve_veriseti_aktarımı/AKTARIM_BELGESI.md` §Ç-03) **112/118** veriyor ve ölçütü farklı tanımlıyor: *"en az bir eğitim karosuyla aynı 1024'lük üst karodan geliyor"* (TE23D dosya adı deseni `sahne_satır_sütun_altkaro`'dan çıkarıldı). **99 sayısının kaynağı hiçbir yerde yok:** aktarım belgesi, `RAPOR_BILGILERI.md`, `araclar_makale_yazin_konumu.py` ve depodaki betiklerde geçmiyor. `makale/arsiv/` içindeki **bütün** docx sürümlerinde (pre-revize18'e kadar, 29 Eylül) 99 yazıyor → revize18/19/20'den önce girmiş. **Mantıksal tutarsızlık:** "coğrafi komşu" ölçütü "aynı üst karo"dan daha geniştir, o hâlde sayı 112'den **büyük** çıkmalı, küçük değil. **Neden önemli:** bu, başka bir grubun yayımlanmış kümesine yönelik nicel bir metodoloji eleştirisi; yanlışsa hem hatalı hem de TE23D yazarlarına haksızlık. **Yeniden ölçülemiyor:** TE23D verisi yerelde yok, yalnız `Makale - Kaynaklar/TE23D_…pdf` (3,3 MB) var; karo listesi Google Drive klasöründen yeniden alınmalı. **ÇÖZÜM YOLU BULUNDU (11 Ekim 2026):** sayıya hiç gerek yok — iddia TE23D makalesinin **kendi yöntem cümleleriyle** kurulabilir ve okuyucu doğrulayabilir: *"We divided 15 GeoTIFF images into 1024 × 1024 px patches"* (§III-B) · *"the images were divided into smaller, more manageable 256 × 256 pixel patches"* (§III-C) · *"The dataset was split into three sets: train, validation, and test, with a ratio of 80:10:10, as shown in Table III"*. Her 1024'lük yama en çok 16 komşu 256'lık karo veriyor; bölme 1 183 karo üzerinden oran bazlı yapılmış ve **kardeş karoları birlikte tutan bir kısıt belirtilmemiş** → komşu karoların eğitim ile sınama arasına dağılması yöntemin doğal sonucu. **Öneri:** "99/118" kaldırılsın, yerine bu argüman konsun (sayısız, alıntıyla desteklenen, site kapanmasından etkilenmeyen). **Neden sayı kurtarılamıyor:** 112/118 ölçümü Drive'daki dosya adı listesinden türetilmişti; kullanıcı sayfaya ~Eylül 2026'da erişebildiğini söylüyor ama site artık kapalı → liste yeniden alınamaz, 99 ile 112 arasındaki fark yerelden çözülemez. CLAUDE.md §8 gereği ölçülemeyen sayı iddia edilmez. **Makaleye dokunulmadı**, karar kullanıcıda. İlgili: Ç-03'ün 5. dersi (blok bootstrap güven aralığı) de makaleye girmemiş — yerine üç tohumun ortalama ± SS'si var, o mekânsal değil tohum belirsizliğini ölçer; bilinçli tercih olabilir ama kayıtlı değil. |
 | 11 Ekim 2026 | **J-139 (🟠) bulundu ve kapandı: TE23D lisans kaydımız iki kaynağı karıştırmıştı; yazarlara gidecek e-posta taslağı yanlış bir iddia taşıyordu.** Kullanıcı *"makalede '© 2025 TE23D all rights reserved' nerede geçiyor"* diye sorunca denetlendi. **Ölçüm:** TE23D PDF'inin 12 sayfasının tam metni çıkarıldı (`pymupdf`); **"rights reserved" ifadesi makalede hiç geçmiyor.** Makaledeki tek lisans ifadesi 1. sayfa dipnotu: *"© 2025 The Authors. This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 License"* → bu IEEE'nin **makale** lisansı (JSTARS açık erişim dipnotu), **veri kümesinin lisansı değil.** Veri kümesi için makalede tek cümle var: *"The dataset can be reached at https://isl.ce.yildiz.edu.tr/datasets/te23d."* — kullanım koşulu, lisans ya da "upon request" kaydı yok. **Hatalı kayıtlar düzeltildi:** (a) `AKTARIM_BELGESI.md` §Ç-03'teki *"Lisans: belirsiz — sayfada hem CC BY-NC-ND 4.0 hem 'tüm hakları saklıdır' yazıyor"* satırı — CC BY-NC-ND **makaleden**, "all rights reserved" **veri sayfasından**; tek sayfadaki çelişki değil. (b) `makale/lisans_epostalari_taslak.md` §1: gerekçesi *"Makalede TE23D 'CC BY-NC-ND' olarak anılıyor"* diyordu — **bizim makalemiz TE23D'nin lisansını hiç belirtmiyor** (denetlendi: docx'teki bütün lisans ifadeleri kendi veri kaynaklarımıza ait), ve e-posta gövdesi yazarlara *"the distribution page states a CC BY-NC-ND license, while another part of the same page states 'all rights reserved'"* diyordu — **gönderilse yazarlara kendi sayfaları hakkında doğru olmayan bir şey söylenecekti.** Gövde yeniden yazıldı: lisans sorusu doğru kurgulandı, erişim sorusu ve karo koordinatları talebi eklendi. **Doğru durum:** veri kümesinin açık lisansı yok, sayfa tüm hakları saklı tutuyor → "ana eğitime katılmaz" kararı (Ç-03) bu bilgiyle daha da güçlü. **Doğrulanamayan:** veri sayfasının tam metni — site 11 Ekim 2026'da erişilemiyor (80 zaman aşımı, 443 bağlantı reddi, DNS 95.183.138.64), Wayback'te `/datasets/te23d` için **hiç** anlık görüntü yok (yalnız 2010–2018 eski site kayıtları), arama da sayfayı indekslememiş. "All rights reserved" ifadesi **kullanıcının birinci elden gözlemine** dayanıyor: sayfaya ~Eylül 2026'da erişmiş ve alt bilgide bu ifadeyi görmüş; site o tarihten sonra kapanmış. Kayıtlarda tarihli birinci el gözlem olarak etiketlendi — bağımsız doğrulama artık mümkün değil (arşiv kaydı yok). **Makalemize etkisi yok** — makale TE23D'yi yalnız yazın kıyası olarak anıyor, verisini kullanmıyor ve lisansı hakkında bir şey söylemiyor. |
 | 11 Ekim 2026 | **J-140 (🟢) TE23D lisansı yazarlardan teyit edildi; "eğitime katılmaz" kararının gerekçesi ortadan kalktı.** Can Ekkazan (TE23D birinci yazarı) ilk e-postamıza ayrıntılı yanıt verdi. **İki bileşen, iki koşul:** uydu görüntüleri **Planet Labs PBC** telifli, Planet'in yazılı izniyle ve yalnız ticari olmayan bilimsel araştırma için paylaşılıyor; **etiketler CC BY-NC-ND 4.0**, TE23D yazarlarınca lisanslı. **İzin verilenler (açık yazılı):** ticari olmayan akademik çalışmada model **eğitimi, doğrulama ve test**; görüntüleri yeniden boyutlandırma; **kendi bölmemize göre yeniden ayırma**; sonuçları (metrik, kıyas, örnek çıktı) akademik yayında paylaşma. **Yasaklar:** veri kümesi/görüntüler/türevleri **yeniden dağıtılamaz**; Planet görüntülerini yeniden üretmeye yönelik modellerde (süper çözünürlük, görüntü üretimi) kullanılamaz — **bölütleme bu kapsamda değil**; ve **TE23D ile eğitilmiş ağırlıklar kamuya açık paylaşılacaksa Planet'ten yazılı onay şart.** **Bu son madde bizi doğrudan bağlıyor:** bölütleme ağırlıklarımız `huggingface.co/Utbird/dispath_optimized_mitb4_focal_dice30` adresinde **açık** yayımlanıyor. Çıkış yolu: TE23D yalnız **dış sınama** olarak kullanılırsa (mevcut KATE ağırlıklarıyla çıkarım) TE23D ile eğitilmiş ağırlık doğmaz ve Planet onayı gerekmez; protokol reprodüksiyonu yapılırsa yalnız metrik yayımlanır, o ağırlıklar paylaşılmaz. Teyit için cevaba yazıldı. **Sahne konum kodları alındı** (dosya adının ilk üç hanesi) — Ç-03'teki *"konum yok"* engeli kalktı: 001–002 Adıyaman-Merkez · 003 Gaziantep-İslahiye · 004 Gaziantep-Nurdağı · 005 Hatay-İskenderun · 006–008 Hatay-Antakya · 010 Hatay-Payas · 011 Hatay-Dörtyol · 013 Hatay-İskenderun · 014–015 Kahramanmaraş-Merkez. **Örtüşme uyarısı:** 003, 004 ve 006–008 bizim üç değerlendirme sahnemizle (İslahiye, Nurdağı, Antakya/Defne) örtüşüyor; KATE-PD/CD de aynı yedi ili kapsadığından TE23D **temiz bir "görülmemiş bölge" sınaması olmaz** — ayak izi paylaşılmazsa en iyi hâlde ilçe düzeyinde ayıklanabilir ve sonuç "aynı bölge, farklı etiketleyici ve sensör" çapraz-küme sınaması olarak raporlanmalıdır. **Eksik:** gönderilen tabloda 13 kod var, makale 15 GeoTIFF diyor → **009 ve 012 sorulacak**. **Can'ın bize sorduğu düzeltme:** *"© 2025 TE23D, All rights reserved" makalede nerede?* → J-139'un sonucu: **makalede değil**, veri sayfasının alt bilgisindeydi; ilk e-postamız iki kaynağı karıştırmıştı. Cevabın ilk maddesi bu oldu, yoksa yazar makalesinde olmayan bir şeyi düzeltmeye çalışacaktı. Cevap taslağı: `makale/lisans_epostalari_taslak.md` §1. **J-138 ile bağ:** cevapta bölme yönteminin (256'lık karo düzeyinde mi, yamaya/sahneye göre gruplanmış mı) doğrudan sorulması J-138'i birincil kaynakla kapatabilir — kendi çıkarımımız yerine yazarın tarifi yazılır. |
+| 12 Kasım 2026 | **PR #5 (Deha, Android uygulaması) incelendi ve çalıştırıldı; J-141…J-148 eklendi.** PR dalı ayrı çalışma ağacında derlendi (`:app:assembleDebug` temiz), backend ayrı SQLite ile ayağa kaldırıldı, uygulama Android 36 emülatöründe gerçek uçlara karşı denendi; `test_mobile_*.py` 12/12. **En ağırı J-141 (🔴):** sunucu yokken eşitleme worker'ı ~150 bağlantı/sn ve %112 CPU ile sonsuz döngüde (80 sn'de ~12 000 bağlantı). J-142 (form alanları sunucuya gitmiyor), J-143 (ihbar formunda GPS yok, harf klavyesi), J-144 (risk etkenleri atılıyor, ekran yanlış bilgi veriyor), J-145 (misafir ucu sınırsız → kişi başı sınır aşılıyor) 🟠; J-146 karar bekliyor (birleştirme sırası, `backend/` yeniden adlandırma, mobil kapsamı); J-147/J-148 küçükler. Bulgular PR'a genel yorum ve satır yorumları olarak yazıldı; düzeltme PR sahibinde. |
