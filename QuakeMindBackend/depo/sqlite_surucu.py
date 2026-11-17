@@ -13,6 +13,7 @@ guvenle paylasir.
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 import math
 import sqlite3
 import time
@@ -378,7 +379,7 @@ class SqliteDepo:
         self._baglanti.execute("PRAGMA synchronous=NORMAL")
         self._baglanti.execute("PRAGMA foreign_keys=ON")
         self._baglanti.execute("PRAGMA busy_timeout=5000")
-        with self._kilit:
+        with self._yazma():
             self._baglanti.executescript(SEMA)
             self._sutunlari_tamamla()
             self._baglanti.commit()
@@ -434,8 +435,25 @@ class SqliteDepo:
 
     # ---- genel yardimcilar ------------------------------------------------
 
-    def _yaz(self, sql: str, parametreler: tuple = ()) -> None:
+    @contextmanager
+    def _yazma(self):
+        """Tek yazma baglantisinin kilidi + hata aninda geri alma.
+
+        Eskiden yazma hata verince (kisit, tetikleyici, disk) acik islem
+        kaliyordu: baglanti RESERVED kilidi tutmaya devam ediyor, ayni dosyaya
+        yazan baska baglantilar ve surecler "database is locked" aliyordu;
+        sonraki yazmalar da o yarim islemin icine giriyordu (J-167 testlerinde
+        bulundu)."""
         with self._kilit:
+            try:
+                yield
+            except BaseException:
+                if self._baglanti.in_transaction:
+                    self._baglanti.rollback()
+                raise
+
+    def _yaz(self, sql: str, parametreler: tuple = ()) -> None:
+        with self._yazma():
             self._baglanti.execute(sql, parametreler)
             self._baglanti.commit()
 
@@ -454,7 +472,7 @@ class SqliteDepo:
                 except sqlite3.Error:
                     pass
             self._okuma_baglantilari.clear()
-        with self._kilit:
+        with self._yazma():
             self._baglanti.close()
 
     # ---- kullanicilar -----------------------------------------------------
@@ -596,7 +614,7 @@ class SqliteDepo:
             ozet,
             json.dumps(ayrinti, ensure_ascii=False) if ayrinti else None,
         )
-        with self._kilit:
+        with self._yazma():
             # Tek yazma baglantisi + kilit: zincirin sirasi yazma sirasidir.
             son = self._baglanti.execute(
                 "SELECT hash FROM islem_kayitlari WHERE hash IS NOT NULL ORDER BY id DESC LIMIT 1"
@@ -917,7 +935,7 @@ class SqliteDepo:
         """Cagriyi kapatir; acik gorevleri de bitirir ki ekip "gorevde" asili
         kalmasin (J-54). Doner: (kapandi mi, biten gorevlerin kimlikleri)."""
         simdi = time.time()
-        with self._kilit:
+        with self._yazma():
             imlec = self._baglanti.execute(
                 """UPDATE sos_cagrilari
                    SET durum = 'kapandi', kapanma_zamani = ?
@@ -1022,7 +1040,7 @@ class SqliteDepo:
         Doner: bu ekibin bir onceki konum zamani (yoksa None); paylasimin yeni
         basladigini anlamak icin."""
         simdi = time.time()
-        with self._kilit:
+        with self._yazma():
             onceki = self._baglanti.execute(
                 "SELECT MAX(zaman) FROM ekip_konum_gecmisi WHERE ekip_id = ?", (ekip_id,)
             ).fetchone()[0]
@@ -1083,7 +1101,7 @@ class SqliteDepo:
     def ekip_uyelerini_ayarla(self, ekip_id: str, kullanici_idler: list[str]) -> None:
         """Ekibin uyelerini verilen listeyle degistirir. Bir kisi tek ekipte
         olur: baska ekipteyse oradan cikar."""
-        with self._kilit:
+        with self._yazma():
             self._baglanti.execute(
                 "UPDATE kullanicilar SET ekip_id = NULL WHERE ekip_id = ?", (ekip_id,)
             )
@@ -1161,7 +1179,7 @@ class SqliteDepo:
           - giden kisi sayisi ekibin kayitli sayisini gecemez.
         Olay 'bekliyor' ise 'atandi' olur (ihbar 'yeni' ise 'goruldu')."""
         simdi = time.time()
-        with self._kilit:
+        with self._yazma():
             try:
                 hedef = self._hedef_oku(hedef_tur, hedef_id)
                 if hedef is None:
@@ -1268,7 +1286,7 @@ class SqliteDepo:
             raise GorevHatasi("gecersiz-durum", f"Bilinmeyen görev durumu: {durum}")
         simdi = time.time()
         hedef_durumu: Optional[str] = None
-        with self._kilit:
+        with self._yazma():
             try:
                 g = self._kilitsiz_tek("SELECT * FROM gorevler WHERE id = ?", (gorev_id,))
                 if g is None:
@@ -1554,7 +1572,7 @@ class SqliteDepo:
 
     def bildirim_kaldir(self, bildirim_id: str, kaldiran_id: str, kaldiran_ad: str) -> bool:
         """Yayindaki bildirimi geri ceker; zaten cekilmisse False."""
-        with self._kilit:
+        with self._yazma():
             imlec = self._baglanti.execute(
                 """UPDATE bildirimler
                    SET kaldirildi = ?, kaldiran_id = ?, kaldiran_ad = ?
@@ -1611,7 +1629,7 @@ class SqliteDepo:
             "isleyen_ad": None,
             "guncellendi": None,
         }
-        with self._kilit:
+        with self._yazma():
             try:
                 self._baglanti.execute(
                     """INSERT INTO ihbarlar
@@ -1683,7 +1701,7 @@ class SqliteDepo:
         if durum not in ("goruldu", "kapandi"):
             raise ValueError(f"Gecersiz ihbar durumu: {durum}")
         simdi = time.time()
-        with self._kilit:
+        with self._yazma():
             imlec = self._baglanti.execute(
                 """UPDATE ihbarlar
                    SET durum = ?, isleyen_id = ?, isleyen_ad = ?, guncellendi = ?
