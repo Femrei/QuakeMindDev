@@ -243,3 +243,20 @@ def test_gecerli_oturumun_akisi_surer():
     # Rol degisirse akis yeniden kurulmali (eski rolun suzgeciyle surmesin).
     assert not canli._akis_suruyor_mu(jeton, {"id": h["id"], "rol": "yonetici"})
 
+
+# --- P-5 -----------------------------------------------------------------------
+
+def test_hazir_ucu(monkeypatch):
+    """Oturumsuz; yalniz evet/hayir. Analiz iscisi yoksa 503, varsa 200."""
+    import cekirdek as ck
+    from uclar import genel
+
+    u = FastAPI()
+    u.include_router(genel.yonlendirici)
+    c = TestClient(u)
+    monkeypatch.setattr(ck, "road_damage_pool", None)
+    y = c.get("/api/hazir")
+    assert y.status_code == 503 and y.json() == {"hazir": False, "veritabani": True, "analizIscisi": False}
+    monkeypatch.setattr(ck, "road_damage_pool", object())
+    y = c.get("/api/hazir")
+    assert y.status_code == 200 and y.json()["hazir"] is True
