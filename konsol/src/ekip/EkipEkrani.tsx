@@ -81,7 +81,7 @@ function useKonumPaylasimi(ekipId: string | null) {
         if (onceki && simdi - onceki.t < 30_000 && kusUcusuM(onceki, nokta) < 25) return
         son.current = { ...nokta, t: simdi }
         mutate(
-          { ekipId, ...nokta },
+          { ekipId, ...nokta, dogrulukM: Number.isFinite(p.coords.accuracy) ? Math.round(p.coords.accuracy) : undefined },
           {
             onSuccess: () => setDurum({ son: simdi, dogrulukM: p.coords.accuracy }),
             onError: (e) => setDurum({ hata: e instanceof Error ? e.message : 'Konum gönderilemedi.' }),

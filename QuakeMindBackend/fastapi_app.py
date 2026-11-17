@@ -9,8 +9,6 @@ yalnizca uygulamayi kurar ve router'lari baglar:
 Calistirma degismedi:  uvicorn fastapi_app:app --host 127.0.0.1 --port 8001
 """
 
-import os
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
@@ -29,6 +27,7 @@ from uclar import (
     goruntu,
     hasar_analiz,
     ihbar,
+    islem,
     kamera,
     kapanma,
     katmanlar,
@@ -67,6 +66,7 @@ for modul in (
     katmanlar,
     simulasyon,
     goruntu,
+    islem,
 ):
     app.include_router(modul.yonlendirici)
 
