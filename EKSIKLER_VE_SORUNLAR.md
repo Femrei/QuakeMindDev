@@ -5283,6 +5283,40 @@ görünür, `/api/sos/{id}/kapat` saha ve üstüne açık kalır; değişiklik y
   önce de düşüyordu. Uç giriş istiyor (401), test jetonsuz çağırıyor. Rota testleri bayrakla
   çalışacak şekilde güncellendi (3/4 geçiyor).
 
+
+## J-164 🟡 Konsol üst çubuğu 1024 px'te taşıyordu; hesap sayıları yüklenirken 0 görünüyordu
+**Durum:** KAPALI · **Görüldü** · **İlgili:** J-56, J-157, ARAYUZ §6
+
+**Bulgu (17 Kasım, koordinatör ekranı incelemesi, 1024×768).**
+- Üst çubuğun içeriği 1 226 px, ekran 1 024 px: 202 px taşıyordu.
+  - "Ara veya komut ver" üç satıra, "Afetzede ekranı" iki satıra kırılıyordu.
+  - Canlı/Geçmiş rozeti ve çıkış (ad baş harfleri) düğmesi ekran dışında kalıyordu.
+- Kullanıcılar sayfası liste gelene kadar "Hesaplar · 0", "Tümü · 0", "Saha ekibi · 0" yazıyordu.
+  Bir iki saniye "hiç hesap yok" diye okunuyor; bilinmeyen sayı 0 diye gösterilmiş oluyor
+  (CLAUDE.md §1).
+
+**Yapılan.**
+- `UstCubuk.tsx`, `Marka.tsx`: 1280 px altında
+  - marka yazısı gizlenir, yalnız simge kalır;
+  - arama düğmesi büyüteç simgesine, "Afetzede ekranı" ve "Görev ekranı" telefon/pano simgesine
+    iner (ad `aria-label` ve `title`'da);
+  - sekme dolgusu ve çubuk aralığı daralır.
+- Sağdaki denetimler küçülmez (`shrink-0`, `whitespace-nowrap`). Yine sığmazsa yalnız mod
+  sekmeleri yatay kayar. Analiz menüsü kayan alanın dışında; açılır listesi kırpılmaz.
+- `kullanicilar.tsx`: liste gelmeden sayaçlar "—" yazar.
+
+**Doğrulama (koordinatör, tarayıcıda ölçüldü).**
+
+| Genişlik | Kip | Çubuk (içerik / ekran) | Sekmeler |
+|---|---|---|---|
+| 1024 | Canlı | 1 024 / 1 024 | kaymıyor |
+| 1024 | Geçmiş + "Canlıya dön" | 1 024 / 1 024 | kaymıyor |
+| 1440 | Canlı | 1 440 / 1 440 | tam yazılar |
+| 900 | Geçmiş | 900 / 900 | kayıyor (385 / 523 px), Analiz menüsü tam görünüyor |
+
+- Yeniden yüklemede sayaçlar önce "Hesaplar · — | Tümü · —", sonra "17".
+- `npx tsc -b`, `npm run kontrol:token` temiz.
+
 ---
 
 # DEĞİŞİKLİK GÜNLÜĞÜ
@@ -5493,3 +5527,4 @@ görünür, `/api/sos/{id}/kapat` saha ve üstüne açık kalır; değişiklik y
 | 13 Kasım 2026 | **J-152** kapatıldı: risk tahmini giriş istiyor; canlı veri tazeleme ve `refreshData` yalnız koordinasyonda. Eski web ve Flutter'ın risk ekranları 401 alır. |
 | 17 Kasım 2026 | **J-162**: saha ekibi görev ekranına kapanmalardan kaçınan rota haritası eklendi (tembel yükleme). Rolüne kapalı konsol modları adresten de açılmıyor. Karar: saha konsolu görür, koordinasyon işleri kapalı (J-163). |
 | 17 Kasım 2026 | **J-163** kapatıldı: ekip gönderme sunucuda ve ekranda yalnız koordinasyonda; Acil bildirim ve Simülasyon saha ekibine görünmüyor. Oturumsuz 14 eski/araştırma ucu `QUAKEMIND_ESKI_UCLAR` bayrağının arkasına alındı, tanı görseli giriş istiyor. Yeni `tests/test_uc_yetkileri.py` (18). |
+| 17 Kasım 2026 | **J-164** kapatıldı: konsol üst çubuğu 1024 px'te 202 px taşıyordu (çıkış ve Canlı rozeti ekran dışında); 1280 altında yazılar simgeye iniyor, sağ denetimler hep görünür. Kullanıcılar sayfası yüklenirken sayıları 0 yerine "—" yazıyor. |

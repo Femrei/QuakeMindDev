@@ -115,6 +115,8 @@ export function HesapYonetimi() {
         k.eposta.toLocaleLowerCase('tr-TR').includes(aranan),
     )
   const ekipsizSayi = tumu.filter(SUZGEC.ekipsiz).length
+  // Liste gelmeden sayı yazılmaz: "Tümü · 0" yüklenirken "hiç hesap yok" diye okunuyordu.
+  const sayac = (n: number) => (liste.data ? sayi(n) : '—')
   const secili =
     cekmece?.tur === 'duzenle' ? tumu.find((k) => k.id === cekmece.id) ?? null : null
   const yetkisiz = liste.error instanceof ApiHatasi && liste.error.durum === 403
@@ -146,7 +148,7 @@ export function HesapYonetimi() {
       <div role="tablist" aria-label="Görünüm" className="mt-4 flex gap-1 border-b border-line">
         {(
           [
-            ['hesaplar', `Hesaplar · ${sayi(tumu.length)}`],
+            ['hesaplar', `Hesaplar · ${sayac(tumu.length)}`],
             ['defter', 'Kayıt defteri'],
           ] as const
         ).map(([id, etiket]) => (
@@ -190,7 +192,7 @@ export function HesapYonetimi() {
               etiket="Hesap grupları"
               secenekler={GRUPLAR.map((g) => ({
                 ...g,
-                etiket: `${g.etiket} · ${sayi(tumu.filter(SUZGEC[g.id]).length)}`,
+                etiket: `${g.etiket} · ${sayac(tumu.filter(SUZGEC[g.id]).length)}`,
               }))}
               secili={grup}
               onSec={setGrup}
