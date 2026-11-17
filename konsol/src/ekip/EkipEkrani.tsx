@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Crosshair, MapPin, NavigationArrow, UsersThree, Warning } from '@phosphor-icons/react'
+import { Crosshair, MapPin, MapTrifold, NavigationArrow, UsersThree, Warning } from '@phosphor-icons/react'
 import { Marka } from '@/kabuk/Marka'
 import { Rozet } from '@/kabuk/parcalar'
 import { useOturum } from '@/kimlik/oturum'
@@ -22,6 +22,10 @@ import {
 } from '@/veri/gorev'
 import { kusUcusuM } from '@/afetzede/konum'
 import { GorevCizelgesi, hedefEtiketi } from '@/modlar/sevk'
+
+// J-162: harita motoru (MapLibre + deck.gl) yalnız "Haritada göster"e basılınca iner;
+// görev ekranının telefondaki açılışı hafif kalır.
+const GorevHaritasi = lazy(() => import('./GorevHaritasi'))
 
 /* ---------------------------------------------------------------------------
    Saha ekibinin görev ekranı (J-54). Telefonda, tek sütun.
@@ -263,6 +267,7 @@ function GorevKarti({ veri }: { veri: Ekibim }) {
   const [form, setForm] = useState<null | 'tamamlandi' | 'iptal'>(null)
   const [not, setNot] = useState('')
   const [suruyor, setSuruyor] = useState(false)
+  const [haritaAcik, setHaritaAcik] = useState(false)
   const sonraki = SONRAKI_ADIM[g.durum]
   const sos = g.hedefTur === 'sos'
   const tur = sos ? IHBAR_TURU.sos : IHBAR_TURU[olay.tur ?? 'metin']
@@ -359,8 +364,27 @@ function GorevKarti({ veri }: { veri: Ekibim }) {
             {lat.toFixed(5)}, {lon.toFixed(5)}
             {olay.konumKaynagi === 'gps' && olay.konumDogrulukM != null ? ` · ${dogruluk(olay.konumDogrulukM)}` : ''}
           </p>
+          <button
+            type="button"
+            aria-expanded={haritaAcik}
+            onClick={() => setHaritaAcik((a) => !a)}
+            className="mt-2 flex h-10 w-full items-center justify-center gap-1.5 rounded-control bg-accent text-body font-semibold text-accent-ink"
+          >
+            <MapTrifold size={16} weight="bold" aria-hidden />
+            {haritaAcik ? 'Haritayı gizle' : 'Rotayı haritada göster'}
+          </button>
+          {haritaAcik && (
+            <Suspense fallback={<p className="mt-2 text-small text-ink-3">Harita yükleniyor…</p>}>
+              <GorevHaritasi
+                rota={g.rota}
+                ekip={g.ekipKonumu ? [g.ekipKonumu.lon, g.ekipKonumu.lat] : null}
+                olay={[lon, lat]}
+              />
+            </Suspense>
+          )}
           {/* geo: bağlantısı telefonun kendi harita uygulamasını açar; konum
-              bir web hizmetine adres içinde gönderilmez. */}
+              bir web hizmetine adres içinde gönderilmez. O uygulama bizim
+              kapanmalarımızı BİLMEZ (J-162); bu yüzden ikincil düğme. */}
           <a
             href={`geo:${lat},${lon}?q=${lat},${lon}`}
             className="mt-2 flex h-10 items-center justify-center gap-1.5 rounded-control border border-line-2 text-body text-ink hover:bg-hover"
@@ -368,6 +392,9 @@ function GorevKarti({ veri }: { veri: Ekibim }) {
             <NavigationArrow size={16} weight="bold" aria-hidden />
             Telefonun haritasında aç
           </a>
+          <p className="mt-1 text-small text-ink-3">
+            Telefonun haritası bilinen kapalı yolları bilmez; yolu yukarıdaki haritaya göre seç.
+          </p>
         </div>
       )}
 

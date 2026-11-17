@@ -31,11 +31,13 @@ import {
   MODLAR,
   VARSAYILAN_MOD,
   modBul,
+  modGorunur,
   sayfaModuMu,
   type ModId,
   type PanelModu,
 } from '@/modlar/modlar'
 import { HesapYonetimi } from '@/modlar/kullanicilar'
+import { useOturum } from '@/kimlik/oturum'
 import { UstCubuk } from './UstCubuk'
 import { SolPanel } from './SolPanel'
 import { SagPanel } from './SagPanel'
@@ -57,8 +59,12 @@ import { TatbikatSeridi } from './TatbikatSeridi'
 export function KonsolKabugu() {
   const { mod } = useParams()
   const tanim = modBul(mod)
+  const { oturum } = useOturum()
 
   if (!tanim) return <Navigate to={`/konsol/${VARSAYILAN_MOD}`} replace />
+  // Rolüne kapalı mod (ör. saha ekibi → Kullanıcılar) adresten de açılmasın;
+  // eskiden boş sayfa iskeleti açılıyordu. Görünüm kilidi, yetkiyi sunucu denetler.
+  if (!modGorunur(tanim, oturum?.rol)) return <Navigate to={`/konsol/${VARSAYILAN_MOD}`} replace />
   const sayfa = sayfaModuMu(tanim.id)
 
   return (

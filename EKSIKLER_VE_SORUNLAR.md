@@ -5175,6 +5175,40 @@ Karar `[T]`: **isteğe bağlı, varsayılan kapalı** "Yakın çekim (deneysel)"
 - Büyük alanı birden çok koşuya bölme (döşeme) yok; alan sığmazsa ortası incelenir.
 - Yakın çekimin doğruluğu ölçülmeli; etiketli bir mahalle gerekir.
 
+## J-162 🟠 Saha ekibi kapanmalardan kaçınan rotayı haritada göremiyordu; rol erişimi incelemesi
+**Durum:** KAPALI (harita; konsol erişimi kararı J-163'te uygulandı) · **Görüldü** · **İlgili:** J-54, J-155, J-163, CLAUDE.md §5
+
+**Bulgu (17 Kasım, rol rol ekran incelemesi).**
+- Görev ekranında harita yoktu. Rota yalnız yazıyla veriliyordu: "olaya yoldan X km, ~Y dk,
+  kapanmalardan kaçınır".
+- "Telefonun haritasında aç" `geo:` bağlantısıyla telefonun kendi haritasını yalnız varış
+  noktasıyla açıyor. O harita bizim kapanmalarımızı bilmez, ekibi kapalı sokağa sokabilir.
+- Sunucu rotanın çizgisini zaten veriyordu (`gorev.rota`, `arac_rotasi.py`); ekran kullanmıyordu.
+- Saha ekibi bilgisayarda (≥640 px) "Konsol" düğmesiyle, telefonda adres yazarak konsolun
+  tamamına geçebiliyor. Bütün SOS'ları ve konumları görüyor; SOS'a ekip atayabiliyor.
+- Kullanıcılar sayfası saha ekibine kapalıydı (sekme yok, sunucu 403), ama adres yazılınca boş
+  sayfa iskeleti açılıyordu.
+
+**Yapılan.**
+- `ekip/GorevHaritasi.tsx`: görev kartında "Rotayı haritada göster". Rota (mavi, kapanmalardan
+  kaçınır), yakındaki kapalı yollar (kırmızı), ekip ve olay noktaları, lejant ve kaynak. Altlık
+  konsoldakiyle aynı yerel OSM paketleri: önce operasyon bölgesi, yoksa tek il paketi.
+- Harita `React.lazy` ile ayrı yükleniyor. Ölçüldü: düğmeye basılmadan maplibre/deck.gl hiç inmedi
+  (0 istek), basınca indi. "Telefonun haritasında aç" ikincil düğme oldu; altında "telefonun
+  haritası kapalı yolları bilmez" uyarısı var.
+- `KonsolKabugu`: rolüne kapalı mod adresten de açılmıyor (saha → `/konsol/kullanicilar` →
+  `/konsol/genel`). Tarayıcıda doğrulandı.
+
+**Doğrulama.**
+- `tsc -b` ve `kontrol:token` temiz.
+- 430 px telefon görünümünde `saha-demo` ile: harita açıldı (2 tuval), rota çizildi, rota kutusunda
+  218 kapalı yol; kaydırmayla yakınlaşma çalışıyor.
+- Deneme görevi şehirler arası (Antakya → Kahramanmaraş, 178 km); şehir içi bir görevle de
+  bakılmalı.
+
+**Karar (17 Kasım, kullanıcı).** Saha ekibi konsolu görür; koordinasyon işleri kapalı: (b).
+Uygulaması ve sunucu yetkisi J-163'te.
+
 ---
 
 # DEĞİŞİKLİK GÜNLÜĞÜ
@@ -5383,3 +5417,4 @@ Karar `[T]`: **isteğe bağlı, varsayılan kapalı** "Yakın çekim (deneysel)"
 | 13 Kasım 2026 | **J-160** (kullanıcı bildirdi, kapatıldı): hasar analizi Defne/Elektrik drone görüntüsünde 0 kapalı yol buluyordu. Alan görüntüye taşınmıyordu ve sunucu sessizce z17'ye iniyordu. Görüntü seçimi alanı taşıyor, düşük kapsamada başlatma kapalı, sunucu açıklamalı hatayla duruyor. Aynı görüntüde z18'de 8 kapalı yol. |
 | 13 Kasım 2026 | **J-161** (kullanıcı istedi, kapatıldı): hasar analizi ekranı yeniden düzenlendi. Görüntü → alan → başlat adımları, aşamalı ilerleme ve büyük sayılı sonuç. Panel genişlik sıçraması giderildi. Yanıltıcı 2,5 / 4 km hazır ayarları kaldırıldı (tek koşu ~1 km²). İsteğe bağlı yakın çekim (z19) eklendi; Defne'de 8 → 19 kapalı yol, doğruluk ölçülmedi. |
 | 13 Kasım 2026 | **J-152** kapatıldı: risk tahmini giriş istiyor; canlı veri tazeleme ve `refreshData` yalnız koordinasyonda. Eski web ve Flutter'ın risk ekranları 401 alır. |
+| 17 Kasım 2026 | **J-162**: saha ekibi görev ekranına kapanmalardan kaçınan rota haritası eklendi (tembel yükleme). Rolüne kapalı konsol modları adresten de açılmıyor. Karar: saha konsolu görür, koordinasyon işleri kapalı (J-163). |
