@@ -308,6 +308,16 @@ BEGIN SELECT RAISE(ABORT, 'zincir denetimi degistirilemez'); END;
 CREATE TRIGGER IF NOT EXISTS zincir_denetimi_silinmez BEFORE DELETE ON islem_zinciri_denetimleri
 BEGIN SELECT RAISE(ABORT, 'zincir denetimi silinemez'); END;
 
+-- Hiz sinirlari (J-167 S-1, S-2): hatali giris, SOS ve kayit denemeleri.
+-- Bellekte degil burada: sunucu yeniden baslasa da kilit surer, ileride birden
+-- cok worker'a gecilse de ortak kalir. Kayit defteri degildir; bir gunden eski
+-- satirlar silinir (islem kaydi ayri ve silinmez).
+CREATE TABLE IF NOT EXISTS hiz_sayaclari (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    anahtar  TEXT NOT NULL,
+    zaman    REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_hiz_anahtar_zaman ON hiz_sayaclari(anahtar, zaman);
 """
 
 
@@ -925,6 +935,116 @@ class SqliteDepo:
             f"SELECT * FROM sos_cagrilari {nerede} ORDER BY zaman DESC LIMIT ?",
             (*parametreler, sinir),
         )
+
+    def sos_ac_ya_da_guncelle(
+        self,
+        lon: float,
+        lat: float,
+        oncelik: str,
+        kullanici_id: str,
+        metin: str | None = None,
+        mahalle: str | None = None,
+        kanal: str | None = None,
+        ek: dict | None = None,
+    ) -> tuple[dict, bool]:
+        """Hesap basina tek acik SOS (J-167 S-2).
+
+        Kisinin kapanmamis cagrisi varsa yenisi acilmaz, o guncellenir: konum,
+        not, kisi sayisi; oncelik yalniz daha acile cikar; ihtiyaclar birlesir.
+        Bekleme suresi bozulmasin diye `zaman` (cagrinin geldigi an) DEGISMEZ;
+        guncelleme sayisi ve zamani `ek`te tutulur. Kontrol ve yazma ayni
+        kilitte: ayni anda gelen iki basis iki satir acamaz.
+        Doner: (kayit, guncellendi_mi)."""
+        sira = {"kritik": 0, "yuksek": 1, "orta": 2}
+        with self._yazma():
+            acik = self._baglanti.execute(
+                """SELECT * FROM sos_cagrilari
+                   WHERE kullanici_id = ? AND durum != 'kapandi'
+                   ORDER BY zaman DESC LIMIT 1""",
+                (kullanici_id,),
+            ).fetchone()
+            if acik is None:
+                kayit = {
+                    "id": f"sos-{uuid.uuid4().hex[:16]}",
+                    "lon": float(lon),
+                    "lat": float(lat),
+                    "oncelik": oncelik,
+                    "durum": "bekliyor",
+                    "zaman": time.time(),
+                    "mahalle": mahalle,
+                    "metin": metin,
+                    "kullanici_id": kullanici_id,
+                    "ekip_id": None,
+                    "atama_zamani": None,
+                    "kapanma_zamani": None,
+                    "kanal": kanal,
+                    "ek": json.dumps(ek, ensure_ascii=False) if ek else None,
+                }
+                self._baglanti.execute(
+                    """INSERT INTO sos_cagrilari
+                       (id, lon, lat, oncelik, durum, zaman, mahalle, metin, kullanici_id,
+                        ekip_id, atama_zamani, kapanma_zamani, kanal, ek)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    tuple(kayit.values()),
+                )
+                self._baglanti.commit()
+                return kayit, False
+
+            eski = dict(acik)
+            try:
+                eski_ek = json.loads(eski["ek"]) if eski.get("ek") else {}
+            except (TypeError, ValueError):
+                eski_ek = {}
+            yeni_ek = {**eski_ek, **(ek or {})}
+            if eski_ek.get("ihtiyaclar") or (ek or {}).get("ihtiyaclar"):
+                yeni_ek["ihtiyaclar"] = sorted(set(eski_ek.get("ihtiyaclar") or []) | set((ek or {}).get("ihtiyaclar") or []))
+            yeni_ek["durumSecildi"] = bool(eski_ek.get("durumSecildi")) or bool((ek or {}).get("durumSecildi"))
+            yeni_ek["guncellemeSayisi"] = int(eski_ek.get("guncellemeSayisi") or 0) + 1
+            yeni_ek["sonGuncelleme"] = time.time()
+            yeni_oncelik = oncelik if sira.get(oncelik, 9) < sira.get(eski["oncelik"], 9) else eski["oncelik"]
+            self._baglanti.execute(
+                """UPDATE sos_cagrilari
+                   SET lon = ?, lat = ?, oncelik = ?, metin = ?, mahalle = ?, ek = ?
+                   WHERE id = ?""",
+                (
+                    float(lon), float(lat), yeni_oncelik,
+                    metin if metin else eski.get("metin"),
+                    mahalle if mahalle else eski.get("mahalle"),
+                    json.dumps(yeni_ek, ensure_ascii=False),
+                    eski["id"],
+                ),
+            )
+            self._baglanti.commit()
+        return self.sos_bul(eski["id"]), True
+
+    # ---- hiz sinirlari (J-167 S-1, S-2) ---------------------------------
+
+    _sayac_yazimi = 0
+
+    def sayac_ekle(self, *anahtarlar: str) -> None:
+        simdi = time.time()
+        with self._yazma():
+            self._baglanti.executemany(
+                "INSERT INTO hiz_sayaclari (anahtar, zaman) VALUES (?, ?)",
+                [(a, simdi) for a in anahtarlar],
+            )
+            self._sayac_yazimi += 1
+            # Ara sira eskiler atilir; en uzun pencere 1 saat.
+            if self._sayac_yazimi % 500 == 0:
+                self._baglanti.execute("DELETE FROM hiz_sayaclari WHERE zaman < ?", (simdi - 86400,))
+            self._baglanti.commit()
+
+    def sayac(self, anahtar: str, baslangic: float) -> tuple[int, Optional[float]]:
+        """Penceredeki deneme sayisi ve en eskisinin zamani; (anahtar, zaman) indeksinden."""
+        satir = self._tek(
+            "SELECT COUNT(*) AS n, MIN(zaman) AS ilk FROM hiz_sayaclari WHERE anahtar = ? AND zaman >= ?",
+            (anahtar, baslangic),
+        )
+        return int(satir["n"]), satir["ilk"]
+
+    def sayac_son(self, anahtar: str) -> Optional[float]:
+        satir = self._tek("SELECT MAX(zaman) AS son FROM hiz_sayaclari WHERE anahtar = ?", (anahtar,))
+        return satir["son"] if satir else None
 
     def sos_bul(self, sos_id: str) -> Optional[dict]:
         return self._tek("SELECT * FROM sos_cagrilari WHERE id = ?", (sos_id,))

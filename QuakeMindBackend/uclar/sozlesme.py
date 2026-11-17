@@ -19,7 +19,7 @@ import json
 import time
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
 
 import canli_yayin
@@ -94,6 +94,9 @@ def _sos_cikti(k: dict) -> dict:
         "konumDogrulukM": ek.get("konumDogrulukM"),
         # False: afetzede durum secmeden SOS'a basti (tek dokunus, J-50).
         "durumSecildi": ek.get("durumSecildi"),
+        # Acik cagri yeniden gonderildiyse (J-167 S-2): kac kez, en son ne zaman.
+        "guncellemeSayisi": ek.get("guncellemeSayisi") or 0,
+        "sonGuncelleme": _ms(ek["sonGuncelleme"]) if ek.get("sonGuncelleme") else None,
     }
 
 
@@ -162,7 +165,15 @@ def sos_listesi(
 
 
 @yonlendirici.post("/sos", status_code=201)
-def sos_ac(istek: SosIstegi, kul: dict = Depends(kimlik.kullanici)):
+def sos_ac(
+    istek: SosIstegi,
+    yanit: Response,
+    http: Request,
+    kul: dict = Depends(kimlik.kullanici),
+):
+    """Hesap basina tek acik SOS (J-167 S-2): acik cagrin varken yeniden basarsan
+    yeni satir acilmaz, o cagri guncellenir ve 200 doner (yeni cagri 201).
+    Ayrica hesap ve adres basina dakikalik sinir (429)."""
     if not (-90.0 <= istek.lat <= 90.0) or not (-180.0 <= istek.lon <= 180.0):
         raise HTTPException(status_code=422, detail="Gecersiz koordinat.")
     if istek.oncelik not in ("kritik", "yuksek", "orta"):
@@ -179,8 +190,11 @@ def sos_ac(istek: SosIstegi, kul: dict = Depends(kimlik.kullanici)):
         "durumSecildi": istek.durumSecildi,
     }.items() if v is not None}
 
+    import hiz_siniri
+
+    hiz_siniri.sos_kontrol(kul["id"], hiz_siniri.istemci_ip(http))
     depo = aktif_depo()
-    kayit = depo.sos_ekle(
+    kayit, guncellendi = depo.sos_ac_ya_da_guncelle(
         lon=istek.lon,
         lat=istek.lat,
         oncelik=istek.oncelik,
@@ -190,6 +204,12 @@ def sos_ac(istek: SosIstegi, kul: dict = Depends(kimlik.kullanici)):
         kanal=istek.kanal,
         ek=ek or None,
     )
+    if guncellendi:
+        # Isi haritasi ve kuyruk kisiyi bir kez sayar: yeni nokta yazilmaz.
+        yanit.status_code = 200
+        canli_yayin.yayinla("yeni-sos", id=kayit["id"], durum=kayit["durum"])
+        cikti = gorevleri_ekle("sos", [kayit], [_sos_cikti(kayit)], afetzede=kul["rol"] == "afetzede")[0]
+        return {**cikti, "guncellendi": True}
     # Cagri ayni zamanda ortak sozlesmeye bir nokta olarak duser: birlesik isi
     # haritasinin "SOS" kanali bu noktalardan beslenir.
     depo.hasar_ekle(

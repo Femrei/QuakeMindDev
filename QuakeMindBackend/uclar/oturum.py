@@ -18,6 +18,7 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
 from pydantic import BaseModel
 
 import canli_yayin
+import hiz_siniri
 import islem_kaydi
 import kimlik
 from depo import aktif_depo
@@ -85,7 +86,10 @@ def _profil(kayit: dict) -> dict:
 
 @yonlendirici.post("/kayit", status_code=201)
 def kayit(istek: KayitIstegi, yanit: Response, http: Request):
+    ip = hiz_siniri.istemci_ip(http)
+    hiz_siniri.kayit_kontrol(ip)  # J-167 S-2: hesap acarak sel
     kayit_edilen = kimlik.kullanici_kaydet(istek.eposta, istek.adSoyad, istek.sifre)
+    hiz_siniri.kayit_oldu(ip)
     # Kayit ayni zamanda ilk giristir; yazilmazsa liste "hic girmedi" der.
     aktif_depo().giris_isle(kayit_edilen["id"])
     erisim = kimlik.oturum_baslat(kayit_edilen, yanit)
@@ -98,11 +102,17 @@ def kayit(istek: KayitIstegi, yanit: Response, http: Request):
 
 @yonlendirici.post("/giris")
 def giris(istek: GirisIstegi, yanit: Response, http: Request):
+    ip = hiz_siniri.istemci_ip(http)
     try:
+        # J-167 S-1: kilitliyken sifre hic denenmez, dogru sifre de 429 alir.
+        hiz_siniri.giris_kontrol(istek.eposta, ip)
         kayit_edilen = kimlik.giris_yap(istek.eposta, istek.sifre, istek.kapi)
     except HTTPException as h:
+        if h.status_code == 401:
+            hiz_siniri.giris_basarisiz(istek.eposta, ip)
         _basarisiz_giris_kaydi(istek, h, http)
         raise
+    hiz_siniri.giris_basarili(istek.eposta)
     erisim = kimlik.oturum_baslat(kayit_edilen, yanit)
     islem_kaydi.kaydet(
         kayit_edilen,
@@ -151,7 +161,9 @@ def ben(kul: dict = Depends(kimlik.kullanici_sifre_serbest)):
 #: degismez (hesabin var olup olmadigi disari sizmaz).
 def _basarisiz_giris_kaydi(istek: GirisIstegi, h: HTTPException, http: Request) -> None:
     hesap = aktif_depo().kullanici_eposta(istek.eposta)
-    if h.status_code == 401:
+    if h.status_code == 429:
+        neden = "deneme sınırı aşıldı"
+    elif h.status_code == 401:
         neden = "şifre hatalı" if hesap else "böyle bir hesap yok"
     elif "askı" in str(h.detail).lower():
         neden = "hesap askıda"
