@@ -21,6 +21,12 @@ export function rolunKapisi(rol: Rol): GirisKapisi {
 /** Konsolu (harita, analiz) görebilen roller. Afetzede ayrı ve hafif ekrana gider. */
 export const KONSOL_ROLLERI: Rol[] = ['saha', 'koordinator', 'yonetici']
 
+/** Ekip gönderen, ekip tanımlayan, bildirim ve tatbikat yayınlayan roller.
+    Görünüm kilidi; yetkiyi sunucu denetler (CLAUDE.md kural 5). */
+export function koordinasyonMu(rol: Rol | undefined): boolean {
+  return rol === 'koordinator' || rol === 'yonetici'
+}
+
 /** Rolün açılışta gideceği yer. */
 export function varsayilanYol(rol: Rol): string {
   // Saha ekibi sahada telefonla çalışır: açılışta kendi görev ekranı (J-54).

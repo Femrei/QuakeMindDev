@@ -5209,6 +5209,80 @@ Karar `[T]`: **isteğe bağlı, varsayılan kapalı** "Yakın çekim (deneysel)"
 **Karar (17 Kasım, kullanıcı).** Saha ekibi konsolu görür; koordinasyon işleri kapalı: (b).
 Uygulaması ve sunucu yetkisi J-163'te.
 
+## J-163 🟠 Saha ekibi koordinasyon işlerini yapabiliyordu; eski ve araştırma uçları oturumsuz açıktı
+**Durum:** KAPALI · **Görüldü** · **İlgili:** J-53, J-152, J-162, CLAUDE.md §5
+
+**Karar (17 Kasım, kullanıcı).** Saha ekibi konsolu görür, ama şunları görmez: Acil bildirim,
+Simülasyon (tatbikat), SOS'a ekip gönderme, Ekip tanımlama. Ayrıca açık uçlar kapatılsın.
+
+**Bulgu.**
+- `POST /api/gorevler` ve `POST /api/sos/{id}/ata` saha rolüne açıktı. Saha kendi ekibini
+  istediği olaya gönderebiliyordu.
+- Konsolda Acil bildirim sekmesi ve Analiz menüsündeki Simülasyon saha ekibine görünüyordu.
+  Sunucu ikisini de zaten reddediyordu (403); ekran boşuna açılıyordu.
+- Ekip ekle / Düzenle / hesap bağlama zaten yalnız koordinasyona görünüyordu, sunucu da
+  kısıtlıydı. Değişiklik gerekmedi.
+- Oturumsuz yanıt veren 15 uç vardı:
+  - eski web ve Flutter'ın bildirim ve sohbet uçları: `notifications/send_emergency`,
+    `notifications/active`, `chat/send`, `chat/messages`;
+  - makale ölçüm betiklerinin kapanma uçları: `simulate_closures`, `closures_from_mask`,
+    `closures_from_emsr`, `naive_compare`, `reference_compare`;
+  - eski rota uçları: `route`, `safe_route`, `assembly`, `calculate_custom_route`,
+    `nearest_debris`;
+  - analiz tanı görseli: `road_damage/gorsel/{id}/{ad}`.
+- Kimlerin çağırdığı tarandı. Yeni konsol bunların hiçbirini doğrudan çağırmıyor; tanı görselini
+  jetonla (`apiGorsel`) istiyor. Deha'nın Android uygulaması da (`upstream/codex/web-harita-yayin`,
+  `mobile/`) çağırmıyor; o `bildirimler/aktif`, `afetzede/*`, `katman/kapanmalar` kullanıyor.
+
+**Yapılan.**
+- Sunucu: ekip gönderme (`POST /api/gorevler`, `POST /api/sos/{id}/ata`) yalnız koordinatör ve
+  yönetici. Saha ekibi kendi görevini yürütmeye devam eder: görev durumu ve konum paylaşımı.
+- Sunucu: eski ve araştırma uçlarının 14'ü J-53'teki `kimlik.eski_uc` bayrağının arkasında.
+  Bayraksız 404 döner; `QUAKEMIND_ESKI_UCLAR=1` ile açılır. Ölçüm betikleri (`benchmark/
+  full_scenario.py` vb.) zaten bayrak isteyen `team/claim`, `sos/alert` uçlarını kullanıyordu;
+  bayrak gereksinimi yeni değil.
+- Sunucu: tanı görseli giriş istiyor (saha, koordinatör, yönetici).
+- Konsol:
+  - `bildirim` ve `simulasyon` modlarına `roller` eklendi. Sekme, Analiz menüsü ve komut paleti
+    gizliyor; adresle girilince Genel duruma yönleniyor (J-162).
+  - SOS/ihbar ayrıntısında saha "Kim gidiyor"u görür; "Ekip gönder" yerine "Ekibi koordinasyon
+    gönderir." yazar.
+  - Tatbikat şeridi herkese görünür (gerçek olay değil uyarısı), "Tatbikat paneli" bağlantısı
+    yalnız koordinasyona.
+  - `kimlik/roller.ts`: ortak `koordinasyonMu`.
+
+**Doğrulama.**
+- `tests/test_uc_yetkileri.py` (yeni, 18 test):
+  - 14 uç bayraksız 404, bayrakla açılıyor;
+  - görsel: jetonsuz 401, afetzede 403, saha geçer;
+  - saha ekip gönderemez (403), koordinatör gönderir (201);
+  - saha konum paylaşabilir.
+- `test_oturum_rol.py`, `test_depo_eszamanlilik.py` ile birlikte **38/38** geçti.
+- Tarayıcıda `saha-demo` ile:
+  - üst çubukta Acil bildirim, Kullanıcılar ve Simülasyon yok;
+  - `/konsol/simulasyon` ve `/konsol/bildirim` adresleri `/konsol/genel`e yönlendi;
+  - SOS ayrıntısında "Ekip gönder" düğmesi yok, not görünüyor.
+  - Denemede yerel veritabanına "TEST J-163" etiketli tek bir SOS eklendi; bakıldıktan sonra silindi.
+- Yerel API: `notifications/active` 404, `road_damage/route` 404, `gorsel` jetonsuz 401.
+- `npx tsc -b`, `npm run kontrol:token` temiz.
+
+**Etkisi.**
+- Eski web (`quakemind-web`) ve Flutter (`quakemind/`) bildirim bandı, sohbet, güvenli rota ve
+  toplanma alanı ekranları bayraksız çalışmaz. Kapsam dışılar (CLAUDE.md §7, §10).
+- `araclar_uc_duman_testi.py` imzaları değişti: bu uçlar artık 404. Referans
+  `testler/uc_imzalari.json` yeniden kaydedilmedi.
+- Koordinatörün konsolda ekip gönderme düğmesi tarayıcıda ayrıca denenmedi; koşul kodda
+  `koordinasyonMu` ile, sunucu tarafı testle doğrulandı.
+
+**Karar (17 Kasım, kullanıcı): saha ekibi SOS çağrısını kapatabilir.** Sahada olan ekip
+çağrının bittiğini ya da yanlış olduğunu ilk bilen taraftır. "Çağrıyı kapat…" düğmesi sahaya
+görünür, `/api/sos/{id}/kapat` saha ve üstüne açık kalır; değişiklik yapılmadı.
+
+**Açık.**
+- `tests/test_road_damage_api.py::test_heatmap_offline_fallback_returns_200` bu değişiklikten
+  önce de düşüyordu. Uç giriş istiyor (401), test jetonsuz çağırıyor. Rota testleri bayrakla
+  çalışacak şekilde güncellendi (3/4 geçiyor).
+
 ---
 
 # DEĞİŞİKLİK GÜNLÜĞÜ
@@ -5418,3 +5492,4 @@ Uygulaması ve sunucu yetkisi J-163'te.
 | 13 Kasım 2026 | **J-161** (kullanıcı istedi, kapatıldı): hasar analizi ekranı yeniden düzenlendi. Görüntü → alan → başlat adımları, aşamalı ilerleme ve büyük sayılı sonuç. Panel genişlik sıçraması giderildi. Yanıltıcı 2,5 / 4 km hazır ayarları kaldırıldı (tek koşu ~1 km²). İsteğe bağlı yakın çekim (z19) eklendi; Defne'de 8 → 19 kapalı yol, doğruluk ölçülmedi. |
 | 13 Kasım 2026 | **J-152** kapatıldı: risk tahmini giriş istiyor; canlı veri tazeleme ve `refreshData` yalnız koordinasyonda. Eski web ve Flutter'ın risk ekranları 401 alır. |
 | 17 Kasım 2026 | **J-162**: saha ekibi görev ekranına kapanmalardan kaçınan rota haritası eklendi (tembel yükleme). Rolüne kapalı konsol modları adresten de açılmıyor. Karar: saha konsolu görür, koordinasyon işleri kapalı (J-163). |
+| 17 Kasım 2026 | **J-163** kapatıldı: ekip gönderme sunucuda ve ekranda yalnız koordinasyonda; Acil bildirim ve Simülasyon saha ekibine görünmüyor. Oturumsuz 14 eski/araştırma ucu `QUAKEMIND_ESKI_UCLAR` bayrağının arkasına alındı, tanı görseli giriş istiyor. Yeni `tests/test_uc_yetkileri.py` (18). |

@@ -34,13 +34,14 @@ from utils.postgis_manager import postgis_engine
 from apps.road_damage.utils.serialization import compact_segment_coords as _compact_segment_coords, serialize_segments as _serialize_segments, haversine_m as _haversine_m
 from apps.road_damage.utils.imaging import image_array_to_b64 as _image_array_to_b64, build_damage_overlay as _build_damage_overlay, build_segmentation_overlay as _build_segmentation_overlay
 from apps.road_damage.utils.tiling import zoom_for_radius as _zoom_for_radius
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+import kimlik
 
 yonlendirici = APIRouter()
 
 
 @yonlendirici.post("/api/road_damage/simulate_closures")
-def simulate_road_closures(req: ck.SimulateClosuresRequest):
+def simulate_road_closures(req: ck.SimulateClosuresRequest, _eski: None = Depends(kimlik.eski_uc)):
     """Gercek senaryo kurgusu icin: CANLI SegFormer/uydu goruntusu
     calistirmadan, gercek bir OSM yol grafigi uzerinde rastgele yol
     kapanmalari atar. `/analyze`'in basarili sonuc seklinin BIREBIR ayni
@@ -97,7 +98,7 @@ def simulate_road_closures(req: ck.SimulateClosuresRequest):
 
 
 @yonlendirici.post("/api/road_damage/closures_from_mask")
-def closures_from_mask(req: ck.ClosuresFromMaskRequest):
+def closures_from_mask(req: ck.ClosuresFromMaskRequest, _eski: None = Depends(kimlik.eski_uc)):
     """MODEL TABANLI kapanmalar: Colab'da SegFormer ile uretilmis hazir bir
     hasar maskesinden, canli /analyze ile AYNI kuralla (r_h yaricapi) yol
     kapanmalari cikarir. Yanit /simulate_closures ile birebir ayni sekildedir;
@@ -159,7 +160,7 @@ def closures_from_mask(req: ck.ClosuresFromMaskRequest):
 
 
 @yonlendirici.post("/api/road_damage/closures_from_emsr")
-def closures_from_emsr(req: ck.ClosuresFromEmsrRequest):
+def closures_from_emsr(req: ck.ClosuresFromEmsrRequest, _eski: None = Depends(kimlik.eski_uc)):
     """YER GERCEGI kapanmalar: Copernicus EMSR648 Grading'in hasarli yol
     cizgilerini OSM grafina esleyerek kapanma cikarir. Yanit ve oturum
     /simulate_closures ve /closures_from_mask ile ayni sekildedir; boylece
@@ -227,7 +228,7 @@ def closures_from_emsr(req: ck.ClosuresFromEmsrRequest):
 
 
 @yonlendirici.post("/api/road_damage/naive_compare")
-def naive_compare(req: ck.NaiveCompareRequest):
+def naive_compare(req: ck.NaiveCompareRequest, _eski: None = Depends(kimlik.eski_uc)):
     """'Biz tespit edip soylemeseydik ne kadar kaybederdiniz' karsilastirmasi
     -- SADECE simulate_closures ile olusturulmus (yani gercek bir G + kapali
     kenar kumesi tasiyan) session'lar icin calisir. Naif ajan simulasyonu
@@ -264,7 +265,7 @@ def naive_compare(req: ck.NaiveCompareRequest):
 
 
 @yonlendirici.post("/api/road_damage/reference_compare")
-def reference_compare(req: ck.ReferenceCompareRequest):
+def reference_compare(req: ck.ReferenceCompareRequest, _eski: None = Depends(kimlik.eski_uc)):
     """Makalenin ara karsilastirma referanslari (Bolum 3.8): R1 gorus mesafeli
     ajan, R2 bilgi paylasan filo. naive_compare ile ayni gerekceyle ayni surecte,
     oturumdaki AYNI G ve kapanma kumesiyle calisir. Gorevler bir bolgenin tum

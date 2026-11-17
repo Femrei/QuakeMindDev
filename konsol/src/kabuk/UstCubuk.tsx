@@ -127,10 +127,11 @@ export function UstCubuk() {
 
 /** Analiz modları: tek düğme, açılınca her modun adı ve ne işe yaradığı. */
 function AnalizMenusu() {
+  const { oturum } = useOturum()
   const [acik, setAcik] = useState(false)
   const kutu = useRef<HTMLDivElement>(null)
   const { mod } = useParams()
-  const modlar = MODLAR.filter((m) => m.grup === 'analiz')
+  const modlar = MODLAR.filter((m) => m.grup === 'analiz' && modGorunur(m, oturum?.rol))
   const secili = modlar.find((m) => m.id === mod)
 
   useEffect(() => {

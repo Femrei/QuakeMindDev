@@ -33,6 +33,8 @@ def postgis_offline(monkeypatch):
     """Forces every test onto the offline-fallback path -- deterministic,
     with no dependency on a real PostGIS instance being reachable."""
     monkeypatch.setattr(postgis_engine, "check_connection", lambda: False)
+    # safe_route ve nearest_debris eski uclar: bayraksiz 404 (J-163).
+    monkeypatch.setenv("QUAKEMIND_ESKI_UCLAR", "1")
 
 
 def test_heatmap_offline_fallback_returns_200(client):

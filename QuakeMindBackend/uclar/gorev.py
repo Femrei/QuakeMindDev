@@ -157,7 +157,9 @@ class SevkIstegi(BaseModel):
 
 
 @yonlendirici.post("/gorevler", status_code=201)
-def sevk_et(istek: SevkIstegi, kul: dict = Depends(kimlik.rol_gerektir(*SAHA_VE_USTU))):
+def sevk_et(istek: SevkIstegi, kul: dict = Depends(kimlik.rol_gerektir(*KOORDINASYON))):
+    # Ekip gondermek koordinasyonun isi (17 Kasim, J-163): saha ekibi kendi
+    # gorevini yurutur (durum, konum) ama baska ekibe ya da kendine is acmaz.
     if istek.hedefTur not in HEDEF_TURLERI:
         raise HTTPException(status_code=422, detail="hedefTur: sos | ihbar")
     _yetki(kul, istek.ekipId)

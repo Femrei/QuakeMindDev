@@ -217,7 +217,7 @@ def _sos_tam(kayit: dict) -> dict:
 def sos_ata(
     sos_id: str,
     istek: AtamaIstegi,
-    kul: dict = Depends(kimlik.rol_gerektir(*SAHA_VE_USTU)),
+    kul: dict = Depends(kimlik.rol_gerektir(*KOORDINASYON)),
 ):
     """Eski tek-ekip atamasi; artik bir sevk gorevi acar (J-54). Yalniz bekleyen
     cagri atanir (mukerrer sevk engeli). Yeni konsol `POST /api/gorevler`

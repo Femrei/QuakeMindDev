@@ -189,7 +189,11 @@ def analyze_road_damage(req: ck.RoadDamageRequest, _kul: dict = Depends(kimlik.r
 
 
 @yonlendirici.get("/api/road_damage/gorsel/{analysis_id}/{ad}")
-def road_damage_gorsel(analysis_id: str, ad: str):
+def road_damage_gorsel(
+    analysis_id: str,
+    ad: str,
+    _kul: dict = Depends(kimlik.rol_gerektir("saha", "koordinator", "yonetici")),
+):
     """Analizin tani gorseli (PNG).
 
     Gorseller JSON icinde base64 tasinmaz (J-32): istemci hangisini isterse

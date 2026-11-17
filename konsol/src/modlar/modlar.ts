@@ -45,6 +45,8 @@ export const MODLAR = [
     ad: 'Acil bildirim',
     ozet: 'Afetzede ekranlarına acil durum bildirimi yayınla, yanlış olanı geri çek.',
     katmanlar: ['yollar', 'isi', 'ekipler'],
+    // Saha ekibi görmez (17 Kasım, J-163); sunucu da yalnız bu rollere izin verir.
+    roller: ['koordinator', 'yonetici'],
   },
   {
     id: 'kullanicilar',
@@ -92,6 +94,8 @@ export const MODLAR = [
     ad: 'Simülasyon (tatbikat)',
     ozet: 'Gerçek görüntüde model koşturup rotaları tatbikat olarak dener; gerçek olay değildir.',
     katmanlar: ['yollar', 'simHasar', 'simKapanma', 'simRota', 'simGorev', 'simKamera', 'simMetin'],
+    // Saha ekibi görmez (17 Kasım, J-163); sunucu da yalnız bu rollere izin verir.
+    roller: ['koordinator', 'yonetici'],
   },
   {
     id: 'yol',
