@@ -77,3 +77,78 @@
 @utility alan-duyuru {
   grid-area: duyuru;
 }
+
+/* Giriş ekranının arka plan haritası (J-176): fay türü renkte, kayma hızı
+   kalınlıkta, 6 Şubat 2023 depremleri kırmızı. Yalnız açılışta bir kez belirir
+   (ARAYUZ §7: opacity + transform, sürekli hareket yok); "hareketi azalt" açıksa
+   genel kural animasyonu anında bitirir. Saydamlık stroke-opacity ile verilir,
+   böylece giriş animasyonunun opacity'si sınıfın tonunu ezmez. */
+.giris-yollar {
+  fill: none;
+  stroke: var(--color-map-motorway);
+  stroke-width: 1;
+  stroke-opacity: 0.55;
+  vector-effect: non-scaling-stroke;
+  animation: giris-belir 900ms var(--ease-out-qm) both;
+}
+.giris-fay {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  animation: giris-belir 900ms var(--ease-out-qm) both;
+}
+.giris-fay-dogrultu { stroke: var(--color-fay-dogrultu); }
+.giris-fay-normal { stroke: var(--color-fay-normal); }
+.giris-fay-ters { stroke: var(--color-fay-ters); }
+.giris-fay-h0 { stroke-width: 1.2; stroke-opacity: 0.65; animation-delay: 250ms; }
+.giris-fay-h1 { stroke-width: 1.8; stroke-opacity: 0.8; animation-delay: 500ms; }
+.giris-fay-h2 { stroke-width: 3; stroke-opacity: 1; animation-delay: 750ms; }
+.giris-deprem-nokta {
+  fill: var(--color-crit);
+  animation: giris-belir 600ms var(--ease-out-qm) 1100ms both;
+}
+.giris-deprem-halka {
+  fill: none;
+  stroke: var(--color-crit);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: giris-halka 1600ms var(--ease-out-qm) 1200ms both;
+}
+.giris-deprem-yazi {
+  fill: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--color-ground);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  animation: giris-belir 600ms var(--ease-out-qm) 1300ms both;
+}
+.giris-lejant {
+  animation: giris-belir 600ms var(--ease-out-qm) 900ms both;
+}
+@keyframes giris-belir {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Bir kez genişleyip soluk kalan halka: depremin etki alanı izlenimi, nabız değil. */
+@keyframes giris-halka {
+  from {
+    opacity: 1;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+}

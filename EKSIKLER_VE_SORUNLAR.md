@@ -2374,6 +2374,7 @@ kimlikle. Başka belgelerdeki "EKSIKLER J-xxx" atıfları için kimliği burada 
 | J-173 | 🔴 Deprem riski: eşzamanlı istekte başka ilin sonucu, şişkin uzun vadeli tehlike, açık uçlar; ekran soruya cevap vermiyordu | — |
 | J-174 | 🔴 Uçtan uca akış: canlı akış ilk jeton yenilemesinde kalıcı kapanıyordu; ihtiyaç geçen yazılı ihbar ihtiyaç sayfasına düşmüyordu | — |
 | J-175 | 🟠 Genel durum: ısı haritası kaynak ayırmıyor ve az veriyi yoğun gösteriyordu; sağ panel bir sonraki adımı söylemiyordu; gereksiz veri iniyordu | 18 Kasım 2026 |
+| J-176 | 🟡 Giriş ekranı: hesap açarken üç kapı seçilebilir duruyordu; şifre görünür yapılamıyordu; zemin boştu | 18 Kasım 2026 |
 
 ---
 
@@ -2601,3 +2602,4 @@ kimlikle. Başka belgelerdeki "EKSIKLER J-xxx" atıfları için kimliği burada 
 | 18 Kasım 2026 | **J-174** kapatıldı: uçtan uca akış 48 adımda dört hesapla sınandı (`araclar_akis_senaryosu.py`). Canlı akış ilk jeton yenilemesinde kalıcı kapanıyordu (bütün roller), düzeltildi. Saha akışına işlem kaydı işareti gitmiyor. İhtiyaç geçen yazılı ihbar ihtiyaç sayfasına düşüyor. Afetzede ihbarına gelen ekibi ve "olay sürüyor" durumunu doğru görüyor. Yüklenirken "veri yok" yazılmıyor. `pytest -q` 131/131. |
 | 18 Kasım 2026 | **Temizlik.** Açık görünen ürün maddeleri birleşik dalda (UtBird/QuakeMind#12) kodla ve ölçümle doğrulandı. 22 madde güncellendi: J-07, J-09, J-11, J-13, J-18, J-37, J-45, J-46 (ölçüldü: boşta 137 sn'de 0 istek), J-50, J-59 (sayıldı: 116 uçtan 6'sı oturumsuz, hepsi olması gerektiği gibi), J-141–J-145, J-148, J-146, F-01, F-02 kapandı; J-15, J-147 kısmen; J-167 büyük ölçüde. Durum satırı KAPALI ya da DÜZELTİLDİ olan 92 madde değiştirilmeden `EKSIKLER_ARSIV.md`'ye taşındı; burada dizin ve baştaki özet kaldı. Taşımada satır kaybı yok (betikle sayıldı: 175 madde, bütün satırlar iki dosyada). |
 | 18 Kasım 2026 | **J-175** kapatıldı: genel durum ısı haritasında renk kaynağı, koyuluk yoğunluğu gösteriyor; üzerine gelince kaynak payları. Listeler, sayılar ve ısı aynı pencerede. Sağ panel "Şimdi / Uydu hasarı / Açık ihbarlar". Genel mod açılışı 16 istek / 993 KB → 13 / 201 KB. Madde arşivde. |
+| 18 Kasım 2026 | **J-176** kapatıldı: giriş ekranında hesap açma kipinde kapı seçicisi gizli; bütün şifre alanlarında göster/gizle ve büyük harf uyarısı; zemin gerçek veriden okunur bir Türkiye haritası (fay türü renkte, kayma hızı kalınlıkta, 6 Şubat 2023 depremleri, OSM yol silüeti), açılışta bir kez belirir, yalnız geniş ekranda iner (gzip 20,2 KB). Madde arşivde. |

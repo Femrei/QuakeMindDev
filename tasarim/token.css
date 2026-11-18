@@ -93,6 +93,12 @@
   --color-fay: #9b7f6b;
   --color-deprem: #7f8fb3;
 
+  /* --- giriş ekranı haritası (J-176): fay türü. Hasar değil, jeolojik bilgi:
+     soğuk tonlar, aciliyet renklerinin dışında. --- */
+  --color-fay-dogrultu: #45c8e0;
+  --color-fay-normal: #5aa9ff;
+  --color-fay-ters: #b08cff;
+
   /* --- yazı tipi aileleri --- */
   --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
   --font-cond: 'IBM Plex Sans Condensed', 'IBM Plex Sans', ui-sans-serif, sans-serif;

@@ -4,6 +4,7 @@ import { useOturum } from './oturum'
 import { Bekleme } from './RolKapisi'
 import { ROL_ADI, varsayilanYol } from './roller'
 import { Marka } from '@/kabuk/Marka'
+import { SifreAlani } from './SifreAlani'
 
 /* ---------------------------------------------------------------------------
    Şifre değiştirme (J-157).
@@ -24,6 +25,8 @@ export function SifreDegistirmeEkrani() {
   const [tekrar, setTekrar] = useState('')
   const [hata, setHata] = useState<string | null>(null)
   const [gonderiliyor, setGonderiliyor] = useState(false)
+  // Her gönderimde şifre alanları yeniden gizlenir (J-176).
+  const [gonderim, setGonderim] = useState(0)
   // Kaydedildikten sonra sonraki ekran yüklenirken form bir an "isteğe bağlı"
   // hâliyle görünmesin.
   const [bitti, setBitti] = useState(false)
@@ -50,6 +53,7 @@ export function SifreDegistirmeEkrani() {
     if (eksik.length) return
     setHata(null)
     setGonderiliyor(true)
+    setGonderim((n) => n + 1)
     try {
       const guncel = await sifreDegistir(eski, yeni)
       setBitti(true)
@@ -92,37 +96,37 @@ export function SifreDegistirmeEkrani() {
           <label className={etiket} htmlFor="eski-sifre">
             {zorunlu ? 'Geçici şifre' : 'Şu anki şifre'}
           </label>
-          <input
+          <SifreAlani
             id="eski-sifre"
-            type="password"
+            deger={eski}
+            degisti={setEski}
             autoComplete="current-password"
-            value={eski}
-            onChange={(e) => setEski(e.target.value)}
             className={alan}
+            gizle={gonderim}
           />
 
           <label className={etiket} htmlFor="yeni-sifre">
             Yeni şifre · en az {SIFRE_EN_AZ} karakter
           </label>
-          <input
+          <SifreAlani
             id="yeni-sifre"
-            type="password"
+            deger={yeni}
+            degisti={setYeni}
             autoComplete="new-password"
-            value={yeni}
-            onChange={(e) => setYeni(e.target.value)}
             className={alan}
+            gizle={gonderim}
           />
 
           <label className={etiket} htmlFor="yeni-sifre-tekrar">
             Yeni şifre (tekrar)
           </label>
-          <input
+          <SifreAlani
             id="yeni-sifre-tekrar"
-            type="password"
+            deger={tekrar}
+            degisti={setTekrar}
             autoComplete="new-password"
-            value={tekrar}
-            onChange={(e) => setTekrar(e.target.value)}
             className={alan}
+            gizle={gonderim}
           />
 
           {hata && (

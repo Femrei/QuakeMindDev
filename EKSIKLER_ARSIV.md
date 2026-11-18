@@ -3852,3 +3852,34 @@ Veritabanının kopyasında koşar (`--api http://127.0.0.1:8001`), canlı veriy
 - Geliştirme sunucusunda kod sıcak yüklenince harita tuvali kayboluyor (sayfa yenilenince geliyor); yalnız geliştirmede, derlemede yok.
 
 ---
+
+## J-176 🟡 Giriş ekranı: hesap açarken üç kapı seçilebilir duruyordu; şifre görünür yapılamıyordu; zemin boştu
+**Durum:** KAPALI (18 Kasım 2026) · **Ölçüldü** · **Bulundu:** 18 Kasım 2026 (kullanıcı: "hesap aç diyince hâlâ 3 user type açık duruyor ama yazıda afetzede hesabı aç diyor"; "şifreler varsayılan gizli ama isterse görülebilir olmalı"; "arkaya güzel bir tasarım, bize uygun") · **İlgili:** J-156, CLAUDE.md §1, §5, §6, ARAYUZ §7
+
+**Bulgu.**
+- Hesap açma kipinde başlık "Afetzede hesabı aç" derken Afetzede / Saha ekibi / Koordinasyon seçicisi seçilebilir duruyordu. Sunucu zaten rolü istemciden almıyor: kayıt isteğine elle `"rol":"koordinator"` eklendi, hesap **afetzede** açıldı `[Ö]` (kopya veritabanı). Sorun ekranın yanıltıcı olmasıydı, yetki değil.
+- Şifre alanları (giriş 1, şifre değiştirme 3) görünür yapılamıyordu; büyük harf kilidi uyarısı yoktu.
+
+**Yapılan.**
+- `kimlik/GirisEkrani.tsx`: hesap açma kipinde kapı seçicisi gizlenir; yerine "Burada yalnız afetzede hesabı açılır. Saha ekibi ve koordinasyon hesaplarını koordinasyon merkezi açar." yazar. "Giriş yap" ile seçici geri gelir.
+- `kimlik/SifreAlani.tsx` (yeni), giriş ve şifre değiştirme ekranlarındaki 4 alanda: varsayılan gizli; göz düğmesi (`aria-label` "Şifreyi göster/gizle", `aria-pressed`, `aria-controls`, `type="button"`); kip ya da kapı değişince ve her gönderimde yeniden gizlenir; büyük harf kilidi açıksa uyarı; `autocomplete` (current/new-password) korunur.
+- Zemin (ikinci tur; ilk tur tek renkli fay çizgileri ve il noktalarıydı, kullanıcı: "hiç güzel olmamış", formun altındaki kaynak paragrafı da yersizdi): gerçek veriden okunur bir Türkiye haritası.
+  - Silüet: OSM ana yol iskeleti (`veri/altlik/ulke.json.gz`, ODbL 1.0), birleştirilip sadeleştirilmiş, soluk gri.
+  - Etkin faylar (GEM, CC BY-SA 4.0): **renk = tür** (doğrultu atımlı / normal / ters; yeni token `--color-fay-*`, soğuk tonlar), **kalınlık ve parlaklık = kayma hızı** (`net_slip_rate`: < 3, 3–10, ≥ 10 mm/yıl). Kuzey ve Doğu Anadolu fayları bu yüzden öne çıkar.
+  - 6 Şubat 2023 ana şokları projenin kataloğundan (`query.csv`): Mw 7,8 Pazarcık 04.17 ve Mw 7,5 Elbistan 13.24 (TSİ); kırmızı nokta (yıkıcı deprem, §6'ya uygun) ve açılışta bir kez genişleyip soluk kalan halka.
+  - Sağ altta lejant: türler, sayıları, kalınlığın anlamı, depremler; kaynaklar lejantın son satırında tek satır (lisans gereği zorunlu, formun altındaki paragraf kaldırıldı).
+  - Düzen: 1280 px ve üstünde form solda (2/5), harita sağda tam görünür; 768–1279 px'te formun arkasında soluk; telefonda inmez.
+  - Üretim: `backend/araclar_giris_haritasi_uret.py` → `konsol/src/kimlik/girisHaritasiVerisi.ts` (412 fay, 950 yol hattı, 2 deprem; 49 KB, ~2 sn).
+  - Hareket yalnız açılışta bir kez: önce silüet, sonra yavaştan hızlıya faylar, en son depremler (yalnız opacity + transform; "hareketi azalt" açıksa anında). Gradyan, cam efekti, sürekli hareket yok (CLAUDE.md §6, ARAYUZ §7).
+- Harita ayrı parça olarak tembel yüklenir ve yalnız 768 px ve üstü ekranda istenir: telefonda formun arkasında görünmüyordu, afet bölgesinde mobil veriyle giren afetzedeye yük olurdu.
+
+**Ölçüm** `[Ö]`:
+- Derlemede harita parçası `GirisHaritasi-*.js` 51,7 KB, **gzip 20,2 KB**; ana pakete girmiyor (ana paket 111 KB gzip, değişmedi).
+- 375 px genişlikte harita modülü **istenmedi** (0 istek); 1024 px'te istendi. Formun modülü 36 ms'de, harita 786 ms'de indi: form haritayı beklemiyor.
+- Tarayıcıda denendi: göz düğmesi tip/etiket/basılı durumunu değiştiriyor; hesap açma kipinde seçici yok; girişe dönünce geri geliyor; kip değişince şifre yeniden gizli.
+- `npx tsc -b` ve `kontrol:token` temiz.
+
+**Açık kalan.**
+- Kullanıcılar ekranında koordinatörün gördüğü tek seferlik geçici şifre bir giriş alanı değil, gösterim; bu işin kapsamında değil.
+
+---

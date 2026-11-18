@@ -1,10 +1,24 @@
-import { useState, type FormEvent } from 'react'
+import { Suspense, lazy, useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useOturum } from './oturum'
 import { GIRIS_KAPILARI, acilisYolu, type GirisKapisi } from './roller'
 import { Marka } from '@/kabuk/Marka'
 import { sn } from '@/lib/sinif'
 import { ApiHatasi } from '@/veri/istemci'
+import { SifreAlani } from './SifreAlani'
+
+// Arka plan haritası ayrı parça (J-176): form onu beklemeden çizilir.
+const GirisHaritasi = lazy(() => import('./GirisHaritasi'))
+
+/** Harita yalnız geniş ekranda iner: telefonda formun arkasında görünmüyor,
+    afet bölgesinde mobil veriyle giren afetzedeye boşuna yük olurdu. */
+function genisEkran(): boolean {
+  try {
+    return window.matchMedia('(min-width: 768px)').matches
+  } catch {
+    return false
+  }
+}
 
 /** Ham "HTTP 500" yerine insan dili (J-167 U-2). Sunucu açılırken (~30 sn)
     geliştirme vekili 500, canlıda Nginx 502/503 döner; ağ kopuksa TypeError. */
@@ -25,7 +39,10 @@ function girisHatasi(err: unknown, kayit: boolean): string {
    seçilen kapıyla karşılaştırır, uymazsa oturum açmaz ve doğru kapıyı söyler.
 
    Hesap açma yalnız Afetzede kapısında. Ekip ve koordinasyon hesaplarını
-   koordinasyon merkezi konsoldaki Kullanıcılar ekranından açar.
+   koordinasyon merkezi konsoldaki Kullanıcılar ekranından açar. Hesap açma
+   kipinde kapı seçicisi GİZLENİR (J-176): eskiden üç kapı seçilebilir duruyor,
+   başlık ise "Afetzede hesabı aç" diyordu. Sunucu zaten rolü istemciden
+   almaz (kayıt hep afetzede, CLAUDE.md §5); bu düzeltme ekranın dürüstlüğü.
 --------------------------------------------------------------------------- */
 
 const SIFRE_EN_AZ = 8
@@ -82,6 +99,9 @@ export function GirisEkrani() {
   const [sifre, setSifre] = useState('')
   const [hata, setHata] = useState<string | null>(null)
   const [gonderiliyor, setGonderiliyor] = useState(false)
+  // Her gönderimde şifre alanı yeniden gizlenir (J-176).
+  const [gonderim, setGonderim] = useState(0)
+  const [haritaGoster] = useState(genisEkran)
 
   if (oturum) return <Navigate to={acilisYolu(oturum)} replace />
 
@@ -99,6 +119,7 @@ export function GirisEkrani() {
     if (eksik.length) return
     setHata(null)
     setGonderiliyor(true)
+    setGonderim((n) => n + 1)
     try {
       const yeni = kayit
         ? await kayitOl(eposta.trim(), adSoyad.trim(), sifre)
@@ -131,12 +152,32 @@ export function GirisEkrani() {
   const tanim = KAPI[kapi]
 
   return (
-    <div className="grid h-full place-items-center overflow-auto bg-ground p-6">
+    <div className="relative h-full overflow-auto bg-ground">
+      {/* Geniş ekranda harita sağda tam görünür, form solda; orta ekranda
+          formun arkasında soluk durur; telefonda hiç inmez (J-176). */}
+      {haritaGoster && (
+        <div className="pointer-events-none fixed inset-0 overflow-hidden opacity-40 xl:left-2/5 xl:opacity-100">
+          <Suspense fallback={null}>
+            <GirisHaritasi />
+          </Suspense>
+        </div>
+      )}
+      <div className="relative grid min-h-full place-items-center p-6 xl:w-2/5 xl:border-r xl:border-line xl:bg-ground">
       <div className="w-full max-w-form">
-        <div className="mb-5 flex items-center gap-2.5">
+        <div className="mb-5">
           <Marka />
+          <p className="mt-2 text-small text-ink-2">Deprem ve afet koordinasyonu</p>
         </div>
 
+        {kayit ? (
+          <div className="rounded-control border border-line bg-panel px-3 py-2.5">
+            <p className="text-small text-ink-2">
+              Burada yalnız <span className="text-ink">afetzede</span> hesabı açılır. Saha ekibi ve
+              koordinasyon hesaplarını koordinasyon merkezi açar.
+            </p>
+          </div>
+        ) : (
+          <>
         <p id="kapi-baslik" className="text-micro ls-micro text-ink-3 uppercase">
           Kim olarak giriyorsun?
         </p>
@@ -162,6 +203,8 @@ export function GirisEkrani() {
           ))}
         </div>
         <p className="mt-1.5 text-small text-ink-2">{tanim.ne}</p>
+          </>
+        )}
 
         <form
           onSubmit={gonder}
@@ -207,13 +250,13 @@ export function GirisEkrani() {
           <label className={etiket} htmlFor="sifre">
             Şifre{kayit ? ` · en az ${SIFRE_EN_AZ} karakter` : ''}
           </label>
-          <input
+          <SifreAlani
             id="sifre"
-            type="password"
+            deger={sifre}
+            degisti={setSifre}
             autoComplete={kayit ? 'new-password' : 'current-password'}
-            value={sifre}
-            onChange={(e) => setSifre(e.target.value)}
             className={alan}
+            gizle={`${kip}-${kapi}-${gonderim}`}
           />
 
           {hata && (
@@ -274,6 +317,7 @@ export function GirisEkrani() {
           )}
           <p className="mt-2.5 text-small text-ink-3">Acil durumda 112'yi ara.</p>
         </div>
+      </div>
       </div>
     </div>
   )
