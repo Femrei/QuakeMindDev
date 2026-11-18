@@ -40,6 +40,7 @@ import {
 import { mesafe, sureMetni, tarihSaat, tarihSaatYilli } from '@/lib/bicim'
 import { tokenPx, tokenRenk } from './tokenRenk'
 import { ikon, simgeAdresi, type SimgeTuru } from './simgeler'
+import { paylarMetni, type IsiDokusu } from './isiDokusu'
 
 /* Yakınlaştırma eşikleri (J-172): harita her ölçekte yalnız o ölçekte işe
    yarayanı çizer. Olaylar (SOS, ihbar) ve ekipler her ölçekte; tek tek uydu
@@ -260,7 +261,7 @@ export type KatmanGirdisi = {
   faylar?: Fay[]
   toplanma?: ToplanmaAlani[]
   /** Kanalların ağırlıklı karışımından çıkan ısı dokusu. */
-  isi?: { goruntu: ImageData; sinirlar: [number, number, number, number] } | null
+  isi?: IsiDokusu | null
   /** Analiz alanı seçimi: kesinleşmiş şekil ve çizim sürerken taslak. */
   secim?: {
     kutu: Kutu | null
@@ -312,6 +313,7 @@ export function katmanlariKur(g: KatmanGirdisi): Layer[] {
 
   // Isı haritası: kanal ızgaraları sunucudan gelir, karışım istemcide yapılır
   // ve doku olarak çizilir. İkinci bir bulanıklaştırma YOK (MIMARI §5).
+  sonIsi = g.katmanlar.isi ? (g.isi ?? null) : null
   if (g.katmanlar.isi && g.isi) {
     L.push(
       new BitmapLayer({
@@ -320,6 +322,8 @@ export function katmanlariKur(g: KatmanGirdisi): Layer[] {
         bounds: g.isi.sinirlar,
         opacity: g.isiOrtuculugu ?? 0.72,
         textureParameters: { minFilter: 'linear', magFilter: 'linear' },
+        // Üzerine gelince hücrenin dökümü (J-175): hangi kaynak, ne kadar.
+        pickable: true,
       }),
     )
   }
@@ -878,7 +882,38 @@ export function ipucuKutusu(baslik: string, satirlar: Array<string | null | unde
 
 const kisalt = (m: string | null | undefined, n = 140) => (m && m.length > n ? `${m.slice(0, n)}…` : m)
 
-export function haritaIpucu({ object, layer }: PickingInfo) {
+/** Son çizilen ısı dokusu: bilgi kartı hücre dökümünü buradan okur. */
+let sonIsi: IsiDokusu | null = null
+
+function isiIpucu(bilgi: PickingInfo) {
+  const piksel = (bilgi as PickingInfo & { bitmap?: { pixel: [number, number] } }).bitmap?.pixel
+  const h = piksel && sonIsi?.hucre(piksel[0], piksel[1])
+  if (!h) return null
+  // Sunucu ölçeği mutlak: 1,0 ≈ aynı 0,5 km içinde 3 birim ağırlıklı bildirim.
+  const yaklasik = h.yogunluk * 3
+  return ipucuKarti({
+    tur: 'Birleşik ısı',
+    baslik: paylarMetni(h.paylar) || 'Isı',
+    satirlar: [
+      ['Yoğunluk', `%${Math.round(h.yogunluk * 100)}`],
+      [
+        'Yaklaşık',
+        // Ölçek 1,0'da doluyor: tavandaki hücre "en az 3" demektir, kaç olduğu bilinmez.
+        h.yogunluk >= 0.99
+          ? '3 ya da daha çok bildirim üst üste (ölçek doldu)'
+          : yaklasik < 1.5
+            ? '1 bildirim çevresi'
+            : `${Math.round(yaklasik)} bildirim üst üste`,
+      ],
+      h.dusulen > 0.01 ? ['Çıkarılan', `%${Math.round(h.dusulen * 100)} (Çıkar ayarlı kaynaklar)`] : null,
+    ],
+    kaynak: 'Renk kaynağı, koyuluk yoğunluğu gösterir. Ağırlıklar sol panelde. Tahmindir; tek tek noktalara yakınlaşarak bak.',
+  })
+}
+
+export function haritaIpucu(bilgi: PickingInfo) {
+  const { object, layer } = bilgi
+  if (layer?.id === 'isi') return isiIpucu(bilgi)
   if (!object || !layer) return null
   switch (layer.id) {
     case 'sos': {

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Amac, Bolum, HazirSecenekler, InceAyar, SuAn, Teknik, VeriYok } from '@/kabuk/Panel'
 import { Chip, Micro, Rozet } from '@/kabuk/parcalar'
 import { useHarita } from '@/harita/HaritaKabugu'
@@ -10,8 +11,8 @@ import {
   useKonsol,
   type KanalId,
 } from '@/durum/konsolDurumu'
-import { sayi, tarihSaat } from '@/lib/bicim'
-import { useSorguAraligi } from '@/durum/zamanDurumu'
+import { sayi, sure, tarihSaat } from '@/lib/bicim'
+import { seciliPencere, useSorguAraligi, useZaman } from '@/durum/zamanDurumu'
 import {
   ONCELIK_ADI,
   ONCELIK_TON,
@@ -40,6 +41,8 @@ const SUZGECLER: ReadonlyArray<{ id: Suzgec; etiket: string }> = [
   { id: 'ihtiyac', etiket: 'İhtiyaç' },
 ]
 const LISTE_BOYU = 30
+/** Bu kadar bildirimin altında ısı haritası "az veri" uyarısı verir (J-175). */
+const AZ_VERI = 10
 
 /** Sunucudaki kaynak tipi → ısı kanalı. Sayım tek yerden gelir (özet ucu),
     yoksa aynı çağrı hem nokta hem çağrı olarak iki kez sayılıyor. */
@@ -80,6 +83,10 @@ export function GenelSol() {
   }, [ozet.data])
 
   const hazirNot = KARISIM_HAZIRLARI.find((h) => h.id === karisim)?.not
+  // Haritaya giren (ağırlığı pozitif) bildirimlerin toplamı.
+  const toplamNokta = ozet.data
+    ? KANALLAR.reduce((n, k) => n + (agirliklar[k] > 0.05 ? (sayimlar[k] ?? 0) : 0), 0)
+    : null
   const acikKanallar = KANALLAR.filter((k) => Math.abs(agirliklar[k]) > 0.05 && (sayimlar[k] ?? 0) > 0)
 
   return (
@@ -154,28 +161,32 @@ export function GenelSol() {
         </p>
       </InceAyar>
 
-      <div className="mt-3">
+      {/* Haritayı okuma (J-175): renk kaynağı, koyuluk yoğunluğu söyler. */}
+      <div className="mt-3 space-y-1.5">
+        <p className="text-small text-ink-2">
+          <span className="text-ink">Renk</span> hangi kaynaktan geldiğini söyler (yukarıdaki noktalar); iki
+          kaynak üst üste binerse renkleri karışır.
+        </p>
         <div
-          aria-label="Isı ölçeği: düşükten yükseğe"
+          aria-label="Koyuluk ölçeği: soluk tek bildirim, koyu üç ve daha çok bildirim"
           role="img"
           className="h-2 rounded-badge"
-          style={{
-            background:
-              'linear-gradient(90deg, var(--heat-0) 0%, var(--heat-1) 18%, var(--heat-2) 42%, var(--heat-3) 63%, var(--heat-4) 82%, var(--heat-5) 100%)',
-          }}
+          style={{ background: 'linear-gradient(90deg, transparent 0%, var(--color-ink-2) 100%)' }}
         />
-        <div className="mt-1 flex justify-between">
-          <Micro>yok</Micro>
-          <Micro>yoğun</Micro>
+        <div className="flex justify-between">
+          <Micro>1 bildirim · soluk</Micro>
+          <Micro>3+ bildirim üst üste · koyu</Micro>
         </div>
       </div>
 
       {/* 4 — şu an ne görüyorum */}
       <SuAn>
-        {hazirNot ??
-          (acikKanallar.length
-            ? `Haritayı ${acikKanallar.map((k) => KANAL_BILGI[k].ad.toLocaleLowerCase('tr')).join(', ')} oluşturuyor.`
-            : 'Isı haritası için veri yok; ağırlıklar veri geldiğinde etkili olur.')}
+        {toplamNokta != null && toplamNokta > 0 && toplamNokta < AZ_VERI
+          ? `Bu aralıkta yalnız ${sayi(toplamNokta)} bildirim var. Isı haritası yoğunluk göstermek için az; renkli lekeler tek tek bildirimlerin çevresidir, bölgenin hasarlı olduğunu göstermez. Noktalara yakınlaşarak bak.`
+          : (hazirNot ??
+            (acikKanallar.length
+              ? `Haritayı ${acikKanallar.map((k) => KANAL_BILGI[k].ad.toLocaleLowerCase('tr')).join(', ')} oluşturuyor.`
+              : 'Isı haritası için veri yok; ağırlıklar veri geldiğinde etkili olur.'))}
       </SuAn>
 
       {ozet.isError && (
@@ -187,164 +198,265 @@ export function GenelSol() {
       {/* 5 — teknik not en altta */}
       <Teknik>
         Ağırlık değişince sunucuya istek gitmez. Her kaynağın yoğunluk ızgarası sunucuda bir kez
-        hesaplanır, ağırlıklı karışım ekran kartında yapılır; ölçek mutlaktır, harita kaydırınca
-        renkler kaymaz.
+        hesaplanır (0,5 km Gauss çekirdeği), karışım tarayıcıda yapılır. Ölçek mutlaktır: tam koyuluk
+        aynı yerde yaklaşık 3 bildirime denk gelir ve harita kaydırınca renkler kaymaz. Isının
+        üzerine gelince o noktadaki kaynak payları görünür.
       </Teknik>
     </Bolum>
   )
 }
 
-/** Sağ panel — bölge durumu. Sayılar sunucudan gelir, istemci hesap yapmaz. */
+/** Sağ panel (J-175): "şimdi neye bakmalıyım?" Eskiden altı sayı kartıydı
+    (çoğu 0), altında boş bir liste ve teknik not vardı; hiçbiri bir sonraki
+    adımı söylemiyordu. Şimdi önce bekleyen iş ve ilgili sayfaya düğme, sonra
+    uydu hasarı (yoksa tek satır), sonra açık ihbarlar. Sayılar sunucudan
+    (özet) ya da aynı penceredeki listelerden gelir. */
 export function GenelSag() {
   const aralik = useSorguAraligi()
   const ozet = useOzet(aralik)
   const sos = useSosCagrilari(aralik)
   const ihbar = useIhbarlar(aralik)
+  const simdi = useZaman((d) => d.simdi)
+  const pencereSec = useZaman((d) => d.pencereSec)
+  const pencere = useZaman(seciliPencere)
   const secili = useKonsol((d) => d.seciliKayit)
   const kayitSec = useKonsol((d) => d.kayitSec)
   const { ucus } = useHarita()
+  const git = useNavigate()
   const [suzgec, setSuzgec] = useState<Suzgec>('tum')
+  const [kapananlar, setKapananlar] = useState(false)
 
   // Son ihbarlar, en yeni önce: tıklayınca haritada oraya gidilir (J-41).
   // Canlı akışla gelen SOS ve ihbar listeye anında düşer (J-51).
   const satirlar = useMemo<Satir[]>(() => {
-    const cagrilar: Satir[] = (sos.data ?? []).map((c) => ({
-      anahtar: `sos-${c.id}`,
-      zaman: c.zaman,
-      tur: 'sos',
-      sos: c,
-    }))
-    const ihbarlar: Satir[] = (ihbar.data ?? []).map((i) => ({
-      anahtar: `ihb-${i.id}`,
-      zaman: i.zaman,
-      tur: i.tur,
-      ihbar: i,
-    }))
+    const cagrilar: Satir[] = (sos.data ?? []).map((c) => ({ anahtar: `sos-${c.id}`, zaman: c.zaman, tur: 'sos', sos: c }))
+    const ihbarlar: Satir[] = (ihbar.data ?? []).map((i) => ({ anahtar: `ihb-${i.id}`, zaman: i.zaman, tur: i.tur, ihbar: i }))
     return [...cagrilar, ...ihbarlar].sort((a, b) => b.zaman - a.zaman)
   }, [sos.data, ihbar.data])
-
+  const acikSatirlar = useMemo(
+    () => satirlar.filter((x) => (x.tur === 'sos' ? x.sos.durum !== 'kapandi' : x.ihbar.durum !== 'kapandi')),
+    [satirlar],
+  )
+  const kaynakSatirlar = kapananlar ? satirlar : acikSatirlar
   const sayilar = useMemo(() => {
-    const s: Record<Suzgec, number> = { tum: satirlar.length, sos: 0, fotograf: 0, metin: 0, ihtiyac: 0 }
-    for (const x of satirlar) s[x.tur] += 1
+    const s: Record<Suzgec, number> = { tum: kaynakSatirlar.length, sos: 0, fotograf: 0, metin: 0, ihtiyac: 0 }
+    for (const x of kaynakSatirlar) s[x.tur] += 1
     return s
-  }, [satirlar])
-  const gorunen = (suzgec === 'tum' ? satirlar : satirlar.filter((x) => x.tur === suzgec)).slice(0, LISTE_BOYU)
+  }, [kaynakSatirlar])
+  const gorunen = (suzgec === 'tum' ? kaynakSatirlar : kaynakSatirlar.filter((x) => x.tur === suzgec)).slice(0, LISTE_BOYU)
 
-  const seciliCagri =
-    secili?.tip === 'sos' ? (sos.data ?? []).find((c) => c.id === secili.id) : undefined
-  const seciliIhbar =
-    secili?.tip === 'ihbar' ? (ihbar.data ?? []).find((i) => i.id === secili.id) : undefined
+  const seciliCagri = secili?.tip === 'sos' ? (sos.data ?? []).find((c) => c.id === secili.id) : undefined
+  const seciliIhbar = secili?.tip === 'ihbar' ? (ihbar.data ?? []).find((i) => i.id === secili.id) : undefined
 
-  // Yüklenirken "veri yok" yazılmaz (J-174): o, sorgunun hata verdiği anlamına gelir.
-  const yok = (q: { isError: boolean }) => (q.isError ? 'veri yok' : 'yükleniyor…')
-  const kartlar: Array<[string, string, string]> = [
-    [
-      'Yıkık yapı',
-      ozet.data ? sayi(ozet.data.yikikYapi) : '—',
-      ozet.data ? `${sayi(ozet.data.hasarliYapi)} yapı da hasarlı` : yok(ozet),
-    ],
-    [
-      'Kapalı yol',
-      ozet.data ? sayi(ozet.data.hasarliYol) : '—',
-      ozet.data ? 'uydu analizinden gelen kapanma' : yok(ozet),
-    ],
-    [
-      'Bekleyen SOS',
-      ozet.data ? sayi(ozet.data.bekleyenSos) : '—',
-      ozet.data ? `${sayi(ozet.data.atananSos)} çağrıya ekip gidiyor` : yok(ozet),
-    ],
-    [
-      'Yeni ihbar',
-      ihbar.data ? sayi(ihbar.data.filter((i) => i.durum === 'yeni').length) : '—',
-      ihbar.data ? `aralıkta ${sayi(ihbar.data.length)} ihbar` : yok(ihbar),
-    ],
-    // Ekipler şu anki durumuyla (zaman aralığından bağımsız, J-54).
-    [
-      'Görevdeki ekip',
-      ozet.data?.ekipSayisi != null ? `${sayi(ozet.data.gorevdekiEkip ?? 0)} / ${sayi(ozet.data.ekipSayisi)}` : '—',
-      ozet.data?.ekipSayisi != null ? `${sayi(ozet.data.musaitEkip ?? 0)} ekip müsait` : yok(ozet),
-    ],
-    [
-      'Sahadaki kişi',
-      ozet.data?.sahadakiKisi != null ? sayi(ozet.data.sahadakiKisi) : '—',
-      ozet.data?.sahadakiKisi != null ? 'açık görevlere giden' : yok(ozet),
-    ],
-  ]
+  // Şimdi bekleyen iş.
+  const bekleyenler = (sos.data ?? []).filter((c) => c.durum === 'bekliyor')
+  const enEski = bekleyenler.reduce<number | null>((m, c) => (m == null || c.zaman < m ? c.zaman : m), null)
+  const yeniIhbar = (ihbar.data ?? []).filter((i) => i.durum === 'yeni')
+  const yeniTurler = (['fotograf', 'metin', 'ihtiyac'] as const)
+    .map((t) => [t, yeniIhbar.filter((i) => i.tur === t).length] as const)
+    .filter(([, n]) => n > 0)
+    .map(([t, n]) => `${IHBAR_TURU[t].kisa} ${sayi(n)}`)
+    .join(' · ')
+  const o = ozet.data
+  const uyduVar = !!o && o.yikikYapi + o.hasarliYapi + o.hasarliYol > 0
+  const yukleniyor = (q: { isError: boolean; data?: unknown }) => !q.data && !q.isError
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-px bg-line">
-        {kartlar.map(([etiket, deger, alt]) => (
-          <div key={etiket} className="bg-panel px-3.5 py-3.5">
-            <div className="font-cond text-metric text-ink">{deger}</div>
-            <div className="mt-1 text-micro ls-micro text-ink-3 uppercase">{etiket}</div>
-            <div className="mt-1 text-small text-ink-3">{alt}</div>
+      <Bolum baslik="Şimdi">
+        <div className="space-y-px">
+          <IsSatiri
+            sayi={bekleyenler.length}
+            yukleniyor={yukleniyor(sos)}
+            ad="Bekleyen SOS"
+            ton="crit"
+            aciklama={
+              bekleyenler.length
+                ? `En uzun bekleyen ${sure(simdi - (enEski ?? simdi))}${o ? ` · ${sayi(o.atananSos)} çağrıya ekip gidiyor` : ''}`
+                : o && o.atananSos
+                  ? `Bekleyen yok · ${sayi(o.atananSos)} çağrıya ekip gidiyor`
+                  : 'Bekleyen çağrı yok'
+            }
+            eylem={bekleyenler.length ? 'Kuyruğa git' : undefined}
+            onEylem={() => git('/konsol/sos')}
+          />
+          <IsSatiri
+            sayi={yeniIhbar.length}
+            yukleniyor={yukleniyor(ihbar)}
+            ad="Görülmemiş ihbar"
+            ton="high"
+            aciklama={yeniIhbar.length ? yeniTurler : 'Hepsi görüldü'}
+            eylem={yeniIhbar.length ? 'Listede göster' : undefined}
+            onEylem={() => {
+              setKapananlar(false)
+              setSuzgec('tum')
+              document.getElementById('son-ihbarlar')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+          />
+          <IsSatiri
+            sayi={o?.gorevdekiEkip ?? 0}
+            yukleniyor={yukleniyor(ozet)}
+            ad={o?.ekipSayisi != null ? `Görevdeki ekip / ${sayi(o.ekipSayisi)}` : 'Görevdeki ekip'}
+            ton="accent"
+            aciklama={
+              o?.ekipSayisi != null
+                ? `${sayi(o.musaitEkip ?? 0)} ekip müsait · sahada ${sayi(o.sahadakiKisi ?? 0)} kişi`
+                : 'Ekip bilgisi yok'
+            }
+            eylem="Ekipler"
+            onEylem={() => git('/konsol/ekipler')}
+          />
+        </div>
+      </Bolum>
+
+      <Bolum baslik="Uydu hasarı">
+        {!o ? (
+          <p className="text-small text-ink-3">{ozet.isError ? 'Özet ucu yanıt vermedi.' : 'Yükleniyor…'}</p>
+        ) : uyduVar ? (
+          <div className="grid grid-cols-3 gap-2">
+            {(
+              [
+                ['Yıkık yapı', o.yikikYapi],
+                ['Hasarlı yapı', o.hasarliYapi],
+                ['Kapalı yol', o.hasarliYol],
+              ] as const
+            ).map(([ad, n]) => (
+              <div key={ad}>
+                <div className="font-cond text-metric text-ink">{sayi(n)}</div>
+                <div className="text-micro ls-micro text-ink-3 uppercase">{ad}</div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        ) : (
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-small text-ink-3">Bu aralıkta uydu analizi yok.</p>
+            <button
+              type="button"
+              onClick={() => git('/konsol/hasar')}
+              className="shrink-0 text-small text-accent hover:underline"
+            >
+              Hasar analizi
+            </button>
+          </div>
+        )}
+      </Bolum>
+
       {seciliCagri && <SosDetayi cagri={seciliCagri} />}
       {seciliIhbar && <IhbarDetayi ihbar={seciliIhbar} />}
 
-      <Bolum baslik="Son ihbarlar" ek={<Micro>{sayi(satirlar.length)}</Micro>} dolgusuz>
-        <div role="group" aria-label="İhbar türü" className="flex flex-wrap gap-1.5 px-3 pb-2.5">
-          {SUZGECLER.map((s) => (
-            <Chip key={s.id} secili={suzgec === s.id} onClick={() => setSuzgec(s.id)}>
-              {s.id !== 'tum' && (
-                <span
-                  aria-hidden
-                  className={sn('mr-1.5 inline-block h-2 w-2 rounded-badge', IHBAR_TURU[s.id].zemin)}
-                />
+      <div id="son-ihbarlar">
+        <Bolum
+          baslik={kapananlar ? 'Son ihbarlar · hepsi' : 'Açık ihbarlar'}
+          ek={<Micro>{sayi(kaynakSatirlar.length)}</Micro>}
+          dolgusuz
+        >
+          <div role="group" aria-label="İhbar türü" className="flex flex-wrap gap-1.5 px-3 pb-2">
+            {SUZGECLER.map((sz) => (
+              <Chip key={sz.id} secili={suzgec === sz.id} onClick={() => setSuzgec(sz.id)}>
+                {sz.id !== 'tum' && (
+                  <span aria-hidden className={sn('mr-1.5 inline-block h-2 w-2 rounded-badge', IHBAR_TURU[sz.id].zemin)} />
+                )}
+                {sz.etiket} {sayi(sayilar[sz.id])}
+              </Chip>
+            ))}
+          </div>
+          <label className="flex items-center gap-2 px-3 pb-2.5 text-small text-ink-2">
+            <input type="checkbox" checked={kapananlar} onChange={(e) => setKapananlar(e.target.checked)} />
+            Kapananları da göster ({sayi(satirlar.length - acikSatirlar.length)})
+          </label>
+          {gorunen.length ? (
+            <div className="border-t border-line">
+              {gorunen.map((x) =>
+                x.tur === 'sos' ? (
+                  <SosSatiri
+                    key={x.anahtar}
+                    c={x.sos}
+                    secili={seciliCagri?.id === x.sos.id}
+                    onSec={() => {
+                      kayitSec({ tip: 'sos', id: x.sos.id })
+                      ucus(x.sos.lon, x.sos.lat, 15.5)
+                    }}
+                  />
+                ) : (
+                  <IhbarSatiri
+                    key={x.anahtar}
+                    ihbar={x.ihbar}
+                    secili={seciliIhbar?.id === x.ihbar.id}
+                    onSec={() => {
+                      kayitSec({ tip: 'ihbar', id: x.ihbar.id })
+                      ucus(x.ihbar.lon, x.ihbar.lat, 15.5)
+                    }}
+                  />
+                ),
               )}
-              {s.etiket} {sayi(sayilar[s.id])}
-            </Chip>
-          ))}
-        </div>
-        {gorunen.length ? (
-          <div className="border-t border-line">
-            {gorunen.map((x) =>
-              x.tur === 'sos' ? (
-                <SosSatiri
-                  key={x.anahtar}
-                  c={x.sos}
-                  secili={seciliCagri?.id === x.sos.id}
-                  onSec={() => {
-                    kayitSec({ tip: 'sos', id: x.sos.id })
-                    ucus(x.sos.lon, x.sos.lat, 15.5)
-                  }}
-                />
-              ) : (
-                <IhbarSatiri
-                  key={x.anahtar}
-                  ihbar={x.ihbar}
-                  secili={seciliIhbar?.id === x.ihbar.id}
-                  onSec={() => {
-                    kayitSec({ tip: 'ihbar', id: x.ihbar.id })
-                    ucus(x.ihbar.lon, x.ihbar.lat, 15.5)
-                  }}
-                />
-              ),
-            )}
-          </div>
-        ) : (
-          <div className="px-3 py-2">
-            <VeriYok ne="İhbar" neden="seçili zaman aralığında kayıt yok" />
-          </div>
-        )}
-      </Bolum>
-
-      <Bolum baslik="Bölge durumu">
-        <Amac>Seçili zaman aralığında bölgenin özeti: ne kadar hasar, kaç bekleyen çağrı?</Amac>
-        {ozet.isError && (
-          <div className="mt-2">
-            <VeriYok ne="Bölge özeti" neden="/api/ozet ucu henüz bağlı değil" />
-          </div>
-        )}
-        <Teknik>
-          Bu sayılar sunucuda hazır tutulur; istek anında hesaplanmaz. Canlı modda yeni çağrı ve
-          ihbar, canlı akış mesajıyla listeye anında düşer; sorgular dakikada bir yenilenmez.
-        </Teknik>
-      </Bolum>
+            </div>
+          ) : (
+            <div className="space-y-2 px-3 pb-3">
+              <p className="text-small text-ink-3">
+                {yukleniyor(sos) || yukleniyor(ihbar)
+                  ? 'Yükleniyor…'
+                  : sos.isError || ihbar.isError
+                    ? 'İhbar uçları yanıt vermedi.'
+                    : satirlar.length && !kapananlar
+                      ? `Açık ihbar yok; bu aralıktaki ${sayi(satirlar.length)} kaydın hepsi kapandı.`
+                      : 'Bu zaman aralığında kayıt yok.'}
+              </p>
+              {!satirlar.length && pencere !== 'tum' && pencere !== '3g' && !yukleniyor(sos) && (
+                <button
+                  type="button"
+                  onClick={() => pencereSec(pencere === '24s' ? '3g' : '24s')}
+                  className="rounded-control border border-line-2 px-2 py-1 text-small text-ink-2 hover:bg-hover hover:text-ink"
+                >
+                  {pencere === '24s' ? 'Son 3 güne genişlet' : 'Son 24 saate genişlet'}
+                </button>
+              )}
+            </div>
+          )}
+        </Bolum>
+      </div>
     </>
+  )
+}
+
+/** "Şimdi" bölümünün bir satırı: sayı, ne olduğu, kısa açıklama, sonraki adım. */
+function IsSatiri({
+  sayi: n,
+  yukleniyor,
+  ad,
+  ton,
+  aciklama,
+  eylem,
+  onEylem,
+}: {
+  sayi: number
+  yukleniyor: boolean
+  ad: string
+  ton: 'crit' | 'high' | 'accent'
+  aciklama: string
+  eylem?: string
+  onEylem: () => void
+}) {
+  const renk = { crit: 'text-crit', high: 'text-high', accent: 'text-ink' }[ton]
+  const sakin = !yukleniyor && n === 0
+  return (
+    <div className="flex items-center gap-3 py-1.5">
+      <span className={sn('w-8 shrink-0 text-right font-cond text-metric', sakin ? 'text-ink-3' : renk)}>
+        {yukleniyor ? '—' : sayi(n)}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className={sn('block text-small', sakin ? 'text-ink-2' : 'text-ink')}>{ad}</span>
+        <span className="block truncate text-small text-ink-3">{yukleniyor ? 'Yükleniyor…' : aciklama}</span>
+      </span>
+      {eylem && !yukleniyor && (
+        <button
+          type="button"
+          onClick={onEylem}
+          className="shrink-0 rounded-control border border-line-2 px-2 py-1 text-small text-ink-2 hover:bg-hover hover:text-ink"
+        >
+          {eylem}
+        </button>
+      )}
+    </div>
   )
 }
 

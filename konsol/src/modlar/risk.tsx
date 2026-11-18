@@ -72,9 +72,11 @@ const OPERASYON = [
 const yuzde = (x: number) => `%${Math.round(x * 100)}`
 const ondalik = (x: number, b = 1) => x.toFixed(b).replace('.', ',')
 
-export function useRiskSiralamasi() {
+export function useRiskSiralamasi(acik = true) {
   return useQuery({
     queryKey: ['risk', 'siralama'],
+    // Harita kabuğu her modda çağırır; yalnız risk modunda istenir (J-175).
+    enabled: acik,
     staleTime: 10 * 60_000,
     queryFn: () => apiGet<{ iller: RiskSirasi[] }>('/api/risk/siralama'),
   })

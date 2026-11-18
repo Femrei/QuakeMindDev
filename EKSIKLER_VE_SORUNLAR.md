@@ -2373,6 +2373,7 @@ kimlikle. Başka belgelerdeki "EKSIKLER J-xxx" atıfları için kimliği burada 
 | J-172 | 🟠 Harita karmaşık ve okunmuyordu: aynı yuvarlaklar, kesilen bilgi kutusu, anlaşılmaz kaynak ağırlıkları; J-167 Grup F | — |
 | J-173 | 🔴 Deprem riski: eşzamanlı istekte başka ilin sonucu, şişkin uzun vadeli tehlike, açık uçlar; ekran soruya cevap vermiyordu | — |
 | J-174 | 🔴 Uçtan uca akış: canlı akış ilk jeton yenilemesinde kalıcı kapanıyordu; ihtiyaç geçen yazılı ihbar ihtiyaç sayfasına düşmüyordu | — |
+| J-175 | 🟠 Genel durum: ısı haritası kaynak ayırmıyor ve az veriyi yoğun gösteriyordu; sağ panel bir sonraki adımı söylemiyordu; gereksiz veri iniyordu | 18 Kasım 2026 |
 
 ---
 
@@ -2599,3 +2600,4 @@ kimlikle. Başka belgelerdeki "EKSIKLER J-xxx" atıfları için kimliği burada 
 | 18 Kasım 2026 | **J-173** kapatıldı: deprem riskinde eşzamanlı istekte başka ilin sonucu dönüyordu (40'ta 35 → 0); hesap iş parçacığı güvenli ve önbellekli (ortanca 162 → 30 ms). Uzun vadeli tehlike artçısız (Gardner–Knopoff) ve katalog süresiyle (81 il ortancası 0,63 → 0,53). İki açık uç kapandı. Ekran 81 il sıralaması, haritada risk renkli iller ve bileşen kartlarıyla yeniden. `pytest -q` 127/127. |
 | 18 Kasım 2026 | **J-174** kapatıldı: uçtan uca akış 48 adımda dört hesapla sınandı (`araclar_akis_senaryosu.py`). Canlı akış ilk jeton yenilemesinde kalıcı kapanıyordu (bütün roller), düzeltildi. Saha akışına işlem kaydı işareti gitmiyor. İhtiyaç geçen yazılı ihbar ihtiyaç sayfasına düşüyor. Afetzede ihbarına gelen ekibi ve "olay sürüyor" durumunu doğru görüyor. Yüklenirken "veri yok" yazılmıyor. `pytest -q` 131/131. |
 | 18 Kasım 2026 | **Temizlik.** Açık görünen ürün maddeleri birleşik dalda (UtBird/QuakeMind#12) kodla ve ölçümle doğrulandı. 22 madde güncellendi: J-07, J-09, J-11, J-13, J-18, J-37, J-45, J-46 (ölçüldü: boşta 137 sn'de 0 istek), J-50, J-59 (sayıldı: 116 uçtan 6'sı oturumsuz, hepsi olması gerektiği gibi), J-141–J-145, J-148, J-146, F-01, F-02 kapandı; J-15, J-147 kısmen; J-167 büyük ölçüde. Durum satırı KAPALI ya da DÜZELTİLDİ olan 92 madde değiştirilmeden `EKSIKLER_ARSIV.md`'ye taşındı; burada dizin ve baştaki özet kaldı. Taşımada satır kaybı yok (betikle sayıldı: 175 madde, bütün satırlar iki dosyada). |
+| 18 Kasım 2026 | **J-175** kapatıldı: genel durum ısı haritasında renk kaynağı, koyuluk yoğunluğu gösteriyor; üzerine gelince kaynak payları. Listeler, sayılar ve ısı aynı pencerede. Sağ panel "Şimdi / Uydu hasarı / Açık ihbarlar". Genel mod açılışı 16 istek / 993 KB → 13 / 201 KB. Madde arşivde. |

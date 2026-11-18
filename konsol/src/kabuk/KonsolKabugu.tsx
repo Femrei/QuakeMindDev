@@ -275,7 +275,8 @@ function KatmanKopru() {
   // altlık paketi yok (Nurdağı'nda zemin bomboş siyahtı) ve doğru zemin zaten
   // enkazın kendisidir. Yalnız koşu varken serilir.
   const simSecim = useSimulasyon((d) => d.secim)
-  const simAlanlar = useSimAlanlar()
+  // Yalnız koşu varken ya da tatbikat modunda (J-175): genel modda gereksiz istekti.
+  const simAlanlar = useSimAlanlar(!!simIsId || tanim.id === 'simulasyon')
   const simGoruntu = useMemo(() => {
     if (!simIsId) return null
     // Alan KOŞUNUN kendisinden okunur, panel seçiminden değil: sayfa
@@ -448,7 +449,7 @@ function KatmanKopru() {
   }, [tanim.id, rotaBas, rotaHedef, rotaSonuc, rotaKiyas, rotaAdaylar])
 
   // Deprem riski (J-173): yalnız risk modunda.
-  const riskSiralamasi = useRiskSiralamasi()
+  const riskSiralamasi = useRiskSiralamasi(tanim.id === 'risk')
   const riskIli = useSeciliRiskIli(riskSiralamasi.data?.iller)
   const riskGirdisi = useMemo(() => {
     if (tanim.id !== 'risk' || !riskSiralamasi.data) return null

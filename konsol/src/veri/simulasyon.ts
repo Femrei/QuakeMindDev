@@ -266,9 +266,10 @@ function liste<T>(yanit: unknown, anahtar: string): T[] {
   return Array.isArray(kutu) ? (kutu as T[]) : []
 }
 
-export function useSimAlanlar() {
+export function useSimAlanlar(acik = true) {
   return useQuery({
     queryKey: ['simulasyon', 'alanlar'],
+    enabled: acik,
     queryFn: async () => liste<SimAlan>(await apiGet<unknown>('/api/simulasyon/alanlar'), 'alanlar'),
   })
 }

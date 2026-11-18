@@ -212,7 +212,9 @@ const BASLANGIC: Record<KatmanId, boolean> = {
   yollar: true,
   hasarliYollar: true,
   isi: true,
-  depremler: true,
+  // Kapalı başlar (J-175): mod kendi katmanlarını ilk karede değil bir sonraki
+  // etkide yazıyor; arada genel modda bile 755 KB'lık deprem kataloğu iniyordu.
+  depremler: false,
   toplanma: false,
   saglik: false,
   ekipler: true,

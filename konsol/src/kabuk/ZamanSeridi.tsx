@@ -149,7 +149,7 @@ export function ZamanSeridi() {
         </Amac>
         <SuAn>
           {canli
-            ? `Canlı: son ${sure(uzunluk)} gösteriliyor, pencere saatle birlikte kayıyor.`
+            ? `Canlı: son ${sure(uzunluk)} gösteriliyor; başlangıç 15 dakikalık adımlarla kayar, her yerde aynı pencere.`
             : `Geçmiş: ${tarihSaat(t0)} — ${tarihSaat(t1)} arası (${sure(uzunluk)}) gösteriliyor.`}
         </SuAn>
       </div>

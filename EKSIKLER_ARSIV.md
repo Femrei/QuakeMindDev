@@ -3816,3 +3816,39 @@ Veritabanının kopyasında koşar (`--api http://127.0.0.1:8001`), canlı veriy
 - Yazılı ihbardan çıkan kişi sayısı model çıkarımıdır, doğrulanmamıştır. Metinde birden çok sayı varsa en büyüğü alınır.
 
 ---
+
+## J-175 🟠 Genel durum: ısı haritası kaynak ayırmıyor ve az veriyi yoğun gösteriyordu; sağ panel bir sonraki adımı söylemiyordu; gereksiz veri iniyordu
+**Durum:** KAPALI (18 Kasım 2026) · **Ölçüldü** · **Bulundu:** 18 Kasım 2026 (kullanıcı: "renkler hepsi aynı, fark oluşturmuyor, doğru bilgi vermiyor; sağdaki kısım kullanışlı değil; performansı artıralım") · **İlgili:** J-46, J-172, MIMARI §5, ARAYUZ §6
+
+**Bulgu.**
+- **Renk kaynak söylemiyordu.** Dört kanalın ızgarası ağırlıkla toplanıp tek mor→sarı skalayla boyanıyordu (`harita/isiDokusu.ts`); hangi lekenin SOS'tan, hangisinin kameradan geldiği okunmuyordu.
+- **Az veri yoğun görünüyordu.** Skala en düşük değeri bile koyu ve opak boyuyordu (0,12'de alfa 150). Sunucunun 0,5 km çekirdeği tek bildirimi ~1,2 km yarıçapa yayıyor; 3 bildirim Antakya merkezini "yoğun hasar" gibi kaplıyordu.
+- **Pencere tutarsızdı.** Isı ve özet sayıları 15 dakikalık çapadan (J-46), listeler tam pencereden soruluyordu: kenardaki kayıt ısıda ve "SOS 1 nokta"da görünüp "Son ihbarlar 0" listesinde görünmüyordu.
+- **Sağ panel:** altı sayı kartının çoğu 0'dı, altında boş liste ve teknik not; hiçbiri bir sonraki adımı söylemiyordu. Kapanan kayıtlar açıklarla karışıktı.
+- **Gereksiz veri:** genel modda açılışta 755 KB deprem kataloğu (başlangıç katman ayarında `depremler: true`; mod kendi katmanlarını bir sonraki etkide yazıyordu), her modda 81 il risk sıralaması (sunucuda 345 ms) ve tatbikat alanları iniyordu.
+
+**Yapılan.**
+- `harita/isiDokusu.ts`: **renk = kaynak** (katkı veren kaynakların token renklerinin katkı oranıyla karışımı; tek kaynaklı yer saf renk), **koyuluk = yoğunluk** (saydamlık mutlak yoğunlukla doğrusal; eşik 0,08). "Çıkar" ağırlıkları yoğunluktan düşülür. Hücre dökümü (`hucre`) tutulur.
+- Isının üzerine gelince bilgi kartı (`harita/katmanlar.ts`, `HaritaKabugu.tsx`): kaynak payları ("Kamera %52 · SOS %48"), yoğunluk, yaklaşık bildirim sayısı (ölçek dolduysa "3 ya da daha çok"), "Çıkar" ile düşülen.
+- Sol panel: ölçek açıklaması (renk kaynak, koyuluk 1 → 3+ bildirim); 10 bildirimin altında "ısı yoğunluk göstermek için az, noktalara bak" uyarısı.
+- `durum/zamanDurumu.ts`: canlıda listeler, sayılar ve ısı **aynı pencere** (çapa); zaman şeridi gerçek başlangıcı yazar. Sorgu aralığı nesnesi artık dakikada bir değil çapa değişince yenilenir.
+- `modlar/genel.tsx` sağ panel: **Şimdi** (bekleyen SOS + en uzun bekleme + "Kuyruğa git"; görülmemiş ihbar türleriyle + "Listede göster"; ekipler + "Ekipler"), **Uydu hasarı** (analiz yoksa tek satır + "Hasar analizi"), **Açık ihbarlar** (kapananlar isteğe bağlı; boşsa "Son 24 saate genişlet").
+- `konsolDurumu.ts` `depremler: false`; `useRiskSiralamasi` yalnız risk modunda; `useSimAlanlar` yalnız koşu varken ya da tatbikat modunda.
+
+**Ölçüm** `[Ö]` (birleşik dal, kopya veritabanı, genel mod, sayfa açılışı, bu makine):
+
+| | Önce | Sonra |
+|---|---|---|
+| İstek (akış hariç) | 16 | **13** |
+| İnen veri | 993 KB | **201 KB** |
+| Isı dokusu üretimi (istemci, 4 kanal) | ortanca 0,6 ms | değişmedi (yükü taşımıyor) |
+
+- Bilgi kartı tarayıcıda denendi: "Kamera tespiti %52 · SOS çağrıları %48", "Metin ihbarı %98".
+- `npx tsc -b` ve `kontrol:token` temiz.
+
+**Açık kalan.**
+- Harita sürüklenirken kare süresi ölçülemedi (tarayıcı paneli ekranda değildi, sayfa kare çizmiyordu).
+- Sunucunun 0,5 km çekirdeği değişmedi: aynı noktada çok bildirim olunca leke ~1,2 km'ye yayılıyor. Daraltmak (ör. 0,25 km) tasarım kararı; kullanıcıya soruldu.
+- Geliştirme sunucusunda kod sıcak yüklenince harita tuvali kayboluyor (sayfa yenilenince geliyor); yalnız geliştirmede, derlemede yok.
+
+---

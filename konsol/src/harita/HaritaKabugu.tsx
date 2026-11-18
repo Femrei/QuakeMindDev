@@ -79,7 +79,8 @@ export function HaritaKabugu({ children, className, ipucu, baslangic }: KabukSec
       interleaved: false,
       layers: [],
       onHover: (bilgi) => {
-        const icerik = bilgi.object ? ipucuUret(bilgi) : null
+        // Isı dokusunun nesnesi yok, pikseli var (J-175): onun kartı da üretilir.
+        const icerik = bilgi.object || bilgi.layer?.id === 'isi' ? ipucuUret(bilgi) : null
         const kab = kutu.current?.getBoundingClientRect()
         setKart(icerik && kab ? { x: kab.left + bilgi.x, y: kab.top + bilgi.y, html: icerik.html } : null)
       },

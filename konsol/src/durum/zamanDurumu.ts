@@ -83,9 +83,14 @@ export function aralikAl(d: ZamanDurumu): [number, number] {
 
 /** Bileşenler aralığı bu kancayla okur: yalnız ilkel değerlere abone olunur. */
 export function useAralik(): [number, number] {
+  const canli = useZaman((d) => d.canli)
   const bitis = useZaman((d) => (d.canli ? d.simdi : d.bitis))
   const uzunluk = useZaman((d) => d.uzunluk)
-  return useMemo(() => [bitis - uzunluk, bitis], [bitis, uzunluk])
+  // Canlıda gösterilen başlangıç, sorgunun gerçek başlangıcıdır (çapa, J-175).
+  return useMemo(
+    () => [canli ? Math.floor((bitis - uzunluk) / CANLI_CAPA) * CANLI_CAPA : bitis - uzunluk, bitis],
+    [canli, bitis, uzunluk],
+  )
 }
 
 /** Sorguların kullandığı aralık (J-46, J-51).
@@ -97,8 +102,10 @@ export function useAralik(): [number, number] {
 
     Canlıda başlangıç 15 dakikalık çapaya yuvarlanır: sorgu anahtarı dakikada
     bir değişmez, sorgular yalnız canlı akış mesajıyla tazelenir (kural 4).
-    Listeler tam pencereye istemcide süzülür (`kesinBaslangic`); sunucunun
-    saydığı özet ve ısı en çok 15 dakika geniş pencereyle hesaplanır.
+    Listeler, sayılar ve ısı AYNI pencereyi kullanır: canlıda başlangıç çapadır
+    ve zaman şeridi de onu yazar. Eskiden listeler tam pencereye süzülüyor,
+    sunucunun saydığı özet ve ısı çapadan başlıyordu: kenardaki kayıt ısıda ve
+    "SOS 1 nokta" sayısında görünüp listede görünmüyordu (J-175).
     Geçmiş modunda aralık olduğu gibi gider. */
 export type SorguAraligi = {
   baslangic: number
@@ -118,9 +125,11 @@ export function useSorguAraligi(): SorguAraligi {
   return useMemo(
     () =>
       canli
-        ? { baslangic: capa, bitis: null, kesinBaslangic: baslangic }
+        ? { baslangic: capa, bitis: null, kesinBaslangic: capa }
         : { baslangic, bitis, kesinBaslangic: null },
-    [canli, capa, baslangic, bitis],
+    // Canlıda yalnız çapa değişince (15 dakikada bir) yeni nesne: dakikalık
+    // saat ilerlemesi listeleri yeniden süzdürmez.
+    [canli, capa, canli ? 0 : baslangic, canli ? 0 : bitis],
   )
 }
 
