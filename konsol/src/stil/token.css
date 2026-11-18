@@ -1,6 +1,17 @@
 /* Konsola özel taban stiller. Token'lar ortak dosyadan gelir. */
 @import '../../../tasarim/token.css';
 
+/* Konsolun yazı ölçeği bir kademe büyük (J-177, Grup G U-5; ARAYUZ §4).
+   Ölçüldü: görünen metnin %87–91'i 11–12 px'ti; uzun süre bakılan operasyon
+   ekranı için küçük. Ortak dosyadaki değerler tanıtım sitesi için aynı kalır;
+   konsol burada üzerine yazar. Rol sayısı yine altı, yeni değer eklenmez. */
+@theme {
+  --text-micro: 12px;
+  --text-small: 13px;
+  --text-body: 14px;
+  --text-subtitle: 16px;
+}
+
 @layer base {
   html,
   body,

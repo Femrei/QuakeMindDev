@@ -264,6 +264,35 @@ def main():
     kontrol("9 saha akisina islem kaydi isareti gitmez", not saha.olay_var("islem-kaydi", lambda m: True, bekle=0.5))
     kontrol("9 koordinasyon akisina islem kaydi isareti gider", koord.olay_var("islem-kaydi", lambda m: True, bekle=0.5))
 
+    # --- 10. acil bildirim (J-177) ----------------------------------------------------
+    govde = {"baslik": "Akış senaryosu: artçı sarsıntı uyarısı",
+             "metin": "Bu bir sınama bildirimidir; gerçek bir uyarı değildir.", "onem": "uyari"}
+    k, _ = afz.istek("POST", "/api/bildirimler", govde)
+    kontrol("10 afetzede bildirim yayinlayamaz (403)", k == 403, str(k))
+    k, _ = saha.istek("POST", "/api/bildirimler", govde)
+    kontrol("10 saha bildirim yayinlayamaz (403)", k == 403, str(k))
+    k, b = koord.istek("POST", "/api/bildirimler", govde)
+    kontrol("10 koordinasyon bildirim yayinladi (201)", k == 201, f"{k} {b}")
+    if k == 201:
+        bid = b["id"]
+        for h, ad in ((afz, "afetzede A"), (afz2, "afetzede B"), (saha, "saha")):
+            kontrol(f"10 {ad} bildirimi akista alir",
+                    h.olay_var("bildirim", lambda m: m.get("id") == bid and m.get("durum") == "yayinda"))
+        for h, ad in ((afz, "afetzede A"), (saha, "saha")):
+            k, akt = h.istek("GET", "/api/bildirimler/aktif")
+            kontrol(f"10 {ad} aktif listede gorur", k == 200 and any(x["id"] == bid for x in akt or []), str(k))
+        k, akt = afz.istek("GET", "/api/bildirimler/aktif")
+        kontrol("10 afetzede yayinlayanin adini gormez",
+                all("gonderen" not in x for x in (akt or [])), str((akt or [{}])[0].keys()))
+        k, _ = koord.istek("POST", f"/api/bildirimler/{bid}/kaldir")
+        kontrol("10 koordinasyon geri cekti", k == 200, str(k))
+        kontrol("10 afetzede geri cekmeyi akista alir",
+                afz.olay_var("bildirim", lambda m: m.get("id") == bid and m.get("durum") == "kaldirildi"))
+        k, akt = afz.istek("GET", "/api/bildirimler/aktif")
+        kontrol("10 geri cekilen aktif listeden duser", k == 200 and not any(x["id"] == bid for x in akt or []))
+        k, _ = koord.istek("POST", f"/api/bildirimler/{bid}/kaldir")
+        kontrol("10 ikinci geri cekme 409", k == 409, str(k))
+
     gecen = sum(1 for _, g, _ in SONUC if g)
     print(f"\n{gecen}/{len(SONUC)} adim gecti")
     kalan = [(a, x) for a, g, x in SONUC if not g]

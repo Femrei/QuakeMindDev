@@ -89,12 +89,12 @@ Instrument Sans + JetBrains Mono, Geist + Geist Mono. **Nihai seçim ürün sahi
 
 Ölçek — **yalnız bu altı değer** kullanılır:
 
-| Rol | Boyut / ağırlık |
-|---|---|
-| micro (bölüm etiketi, büyük harf, ls .07em) | 11 / 600 |
-| small (kaynak notu, yardım metni) | 12 / 400 |
-| body (arayüz metni, liste) | 13 / 400 |
-| subtitle (panel başlığı) | 15 / 500 |
+| Rol | Boyut / ağırlık (konsol) | Ortak dosya (tanıtım sitesi) |
+|---|---|---|
+| micro (bölüm etiketi, büyük harf, ls .07em) | 12 / 600 | 11 |
+| small (kaynak notu, yardım metni) | 13 / 400 | 12 |
+| body (arayüz metni, liste) | 14 / 400 | 13 |
+| subtitle (panel başlığı) | 16 / 500 | 15 |
 | title (mod başlığı) | 20 / 500 |
 | metric (KPI sayısı, Condensed) | 30 / 600 |
 
@@ -102,6 +102,11 @@ Kurallar: sayılar her yerde eşit genişlikte (`font-variant-numeric: tabular-n
 büyük harf yalnız micro rolünde; iki ağırlık yeter (400, 500/600).
 Prototipte birkaç yerde 10,5 / 11,5 / 12,5 kullanıldı — gerçek uygulamada bu altı değere
 kilitlenecek.
+
+**18 Kasım 2026 (J-177, U-5):** konsolun ölçeği bir kademe büyütüldü. Ölçüldü: görünen metnin
+%87–91'i 11–12 px'ti; uzun süre bakılan operasyon ekranı için küçük. Konsol değerleri
+`konsol/src/stil/token.css` içinde ortak dosyanın üzerine yazılır; tanıtım sitesi ortak
+değerlerle kalır. Rol sayısı yine altı.
 
 ## 5. Boşluk, köşe, kenarlık
 
@@ -298,7 +303,7 @@ Sayılar birimiyle yazılır ("394 nokta"), ham sayı bırakılmaz.
 ## 12. Okunabilirlik
 
 - Küçük metinde en düşük renk `--ink-3`; daha sönük gri kullanılmaz.
-- Taban yazı boyutu 11 px; altına inilmez.
+- Taban yazı boyutu konsolda 12 px (yalnız büyük harfli etiket), okuma metni 13–14 px; altına inilmez.
 - Klavye odağı her zaman görünür.
 - Renk tek başına anlam taşımaz: her durum renginin yanında ad veya sayı bulunur.
 

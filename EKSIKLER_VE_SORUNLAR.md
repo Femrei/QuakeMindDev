@@ -24,12 +24,12 @@ dizine bir satır ekleyin. Hiçbir madde silinmez; kimlikler değişmez.
 
 ## Özet (18 Kasım 2026)
 
-175 maddenin **92'si kapandı** ve `EKSIKLER_ARSIV.md`'ye taşındı (dizini bu dosyanın sonunda).
-Burada kalan **83 madde** şöyle dağılıyor:
+178 maddenin **96'sı kapandı** ve `EKSIKLER_ARSIV.md`'ye taşındı (dizini bu dosyanın sonunda).
+Burada kalan **82 madde** şöyle dağılıyor:
 
 | Neye ait | Madde | Ne zaman |
 |---|---|---|
-| Ürün — teslimden önce bakılmalı | 7 | Bu hafta (aşağıdaki liste) |
+| Ürün — teslimden önce bakılmalı | 6 | Bu hafta (aşağıdaki liste) |
 | Ürün — iyileştirme | 9 | Teslimden sonra olabilir |
 | Makale ve model sonuçları | 62 | Makale aşamasında (`MAKALE_DUZELTME_LISTESI.md` ile birlikte) |
 | Kapsam dışı (C grubu) | 5 | Makalede "yapılmadı" diye yazılır |
@@ -44,7 +44,6 @@ Burada kalan **83 madde** şöyle dağılıyor:
 | J-153 🟠 | Deprem kataloğu kendiliğinden tazelenmiyor; canlıda risk modeli yeniden eğitilmeli | Canlıya çıkış (Deha) |
 | J-58 🟠 | Yol kapanmasının geometrisi atılıyor, derece sabit 3 | Geliştirme |
 | J-39 🟡 | Büyük alan çizilince görüntü sessizce 8 × 8 karoya kırpılıyor | Geliştirme |
-| J-167 🟠 | Yalnız Grup G kaldı: U-5, konsol yazısı küçük (token ölçeği kararı) | Karar: yazı ölçeği |
 
 **Ürün — iyileştirme (teslimden sonra olabilir):**
 - J-10: soğuk başlangıç.
@@ -2057,210 +2056,6 @@ Temel ölçüm de yeniden koşuldu (`benchmark/reports/sqlite_yuk_2026-11-13_son
 - Ölçüm betiğinin ilk sürümünde "gerçekleşen hız" konsol bekleme süresini de paydaya katıyordu
   (47,5 ve 39,9 gibi düşük değerler). Düzeltildi; bütün koşularda 10 sn'de 501 yazma = 50/sn.
 
-## J-167 🟠 Uçtan uca tarama (17 Kasım): giriş ve SOS sınırsız, birkaç ölü ekran, saha ana düğmesi ekran dışında
-**Durum:** BÜYÜK ÖLÇÜDE KAPALI (18 Kasım 2026) — Grup A–F kapandı (J-169…J-174); yalnız Grup G (U-5, yazı boyutu) açık · **Bulundu:** 17 Kasım 2026 · **İlgili:** J-158, J-162, J-165, CLAUDE.md §1, §5, §8
-
-> Not: J-166 kimliği kodda (ekip konum geçmişi, işlem kaydı hash zinciri) başka bir iş için
-> kullanılıyor ama bu dosyada henüz maddesi yok; çakışmasın diye bu tarama J-167 aldı.
-
-**Nasıl ölçüldü.**
-- Çalışma ağacının o anki hâli (J-165 + J-166 commit edilmemiş).
-- Gerçek veritabanının kopyasında ayrı bir API (8001) ve konsol (3201). Gerçek veritabanına yazılmadı.
-- Demo hesaplarıyla dört rol, tarayıcıda (1440×900 ve 375×812) ve betikle (54 kontrol).
-- Bu makinede ölçüldü (Windows, GPU yok).
-
-**Geçenler.**
-- Testler:
-  - `tsc -b` ve `kontrol:token` temiz.
-  - Backend 66/68 (kalan ikisi aşağıda T-1).
-- Uçtan uca zincir:
-  - afetzede SOS → koordinatör sevk → saha "yola çıktık / vardık / bitti" → afetzede "kapandı";
-  - ihtiyaç, metin ve fotoğraf ihbarı;
-  - duyuru yayını ve geri çekme;
-  - hepsi işlem kaydında, zincir doğrulaması sağlam.
-- Yetki:
-  - 100 yolun yalnız 10'u oturumsuz (giriş, kayıt, yenile, çıkış, durum, deprem ve fay katmanı).
-  - Rol istemciden alınmıyor.
-  - Koordinatör yönetici hesabı açamıyor, kendi rolünü yükseltemiyor (409).
-  - Kurcalanmış JWT ve `alg=none` 401 alıyor.
-  - Başka afetzedenin fotoğrafı 404, SOS'u 403 dönüyor; yol geçişi denemeleri 404/422.
-  - 20 MB gövde 422 ile reddediliyor.
-- Canlı akış:
-  - API'den atılan SOS 1,5 sn içinde konsolda.
-  - Boşta 67 sn'de 8 istek (§4'teki eski ölçüm dakikada ~65'ti).
-- Tatbikat ("Hızlı", Elektrik): 33,8 sn sürdü; bu sırada `/api/ozet` p95 12 ms (API donmuyor).
-- Mobil: afetzede ve saha ekranında yatay taşma yok.
-
-**Bulgular.**
-
-*Güvenlik*
-- **S-1 🟠 Giriş denemesi sınırı yok.**
-  - Aynı hesaba 15 yanlış şifre gönderildi; hepsi 401 döndü, kilit ya da 429 yok.
-  - Tek engel bcrypt (~370 ms).
-  - ✅ Düzeltildi (17 Kasım, Grup B): `hiz_siniri.py`, `uclar/oturum.py` giriş ucu.
-    - Aynı e-postaya 15 dakikada 5 hatalı deneme → 6.'da **429** + `Retry-After`. Kilit sürerken
-      doğru şifre de 429 alır (şifre hiç denenmez). Başarılı giriş sayacı sıfırlar.
-    - Aynı adresten 15 dakikada 30 hatalı deneme (çok hesaba yayılan) → 429.
-    - Olmayan e-posta da aynı sayıda denemede aynı iletiyle kilitlenir; hesabın varlığı sızmaz.
-    - Konsol iletisi: "Çok fazla hatalı deneme. 15 dakika sonra yeniden dene."
-    - **Karar `[T]`: sayaç SQLite'ta** (`hiz_sayaclari`), bellekte değil. Sunucu yeniden
-      başlatılınca kilit sıfırlanmaz, ileride birden çok worker'a geçilirse ortak kalır.
-      Bedeli deneme başına bir yazma. Bir günden eski satırlar silinir. Sorgular
-      `(anahtar, zaman)` indeksinden okunuyor; `EXPLAIN QUERY PLAN` tablo taramıyor.
-    - **Vekil:** `X-Forwarded-For` geliyorsa yalnız `QUAKEMIND_VEKIL_GUVENILIR=1` iken
-      adres sınırı uygulanır. Yoksa Nginx arkasında herkes aynı adresten görünür ve bir kişi
-      herkesi kilitlerdi. Canlıda Nginx arkasında bu değişken açılmalı (Deha).
-    - Tarayıcıda (veritabanı kopyasında) denendi: olmayan bir e-postayla 5 kez "E-posta veya
-      şifre hatalı", 6.'da 429 iletisi.
-- **S-2 🟠 SOS sınırı yok.**
-  - Tek afetzede hesabı 0,2 sn'de 30 SOS attı; hepsi 201 döndü.
-  - Kuyrukta 30 ayrı satır oldu ve ısı haritasında tek başına "en acil bölge" lekesi çıktı.
-  - Kayıt açık, doğrulama yok: çok hesapla sel de mümkün.
-  - Öneri:
-    - hesap başına tek açık SOS; yenisi var olanı güncellesin;
-    - hesap ve IP başına dakikalık sınır;
-    - kayıtta IP sınırı.
-  - ✅ Düzeltildi (17 Kasım, Grup B, U-3 ile): `depo/sqlite_surucu.py` `sos_ac_ya_da_guncelle`,
-    `uclar/sozlesme.py` SOS ucu.
-    - **Hesap başına tek açık SOS.** Açık çağrı varken yeniden basılırsa yeni satır açılmaz:
-      konum, not ve kişi sayısı güncellenir; öncelik yalnız daha acile çıkar; ihtiyaçlar
-      birleşir.
-    - Yanıt 200 + mevcut kimlik (yeni çağrı 201).
-    - Bekleme süresi bozulmasın diye çağrının geldiği an (`zaman`) değişmez; kaç kez ve en son
-      ne zaman güncellendiği `ek`te durur.
-    - Kontrol ve yazma aynı kilitte: aynı anda iki basış iki satır açamaz.
-    - Isı haritasına güncellemede nokta yazılmaz: kişi bir kez sayılır.
-    - Hesap başına dakikada 6, adres başına dakikada 30 basış → 429 ("Çağrın zaten
-      iletildi… şebeke varsa 112'yi ara").
-    - Hesap açmaya adres başına saatte 10 sınırı (aile, aynı Wi-Fi payı).
-    - Yeni sorgu `ix_sos_kullanici_zaman` indeksinden okunuyor (`EXPLAIN QUERY PLAN`).
-    - Ekranda:
-      - konsol kuyruğu tek satır, "N kez yeniden gönderdi";
-      - ayrıntıda "Yeni çağrı açılmadı; konum ve bilgiler güncellendi";
-      - afetzede ekranı "Çağrın zaten iletilmişti… güncellendi (N kez)" diyor; açık çağrı
-        varken form bunu önceden söylüyor.
-    - Kopyada 8 hızlı SOS: 201, 200×5, 429×2 → tek açık satır, `guncellemeSayisi` 5. Konsolda
-      tek satır göründü.
-- **S-3 🟡 Kamera ucu bilinmeyen `modelType`'ta model çalıştırmıyor ama "temiz" diyor.**
-  - `"ikisi"` gönderilince 28 ms'de 200 `NO_DETECTION` dönüyor.
-  - `activeModels` iki modeli de çalışmış gibi yazıyor (`uclar/kamera.py:255`). Kural §1'e aykırı ve yanlış negatif üretiyor.
-  - Bilinmeyen değer 422 almalı.
-  - ✅ Düzeltildi (J-166): `cekirdek.py` `CameraAnalysisRequest.modelType` Literal; `uclar/kamera.py` model yoksa 503, `activeModels` yalnız koşanlar.
-- **S-4 🟡 Belgeler oturumsuz açık.** `/docs`, `/redoc`, `/openapi.json` 200 dönüyor; üretimde kapatılmalı.
-  - ✅ Düzeltildi (17 Kasım, Grup B): `fastapi_app.py`. Varsayılan **kapalı** (404); geliştirmede
-    `QUAKEMIND_BELGELER=1` ile açılır. Konsol ve araçlar bunlara bağlı değil (tarandı).
-- **S-5 🟡 Metin ihbarındaki adres dış servise gidiyor.**
-  - Adres, kamuya açık OSM Nominatim'e gönderiliyor (`apps/disaster_nlp/src/ner_extraction.py:120`).
-  - Afetzedenin yazdığı adres üçüncü tarafa çıkıyor.
-  - Nominatim saniyede 1 istek kuralı koyuyor; internet zayıfsa adres bulunamıyor. Yerel mahalle/sokak dizini önerilir.
-  - ✅ Düzeltildi (17 Kasım, J-170): adres yerel dizinden çözülüyor, metin dışarı gitmiyor.
-- **S-6 ⚪ Canlı akış kimliği yalnız bağlanırken denetliyor** (`uclar/canli.py`). Hesap askıya alınsa da açık akış sürer. Kodda görüldü, ölçülmedi.
-  - ✅ Düzeltildi (17 Kasım, Grup B): `uclar/canli.py`, `konsol/src/canli/canliAkis.ts`.
-    - Açık akış oturumu 15 saniyede bir yeniden denetliyor.
-    - Hesap askıya alınırsa, oturum kapanırsa ya da rol değişirse akış `oturum-bitti` olayıyla
-      kapanıyor. İstemci yeniden bağlanmayı bırakıyor, sonraki istek giriş ekranına götürüyor.
-    - Kopyada: saha konsolu açıkken hesap askıya alındı; ~24 sn içinde giriş ekranına düştü,
-      canlı akışa yeniden bağlanma denemesi olmadı.
-
-*İşlev ve doğruluk*
-- **F-1 🟠 Metin modeli kendi örnek cümlesini çözemiyor.**
-  - Kutudaki örnek, "Armutlu Mahallesi 5. Sokak'ta bina çöktü, iki kişi enkaz altında…", "metinde adres bulunamadı" sonucu verdi.
-  - Kategori "Acil Yardım İhtiyacı" çıktı (enkaz cümlesi).
-  - İlk istek 31,8 sn sürdü.
-  - ✅ Düzeltildi (17 Kasım, J-170): aynı cümle "5. Sokak, Armutlu Mah., Hatay" (sokak düzeyi, ±400 m), kategori "Enkaz Bildirimi".
-- **F-2 🟡 Koordinatla gelen SOS'ta mahalle boş.**
-  - Konsolda "Mahalle bilinmiyor", saha ekranında yalnız ham koordinat (`36.19250, 36.14150`) görünüyor.
-  - Sunucu koordinattan mahalleyi bulabilir (altlıkta mahalle var).
-- **F-3 🟡 "Yol ve Rota" sayfası ölü.** "Rota ucu (A*) henüz bağlı değil" diyor, oysa görev ekranında rota var (J-162). Ya bağlanmalı ya menüden kalkmalı.
-  - ✅ Düzeltildi (18 Kasım, J-171): kullanıcı kararı "bağla". Sayfa rota motoruna bağlandı, motor da yenilendi.
-- **F-4 🟡 Zaman şeridi histogramı hiç yazılmamış.**
-  - Şerit canlı bağlıyken ve 35 SOS varken de "canlı akış bağlanınca şerit dolacak" diyor (`konsol/src/kabuk/ZamanSeridi.tsx:114-119`).
-  - Metin ya düzeltilmeli ya histogram yazılmalı.
-  - ✅ Düzeltildi (18 Kasım, J-171): `/api/olay-yogunlugu` (saat başına SOS ve ihbar, SQL'de sayım, zaman indeksiyle) ve şeritte yığılmış çubuklar. Yoklama yok; canlı akışla tazelenir.
-- **F-5 ⚪ Afetzede "Nereye" kartında İtfaiye 0, Polis 0.** Antakya merkezi, 5 km içinde. Yerel OSM kopyasında bu türler var mı bakılmalı; doğrulanmadı.
-  - ✅ Bakıldı (18 Kasım, J-171): yerel OSM kopyasında Antakya kutusunda polis ve itfaiye istasyonu **yok** (geniş aramada yalnız "Hatay Polis Evi" misafirhanesi). Çıkarım doğru, veri eksik. Kart artık "0" yerine "—" yazıyor ve "haritada kayıtlı yok; yakında olmadığı anlamına gelmez, acil durumda 112" diyor.
-- **F-6 ⚪ Tatbikat ilerleme metinlerinde Türkçe karakter yok.**
-  - "Uydu goruntusu indiriliyor", "Analiz tamamlandi" gibi.
-  - Drone katmanında da "Uydu" yazıyor.
-  - ✅ Düzeltildi (18 Kasım, J-171): `apps/road_damage/worker.py` ilerleme ve not metinleri, `utils/tatbikat.py` uyarısı Türkçe karakterle; drone kaynağında "Drone görüntüsü indiriliyor", tatbikat aşama adı "Görüntü (drone ya da uydu)".
-- **F-7 ⚪ Hasar sayfası kapsaması %0 olan görüntüleri de listeliyor.**
-  - ✅ Düzeltildi (18 Kasım, J-171): alanı kapsamayan görüntü listenin altında ve sönük; "%0" yerine "alanın dışında; seçersen alan bu görüntüye taşınır" yazıyor (seçilince alan taşındığı için listeden atılmadı).
-
-*Arayüz*
-- **U-1 🟠 Saha ekranının ana düğmesi telefonda ekranın dışında.**
-  - 375×812'de "Yola çıktık" 800. pikselde başlıyor; görmek için kaydırmak gerekiyor.
-  - Üstteki "Rotayı haritada göster" aynı birincil vurguda, dikkati bölüyor.
-  - Öneri: adım düğmeleri yapışkan bir alt çubukta.
-  - ✅ Düzeltildi (17 Kasım, Grup C): `konsol/src/ekip/EkipEkrani.tsx`, `stil/token.css` (`.alt-guvenli`),
-    `index.html` (`viewport-fit=cover`).
-    - Adım düğmeleri görev kartının altında yapışkan bir çubukta: kart boyunca ekranın altında durur.
-    - Birincil adım tam genişlikte; "İşimiz bitti…" ve "Gidemiyoruz…" yan yana.
-    - iPhone'un alt güvenli alanı hesaba katılır.
-    - "Rotayı haritada göster" ikincil görünüme indi.
-    - 375×812'de `saha-demo` ile ölçüldü: "Yola çıktık" 700–748 px'te, kaydırmadan görünüyor (önce ~800).
-- **U-2 🟡 API ayakta değilken giriş ekranı ham hata gösteriyor:** "/api/oturum/giris → HTTP 500". API'nin açılışı ~30 sn sürüyor; bu sürede insan diliyle bir ileti gerekir.
-  - ✅ Düzeltildi (17 Kasım, Grup C): `konsol/src/kimlik/GirisEkrani.tsx`.
-    - 5xx ve ağ hatasında "Sunucu şu an yanıt vermiyor; açılıyor olabilir (yaklaşık 30 sn).
-      Birkaç saniye sonra yeniden dene." yazıyor.
-    - Yoklama yok: kişi yeniden basınca dener (§4).
-    - API açılırken tarayıcıda denendi; ham ileti görünmedi.
-    - Kök neden: uvicorn açılış bitene kadar bağlantı kabul etmiyor, vekil o sırada 500/502 dönüyor.
-- **U-3 🟡 Aynı kişinin art arda SOS'ları kuyrukta ayrı satır.** S-2 ile birlikte birleştirilmeli.
-  - ✅ Düzeltildi (S-2 ile): kuyrukta tek satır, "N kez yeniden gönderdi".
-- **U-4 🟡 Tatbikat lejantı haritanın yaklaşık üçte birini kapatıyor.** "Haritada ne var" kutusu varsayılan olarak kapalı açılmalı.
-  - ✅ Düzeltildi (17 Kasım, Grup C): `konsol/src/kabuk/HaritaGostergesi.tsx`. Varsayılan kapalı; başlık
-    görünür, tek tıkla açılır. Tatbikat koşturulup tarayıcıda bakılmadı (değişiklik tek satır, başlangıç değeri).
-- **U-5 ⚪ Konsol metni küçük.** Görünen metnin %87'si 11–12 px (169/194 öğe), operasyon ekranı için küçük.
-- **U-6 ⚪ Afetzede ekranında adsız düğmeler var.** Yer listesi satırları ve alt kartlar ekran okuyucuya ad vermiyor. Konsolda adsız düğme yok.
-  - ✅ Düzeltildi (17 Kasım, Grup C): `afetzede/BildirDugmeleri.tsx`, `afetzede/NereyeKarti.tsx`.
-    - Erişilebilirlik ağacında ölçüldü: üç ihbar kartı artık "Hasar fotoğrafı: Fotoğraf çek, modele
-      incelet, ihbar et" gibi okunuyor.
-    - Yer satırları "Toplanma alanı, Turunçlu, yürüyerek 650 m, yön batı" diye okunuyor.
-    - 375×812, afetzede ekranında adsız düğme kalmadı.
-
-*Performans*
-- **P-1 Harita parçası büyük.**
-  - Üretim derlemesinde 2,08 MB (gzip 574 KB).
-  - Afetzede ekranı da deck.gl yüklüyor (`afetzede/haritaKatmanlari.ts`); toplam ≈ 711 KB gzip JS.
-  - Öneri:
-    - afetzede haritasını yalnız maplibre ile çiz;
-    - yavaş 3G'de "SOS'a basılabilir" süresini ölç.
-  - ⏸ Ölçüldü, ertelendi (18 Kasım, J-172): SOS'un kritik yolu **153 KB** gzip (giriş + afetzede ekranı); 560 KB'lık harita parçası kritik yolda değil, sonra iner (toplam 731 KB). Karo katmanını (`@deck.gl/geo-layers`) ayırmak yalnız 6,6 KB kazandırdı. Afetzede altlığı da deck.gl ile çizildiği için "yalnız MapLibre" altlık çiziminin baştan yazılması demek; kullanıcıyla konuşulmadan yapılmadı.
-- **P-2 Metin analizinin ilk isteği 31,8 sn.** Model tembel yükleniyor, üstüne Nominatim bekleniyor. Model işçide açılışta ısıtılmalı; adres çözümü yerelde yapılmalı (S-5).
-  - ✅ Düzeltildi (17 Kasım, J-170): model ayrı işçide, açılışta ısınıyor. Isınma sürerken gelen ilk istek ~7 sn, sonrakiler ~65 ms.
-- **P-3 Isı haritası soğukken yavaş.**
-  - İlk açılışta 4 paralel istek 4,3 sn sürüyor; ısınınca 28 ms.
-  - Öneri: açılışta ısıt ya da 4 kaynağı tek istekte dön.
-  - ✅ Düzeltildi (18 Kasım, J-172): sebep ısı değil PostGIS denemesiydi. `utils/postgis_manager.py` her sunucuda varsayılan adrese bağlanmayı deniyordu: deneme 4,0 sn, sonuç 30 sn saklandığı için **her 30 sn'de bir** gelen ilk istek 4 sn bekliyordu. Bağlantı artık yalnız `POSTGIS_URL` açıkça verilmişse denenir. Soğuk 4 kanal: 4,3 sn → **44 ms**; sıcak 28 ms `[Ö]`.
-- **P-4 Tatbikatta yol ağı 12,4 sn, görüntü 12,6 sn sürdü.** `DEMO_CALISTIRMA.md` §4'e göre önbellekten 0–1 sn olmalıydı. Katalog alanları önceden indirilmeli.
-  - ✅ (18 Kasım, J-172) Yol ağı: bu makinede 4 tatbikat alanında 0,0–1,1 sn `[Ö]`. Önbellek tutmasa da yerel bölge dosyası (`araclar_yerel_osm_kur.py`) devreye giriyor; 12,4 sn bölge dosyası olmayan ortamda ölçülmüştü. Canlı sunucuda bu dosya kurulu olmalı.
-  - ✅ Görüntü: açık lisanslı kaynakların (OpenAerialMap, Esri Wayback) birleşik görüntüsü `veri/goruntu_onbellek/`'te saklanıyor (en çok 40 dosya). Defne/Elektrik sahnesi ilk 2,75 sn, ikinci **0,03 sn** `[Ö]`. Google karoları lisans gereği saklanmaz; eksik inen görüntü (geçici hata, J-89) saklanmaz.
-- **P-5 Hazır olma ucu yok.** API açılışı ~30 sn, `/health` 404. Hazır ucu eklenmeli, konsol beklerken bunu göstermeli (U-2).
-  - ✅ Düzeltildi (17 Kasım, Grup C): `uclar/genel.py` `GET /api/hazir`.
-    - Oturumsuz; yalnız evet/hayır döner.
-    - Veritabanı okunuyor ve analiz işçisi havuzu kurulmuşsa 200, değilse 503.
-    - Not: açılış sürerken uvicorn bağlantı almadığı için bu uç da yanıt veremez. Açılıştan sonraki
-      eksikleri ayırt eder.
-    - Bu makinede açılış ~45–60 sn sürdü (30 değil).
-- **P-6 Zincir doğrulaması bütün tabloyu okuyor.**
-  - `/api/islem-kayitlari/dogrula` her istekte bütün `islem_kayitlari`'nı tarıyor.
-  - Kayıt büyüdükçe doğrusal büyür. Artımlı doğrulama ya da sınır gerekir.
-  - ✅ Düzeltildi (J-166): artımlı doğrulama, 100 bin kayıttan sonra 100 yeni kayıt 2,9 ms; tam tarama `?tam=true`.
-
-*Test*
-- **T-1 İki test kırık.**
-  - `test_konum_gecmisi_tutulur` sıraya bağlı: tek başına geçiyor, dosyanın tamamında kalıyor. `test_islem_kaydi.py:116` saha hesabını başka ekibe taşıyor.
-  - `test_heatmap_offline_fallback_returns_200` eskimiş: uç artık giriş istiyor (401), test oturumsuz çağırıyor.
-  - ✅ Düzeltildi (J-166): ikisi de geçiyor, `pytest -q` 76/76.
-- **T-2 8000'deki API eski kodla çalışıyor.** 14:24'te açılmış, J-166 dosyaları 14:49'da değişti. Yeniden başlatılmadan denenen her şey eski kodu sınar.
-
-**Açık.**
-- Fotoğraf yükleme tarayıcıda denenmedi (dosya seçici sürülemedi); yalnız API ile denendi.
-- Hasar analizi (uydu) ve risk tahmini tarayıcıda koşulmadı.
-- Yavaş ağ ve düşük cihaz ölçümü yapılmadı.
-
-**Temizlik (18 Kasım 2026).** Grup A–C `kamera-analiz-gelistirme`, D J-170, E J-171, F J-172'de kapandı; J-173 ve J-174 ayrıca risk ve uçtan uca akış. Kalan tek madde U-5: konsol metninin %87'si 11–12 px; token ölçeği (`ARAYUZ_KARARLARI.md`) kullanıcıyla konuşulmadan değiştirilmez.
-
 ## J-168 🔴 Eski web kamera sayfası API'ye ulaşamayınca uydurma sonuç gösteriyor
 **Durum:** AÇIK · **Görüldü** · **İlgili:** J-165, CLAUDE.md §1, §7
 
@@ -2375,6 +2170,8 @@ kimlikle. Başka belgelerdeki "EKSIKLER J-xxx" atıfları için kimliği burada 
 | J-174 | 🔴 Uçtan uca akış: canlı akış ilk jeton yenilemesinde kalıcı kapanıyordu; ihtiyaç geçen yazılı ihbar ihtiyaç sayfasına düşmüyordu | — |
 | J-175 | 🟠 Genel durum: ısı haritası kaynak ayırmıyor ve az veriyi yoğun gösteriyordu; sağ panel bir sonraki adımı söylemiyordu; gereksiz veri iniyordu | 18 Kasım 2026 |
 | J-176 | 🟡 Giriş ekranı: hesap açarken üç kapı seçilebilir duruyordu; şifre görünür yapılamıyordu; zemin boştu | 18 Kasım 2026 |
+| J-177 | 🟠 Konsol yazısı küçüktü (U-5); acil bildirim saha ekibi ekranında hiç görünmüyordu | 18 Kasım 2026 |
+| J-167 | 🟠 Uçtan uca tarama (17 Kasım): giriş ve SOS sınırsız, birkaç ölü ekran, saha ana düğmesi ekran dışında | 18 Kasım 2026 |
 
 ---
 
@@ -2604,3 +2401,4 @@ kimlikle. Başka belgelerdeki "EKSIKLER J-xxx" atıfları için kimliği burada 
 | 18 Kasım 2026 | **J-175** kapatıldı: genel durum ısı haritasında renk kaynağı, koyuluk yoğunluğu gösteriyor; üzerine gelince kaynak payları. Listeler, sayılar ve ısı aynı pencerede. Sağ panel "Şimdi / Uydu hasarı / Açık ihbarlar". Genel mod açılışı 16 istek / 993 KB → 13 / 201 KB. Madde arşivde. |
 | 18 Kasım 2026 | **J-176** kapatıldı: giriş ekranında hesap açma kipinde kapı seçicisi gizli; bütün şifre alanlarında göster/gizle ve büyük harf uyarısı; zemin gerçek veriden okunur bir Türkiye haritası (fay türü renkte, kayma hızı kalınlıkta, 6 Şubat 2023 depremleri, OSM yol silüeti), açılışta bir kez belirir, yalnız geniş ekranda iner (gzip 20,2 KB). Madde arşivde. |
 | 18 Kasım 2026 | Toplanma alanları genel durum, SOS kuyruğu ve ekipler modlarının varsayılan katmanlarına geri eklendi. J-172'deki sadeleştirmede SOS ve ekipler modlarından çıkarılmıştı; kullanıcı "acil toplanma alanlarını göremiyorum" dedi. Veri sağlamdı (AFAD dosyası yerinde, API Antakya'da 129 alan veriyor); simgeler yalnız z11 ve üstünde çizilir. |
+| 18 Kasım 2026 | **J-177** kapatıldı: konsol yazı ölçeği bir kademe büyük (12 px'te yalnız etiket; genel %91 → %13). Acil bildirim uçtan uca sınandı (senaryo 61/61); saha ekibi ekranı bildirimi hiç göstermiyordu, duyuru bandı ve listesi eklendi; bildirim sayfasında önem rengi, bölge önerisi, yayın süresi, 5'ten fazla uyarısı. J-167 Grup G bitti. |

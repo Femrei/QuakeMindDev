@@ -22,6 +22,8 @@ import {
 } from '@/veri/gorev'
 import { kusUcusuM } from '@/afetzede/konum'
 import { GorevCizelgesi, hedefEtiketi } from '@/modlar/sevk'
+import { DuyuruListesi, SonDuyuru, YeniDuyuruUyarisi } from '@/afetzede/Duyurular'
+import { useAktifBildirimler } from '@/veri/bildirim'
 
 // J-162: harita motoru (MapLibre + deck.gl) yalnız "Haritada göster"e basılınca iner;
 // görev ekranının telefondaki açılışı hafif kalır.
@@ -112,9 +114,14 @@ export function EkipEkrani() {
   const akis = useCanliAkisDurumu((d) => d.durum)
   const ekip = ekibim.data?.ekip ?? null
   const konum = useKonumPaylasimi(ekip?.id ?? null)
+  // Koordinasyonun duyuruları (J-177): tahliye, artçı uyarısı sahadaki ekibe de
+  // düşmeli. Sunucu ve canlı akış saha rolüne gönderiyordu, ekran göstermiyordu.
+  const duyurular = useAktifBildirimler().data ?? []
+  const [duyuruAcik, setDuyuruAcik] = useState(false)
 
   return (
     <div className="flex h-full flex-col bg-ground">
+      <YeniDuyuruUyarisi oku={() => setDuyuruAcik(true)} />
       <header className="flex h-topbar shrink-0 items-center gap-2 border-b border-line bg-panel px-3.5">
         <Marka />
         <span className="text-body text-ink-2">Saha ekibi</span>
@@ -140,9 +147,25 @@ export function EkipEkrani() {
           Çıkış
         </button>
       </header>
+      <SonDuyuru duyurular={duyurular} tumunuAc={() => setDuyuruAcik((a) => !a)} />
 
       <main className="min-h-0 flex-1 overflow-auto">
         <div className="mx-auto w-full max-w-xl space-y-3 px-4 py-4">
+          {duyuruAcik && duyurular.length > 0 && (
+            <section aria-label="Duyurular" className="rounded-panel border border-line bg-panel p-3.5">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-micro ls-micro text-ink-3 uppercase">Koordinasyon duyuruları</p>
+                <button
+                  type="button"
+                  onClick={() => setDuyuruAcik(false)}
+                  className="rounded-control border border-line-2 px-2 py-1 text-small text-ink-2 hover:bg-hover hover:text-ink"
+                >
+                  Kapat
+                </button>
+              </div>
+              <DuyuruListesi duyurular={duyurular} />
+            </section>
+          )}
           {ekibim.isPending && <p className="text-body text-ink-2">Görevin yükleniyor…</p>}
           {ekibim.isError && (
             <p role="alert" className="rounded-panel border border-line-2 bg-panel p-3 text-body text-ink">

@@ -13,7 +13,9 @@ import {
   type BildirimKaydi,
   type BildirimOnemi,
 } from '@/veri/bildirim'
-import { sayi, saat, tarihSaat } from '@/lib/bicim'
+import { sayi, saat, sure, tarihSaat } from '@/lib/bicim'
+import { useZaman } from '@/durum/zamanDurumu'
+import { BOLGELER } from '@/veri/analiz'
 import { sn } from '@/lib/sinif'
 
 /* ---------------------------------------------------------------------------
@@ -65,6 +67,11 @@ const SABLONLAR = [
 type SablonId = (typeof SABLONLAR)[number]['id']
 
 const YER_TUTUCU = /\[[^\]]*\]/g
+/** Afetzede ekranı yayındaki en yeni bu kadar bildirimi gösterir (sunucu: /aktif, sinir=5). */
+const AFETZEDE_GORUR = 5
+/** Bundan uzun süredir yayında olan bildirim için "hâlâ geçerli mi?" sorulur. */
+const UZUN_YAYIN_MS = 24 * 3600 * 1000
+const GERI_CEKILEN_ILK = 3
 const BASLIK_SINIRI = 120
 const METIN_SINIRI = 1000
 
@@ -156,8 +163,8 @@ export function BildirimSol() {
   return (
     <Bolum baslik="Acil bildirim" ek={<Micro>{sayi(yayindaSayisi)} yayında</Micro>}>
       <Amac>
-        Afetzedelerin ekranının en üstüne düşen duyuru. Yayınladığın anda bütün afetzede ve ekip
-        ekranlarına gider.
+        Afetzede ve saha ekibi ekranlarının en üstüne düşen duyuru. Yayınladığın anda canlı akışla
+        hepsine gider.
       </Amac>
 
       {!yetkili && (
@@ -204,7 +211,9 @@ export function BildirimSol() {
             onClick={() => setOnem(o)}
             className={sn(
               'flex-1 rounded-control border px-2 py-1.5 text-body transition-colors duration-150 ease-out-qm disabled:opacity-50',
-              onem === o ? 'border-accent bg-accent-soft text-ink' : 'border-line-2 text-ink-2 hover:bg-hover',
+              onem === o
+                ? sn(ONEM[o].kenar, ONEM[o].zemin, 'font-semibold text-ink')
+                : 'border-line-2 text-ink-2 hover:bg-hover',
             )}
           >
             {ONEM[o].ad}
@@ -257,9 +266,15 @@ export function BildirimSol() {
               maxLength={120}
               disabled={!yetkili}
               placeholder="ör. Antakya"
+              list={`${kimlik}-bolgeler`}
               onChange={(e) => setKonum(e.target.value)}
               className={alan}
             />
+            <datalist id={`${kimlik}-bolgeler`}>
+              {BOLGELER.map((b) => (
+                <option key={b.id} value={b.ad} />
+              ))}
+            </datalist>
           </label>
           <label className="text-small text-ink-2">
             Deprem büyüklüğü
@@ -352,8 +367,9 @@ export function BildirimSol() {
 
       <Teknik>
         Bildirim sunucuda saklanır; sunucu yeniden başlasa da yayında kalır. Canlı akışla anında
-        gider, kimse yoklama yapmaz. Afetzede en yeni 5 bildirimi görür, yayınlayanın adını görmez;
-        ad kayda geçer.
+        gider, kimse yoklama yapmaz. Afetzede ve saha ekranı en yeni 5 bildirimi gösterir;
+        yayınlayanın adını görmezler, ad işlem kaydına geçer. Bildirim kendiliğinden kalkmaz;
+        geçerliliğini yitirince geri çek.
       </Teknik>
     </Bolum>
   )
@@ -365,6 +381,8 @@ export function BildirimSag() {
   const gecmis = useBildirimGecmisi()
   const kaldir = useBildirimKaldir()
   const [soruluyor, setSoruluyor] = useState<string | null>(null)
+  const [tumCekilenler, setTumCekilenler] = useState(false)
+  const simdi = useZaman((d) => d.simdi)
 
   const liste = gecmis.data ?? []
   const yayinda = liste.filter((b) => !b.kaldirildi)
@@ -380,12 +398,27 @@ export function BildirimSag() {
           ) : gecmis.isError ? (
             <VeriYok ne="Bildirim listesi" neden="uç yanıt vermedi" />
           ) : yayinda.length === 0 ? (
-            <VeriYok ne="Yayındaki bildirim" neden="şu an yayında bildirim yok" />
+            <p className="text-small text-ink-2">Şu an yayında bildirim yok.</p>
           ) : (
+            <>
+            {yayinda.length > AFETZEDE_GORUR && (
+              <p role="status" className="mb-2.5 rounded-control border border-high px-2.5 py-2 text-small text-ink">
+                Afetzede ekranı en yeni {AFETZEDE_GORUR} bildirimi gösterir; en eski{' '}
+                {sayi(yayinda.length - AFETZEDE_GORUR)} bildirim şu an görünmüyor. Geçerliliğini
+                yitirenleri geri çek.
+              </p>
+            )}
             <ul>
-              {yayinda.map((b) => (
+              {yayinda.map((b, i) => (
                 <li key={b.id} className="border-b border-line py-2.5 first:pt-0 last:border-b-0">
                   <BildirimSatiri b={b} />
+                  <p className="mt-0.5 text-small text-ink-3">
+                    Yayında: {simdi - b.zaman < 60_000 ? 'az önce başladı' : sure(simdi - b.zaman)}
+                    {i >= AFETZEDE_GORUR && ' · afetzede ekranında görünmüyor'}
+                    {simdi - b.zaman > UZUN_YAYIN_MS && (
+                      <span className="text-ink-2"> · hâlâ geçerli mi?</span>
+                    )}
+                  </p>
                   {b.kaynak === 'eski' && (
                     <p className="mt-1 text-small text-ink">
                       Dikkat: eski web ucundan geldi. O uç kodda sabit demo jetonlarını kabul ediyor
@@ -426,6 +459,7 @@ export function BildirimSag() {
                 </li>
               ))}
             </ul>
+            </>
           )}
         </div>
         {kaldir.isError && (
@@ -434,17 +468,18 @@ export function BildirimSag() {
           </p>
         )}
         <Teknik>
-          Afetzede yayındaki en yeni 5 bildirimi görür. Geri çekilen bildirim silinmez; kim ve ne
-          zaman çektiği kayıtta kalır.
+          Afetzede ve saha ekranı yayındaki en yeni 5 bildirimi gösterir. Geri çekilen bildirim
+          silinmez; kim ve ne zaman çektiği kayıtta kalır.
         </Teknik>
       </Bolum>
 
       <Bolum baslik="Geri çekilenler" ek={<Micro>{sayi(cekilen.length)}</Micro>}>
         {cekilen.length === 0 ? (
-          <VeriYok ne="Geri çekilen bildirim" neden="son 30 bildirimde yok" />
+          <p className="text-small text-ink-2">Son bildirimler arasında geri çekilen yok.</p>
         ) : (
+          <>
           <ul>
-            {cekilen.map((b) => (
+            {(tumCekilenler ? cekilen : cekilen.slice(0, GERI_CEKILEN_ILK)).map((b) => (
               <li key={b.id} className="border-b border-line py-2.5 first:pt-0 last:border-b-0">
                 <BildirimSatiri b={b} />
                 <p className="mt-0.5 text-small text-ink-3">
@@ -454,6 +489,16 @@ export function BildirimSag() {
               </li>
             ))}
           </ul>
+          {cekilen.length > GERI_CEKILEN_ILK && (
+            <button
+              type="button"
+              onClick={() => setTumCekilenler((t) => !t)}
+              className="mt-1 text-small text-accent hover:underline"
+            >
+              {tumCekilenler ? 'Daha az göster' : `Tümünü göster (${sayi(cekilen.length)})`}
+            </button>
+          )}
+          </>
         )}
       </Bolum>
     </>

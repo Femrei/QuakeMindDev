@@ -227,6 +227,8 @@ Her madde için önce taban ölçüm, sonra iyileştirme, sonra yeniden ölçüm
 
 **U-5** Konsol metninin %87'si 11–12 px. Token ölçeğini (`ARAYUZ_KARARLARI.md`)
 kullanıcıyla konuşmadan değiştirme; öneri olarak sun.
+✅ 18 Kasım 2026 (J-177): kullanıcı istedi; konsol ölçeği bir kademe büyütüldü, 12 px'te yalnız
+büyük harfli etiketler kaldı (genel %91 → %13, acil bildirim %87 → %17).
 
 ---
 
