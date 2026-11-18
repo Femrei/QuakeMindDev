@@ -132,7 +132,8 @@ export function NereyeKarti(p: Props) {
                   {YER_TURLERI[t].harf}
                 </span>
                 {YER_TURLERI[t].cogul}
-                {n != null && <span className="text-ink-3">{n}</span>}
+                {/* 0 yerine "—": kayıt yokluğu yer yokluğu değildir (J-167 F-5). */}
+                {n != null && <span className="text-ink-3">{n === 0 ? '—' : n}</span>}
               </button>
             )
           })}
@@ -164,8 +165,10 @@ export function NereyeKarti(p: Props) {
               yakında olmadığı anlamına gelmez. Veri şu bölgelerde var: {kapsam?.bolgeler.join(', ') || '—'}.
             </p>
           ) : liste.length === 0 ? (
-            <p className="px-3.5 py-3 text-small text-ink-3">
-              {YAKIN_YARICAP_KM} km içinde kayıtlı {YER_TURLERI[p.tur].ad.toLocaleLowerCase('tr-TR')} yok.
+            <p className="px-3.5 py-3 text-small text-ink-2">
+              {YAKIN_YARICAP_KM} km içinde haritada (OpenStreetMap) kayıtlı{' '}
+              {YER_TURLERI[p.tur].ad.toLocaleLowerCase('tr-TR')} yok. Bu, yakında olmadığı anlamına
+              gelmez; harita verisi eksik olabilir. Acil durumda 112'yi ara.
             </p>
           ) : (
             <ol>
@@ -219,6 +222,15 @@ function YerSatiri({ y, ...p }: Props & { y: YakinYer }) {
       <button
         type="button"
         aria-expanded={secili}
+        // Ekran okuyucuya açık ad (J-167 U-6): tür, ad, uzaklık, yön tek cümlede.
+        aria-label={[
+          YER_TURLERI[y.tur].ad ?? null,
+          yerAdi(y),
+          `${yuruyerek ? 'yürüyerek' : 'kuş uçuşu'} ${mesafeMetni(yuruyerek ? (y.yuruyusM as number) : y.mesafeM)}`,
+          y2 ? `yön ${y2.ad}` : null,
+        ]
+          .filter(Boolean)
+          .join(', ')}
         onClick={() => p.sec(secili ? null : y)}
         className="flex w-full items-start gap-2.5 px-3.5 py-2 text-left hover:bg-hover"
       >

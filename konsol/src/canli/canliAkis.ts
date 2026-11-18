@@ -39,6 +39,37 @@ const EN_UZUN_BEKLEME = 60_000
    ekran "canlı" derken hiçbir mesaj gelmez (J-45 sınamasında görüldü). */
 const NABIZ_SINIRI = 45_000
 const BEKCI_ARALIGI = 10_000
+/* Tazeleme birleştirme (J-158). Afette saniyede onlarca SOS gelebilir; her
+   mesaj her açık konsolda listenin TAMAMINI yeniden istetirse sunucu doyar
+   (ölçüm: 5 konsol × 50 SOS/sn ≈ 250 tam liste/sn). Aynı sorgu anahtarı için
+   ilk mesaj hemen tazeler; pencere içinde gelenler pencere sonunda TEK
+   tazelemede birleşir. Sessiz anda gecikme yoktur; yoğunlukta en çok 1 sn. */
+export const BIRLESTIRME_PENCERESI_MS = 1_000
+
+/** Anahtar başına ilk-çağrı + son-çağrı birleştirici; saat yalnız mesaj gelince kurulur. */
+export function birlestirici(calistir: (anahtar: string[]) => void, pencereMs = BIRLESTIRME_PENCERESI_MS) {
+  const acik = new Map<string, { zamanlayici: number; bekleyen: boolean }>()
+  const tetikle = (anahtar: string[]) => {
+    const ad = JSON.stringify(anahtar)
+    const durum = acik.get(ad)
+    if (durum) {
+      durum.bekleyen = true // pencere sonunda bir kez daha
+      return
+    }
+    calistir(anahtar)
+    const kapat = () => {
+      const d = acik.get(ad)
+      acik.delete(ad)
+      if (d?.bekleyen) tetikle(anahtar) // son mesajı kaçırma; yeni pencere açar
+    }
+    acik.set(ad, { zamanlayici: window.setTimeout(kapat, pencereMs), bekleyen: false })
+  }
+  const temizle = () => {
+    for (const d of acik.values()) window.clearTimeout(d.zamanlayici)
+    acik.clear()
+  }
+  return { tetikle, temizle }
+}
 
 export type AkisSecenek = {
   url?: string
@@ -54,6 +85,8 @@ export function canliAkisBaslat(qc: QueryClient, secenek: AkisSecenek = {}): () 
   let deneme = 0
   let enAzBirKezBaglandi = false
   let sonSinyal = 0
+  /** "oturum-bitti" sonrası tek yeniden bağlanma denemesi sürüyor (J-174). */
+  let sonDeneme = false
 
   /* Sunucu kopukken yayınlanan mesajları biriktirmez; kopukluk sırasında
      gelen bildirim, geri çekme ya da ekip ataması kaybolur. Bu yüzden akış
@@ -62,6 +95,7 @@ export function canliAkisBaslat(qc: QueryClient, secenek: AkisSecenek = {}): () 
   const hepsiniTazele = () => {
     for (const a of AKIS_ANAHTARLARI) void qc.invalidateQueries({ queryKey: a })
   }
+  const tazeleyici = birlestirici((anahtar) => void qc.invalidateQueries({ queryKey: anahtar }))
 
   const isle = (ham: string) => {
     sonSinyal = Date.now()
@@ -72,9 +106,7 @@ export function canliAkisBaslat(qc: QueryClient, secenek: AkisSecenek = {}): () 
       return // biçimsiz mesaj sessizce atılır, akış kapatılmaz
     }
     if (!mesaj || !MESAJ_TIPLERI.includes(mesaj.tip)) return
-    for (const anahtar of tazelenecekler(mesaj)) {
-      void qc.invalidateQueries({ queryKey: anahtar })
-    }
+    for (const anahtar of tazelenecekler(mesaj)) tazeleyici.tetikle(anahtar)
     useCanliAkisDurumu.setState((d) => ({
       sonMesaj: { tip: mesaj.tip, zaman: Date.now() },
       mesajSayisi: d.mesajSayisi + 1,
@@ -90,6 +122,7 @@ export function canliAkisBaslat(qc: QueryClient, secenek: AkisSecenek = {}): () 
     kaynak.onopen = () => {
       sonSinyal = Date.now()
       deneme = 0
+      sonDeneme = false
       useCanliAkisDurumu.setState({ durum: 'bagli', denemeSayisi: 0, sonrakiDenemeMs: null })
       if (enAzBirKezBaglandi) hepsiniTazele()
       enAzBirKezBaglandi = true
@@ -102,7 +135,30 @@ export function canliAkisBaslat(qc: QueryClient, secenek: AkisSecenek = {}): () 
     kaynak.addEventListener('nabiz', () => {
       sonSinyal = Date.now()
     })
-    kaynak.onerror = koptu
+    // Sunucu akışın açıldığı çerezi geçersiz buldu. İki ayrı neden var:
+    //  - Jeton döndü (J-174): istemci 15 dakikada bir erişim jetonunu yeniler,
+    //    sunucu yenileme çerezini değiştirip eskisini iptal eder. Tarayıcıda
+    //    artık YENİ çerez var; eskiden akış burada kalıcı kapanıyor, ekran
+    //    ilk yenilemeden sonra canlı veriyi almayı bırakıyordu.
+    //  - Çıkış, askıya alma (J-167 S-6): tarayıcıdaki çerez de geçersiz.
+    // Bu yüzden bir kez hemen yeniden bağlanılır; açılırsa jeton dönmüştür,
+    // açılmazsa (401) akış kapanır ve sonraki API isteği giriş ekranına götürür.
+    kaynak.addEventListener('oturum-bitti', () => {
+      kaynak?.close()
+      kaynak = null
+      if (sonDeneme) return bitir()
+      sonDeneme = true
+      bagla()
+    })
+    kaynak.onerror = () => (sonDeneme ? bitir() : koptu())
+  }
+
+  const bitir = () => {
+    kapandi = true
+    window.clearInterval(bekci)
+    kaynak?.close()
+    kaynak = null
+    useCanliAkisDurumu.setState({ durum: 'kapali', sonrakiDenemeMs: null })
   }
 
   const koptu = () => {
@@ -130,6 +186,7 @@ export function canliAkisBaslat(qc: QueryClient, secenek: AkisSecenek = {}): () 
 
   return () => {
     kapandi = true
+    tazeleyici.temizle()
     window.clearInterval(bekci)
     if (zamanlayici) window.clearTimeout(zamanlayici)
     kaynak?.close()

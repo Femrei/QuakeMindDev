@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate, useParams } from 'react-router-dom'
-import { CaretDown } from '@phosphor-icons/react'
+import { CaretDown, ClipboardText, DeviceMobile, MagnifyingGlass } from '@phosphor-icons/react'
 import { useOturum } from '@/kimlik/oturum'
 import { ROL_ADI } from '@/kimlik/roller'
-import { MODLAR } from '@/modlar/modlar'
+import { MODLAR, modGorunur } from '@/modlar/modlar'
 import { useZaman } from '@/durum/zamanDurumu'
 import { useCanliAkisDurumu } from '@/canli/canliAkis'
 import { useKonsol } from '@/durum/konsolDurumu'
@@ -30,21 +30,26 @@ export function UstCubuk() {
         : 'Canlı akış bağlı değil'
 
   return (
-    <header className="flex h-topbar shrink-0 items-center gap-gutter border-b border-line bg-panel px-3.5">
-      <Marka />
-      <span className="h-5 w-px bg-line-2" />
+    <header className="flex h-topbar shrink-0 items-center gap-2.5 border-b border-line bg-panel px-3.5 xl:gap-gutter">
+      {/* 1024 px'te üst çubuk 200 px taşıyor, çıkış ve Canlı rozeti ekran dışına
+          düşüyordu (17 Kasım). 1280 altında yazılar simgeye iner, sekmeler sıkışır;
+          yine sığmazsa yalnız sekmeler kayar, sağdaki denetimler hep görünür. */}
+      <Marka daraltilir />
+      <span className="h-5 w-px shrink-0 bg-line-2" />
 
       {/* Ana modlar sekme, analiz modları tek menüde (J-56): on sekme sığmıyor,
           1366 px'te iki satıra kırılıyordu. */}
-      <nav className="flex items-center gap-0.5" aria-label="Çalışma modu">
-        {MODLAR.filter((m) => m.grup === 'ana').map((m) => (
+      <nav className="flex min-w-0 items-center gap-0.5" aria-label="Çalışma modu">
+        {/* Yalnız sekmeler kayar; Analiz menüsü dışarıda, açılır listesi kırpılmasın. */}
+        <div className="flex min-w-0 items-center gap-0.5 overflow-x-auto">
+        {MODLAR.filter((m) => m.grup === 'ana' && modGorunur(m, oturum?.rol)).map((m) => (
           <NavLink
             key={m.id}
             to={`/konsol/${m.id}`}
             title={m.ozet}
             className={({ isActive }) =>
               sn(
-                'rounded-control px-2.5 py-1.5 text-body whitespace-nowrap transition-colors duration-150 ease-out-qm',
+                'shrink-0 rounded-control px-2 py-1.5 text-body whitespace-nowrap transition-colors duration-150 ease-out-qm xl:px-2.5',
                 isActive ? 'bg-raised text-ink' : 'text-ink-2 hover:bg-hover hover:text-ink',
               )
             }
@@ -52,6 +57,7 @@ export function UstCubuk() {
             {m.ad}
           </NavLink>
         ))}
+        </div>
         <AnalizMenusu />
       </nav>
 
@@ -60,10 +66,13 @@ export function UstCubuk() {
       <button
         type="button"
         onClick={() => komutPaleti(true)}
-        className="flex items-center gap-2 rounded-control border border-line-2 px-2.5 py-1.5 text-small text-ink-2 hover:bg-hover hover:text-ink"
+        aria-label="Ara veya komut ver (Ctrl K)"
+        title="Ara veya komut ver (Ctrl K)"
+        className="flex shrink-0 items-center gap-2 rounded-control border border-line-2 px-2.5 py-1.5 text-small whitespace-nowrap text-ink-2 hover:bg-hover hover:text-ink"
       >
-        Ara veya komut ver
-        <kbd className="rounded-badge border border-line-2 bg-sunken px-1 py-0.5 font-mono text-micro text-ink-3">
+        <MagnifyingGlass size={14} aria-hidden className="xl:hidden" />
+        <span className="hidden xl:inline">Ara veya komut ver</span>
+        <kbd className="hidden rounded-badge border border-line-2 bg-sunken px-1 py-0.5 font-mono text-micro text-ink-3 xl:inline">
           Ctrl K
         </kbd>
       </button>
@@ -72,9 +81,11 @@ export function UstCubuk() {
         <Link
           to="/ekip"
           title="Ekibinin görevi: yola çıktık, vardık, işimiz bitti"
-          className="rounded-control border border-line-2 px-2.5 py-1.5 text-small text-ink-2 hover:bg-hover hover:text-ink"
+          aria-label="Görev ekranı"
+          className="flex shrink-0 items-center gap-1.5 rounded-control border border-line-2 px-2.5 py-1.5 text-small text-ink-2 hover:bg-hover hover:text-ink whitespace-nowrap"
         >
-          Görev ekranı
+          <ClipboardText size={14} aria-hidden className="xl:hidden" />
+          <span className="hidden xl:inline">Görev ekranı</span>
         </Link>
       )}
 
@@ -82,14 +93,16 @@ export function UstCubuk() {
         <Link
           to="/afetzede"
           title="Afetzedenin telefonunda gördüğü ekran: yardım çağrısı, çağrılar, toplanma alanı"
-          className="rounded-control border border-line-2 px-2.5 py-1.5 text-small text-ink-2 hover:bg-hover hover:text-ink"
+          aria-label="Afetzede ekranı"
+          className="flex shrink-0 items-center gap-1.5 rounded-control border border-line-2 px-2.5 py-1.5 text-small text-ink-2 hover:bg-hover hover:text-ink whitespace-nowrap"
         >
-          Afetzede ekranı
+          <DeviceMobile size={14} aria-hidden className="xl:hidden" />
+          <span className="hidden xl:inline">Afetzede ekranı</span>
         </Link>
       )}
 
       {/* Canlı / Geçmiş rozeti — ARAYUZ §10 */}
-      <span className="flex items-center gap-2 text-small text-ink-2" title={baglantiMetni}>
+      <span className="flex shrink-0 items-center gap-2 text-small whitespace-nowrap text-ink-2" title={baglantiMetni}>
         <span
           aria-hidden
           className={sn(
@@ -105,7 +118,7 @@ export function UstCubuk() {
         <button
           type="button"
           onClick={canliyaDon}
-          className="rounded-control border border-line-2 px-2.5 py-1.5 text-small text-ink-2 hover:bg-hover hover:text-ink"
+          className="shrink-0 rounded-control border border-line-2 px-2.5 py-1.5 text-small text-ink-2 hover:bg-hover hover:text-ink whitespace-nowrap"
         >
           Canlıya dön
         </button>
@@ -117,7 +130,7 @@ export function UstCubuk() {
           void cikisYap().then(() => git('/giris', { replace: true }))
         }}
         title={oturum ? `${oturum.adSoyad} · ${ROL_ADI[oturum.rol]} — çıkış yap` : 'Çıkış yap'}
-        className="grid h-6 w-6 place-items-center rounded-full bg-accent-deep text-micro text-ink"
+        className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent-deep text-micro text-ink"
       >
         {bashar(oturum?.adSoyad)}
       </button>
@@ -127,10 +140,11 @@ export function UstCubuk() {
 
 /** Analiz modları: tek düğme, açılınca her modun adı ve ne işe yaradığı. */
 function AnalizMenusu() {
+  const { oturum } = useOturum()
   const [acik, setAcik] = useState(false)
   const kutu = useRef<HTMLDivElement>(null)
   const { mod } = useParams()
-  const modlar = MODLAR.filter((m) => m.grup === 'analiz')
+  const modlar = MODLAR.filter((m) => m.grup === 'analiz' && modGorunur(m, oturum?.rol))
   const secili = modlar.find((m) => m.id === mod)
 
   useEffect(() => {
@@ -150,7 +164,7 @@ function AnalizMenusu() {
   }, [acik])
 
   return (
-    <div ref={kutu} className="relative">
+    <div ref={kutu} className="relative shrink-0">
       <button
         type="button"
         aria-haspopup="menu"

@@ -1,6 +1,9 @@
-export function Marka() {
+import { sn } from '@/lib/sinif'
+
+/** `daraltilir`: dar ekranda (< 1280 px) yalnız simge kalır; üst çubuk sığsın. */
+export function Marka({ daraltilir = false }: { daraltilir?: boolean }) {
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex shrink-0 items-center gap-2.5" title="QuakeMind">
       <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" fill="none">
         <circle cx="10" cy="10" r="2" fill="var(--color-accent)" />
         <path
@@ -32,7 +35,14 @@ export function Marka() {
           opacity=".38"
         />
       </svg>
-      <b className="font-cond text-subtitle font-semibold tracking-marka uppercase">QuakeMind</b>
+      <b
+        className={sn(
+          'font-cond text-subtitle font-semibold tracking-marka uppercase',
+          daraltilir && 'hidden xl:inline',
+        )}
+      >
+        QuakeMind
+      </b>
     </div>
   )
 }

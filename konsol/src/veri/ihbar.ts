@@ -4,6 +4,15 @@ import { apiGet, apiPost } from './istemci'
 import { IHTIYAC_ADI, type Ihtiyac } from './sorgular'
 import type { SorguAraligi } from '@/durum/zamanDurumu'
 import type { Gorev } from './gorev'
+import type {
+  AdresEslesmesi,
+  IhtiyacBilgisi,
+  KategoriUyarisi,
+  KisiBilgisi,
+  KonumDuzeyi,
+  SinyalBilgisi,
+} from './metin'
+import { belirsizlikMetni } from './metin'
 
 /* ---------------------------------------------------------------------------
    Afetzede ihbarları (J-51): hasar fotoğrafı, yazılı ihbar, ihtiyaç talebi.
@@ -42,6 +51,18 @@ export type MetinAnalizi = {
   konum: { lat: number; lon: number } | null
   konumMetin: string | null
   adaylar: string[]
+  /* J-170 (eski ihbarlarda yok) */
+  konumDuzeyi?: KonumDuzeyi | null
+  belirsizlikM?: number | null
+  adres?: Record<string, string> | null
+  adresNotlari?: string[]
+  adresEslesmeleri?: AdresEslesmesi[]
+  kategoriKaynagi?: string | null
+  ikinciKategori?: { kategori: string; puan: number } | null
+  kategoriUyarilari?: KategoriUyarisi[]
+  kisiler?: KisiBilgisi[]
+  ihtiyaclar?: IhtiyacBilgisi[]
+  sinyaller?: SinyalBilgisi[]
 }
 
 export type Ihbar = {
@@ -57,8 +78,12 @@ export type Ihbar = {
   skor?: number | null
   guven?: number | null
   fotografVar: boolean
-  konumKaynagi?: 'gps' | 'mahalle' | 'metin' | null
+  konumKaynagi?: 'gps' | 'manuel' | 'mahalle' | 'metin' | null
   konumDogrulukM?: number | null
+  bildirilenKategoriAdi?: string
+  bildirilenAciliyet?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  mahsurSayisi?: number
+  yaraliSayisi?: number
   guncellendi?: number | null
   /* fotoğraf */
   model?: FotografModeli
@@ -67,13 +92,19 @@ export type Ihbar = {
   boy?: number
   /* yazılı ihbar */
   analiz?: MetinAnalizi | null
-  /* ihtiyaç */
+  /* ihtiyaç; yazılı ihbarda metinden model çıkarır (J-174) */
   ihtiyaclar?: Ihtiyac[]
   kisiSayisi?: number | null
   /** Konsolda: işleyen görevli (afetzedeye gelmez). */
   isleyenAd?: string | null
   /** İhbara giden ekipler, yeniden eskiye (J-54). */
   gorevler?: Gorev[]
+}
+
+/** İhtiyaç sayfasına düşen kayıt: formdan gelen talep ya da metninde ihtiyaç
+    geçen yazılı ihbar ("suyumuz bitti, 30 kişiyiz"; J-174). */
+export function ihtiyacTalebiMi(i: Ihbar): boolean {
+  return i.tur === 'ihtiyac' || (i.tur === 'metin' && !!i.ihtiyaclar?.length)
 }
 
 type TurBilgisi = {
@@ -161,9 +192,11 @@ export function ihbarBasligi(i: Ihbar): string {
 /** Konumun nereden geldiği, ekibin okuyacağı dille. */
 export function ihbarKonumu(i: Ihbar): string {
   if (i.konumKaynagi === 'metin') {
-    return `Metindeki adres: ${i.analiz?.konumMetin ?? 'model buldu'} (yaklaşık)`
+    const pay = belirsizlikMetni(i.analiz?.belirsizlikM) ?? 'yaklaşık'
+    return `Metindeki adres: ${i.analiz?.konumMetin ?? 'model buldu'} (${pay})`
   }
   if (i.konumKaynagi === 'mahalle') return `${i.mahalle ?? 'Mahalle'} merkezi (yaklaşık)`
+  if (i.konumKaynagi === 'manuel') return 'Elle girilen koordinat'
   if (i.konumDogrulukM != null) return `Cihaz konumu, ±${Math.round(i.konumDogrulukM)} m`
   return 'Cihaz konumu'
 }
