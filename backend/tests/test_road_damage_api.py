@@ -47,9 +47,31 @@ def postgis_offline(monkeypatch):
     """Forces every test onto the offline-fallback path -- deterministic,
     with no dependency on a real PostGIS instance being reachable."""
     monkeypatch.setattr(postgis_engine, "check_connection", lambda: False)
+    # safe_route ve nearest_debris eski uclar: bayraksiz 404 (J-163).
+    monkeypatch.setenv("QUAKEMIND_ESKI_UCLAR", "1")
 
 
-def test_heatmap_uses_local_store_when_postgis_is_offline(client):
+@pytest.fixture
+def koordinator_oturumu():
+    """Gercek veritabanina hesap yazmadan oturumlu cagri: kimlik bagimliligi
+    sahte bir koordinatorle degistirilir, test bitince geri alinir."""
+    fastapi_app.app.dependency_overrides[kimlik.kullanici] = lambda: {
+        "id": "test-koordinator", "rol": "koordinator", "ad_soyad": "Test", "ekip_id": None,
+    }
+    yield
+    fastapi_app.app.dependency_overrides.pop(kimlik.kullanici, None)
+
+
+def test_heatmap_oturumsuz_401(client):
+    client.headers.pop("Authorization", None)  # istemci oturumlu kurulur; burada oturumsuz
+    resp = client.get(
+        "/api/road_damage/heatmap",
+        params={"latitude": 36.20, "longitude": 36.16, "radiusKm": 5.0},
+    )
+    assert resp.status_code == 401
+
+
+def test_heatmap_offline_fallback_returns_200(client, koordinator_oturumu):
     resp = client.get(
         "/api/road_damage/heatmap",
         params={"latitude": 36.20, "longitude": 36.16, "radiusKm": 5.0},
@@ -57,6 +79,7 @@ def test_heatmap_uses_local_store_when_postgis_is_offline(client):
     assert resp.status_code == 200
     body = resp.json()
     assert isinstance(body["points"], list)
+    # PostGIS yokken kalici yerel depo (SQLite) okunur; uydurma nokta uretilmez.
     assert body["generatedFrom"]["source"] == "yerel_depo"
 
 

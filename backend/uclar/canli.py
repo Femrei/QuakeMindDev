@@ -46,6 +46,19 @@ def _kendi_olayi(hedef_tur: str, hedef_id: str, kullanici_id: str) -> bool:
     return bool(kayit) and kayit.get("kullanici_id") == kullanici_id
 
 
+#: Acik akista oturumun hala gecerli oldugu bu aralikla yeniden denetlenir
+#: (J-167 S-6). Eskiden yalniz baglanirken bakiliyordu: askiya alinan ya da
+#: rolu dusurulen hesabin acik akisi SOS konumlarini almayi surduruyordu.
+OTURUM_DENETIM_SN = 15.0
+NABIZ_SN = 20.0
+
+
+def _akis_suruyor_mu(cerez: Optional[str], ilk: dict) -> bool:
+    """Oturum gecerli ve rol ayni mi (askida hesap, kapanan oturum, degisen rol: hayir)."""
+    guncel = kimlik.cerezden_kullanici(cerez)
+    return guncel is not None and guncel["id"] == ilk["id"] and guncel["rol"] == ilk["rol"]
+
+
 def _afetzede_icin(mesaj: dict, kullanici_id: str):
     """Afetzedeye giden akis (J-42): yalniz KENDI cagrisinin ve ihbarinin durum
     degisikligi ve acil bildirimler. Baskasinin cagri konumu ve analiz olaylari
@@ -90,6 +103,20 @@ def _afetzede_icin(mesaj: dict, kullanici_id: str):
     return None
 
 
+#: Yalniz koordinasyonun okuyabildigi uclarin degisiklik isaretleri (J-174).
+#: Saha `islem-kayitlari` uclarini okuyamaz (403); isaret ona gitmez.
+KOORDINASYON_OLAYLARI = frozenset({"islem-kaydi"})
+
+
+def role_gore(mesaj: dict, kul: dict) -> Optional[dict]:
+    """Akistaki mesajin bu kullaniciya giden bicimi; gitmeyecekse None."""
+    if kul["rol"] == "afetzede":
+        return _afetzede_icin(mesaj, kul["id"])
+    if kul["rol"] not in ("koordinator", "yonetici") and mesaj.get("tip") in KOORDINASYON_OLAYLARI:
+        return None
+    return mesaj
+
+
 @yonlendirici.get("/api/live")
 async def canli_akis(
     request: Request,
@@ -115,7 +142,6 @@ async def canli_akis(
     kul = kimlik.cerezden_kullanici(cerez)
     if kul is None:
         raise HTTPException(status_code=401, detail="Oturum acilmamis.")
-    afetzede = kul["rol"] == "afetzede"
     kuyruk = canli_yayin.abone_ol()
 
     async def uret():
@@ -123,18 +149,26 @@ async def canli_akis(
             # Akis acilir acilmaz bir kare gonderilir: istemci "bagli" durumuna
             # boylece hemen gecer, ilk olayi beklemez.
             yield ": akis acildi\n\n"
+            son_denetim = time.monotonic()
             while True:
                 if await request.is_disconnected():
                     return
+                if time.monotonic() - son_denetim >= OTURUM_DENETIM_SN:
+                    son_denetim = time.monotonic()
+                    if not _akis_suruyor_mu(cerez, kul):
+                        # Istemci bu olayda yeniden baglanmayi birakir.
+                        yield 'event: oturum-bitti\ndata: {"tip":"oturum-bitti"}\n\n'
+                        return
                 try:
-                    mesaj = await asyncio.wait_for(kuyruk.get(), timeout=20.0)
+                    mesaj = await asyncio.wait_for(
+                        kuyruk.get(), timeout=min(NABIZ_SN, OTURUM_DENETIM_SN)
+                    )
                 except asyncio.TimeoutError:
                     yield 'event: nabiz\ndata: {"tip":"nabiz"}\n\n'
                     continue
-                if afetzede:
-                    mesaj = _afetzede_icin(mesaj, kul["id"])
-                    if mesaj is None:
-                        continue
+                mesaj = role_gore(mesaj, kul)
+                if mesaj is None:
+                    continue
                 yield canli_yayin.sse_bicimle(mesaj)
         finally:
             canli_yayin.abonelik_bitir(kuyruk)

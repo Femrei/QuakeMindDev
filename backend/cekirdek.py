@@ -548,6 +548,47 @@ def _on_road_damage_job_done(analysis_id, future):
                 bolge=result.get("city"),
             )
         job["finishedAt"] = time.time()
+        islem_bilgisi = job.get("islemKaydi")
+        hata_metni = job.get("error") if job.get("status") == "error" else None
+        sonuc = job.get("result") if job.get("status") == "done" else None
+    # Kilidin DISINDA: kayit depoya yazar, is deposunu bekletmesin (J-165).
+    if islem_bilgisi:
+        _analiz_sonucunu_kaydet(analysis_id, islem_bilgisi, hata_metni, sonuc)
+
+
+def _analiz_sonucunu_kaydet(analysis_id, bilgi, hata_metni, sonuc):
+    import islem_kaydi
+
+    onek = bilgi.get("onek", "hasar_analizi")
+    ad = "Tatbikat" if onek == "tatbikat" else "Hasar analizi"
+    if hata_metni is not None:
+        islem_kaydi.kaydet(
+            bilgi.get("yapan"), f"{onek}_hata", f"{ad} hata verdi: {str(hata_metni)[:160]}",
+            hedef_tur="analiz", hedef_id=analysis_id, ayrinti={"hata": str(hata_metni)[:1000]},
+        )
+        return
+    sonuc = sonuc or {}
+    model = sonuc.get("model") if isinstance(sonuc.get("model"), dict) else {}
+    islem_kaydi.kaydet(
+        bilgi.get("yapan"),
+        f"{onek}_bitti",
+        f"{ad} bitti: {sonuc.get('blockedRoads', 0)} kapalı, {sonuc.get('openRoads', 0)} açık yol parçası"
+        + (f", hasar oranı %{round(100 * sonuc['damageRate'], 1)}" if sonuc.get("damageRate") is not None else ""),
+        hedef_tur="analiz",
+        hedef_id=analysis_id,
+        ayrinti={
+            "sehir": sonuc.get("city"),
+            "kapaliYol": sonuc.get("blockedRoads"),
+            "acikYol": sonuc.get("openRoads"),
+            "hasarOrani": sonuc.get("damageRate"),
+            "goruntu": sonuc.get("imageryLabel"),
+            "zoom": sonuc.get("imageryZoom"),
+            "istenenZoom": sonuc.get("imageryRequestedZoom"),
+            "model": model.get("ad"),
+            "esik": sonuc.get("threshold"),
+            "kutu": sonuc.get("bounds"),
+        },
+    )
 
 
 def _gorselleri_diske_al(analysis_id, result):
@@ -739,8 +780,15 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Road Damage pool warm-up failed (will still lazy-init on first job): {e}", flush=True)
 
+    # Metin modeli kendi isci surecinde (J-170, CLAUDE.md 3). Isinma acilisi
+    # BEKLETMEZ: ilk istek isinma surerken gelirse kuyrukta bekler.
+    from metin_analizi import isci as metin_iscisi
+
+    metin_iscisi.baslat()
+
     yield
 
+    metin_iscisi.durdur()
     if road_damage_sweeper_stop is not None:
         road_damage_sweeper_stop.set()
     road_damage_pool.shutdown(wait=False, cancel_futures=True)
@@ -754,7 +802,8 @@ async def lifespan(app: FastAPI):
 
 
 class NLPRequest(BaseModel):
-    text: str
+    # J-170: uzunluk siniri (eskiden sinirsizdi; model 512 jetonu okur).
+    text: str = Field(..., min_length=5, max_length=1000)
 
 
 class SOSAlertRequest(BaseModel):
@@ -1218,7 +1267,9 @@ class SOSStatusUpdateRequest(BaseModel):
 
 
 class CameraAnalysisRequest(BaseModel):
-    modelType: str = "hybrid"  # "catlak", "bina", "hybrid"
+    # Bilinmeyen deger 422 (J-167 S-3): eskiden sessizce hicbir model kosmuyor
+    # ama yanit iki modeli de "calisti" diye yaziyordu. crack/building eski adlar.
+    modelType: Literal["catlak", "bina", "hybrid", "crack", "building"] = "hybrid"
     imageBase64: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None

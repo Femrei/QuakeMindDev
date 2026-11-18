@@ -41,39 +41,18 @@ def test_bridge_yalniz_backend_veri_kokunu_kullanir():
     assert "mobile/tool" not in str(bridge.__file__).replace("\\", "/").lower()
 
 
-def test_manual_coordinates_risk_endpoint_returns_real_contract_shape(monkeypatch, client):
-    """Android'in `{city:'Türkiye',manualLatitude,...}` istegi geocoding istemez."""
-    bridge = importlib.import_module("risk_bridge")
-    monkeypatch.setattr(bridge, "GEOJSON_PATHS", [])
-    fake_risk_engine = types.ModuleType("risk_engine")
-    fake_risk_engine.haversine = lambda lat, lon, lats, lons: np.hypot(np.array(lats) - lat, np.array(lons) - lon) * 111
-    fake_risk_engine.nearest_fault_distance = lambda lat, lon: 12.5
-    fake_risk_engine.fault_hazard_score = lambda distance: 0.2
-    fake_risk_engine.FAULT_LINES = []
-    monkeypatch.setitem(sys.modules, "risk_engine", fake_risk_engine)
+MODEL = BASE_DIR / "apps" / "earthquake_risk" / "models" / "risk_catboost.cbm"
 
-    class Model:
-        last_lat = None
-        last_lon = None
-        df_full = pd.DataFrame({
-            "time": pd.to_datetime(["2026-11-06T12:00:00", "2026-11-07T12:00:00"]),
-            "latitude": [40.99, 41.0], "longitude": [29.02, 29.03],
-            "mag": [3.1, 4.2], "depth": [7.1, 10.4], "place": ["Bolge A", "Bolge B"],
-        })
 
-        def predict_city_risk(self, city, manual_coords):
-            assert city == "Türkiye"
-            assert manual_coords == (40.99, 29.02)
-            self.last_lat, self.last_lon = manual_coords
-            return "Nihai Risk Skoru: 42.00%  ORTA"
+@pytest.mark.skipif(not MODEL.exists(), reason="risk modeli bu makinede egitilmemis")
+def test_manual_coordinates_risk_endpoint_returns_real_contract_shape(client):
+    """Android'in `{city:'Türkiye',manualLatitude,...}` istegi geocoding istemez.
 
-        def _compute_short_term_ml_risk(self, lat, lon):
-            return 0.3
-
-        def _compute_long_term_hazard(self, lat, lon, **kwargs):
-            return 0.4
-
-    monkeypatch.setattr(ck, "risk_engine", Model())
+    Birlesmede (PR #7 + J-173) yeniden yazildi: eski test risk motorunun
+    icini (predict_city_risk, last_lat) taklit ediyordu; API artik
+    risk_hizmeti ile is parcacigi guvenli hesapliyor. Burada Android'in
+    BackendRiskAssessmentService'te OKUDUGU alanlar gercek modelle sinanir:
+    riskScore, factors (ad -> sayi), lastUpdate."""
     guest = client.post("/api/oturum/misafir")
     assert guest.status_code == 201, guest.text
     resp = client.post("/api/risk/predict", headers={
@@ -83,11 +62,12 @@ def test_manual_coordinates_risk_endpoint_returns_real_contract_shape(monkeypatc
     })
     assert resp.status_code == 200, resp.text
     data = resp.json()
-    assert math.isclose(data["riskScore"], 42.0)
+    assert 0.0 <= data["riskScore"] <= 100.0
+    assert data["factors"] and all(isinstance(v, (int, float)) and math.isfinite(v) for v in data["factors"].values())
+    assert data["lastUpdate"]
     assert data["coordinates"] == {"lat": 40.99, "lon": 29.02}
     assert data["source"] == "backend_exact"
     assert data["usedManualCoordinates"] is True
-    assert len(data["mapEvents"]) == 2
 
 
 def test_risk_predict_requires_session(client):

@@ -50,12 +50,19 @@ def test_sos_siniri_kullaniciya_ozel(client):
     client.cookies.clear()
     ikinci = client.post("/api/oturum/misafir").json()["erisimJetonu"]
     payload = {"lat": 40.99, "lon": 29.03, "oncelik": "kritik"}
-    for _ in range(5):
-        assert client.post("/api/sos", json=payload, headers={"Authorization": f"Bearer {ilk}"}).status_code == 201
+    # Hesap basina tek acik SOS (J-167 S-2): ilk basis yeni cagri (201), sonrakiler
+    # ayni cagriyi gunceller (200). Dakikalik sinir (hiz_siniri) dolunca 429.
+    # Birlesmede (PR #7 + J-174) ayrica "10 dakikada 5" siniri kaldirildi: cagrisini
+    # guncelleyen afetzedeyi engelliyordu.
+    import hiz_siniri
+
+    durumlar = [client.post("/api/sos", json=payload, headers={"Authorization": f"Bearer {ilk}"}).status_code
+                for _ in range(hiz_siniri.SOS_HESAP_SINIRI)]
+    assert durumlar == [201] + [200] * (hiz_siniri.SOS_HESAP_SINIRI - 1)
 
     engel = client.post("/api/sos", json=payload, headers={"Authorization": f"Bearer {ilk}"})
     assert engel.status_code == 429
-    assert engel.headers["Retry-After"] == "600"
+    assert 0 < int(engel.headers["Retry-After"]) <= hiz_siniri.SOS_PENCERE_SN
     assert client.post("/api/sos", json=payload, headers={"Authorization": f"Bearer {ikinci}"}).status_code == 201
 
 

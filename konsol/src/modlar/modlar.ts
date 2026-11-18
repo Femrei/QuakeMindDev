@@ -16,21 +16,21 @@ export const MODLAR = [
     grup: 'ana',
     ad: 'Genel durum',
     ozet: 'Bütün kaynaklardan gelen hasar bilgisi ve afetzede ihbarları tek haritada.',
-    katmanlar: ['yapilar', 'yollar', 'hasarliYollar', 'isi', 'depremler', 'ekipler', 'ihbarlar'],
+    katmanlar: ['yapilar', 'yollar', 'hasarliYollar', 'isi', 'ekipler', 'ihbarlar'],
   },
   {
     id: 'sos',
     grup: 'ana',
     ad: 'SOS kuyruğu',
     ozet: 'Ekip bekleyen çağrılar, kime kim gidiyor, ekip gönderme.',
-    katmanlar: ['yollar', 'hasarliYollar', 'ekipler', 'toplanma'],
+    katmanlar: ['yollar', 'hasarliYollar', 'ekipler', 'saglik'],
   },
   {
     id: 'ekipler',
     grup: 'ana',
     ad: 'Ekipler',
     ozet: 'Hangi ekip nerede, neye gidiyor, kaç kişiyle; ekip tanımı ve bağlı hesaplar.',
-    katmanlar: ['yollar', 'ekipler', 'ihbarlar', 'toplanma'],
+    katmanlar: ['yollar', 'hasarliYollar', 'ekipler', 'ihbarlar'],
   },
   {
     id: 'ihtiyac',
@@ -45,6 +45,8 @@ export const MODLAR = [
     ad: 'Acil bildirim',
     ozet: 'Afetzede ekranlarına acil durum bildirimi yayınla, yanlış olanı geri çek.',
     katmanlar: ['yollar', 'isi', 'ekipler'],
+    // Saha ekibi görmez (17 Kasım, J-163); sunucu da yalnız bu rollere izin verir.
+    roller: ['koordinator', 'yonetici'],
   },
   {
     id: 'kullanicilar',
@@ -92,13 +94,15 @@ export const MODLAR = [
     ad: 'Simülasyon (tatbikat)',
     ozet: 'Gerçek görüntüde model koşturup rotaları tatbikat olarak dener; gerçek olay değildir.',
     katmanlar: ['yollar', 'simHasar', 'simKapanma', 'simRota', 'simGorev', 'simKamera', 'simMetin'],
+    // Saha ekibi görmez (17 Kasım, J-163); sunucu da yalnız bu rollere izin verir.
+    roller: ['koordinator', 'yonetici'],
   },
   {
     id: 'yol',
     grup: 'analiz',
     ad: 'Yol ve rota',
     ozet: 'Kapalı yollar ve ekiplerin geçebileceği güzergâh.',
-    katmanlar: ['yollar', 'hasarliYollar', 'toplanma', 'ekipler'],
+    katmanlar: ['yollar', 'hasarliYollar', 'saglik', 'toplanma', 'ekipler'],
   },
 ] as const satisfies ReadonlyArray<{
   id: string

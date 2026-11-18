@@ -1,7 +1,9 @@
-import { useMemo, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { ArrowsOut } from '@phosphor-icons/react'
 import { Amac, Bolum, VeriYok } from '@/kabuk/Panel'
 import { Micro, Rozet } from '@/kabuk/parcalar'
 import { IsaretliFoto, TespitListesi } from '@/kabuk/IsaretliFoto'
+import { FotoInceleme } from '@/kabuk/FotoInceleme'
 import { useHarita } from '@/harita/HaritaKabugu'
 import { useKonsol } from '@/durum/konsolDurumu'
 import { useSorguAraligi } from '@/durum/zamanDurumu'
@@ -12,6 +14,7 @@ import {
   FOTOGRAF_MODELI,
   IHBAR_DURUMU,
   IHBAR_TURU,
+  ihbarBasligi,
   ihbarKonumu,
   useIhbarDurum,
   useIhbarFotografi,
@@ -22,6 +25,7 @@ import {
 import { IHBAR_IKONU, IHTIYAC_IKONU } from '@/veri/ihbarIkon'
 import { acikGorev } from '@/veri/gorev'
 import { GorevOzetSatiri, SevkBolumu } from './sevk'
+import { MetinSonucKarti, ihbarGorunumu } from './metinKarti'
 
 /* Konsolda afetzede ihbarının satırı ve ayrıntısı (J-51). Genel durum, kamera,
    metin ve ihtiyaç modları aynı parçaları kullanır: aynı ihbar her yerde aynı
@@ -33,8 +37,6 @@ const BILDIRILEN_ACILIYET = {
   HIGH: { ad: 'Yüksek', ton: 'high' },
   CRITICAL: { ad: 'Kritik', ton: 'crit' },
 } as const
-
-const ACILIYET_TONU = (n: number) => (n >= 5 ? 'crit' : n >= 4 ? 'high' : n >= 3 ? 'mid' : 'ok')
 
 /** Türün renkli simgesi. Renk tek başına anlam taşımaz; yanında ad yazılır. */
 export function TurSimgesi({ tur, boy = 'kucuk' }: { tur: IhbarTuru | 'sos'; boy?: 'kucuk' | 'buyuk' }) {
@@ -61,7 +63,10 @@ function altYazi(i: Ihbar): string {
     const kisi = i.kisiSayisi ? `${sayi(i.kisiSayisi)} kişi` : null
     return [kisi, i.mahalle, i.metin].filter(Boolean).join(' · ')
   }
-  if (i.tur === 'metin') return i.metin ?? ''
+  if (i.tur === 'metin') {
+    const kisi = i.kisiSayisi ? `${sayi(i.kisiSayisi)} kişi` : null
+    return [kisi, i.metin].filter(Boolean).join(' · ')
+  }
   const tespit = (i.tespitler ?? []).filter((t) => t.hasar).length
   return [tespit ? `${tespit} işaret` : 'model işaretlemedi', i.mahalle, i.metin].filter(Boolean).join(' · ')
 }
@@ -162,7 +167,7 @@ export function IhbarDetayi({ ihbar }: { ihbar: Ihbar }) {
           )}
           {ihbar.mahsurSayisi != null && <Satir ad="Bildirilen mahsur">{sayi(ihbar.mahsurSayisi)}</Satir>}
           {ihbar.yaraliSayisi != null && <Satir ad="Bildirilen yaralı">{sayi(ihbar.yaraliSayisi)}</Satir>}
-          <Satir ad="Konum">{ihbarKonumu(ihbar)}</Satir>
+          {ihbar.tur !== 'metin' && <Satir ad="Konum">{ihbarKonumu(ihbar)}</Satir>}
           <Satir ad="Zaman">
             <span className="font-mono">{tarihSaat(ihbar.zaman)}</span>
           </Satir>
@@ -235,10 +240,40 @@ function FotografAyrintisi({ ihbar }: { ihbar: Ihbar }) {
   const foto = useIhbarFotografi(ihbar.fotografVar ? ihbar.id : null)
   const tespitler = ihbar.tespitler ?? []
   const hasarli = tespitler.filter((t) => t.hasar)
+  const [inceleme, setInceleme] = useState<{ acik: boolean; sira: number | null }>({ acik: false, sira: null })
   return (
     <>
       {foto.data ? (
-        <IsaretliFoto veri={foto.data.veri} en={foto.data.en} boy={foto.data.boy} tespitler={tespitler} />
+        <>
+          <button
+            type="button"
+            onClick={() => setInceleme({ acik: true, sira: null })}
+            className="group relative block w-full rounded-control focus-visible:outline-2 focus-visible:outline-accent"
+            aria-label="Fotoğrafı tam ekranda incele"
+          >
+            <IsaretliFoto veri={foto.data.veri} en={foto.data.en} boy={foto.data.boy} tespitler={tespitler} numarali />
+            <span className="absolute right-2 bottom-2 flex items-center gap-1.5 rounded-control border border-line-2 bg-panel px-2 py-1 text-small text-ink group-hover:bg-hover">
+              <ArrowsOut size={14} aria-hidden />
+              Büyüt
+            </span>
+          </button>
+          <FotoInceleme
+            acik={inceleme.acik}
+            kapat={() => setInceleme({ acik: false, sira: null })}
+            baslik={`${ihbarBasligi(ihbar)} · ${ihbar.mahalle ?? 'konum'}`}
+            veri={foto.data.veri}
+            en={foto.data.en}
+            boy={foto.data.boy}
+            tespitler={tespitler}
+            baslangic={inceleme.sira}
+            kunye={
+              <p className="text-small text-ink-3">
+                Afetzedenin seçtiği model: {ihbar.model ? FOTOGRAF_MODELI[ihbar.model].ad : '—'}. Modelin
+                tahminidir; sahada doğrulanmadı.
+              </p>
+            }
+          />
+        </>
       ) : (
         <div className="grid h-40 place-items-center rounded-control bg-sunken text-small text-ink-3">
           {foto.isError ? 'Fotoğraf alınamadı.' : 'Fotoğraf yükleniyor…'}
@@ -249,37 +284,33 @@ function FotografAyrintisi({ ihbar }: { ihbar: Ihbar }) {
         {hasarli.length ? `${hasarli.length} yer işaretledi.` : 'Model hasar işaretlemedi; fotoğrafa bakın.'}
       </p>
       <div className="mt-1">
-        <TespitListesi tespitler={tespitler} />
+        <TespitListesi
+          tespitler={tespitler}
+          numarali
+          onSec={(sira) => setInceleme({ acik: true, sira })}
+        />
       </div>
       <p className="mt-1.5 text-small text-ink-3">
-        Modelin tahminidir; sahada doğrulanmadı. Model mAP değeri henüz ölçülmedi.
+        Modelin tahminidir; sahada doğrulanmadı. Bağımsız bir sınamada başarımı ölçülmedi.
       </p>
     </>
   )
 }
 
 function MetinAyrintisi({ ihbar }: { ihbar: Ihbar }) {
-  const a = ihbar.analiz
+  const g = ihbar.analiz ? ihbarGorunumu(ihbar.analiz) : null
   return (
-    <>
-      <blockquote className="rounded-control border border-line-2 bg-sunken px-2.5 py-2 text-body whitespace-pre-line text-ink">
-        {ihbar.metin}
-      </blockquote>
-      {!a ? (
-        <p className="mt-2 text-small text-ink-2">Model incelemedi (afetzede incelemeden gönderdi).</p>
-      ) : a.ilgisiz ? (
-        <p className="mt-2 text-small text-ink-2">Model bu metni afetle ilgisiz buldu; afetzede yine de gönderdi.</p>
-      ) : (
-        <dl className="kilav-kv mt-2 gap-x-2.5 gap-y-1.5 text-small">
-          <Satir ad="Kategori">{a.kategori ?? '—'}</Satir>
-          <Satir ad="Aciliyet">
-            {a.aciliyet != null ? <Rozet ton={ACILIYET_TONU(a.aciliyet)}>{`${a.aciliyet}/5`}</Rozet> : '—'}
-          </Satir>
-          <Satir ad="Model güveni">{a.guven != null ? `%${Math.round(a.guven * 100)}` : '—'}</Satir>
-          <Satir ad="Adres">{a.konumMetin ?? 'metinde adres bulunamadı'}</Satir>
-        </dl>
-      )}
-    </>
+    <MetinSonucKarti
+      metin={ihbar.metin ?? ''}
+      g={g}
+      konumNotu={
+        <p className="mt-2 border-t border-line pt-2 text-small text-ink-2">
+          {ihbar.konumKaynagi === 'metin'
+            ? 'Afetzede ekibi bu adrese yönlendirdi; haritadaki nokta burası.'
+            : `Afetzede ekibi kendi konumuna yönlendirdi: ${ihbarKonumu(ihbar)}.`}
+        </p>
+      }
+    />
   )
 }
 
@@ -325,9 +356,12 @@ export function GelenIhbarlar({
   baslik,
   amac,
   suz,
+  kapsa,
   sinir = 20,
 }: {
   tur: IhbarTuru
+  /** Başka türden de bu listeye düşenler (ihtiyaç geçen yazılı ihbar; J-174). */
+  kapsa?: (i: Ihbar) => boolean
   baslik: string
   amac: string
   suz?: (i: Ihbar) => boolean
@@ -342,10 +376,10 @@ export function GelenIhbarlar({
   const liste = useMemo(
     () =>
       (ihbar.data ?? [])
-        .filter((i) => i.tur === tur && (!suz || suz(i)))
+        .filter((i) => (i.tur === tur || !!kapsa?.(i)) && (!suz || suz(i)))
         // Önce işlenmemişler, sonra en yeni.
         .sort((a, b) => Number(a.durum === 'kapandi') - Number(b.durum === 'kapandi') || b.zaman - a.zaman),
-    [ihbar.data, tur, suz],
+    [ihbar.data, tur, suz, kapsa],
   )
   const seciliIhbar =
     secili?.tip === 'ihbar' ? liste.find((i) => i.id === secili.id) : undefined

@@ -131,6 +131,13 @@ def bildirim_yayinla(
         gonderen_ad=kul.get("ad_soyad"),
     )
     _yayinla(kayit, "yayinda")
+    import islem_kaydi
+
+    islem_kaydi.kaydet(
+        kul, "bildirim_yayinlandi", f"Bildirim yayınlandı ({istek.onem}): {baslik}",
+        hedef_tur="bildirim", hedef_id=kayit["id"],
+        ayrinti={"onem": istek.onem, "baslik": baslik, "metin": metin[:500]},
+    )
     return _bildirim_cikti(kayit, ayrintili=True)
 
 
@@ -144,6 +151,12 @@ def bildirim_kaldir(bildirim_id: str, kul: dict = Depends(kimlik.rol_gerektir(*Y
         raise HTTPException(status_code=409, detail="Bildirim zaten geri cekilmis.")
     kayit = depo.bildirim_bul(bildirim_id)
     _yayinla(kayit, "kaldirildi")
+    import islem_kaydi
+
+    islem_kaydi.kaydet(
+        kul, "bildirim_geri_cekildi", f"Bildirim geri çekildi: {kayit.get('baslik')}",
+        hedef_tur="bildirim", hedef_id=bildirim_id,
+    )
     return _bildirim_cikti(kayit, ayrintili=True)
 
 
@@ -169,7 +182,7 @@ def aktif_bildirimler(_kul: dict = Depends(kimlik.kullanici)):
 
 
 @yonlendirici.post("/api/notifications/send_emergency")
-def send_emergency_notification(req: ck.EmergencyNotificationRequest):
+def send_emergency_notification(req: ck.EmergencyNotificationRequest, _eski: None = Depends(kimlik.eski_uc)):
     kul = ck._require_role(req.token, {"responder", "admin"})
     kayit = aktif_depo().bildirim_ekle(
         baslik=req.title,
@@ -190,7 +203,7 @@ def send_emergency_notification(req: ck.EmergencyNotificationRequest):
 
 
 @yonlendirici.get("/api/notifications/active")
-def get_active_emergency_notifications():
+def get_active_emergency_notifications(_eski: None = Depends(kimlik.eski_uc)):
     """Eski web bandi (bicimi degismedi). Artik depodan okur: konsoldan
     yayinlanan bildirim eski webde de gorunur, geri cekilen gorunmez."""
     yayinda = aktif_depo().bildirim_listele(yalniz_yayinda=True, sinir=200)
@@ -201,7 +214,7 @@ def get_active_emergency_notifications():
 
 
 @yonlendirici.post("/api/chat/send")
-def send_team_chat_message(req: ck.ChatMessageRequest):
+def send_team_chat_message(req: ck.ChatMessageRequest, _eski: None = Depends(kimlik.eski_uc)):
     user = ck._require_role(req.token, {"responder", "admin"})
     text = req.text.strip()
     if not text:
@@ -221,7 +234,7 @@ def send_team_chat_message(req: ck.ChatMessageRequest):
 
 
 @yonlendirici.get("/api/chat/messages")
-def get_team_chat_messages(token: Optional[str] = None, limit: int = 50):
+def get_team_chat_messages(token: Optional[str] = None, limit: int = 50, _eski: None = Depends(kimlik.eski_uc)):
     ck._require_role(token, {"responder", "admin"})
     capped_limit = max(1, min(limit, ck._TEAM_CHAT_LIMIT))
     return {"messages": ck.team_chat_messages[-capped_limit:]}

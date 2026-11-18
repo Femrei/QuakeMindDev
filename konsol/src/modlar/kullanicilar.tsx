@@ -18,6 +18,7 @@ import {
 } from '@/veri/kullanici'
 import { sayi, tarihSaatYilli } from '@/lib/bicim'
 import { sn } from '@/lib/sinif'
+import { IslemKaydiGorunumu } from './islemKaydi'
 
 /* ---------------------------------------------------------------------------
    Hesap yönetimi — tam sayfa (J-155, J-156, J-157).
@@ -95,7 +96,7 @@ type Cekmece = { tur: 'yeni' } | { tur: 'duzenle'; id: string } | null
 export function HesapYonetimi() {
   const liste = useKullanicilar()
   const ekipler = useEkipler()
-  const [sekme, setSekme] = useState<'hesaplar' | 'defter'>('hesaplar')
+  const [sekme, setSekme] = useState<'hesaplar' | 'defter' | 'islem'>('hesaplar')
   const [grup, setGrup] = useState<GrupId>('hepsi')
   const [arama, setArama] = useState('')
   const [cekmece, setCekmece] = useState<Cekmece>(null)
@@ -115,6 +116,8 @@ export function HesapYonetimi() {
         k.eposta.toLocaleLowerCase('tr-TR').includes(aranan),
     )
   const ekipsizSayi = tumu.filter(SUZGEC.ekipsiz).length
+  // Liste gelmeden sayı yazılmaz: "Tümü · 0" yüklenirken "hiç hesap yok" diye okunuyordu.
+  const sayac = (n: number) => (liste.data ? sayi(n) : '—')
   const secili =
     cekmece?.tur === 'duzenle' ? tumu.find((k) => k.id === cekmece.id) ?? null : null
   const yetkisiz = liste.error instanceof ApiHatasi && liste.error.durum === 403
@@ -146,8 +149,10 @@ export function HesapYonetimi() {
       <div role="tablist" aria-label="Görünüm" className="mt-4 flex gap-1 border-b border-line">
         {(
           [
-            ['hesaplar', `Hesaplar · ${sayi(tumu.length)}`],
-            ['defter', 'Kayıt defteri'],
+            ['hesaplar', `Hesaplar · ${sayac(tumu.length)}`],
+            ['defter', 'Hesap defteri'],
+            // J-165: analizler, sevk, SOS/ihbar, ekip ve bildirim işlemleri.
+            ['islem', 'İşlem kaydı'],
           ] as const
         ).map(([id, etiket]) => (
           <button
@@ -166,7 +171,9 @@ export function HesapYonetimi() {
         ))}
       </div>
 
-      {sekme === 'defter' ? (
+      {sekme === 'islem' ? (
+        <IslemKaydiGorunumu />
+      ) : sekme === 'defter' ? (
         <KayitDefteri ekipAdi={ekipAdi} />
       ) : yetkisiz ? (
         <div className="mt-4">
@@ -190,7 +197,7 @@ export function HesapYonetimi() {
               etiket="Hesap grupları"
               secenekler={GRUPLAR.map((g) => ({
                 ...g,
-                etiket: `${g.etiket} · ${sayi(tumu.filter(SUZGEC[g.id]).length)}`,
+                etiket: `${g.etiket} · ${sayac(tumu.filter(SUZGEC[g.id]).length)}`,
               }))}
               secili={grup}
               onSec={setGrup}

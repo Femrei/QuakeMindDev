@@ -42,7 +42,7 @@ yonlendirici = APIRouter()
 
 
 @yonlendirici.post("/api/road_damage/route")
-def road_damage_route(req: ck.RoadDamageRouteRequest):
+def road_damage_route(req: ck.RoadDamageRouteRequest, _eski: None = Depends(kimlik.eski_uc)):
     session = ck._get_road_damage_session(req.analysisId)
     if session is None:
         raise HTTPException(status_code=422, detail="Analiz oturumu bulunamadi veya suresi doldu. Once analizi tekrar calistirin.")
@@ -129,7 +129,7 @@ def _yumusak_rota(session, req):
 
 
 @yonlendirici.post("/api/road_damage/safe_route")
-def road_damage_safe_route(req: ck.SafeRouteRequest):
+def road_damage_safe_route(req: ck.SafeRouteRequest, _eski: None = Depends(kimlik.eski_uc)):
     """PostGIS-tabanlı, session'sız risk-ağırlıklı rota (rapor 2.4.4): kapalı
     yol maskeleri + damage_points + road_blockages tek bir ceza-katsayılı
     grafta birleştirilir. /api/road_damage/analyze'nin önceden çağrılmış
@@ -215,6 +215,7 @@ def road_damage_assembly(
     includeCandidates: bool = True,
     dataSource: str = "auto",
     allowOnlineFallback: bool = True,
+    _eski: None = Depends(kimlik.eski_uc),
 ):
     import json
     import math
@@ -299,7 +300,7 @@ def road_damage_assembly(
 
 
 @yonlendirici.post("/api/road_damage/calculate_custom_route")
-def calculate_custom_route(req: ck.CustomRouteRequest):
+def calculate_custom_route(req: ck.CustomRouteRequest, _eski: None = Depends(kimlik.eski_uc)):
     # 1. Fetch real OSRM street route following actual road geometry
     route_coords, route_length_m, route_error = None, None, None
 
@@ -384,7 +385,7 @@ def report_road_blockage(req: ck.RoadBlockageRequest, _eski: None = Depends(kiml
 
 
 @yonlendirici.get("/api/road_damage/nearest_debris")
-def get_nearest_debris_for_teams(latitude: float, longitude: float, limit: int = 5):
+def get_nearest_debris_for_teams(latitude: float, longitude: float, limit: int = 5, _eski: None = Depends(kimlik.eski_uc)):
     """Arama Kurtarma Ekipleri için GPS Konumuna En Yakın Enkaz & Ağır Hasarlı
     Noktaları Listeler -- damage_points (kamera/YOLO/Segformer/SOS tespitleri)
     ve road_blockages'tan gerçek PostGIS mekânsal sorgusuyla üretilir."""

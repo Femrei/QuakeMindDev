@@ -6,6 +6,7 @@ import { useHarita } from '@/harita/HaritaKabugu'
 import { useKonsol, type EkipSuzgeci } from '@/durum/konsolDurumu'
 import { useZaman } from '@/durum/zamanDurumu'
 import { useOturum } from '@/kimlik/oturum'
+import { koordinasyonMu } from '@/kimlik/roller'
 import { once, saatten, sayi } from '@/lib/bicim'
 import { sn } from '@/lib/sinif'
 import {
@@ -54,8 +55,7 @@ function sira(e: Ekip) {
 const OLAY_MODU = { sos: 'sos', fotograf: 'kamera', metin: 'metin', ihtiyac: 'ihtiyac' } as const
 
 function useKoordinasyon() {
-  const rol = useOturum().oturum?.rol
-  return rol === 'koordinator' || rol === 'yonetici'
+  return koordinasyonMu(useOturum().oturum?.rol)
 }
 
 export function EkiplerSol() {

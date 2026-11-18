@@ -194,7 +194,17 @@ def _cikti(k: dict, afetzede: bool = False) -> dict:
         c["en"] = ek.get("en")
         c["boy"] = ek.get("boy")
     elif k["tur"] == "metin":
-        c["analiz"] = ek.get("analiz")
+        a = ek.get("analiz")
+        c["analiz"] = a
+        # Metinde ihtiyac geciyorsa ("suyumuz bitti, 30 kisiyiz") ihtiyac
+        # sayfasina da duser (J-174). Eskiden yalniz analizin icindeydi; ihtiyac
+        # sayfasi yalniz formdan gelen talepleri sayiyordu. Model cikarimidir,
+        # afetzedenin sectigi degil: istemci bunu "metinden" diye yazar.
+        if a and not a.get("ilgisiz"):
+            gecen = {x.get("ihtiyac") for x in a.get("ihtiyaclar") or []}
+            c["ihtiyaclar"] = [i for i in IHTIYACLAR if i in gecen]
+            sayilar = [int(x["sayi"]) for x in a.get("kisiler") or [] if isinstance(x.get("sayi"), (int, float))]
+            c["kisiSayisi"] = max(sayilar) if sayilar else None
     else:
         c["ihtiyaclar"] = ek.get("ihtiyaclar", [])
         c["kisiSayisi"] = ek.get("kisiSayisi")
@@ -288,44 +298,47 @@ class MetinAnalizIstegi(BaseModel):
 
 @yonlendirici.post("/api/afetzede/metin-analiz")
 def metin_analiz(istek: MetinAnalizIstegi, kul: dict = Depends(kimlik.kullanici)):
-    """Metin modelini (BERTurk + adres cozumleme) kosar. Kayit acmaz.
+    """Afetzedenin yazdigi metni cozer (J-170). Kayit acmaz.
 
-    Eski `/api/nlp/analyze` her cagrida sonucu bellekteki konum listesine ve
-    isi haritasina yaziyordu; burada yazma yalniz ihbar olusturulunca olur."""
+    Model metin iscisinde; adres yerel dizinden (metin disari gitmez). Yazma
+    yalniz ihbar olusturulunca olur."""
+    import hiz_siniri
+    from metin_analizi import isci
+
     metin = istek.metin.strip()
     if len(metin) < 5:
         raise HTTPException(status_code=422, detail="Metin çok kısa.")
-    pipeline = ck._get_nlp_pipeline()
-    if not pipeline:
-        raise HTTPException(status_code=503, detail="Metin modeli sunucuda yüklü değil.")
-
-    t0 = time.perf_counter()
+    hiz_siniri.metin_kontrol(kul["id"])
     try:
-        with ck.temporary_sys_path(ck.NLP_ROOT), ck.temporary_cwd(ck.NLP_ROOT):
-            sonuc = pipeline.process_tweet(metin)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Metin modeli çalışmadı: {e}")
-    sure_ms = round((time.perf_counter() - t0) * 1000)
+        sonuc = isci.coz(metin)
+    except isci.MetinModeliYok as e:
+        raise HTTPException(status_code=503, detail="Metin modeli şu an çalışmıyor. " + str(e)) from e
 
-    if not sonuc:
-        # Model metni afetle ilgisiz buldu; ihbar yine gonderilebilir ama
-        # modelin kategorisi, aciliyeti ve adresi yok.
-        analiz = {"ilgisiz": True, "kategori": None, "aciliyet": None, "guven": None,
-                  "konum": None, "konumMetin": None, "adaylar": []}
-    else:
-        k = sonuc.get("konum")
-        analiz = {
-            "ilgisiz": False,
-            "kategori": sonuc.get("kategori"),
-            "aciliyet": sonuc.get("aciliyet"),
-            "guven": sonuc.get("guven_skoru"),
-            # Boru hatti [enlem, boylam] doner.
-            "konum": {"lat": float(k[0]), "lon": float(k[1])} if k and len(k) == 2 else None,
-            "konumMetin": sonuc.get("konum_metin"),
-            "adaylar": list(sonuc.get("konum_adaylari") or [])[:6],
-        }
+    k = sonuc.get("konum")
+    analiz = {
+        # Eski alanlar (ihbar kaydi ve eski istemciler bunlari okur).
+        "ilgisiz": not sonuc["ilgili"],
+        "kategori": sonuc["kategori"] if sonuc["ilgili"] else None,
+        "aciliyet": sonuc.get("aciliyet"),
+        "guven": sonuc.get("guven"),
+        "konum": {"lat": float(k[0]), "lon": float(k[1])} if k else None,
+        "konumMetin": sonuc.get("konumMetin"),
+        "adaylar": [x["konumMetin"] for x in sonuc.get("adresAdaylari", [])][:6],
+        # J-170
+        "konumDuzeyi": sonuc.get("konumDuzeyi"),
+        "belirsizlikM": sonuc.get("belirsizlikM"),
+        "adres": sonuc.get("adres"),
+        "adresNotlari": sonuc.get("adresNotlari", []),
+        "adresEslesmeleri": sonuc.get("adresEslesmeleri", []),
+        "kategoriKaynagi": sonuc.get("kategoriKaynagi"),
+        "ikinciKategori": sonuc.get("ikinciKategori"),
+        "kategoriUyarilari": sonuc.get("kategoriUyarilari", []),
+        "kisiler": sonuc.get("kisiler", []),
+        "ihtiyaclar": sonuc.get("ihtiyaclar", []),
+        "sinyaller": sonuc.get("sinyaller", []),
+    }
     analiz_id = _sakla({"tur": "metin", "kullanici_id": kul["id"], "metin": metin, "analiz": analiz})
-    return {"analizId": analiz_id, **analiz, "sureMs": sure_ms}
+    return {"analizId": analiz_id, **analiz, "sureMs": sonuc.get("sureMs")}
 
 
 # --- 2. ihbar --------------------------------------------------------------------
@@ -544,6 +557,9 @@ def ihbar_listesi(
         kullanici_id=kul["id"] if afetzede else None,
         sinir=sinir,
     )
+    import islem_kaydi
+
+    islem_kaydi.goruntuleme(kul, "ihbar_listesi", ayrinti={"kayitSayisi": len(kayitlar), "tur": tur})
     # Ihbara giden ekip (J-54); afetzede kendi ihbarininkini gorur.
     return gorevleri_ekle("ihbar", kayitlar, [_cikti(k, afetzede) for k in kayitlar], afetzede)
 
@@ -562,6 +578,9 @@ def ihbar_fotografi(ihbar_id: str, kul: dict = Depends(kimlik.kullanici)):
     foto = depo.ihbar_fotografi(ihbar_id)
     if foto is None:
         raise HTTPException(status_code=404, detail="Bu ihbarın fotoğrafı yok.")
+    import islem_kaydi
+
+    islem_kaydi.goruntuleme(kul, "ihbar_fotografi", hedef_tur="ihbar", hedef_id=ihbar_id)
     return {
         "veri": "data:image/jpeg;base64," + base64.b64encode(foto["veri"]).decode("ascii"),
         "en": foto["en"],
@@ -593,4 +612,17 @@ def ihbar_durumu(
     _yayinla(kayit)
     for gorev_id in biten:
         gorev_yayinla(depo.gorev_bul(gorev_id), "kapandi")
+    import islem_kaydi
+
+    tur_adi = {"fotograf": "Fotoğraf", "metin": "Yazılı", "ihtiyac": "İhtiyaç"}.get(kayit["tur"], kayit["tur"])
+    islem_kaydi.kaydet(
+        kul,
+        "ihbar_durumu",
+        f"{tur_adi} ihbarı {'görüldü' if istek.durum == 'goruldu' else 'kapatıldı'}: "
+        f"{kayit.get('mahalle') or kayit.get('etiket') or 'konum'}"
+        + (f", {len(biten)} açık görev bitti" if biten else ""),
+        hedef_tur="ihbar",
+        hedef_id=ihbar_id,
+        ayrinti={"durum": istek.durum, "tur": kayit["tur"], "bitenGorevler": biten},
+    )
     return gorevleri_ekle("ihbar", [kayit], [_cikti(kayit)])[0]

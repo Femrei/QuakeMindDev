@@ -9,7 +9,11 @@ import { useSecim, type Kutu } from '@/durum/secimDurumu'
 import { useSorguAraligi } from '@/durum/zamanDurumu'
 import { useEkipler, useHasarNoktalari, useIsiIzgarasi, useSosCagrilari } from '@/veri/sorgular'
 import { useIhbarlar, type IhbarTuru } from '@/veri/ihbar'
-import { useDepremler, useFaylar, useKapanmalar, useToplanmaAlanlari } from '@/veri/katman'
+import { belirsizlikMetni, duzeyAciklamasi, ihbarBelirsizligi, type BelirsizlikCemberi } from '@/veri/metin'
+import { useCozumleme } from '@/durum/cozumlemeDurumu'
+import { haritadanNokta, useRota } from '@/durum/rotaDurumu'
+import { useRiskSiralamasi, useSeciliRiskIli } from '@/modlar/risk'
+import { useDepremler, useFaylar, useKapanmalar, useSaglik, useToplanmaAlanlari } from '@/veri/katman'
 import { useSimAlanlar, useSimMaske, useSimSonuc } from '@/veri/simulasyon'
 import { useSimulasyon } from '@/durum/simulasyonDurumu'
 import { isiDokusuKur } from '@/harita/isiDokusu'
@@ -31,11 +35,13 @@ import {
   MODLAR,
   VARSAYILAN_MOD,
   modBul,
+  modGorunur,
   sayfaModuMu,
   type ModId,
   type PanelModu,
 } from '@/modlar/modlar'
 import { HesapYonetimi } from '@/modlar/kullanicilar'
+import { useOturum } from '@/kimlik/oturum'
 import { UstCubuk } from './UstCubuk'
 import { SolPanel } from './SolPanel'
 import { SagPanel } from './SagPanel'
@@ -57,8 +63,12 @@ import { TatbikatSeridi } from './TatbikatSeridi'
 export function KonsolKabugu() {
   const { mod } = useParams()
   const tanim = modBul(mod)
+  const { oturum } = useOturum()
 
   if (!tanim) return <Navigate to={`/konsol/${VARSAYILAN_MOD}`} replace />
+  // Rolüne kapalı mod (ör. saha ekibi → Kullanıcılar) adresten de açılmasın;
+  // eskiden boş sayfa iskeleti açılıyordu. Görünüm kilidi, yetkiyi sunucu denetler.
+  if (!modGorunur(tanim, oturum?.rol)) return <Navigate to={`/konsol/${VARSAYILAN_MOD}`} replace />
   const sayfa = sayfaModuMu(tanim.id)
 
   return (
@@ -253,6 +263,7 @@ function KatmanKopru() {
   const depremler = useDepremler(katmanlar.depremler)
   const faylar = useFaylar(katmanlar.faylar)
   const toplanma = useToplanmaAlanlari(katmanlar.toplanma, gorunenBolgeler)
+  const saglik = useSaglik(katmanlar.saglik)
 
   // Tatbikat koşusu (SIMULASYON_SOZLESMESI.md): sonuç canlı akış mesajıyla
   // tazelenir, maske jetonla indirilip ImageBitmap'e çevrilir.
@@ -330,22 +341,30 @@ function KatmanKopru() {
   // Altlık: yalnız görünen bölgelerin paketleri iner (harita durunca), bir kez.
   const { altlik, altlikYapiGorunur, bolgeAdlari, adSeviyesi, gorunum } = useAltlikGirdisi()
   // Isı yakınlaştıkça saydamlaşır: sokak ölçeğinde zemini, yapıları ve adları
-  // örtmesin (z13'e kadar 0,72, z16 ve üstü 0,30). 0,05 adımlı: her kaydırmada
+  // örtmesin (z13'e kadar 0,55, z16 ve üstü 0,22; J-172: 0,72 simgeleri bastırıyordu). 0,05 adımlı: her kaydırmada
   // katmanlar yeniden kurulmasın.
   const isiOrtuculugu = useMemo(() => {
     const z = gorunum?.zoom ?? 0
-    const o = z <= 13 ? 0.72 : z >= 16 ? 0.3 : 0.72 - ((z - 13) / 3) * 0.42
+    const o = z <= 13 ? 0.55 : z >= 16 ? 0.22 : 0.55 - ((z - 13) / 3) * 0.33
     return Math.round(o * 20) / 20
   }, [gorunum?.zoom])
   // Haritada bir ihbara ya da ekibe tıklayınca oraya yakınlaşılır; SOS seçilir.
   useEffect(() => {
     if (!hazir) return
     tiklamaYaz((bilgi) => {
+      // Yol ve rota modunda nokta seçimi açıksa tıklama noktayı seçer (J-171).
+      if (bilgi.coordinate && haritadanNokta(bilgi.coordinate[0], bilgi.coordinate[1])) return
       const nesne = bilgi.object as { id?: string; lon?: number; lat?: number } | undefined
       const katman = bilgi.layer?.id
       if (!nesne || nesne.lon == null || nesne.lat == null) return
       if (katman === 'sos' && nesne.id) kayitSec({ tip: 'sos', id: nesne.id })
       if (katman === 'ihbarlar' && nesne.id) kayitSec({ tip: 'ihbar', id: nesne.id })
+      if (katman === 'risk-illeri') {
+        const il = bilgi.object as { il: string; lat: number; lon: number }
+        useCozumleme.getState().riskBolgeSec(`il:${il.il}`)
+        ucus(il.lon, il.lat, 6.4)
+        return
+      }
       if (katman === 'sos' || katman === 'ihbarlar' || katman === 'hasar-noktalari' || katman === 'ekipler') {
         ucus(nesne.lon, nesne.lat, Math.max(15.5, haritaAl()?.getZoom() ?? 0))
       }
@@ -384,6 +403,62 @@ function KatmanKopru() {
     katmanlariAyarla([...tanim.katmanlar])
   }, [tanim, katmanlariAyarla])
 
+  // Konum belirsizliği (J-170): seçili ihbarın; metin modunda ihbar seçili
+  // değilse konsoldaki deneme analizinin (kayıt açmadığı için başka katmanda yok).
+  const deneme = useCozumleme((d) => d.metin)
+  const belirsizlik = useMemo<BelirsizlikCemberi | null>(() => {
+    if (seciliKayit?.tip === 'ihbar') {
+      const i = ihbar.data?.find((x) => x.id === seciliKayit.id)
+      return i ? ihbarBelirsizligi(i) : null
+    }
+    const s = deneme?.sonuc
+    if (tanim.id === 'metin' && !seciliKayit && s?.konum && s.belirsizlikM) {
+      return {
+        lat: s.konum[0],
+        lon: s.konum[1],
+        yaricapM: s.belirsizlikM,
+        baslik: `Deneme analizi · ${belirsizlikMetni(s.belirsizlikM)}`,
+        aciklama: [s.konumMetin, duzeyAciklamasi(s.konumDuzeyi), 'Kayıt açılmadı.'].filter(Boolean).join(' · '),
+        nokta: true,
+      }
+    }
+    return null
+  }, [seciliKayit, ihbar.data, deneme, tanim.id])
+
+  // Yol ve rota (J-171): yalnız o modda çizilir.
+  const rotaBas = useRota((d) => d.bas)
+  const rotaHedef = useRota((d) => d.hedef)
+  const rotaSonuc = useRota((d) => d.sonuc)
+  const rotaKiyas = useRota((d) => d.kiyas)
+  const rotaAdaylar = useRota((d) => d.adaylar)
+  const guzergah = useMemo(() => {
+    if (tanim.id !== 'yol') return null
+    const seciliRota = rotaSonuc?.rota ?? null
+    return {
+      ana: seciliRota,
+      kiyas: rotaKiyas && rotaKiyas.mesafeM !== rotaSonuc?.mesafeM ? rotaKiyas.rota : null,
+      adaylar: (rotaAdaylar ?? []).map((a) => a.rota).filter((r) => r !== seciliRota),
+      bas: rotaBas ? ([rotaBas.lon, rotaBas.lat] as [number, number]) : null,
+      hedef: rotaHedef
+        ? ([rotaHedef.lon, rotaHedef.lat] as [number, number])
+        : rotaSonuc && rotaAdaylar
+          ? (rotaSonuc.rota[rotaSonuc.rota.length - 1] ?? null)
+          : null,
+    }
+  }, [tanim.id, rotaBas, rotaHedef, rotaSonuc, rotaKiyas, rotaAdaylar])
+
+  // Deprem riski (J-173): yalnız risk modunda.
+  const riskSiralamasi = useRiskSiralamasi()
+  const riskIli = useSeciliRiskIli(riskSiralamasi.data?.iller)
+  const riskGirdisi = useMemo(() => {
+    if (tanim.id !== 'risk' || !riskSiralamasi.data) return null
+    return {
+      iller: riskSiralamasi.data.iller,
+      secili: riskIli?.il ?? null,
+      halkalar: riskIli ? { lon: riskIli.lon, lat: riskIli.lat, kisaKm: 150, uzunKm: 200 } : null,
+    }
+  }, [tanim.id, riskSiralamasi.data, riskIli])
+
   const deckKatmanlari = useMemo(
     () =>
       katmanlariKur({
@@ -400,11 +475,16 @@ function KatmanKopru() {
         ihbarlar: ihbar.data ?? [],
         ihbarTurleri: MOD_IHBARLARI[tanim.id],
         seciliIhbar: seciliKayit?.tip === 'ihbar' ? seciliKayit.id : null,
+        belirsizlik,
+        guzergah,
+        risk: riskGirdisi,
         secim: { kutu: secimKutusu, cokgen: secimCokgeni, taslak: secimTaslagi },
         goruntu: analizKarosu,
         analiz: segmentler.data ?? null,
         isi: isiDokusu,
         toplanmaGorunur: (gorunum?.zoom ?? 0) >= TOPLANMA_EN_AZ_ZOOM,
+        zoom: gorunum?.zoom,
+        saglik: saglik.data?.kayitlar,
         simulasyon: simGirdi,
         kapanmalar: kapanmalar.data?.kayitlar,
         depremler: depremler.data?.kayitlar,
@@ -424,6 +504,9 @@ function KatmanKopru() {
       tanim.id,
       ekipler.data,
       seciliKayit,
+      belirsizlik,
+      guzergah,
+      riskGirdisi,
       secimKutusu,
       secimCokgeni,
       secimTaslagi,
@@ -435,6 +518,7 @@ function KatmanKopru() {
       depremler.data,
       faylar.data,
       toplanma.data,
+      saglik.data,
       simGirdi,
     ],
   )

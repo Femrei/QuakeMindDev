@@ -4,6 +4,8 @@ import { Micro } from './parcalar'
 import { useSimulasyon } from '@/durum/simulasyonDurumu'
 import { sonIsSec, useIsler } from '@/durum/islerDurumu'
 import { useSimSonuc } from '@/veri/simulasyon'
+import { useOturum } from '@/kimlik/oturum'
+import { modBul, modGorunur } from '@/modlar/modlar'
 
 /* ---------------------------------------------------------------------------
    TATBİKAT şeridi (SIMULASYON_SOZLESMESI.md §5 madde 1).
@@ -20,6 +22,11 @@ export function TatbikatSeridi() {
   const hazir = useSimulasyon((d) => d.hazir)
   const is = useIsler(sonIsSec)
   const sonuc = useSimSonuc(isId)
+  const { oturum } = useOturum()
+  // Şerit herkese görünür (gerçek olay değil uyarısı); panel bağlantısı yalnız
+  // tatbikatı yönetebilene (J-163).
+  const sim = modBul('simulasyon')
+  const panelGorunur = !!sim && modGorunur(sim, oturum?.rol)
 
   if (!isId) return null
 
@@ -60,12 +67,14 @@ export function TatbikatSeridi() {
             ? 'koşu hatası'
             : `%${Math.round(simIs?.ilerleme ?? sonuc.data?.ilerleme ?? 0)}`}
       </Micro>
+      {panelGorunur && (
       <Link
         to="/konsol/simulasyon"
         className="ml-auto rounded-control border border-line-2 px-2 py-1 text-small text-ink-2 hover:bg-hover hover:text-ink"
       >
         Tatbikat paneli
       </Link>
+      )}
     </div>
   )
 }

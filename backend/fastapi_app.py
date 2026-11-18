@@ -28,8 +28,10 @@ from uclar import (
     gorev,
     goruntu,
     guvenlik,
+    guzergah,
     hasar_analiz,
     ihbar,
+    islem,
     kamera,
     kapanma,
     katmanlar,
@@ -40,9 +42,21 @@ from uclar import (
     simulasyon,
     sozlesme,
     yerler,
+    zaman,
 )
 
-app = FastAPI(title="QuakeMind API", version="1.0.0", lifespan=ck.lifespan)
+# API belgeleri (/docs, /redoc, /openapi.json) varsayilan KAPALI (J-167 S-4):
+# oturumsuz aciktilar ve butun uclarin haritasini veriyorlardi. Gelistirmede
+# QUAKEMIND_BELGELER=1 ile acilir. Konsol bunlara bagli degil.
+_BELGELER = os.environ.get("QUAKEMIND_BELGELER", "0") == "1"
+app = FastAPI(
+    title="QuakeMind API",
+    version="1.0.0",
+    lifespan=ck.lifespan,
+    docs_url="/docs" if _BELGELER else None,
+    redoc_url="/redoc" if _BELGELER else None,
+    openapi_url="/openapi.json" if _BELGELER else None,
+)
 
 # Siralama korunur: yeni oturum ve sozlesme uclari eskiden de ilk sirada
 # kaydediliyordu; ardindan eski dosyadaki sirayla digerleri.
@@ -69,6 +83,9 @@ for modul in (
     katmanlar,
     simulasyon,
     goruntu,
+    islem,
+    guzergah,
+    zaman,
 ):
     app.include_router(modul.yonlendirici)
 

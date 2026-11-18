@@ -3,6 +3,7 @@ import { MapPin, Plus, UsersThree } from '@phosphor-icons/react'
 import { Bolum } from '@/kabuk/Panel'
 import { Micro, Rozet } from '@/kabuk/parcalar'
 import { useOturum } from '@/kimlik/oturum'
+import { koordinasyonMu } from '@/kimlik/roller'
 import { useZaman } from '@/durum/zamanDurumu'
 import { mesafe, once, saat, suredir, sureMetni } from '@/lib/bicim'
 import { sn } from '@/lib/sinif'
@@ -110,6 +111,8 @@ export function SevkBolumu({
 }) {
   const [secici, setSecici] = useState(false)
   const simdi = useZaman((z) => z.simdi)
+  // Ekip göndermek koordinasyonun işi (J-163); saha ekibi kimin gittiğini görür.
+  const sevkEdebilir = koordinasyonMu(useOturum().oturum?.rol)
   const ekipler = useEkipler()
   const eski = useEskiAtama(eskiEkipId)
   const acik = gorevler.filter(acikGorev)
@@ -125,8 +128,8 @@ export function SevkBolumu({
         <p className="text-body text-ink">
           Bu çağrı görev kaydından önce {eski} ekibine atanmış.{' '}
           <span className="text-ink-2">
-            Kaç kişi gittiği ve hangi aşamada olduğu kaydedilmemiş. Durumu biliyorsan ekibi buradan yeniden gönder
-            ya da çağrıyı kapat.
+            Kaç kişi gittiği ve hangi aşamada olduğu kaydedilmemiş.
+            {sevkEdebilir && ' Durumu biliyorsan ekibi buradan yeniden gönder ya da çağrıyı kapat.'}
           </span>
         </p>
       )}
@@ -146,7 +149,11 @@ export function SevkBolumu({
         <GorevKarti key={g.id} gorev={g} canliEkip={ekipler.data?.find((e) => e.id === g.ekip.id)} />
       ))}
 
+      {!kapali && !sevkEdebilir && (
+        <p className="mt-2 text-small text-ink-3">Ekibi koordinasyon gönderir.</p>
+      )}
       {!kapali &&
+        sevkEdebilir &&
         (secici ? (
           <EkipSecici
             hedefTur={hedefTur}

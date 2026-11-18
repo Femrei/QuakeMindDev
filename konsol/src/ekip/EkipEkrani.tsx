@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Crosshair, MapPin, NavigationArrow, UsersThree, Warning } from '@phosphor-icons/react'
+import { Crosshair, MapPin, MapTrifold, NavigationArrow, UsersThree, Warning } from '@phosphor-icons/react'
 import { Marka } from '@/kabuk/Marka'
 import { Rozet } from '@/kabuk/parcalar'
 import { useOturum } from '@/kimlik/oturum'
@@ -22,6 +22,10 @@ import {
 } from '@/veri/gorev'
 import { kusUcusuM } from '@/afetzede/konum'
 import { GorevCizelgesi, hedefEtiketi } from '@/modlar/sevk'
+
+// J-162: harita motoru (MapLibre + deck.gl) yalnız "Haritada göster"e basılınca iner;
+// görev ekranının telefondaki açılışı hafif kalır.
+const GorevHaritasi = lazy(() => import('./GorevHaritasi'))
 
 /* ---------------------------------------------------------------------------
    Saha ekibinin görev ekranı (J-54). Telefonda, tek sütun.
@@ -77,7 +81,7 @@ function useKonumPaylasimi(ekipId: string | null) {
         if (onceki && simdi - onceki.t < 30_000 && kusUcusuM(onceki, nokta) < 25) return
         son.current = { ...nokta, t: simdi }
         mutate(
-          { ekipId, ...nokta },
+          { ekipId, ...nokta, dogrulukM: Number.isFinite(p.coords.accuracy) ? Math.round(p.coords.accuracy) : undefined },
           {
             onSuccess: () => setDurum({ son: simdi, dogrulukM: p.coords.accuracy }),
             onError: (e) => setDurum({ hata: e instanceof Error ? e.message : 'Konum gönderilemedi.' }),
@@ -263,6 +267,7 @@ function GorevKarti({ veri }: { veri: Ekibim }) {
   const [form, setForm] = useState<null | 'tamamlandi' | 'iptal'>(null)
   const [not, setNot] = useState('')
   const [suruyor, setSuruyor] = useState(false)
+  const [haritaAcik, setHaritaAcik] = useState(false)
   const sonraki = SONRAKI_ADIM[g.durum]
   const sos = g.hedefTur === 'sos'
   const tur = sos ? IHBAR_TURU.sos : IHBAR_TURU[olay.tur ?? 'metin']
@@ -359,8 +364,27 @@ function GorevKarti({ veri }: { veri: Ekibim }) {
             {lat.toFixed(5)}, {lon.toFixed(5)}
             {olay.konumKaynagi === 'gps' && olay.konumDogrulukM != null ? ` · ${dogruluk(olay.konumDogrulukM)}` : ''}
           </p>
+          <button
+            type="button"
+            aria-expanded={haritaAcik}
+            onClick={() => setHaritaAcik((a) => !a)}
+            className="mt-2 flex h-10 w-full items-center justify-center gap-1.5 rounded-control border border-line-2 text-body text-ink hover:bg-hover"
+          >
+            <MapTrifold size={16} weight="bold" className="text-accent" aria-hidden />
+            {haritaAcik ? 'Haritayı gizle' : 'Rotayı haritada göster'}
+          </button>
+          {haritaAcik && (
+            <Suspense fallback={<p className="mt-2 text-small text-ink-3">Harita yükleniyor…</p>}>
+              <GorevHaritasi
+                rota={g.rota}
+                ekip={g.ekipKonumu ? [g.ekipKonumu.lon, g.ekipKonumu.lat] : null}
+                olay={[lon, lat]}
+              />
+            </Suspense>
+          )}
           {/* geo: bağlantısı telefonun kendi harita uygulamasını açar; konum
-              bir web hizmetine adres içinde gönderilmez. */}
+              bir web hizmetine adres içinde gönderilmez. O uygulama bizim
+              kapanmalarımızı BİLMEZ (J-162); bu yüzden ikincil düğme. */}
           <a
             href={`geo:${lat},${lon}?q=${lat},${lon}`}
             className="mt-2 flex h-10 items-center justify-center gap-1.5 rounded-control border border-line-2 text-body text-ink hover:bg-hover"
@@ -368,6 +392,9 @@ function GorevKarti({ veri }: { veri: Ekibim }) {
             <NavigationArrow size={16} weight="bold" aria-hidden />
             Telefonun haritasında aç
           </a>
+          <p className="mt-1 text-small text-ink-3">
+            Telefonun haritası bilinen kapalı yolları bilmez; yolu yukarıdaki haritaya göre seç.
+          </p>
         </div>
       )}
 
@@ -382,42 +409,64 @@ function GorevKarti({ veri }: { veri: Ekibim }) {
         <GorevCizelgesi gorev={g} />
       </div>
 
+      {/* Adım düğmeleri kartın altında YAPIŞKAN (J-167 U-1): telefonda kart uzun,
+          "Yola çıktık" 375×812'de 800. pikseldeydi ve görmek için kaydırmak
+          gerekiyordu. Çubuk kart boyunca ekranın altında durur. */}
+      <div className="sticky bottom-0 z-10 -mx-4 -mb-4 mt-4 rounded-b-panel border-t border-line bg-panel px-4 pt-3 alt-guvenli">
       {form === null ? (
-        <div className="mt-4 grid gap-2">
-          {sonraki && sonraki.durum !== 'tamamlandi' && (
-            <button
-              type="button"
-              disabled={durum.isPending}
-              onClick={() => gonder(sonraki.durum)}
-              className="h-12 rounded-control bg-accent text-subtitle font-semibold text-accent-ink hover:bg-accent-deep hover:text-ink disabled:opacity-40"
-            >
-              {sonraki.ekipEylemi}
-            </button>
+        <div className="grid gap-2">
+          {sonraki && sonraki.durum !== 'tamamlandi' ? (
+            <>
+              <button
+                type="button"
+                disabled={durum.isPending}
+                onClick={() => gonder(sonraki.durum)}
+                className="h-12 rounded-control bg-accent text-subtitle font-semibold text-accent-ink hover:bg-accent-deep hover:text-ink disabled:opacity-40"
+              >
+                {sonraki.ekipEylemi}
+              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={durum.isPending}
+                  onClick={() => setForm('tamamlandi')}
+                  className="h-11 rounded-control border border-line-2 text-body text-ink hover:bg-hover disabled:opacity-40"
+                >
+                  İşimiz bitti…
+                </button>
+                <button
+                  type="button"
+                  disabled={durum.isPending}
+                  onClick={() => setForm('iptal')}
+                  className="h-11 rounded-control border border-line-2 text-body text-ink-2 hover:bg-hover hover:text-ink disabled:opacity-40"
+                >
+                  Gidemiyoruz…
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled={durum.isPending}
+                onClick={() => setForm('tamamlandi')}
+                className="h-12 rounded-control bg-accent text-subtitle font-semibold text-accent-ink hover:bg-accent-deep hover:text-ink disabled:opacity-40"
+              >
+                İşimiz bitti…
+              </button>
+              <button
+                type="button"
+                disabled={durum.isPending}
+                onClick={() => setForm('iptal')}
+                className="h-11 rounded-control border border-line-2 text-body text-ink-2 hover:bg-hover hover:text-ink disabled:opacity-40"
+              >
+                Gidemiyoruz…
+              </button>
+            </>
           )}
-          <button
-            type="button"
-            disabled={durum.isPending}
-            onClick={() => setForm('tamamlandi')}
-            className={sn(
-              'h-12 rounded-control text-subtitle font-semibold disabled:opacity-40',
-              g.durum === 'olay-yerinde'
-                ? 'bg-accent text-accent-ink hover:bg-accent-deep hover:text-ink'
-                : 'border border-line-2 text-ink hover:bg-hover',
-            )}
-          >
-            İşimiz bitti…
-          </button>
-          <button
-            type="button"
-            disabled={durum.isPending}
-            onClick={() => setForm('iptal')}
-            className="h-11 rounded-control border border-line-2 text-body text-ink-2 hover:bg-hover hover:text-ink disabled:opacity-40"
-          >
-            Gidemiyoruz…
-          </button>
         </div>
       ) : (
-        <div className="mt-4 rounded-control border border-line-2 p-3">
+        <div className="rounded-control border border-line-2 p-3">
           <label htmlFor="gorev-not" className="block text-body text-ink">
             {form === 'iptal' ? 'Neden gidemiyorsunuz? (zorunlu)' : 'Sonuç (isteğe bağlı)'}
           </label>
@@ -473,6 +522,7 @@ function GorevKarti({ veri }: { veri: Ekibim }) {
           {durum.error instanceof Error ? durum.error.message : 'Durum kaydedilemedi.'}
         </p>
       )}
+      </div>
     </section>
   )
 }
@@ -490,6 +540,7 @@ function Gecmis({ veri }: { veri: Ekibim }) {
                 {' '}
                 · {GOREV_DURUMU[g.durum].kisa}
                 {g.bitti ? ` ${saat(g.bitti)}` : ''}
+                {g.olaySuruyor ? ' · olay sürüyordu' : ''}
               </span>
             </p>
             {g.sonuc && <p className="text-ink-3">{g.sonuc}</p>}
