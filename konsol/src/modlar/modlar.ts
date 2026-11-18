@@ -16,21 +16,22 @@ export const MODLAR = [
     grup: 'ana',
     ad: 'Genel durum',
     ozet: 'Bütün kaynaklardan gelen hasar bilgisi ve afetzede ihbarları tek haritada.',
-    katmanlar: ['yapilar', 'yollar', 'hasarliYollar', 'isi', 'ekipler', 'ihbarlar'],
+    // Toplanma alanları yakınlaşınca (z11+) çizilir; uzakta kalabalık yapmaz (J-176).
+    katmanlar: ['yapilar', 'yollar', 'hasarliYollar', 'isi', 'ekipler', 'ihbarlar', 'toplanma'],
   },
   {
     id: 'sos',
     grup: 'ana',
     ad: 'SOS kuyruğu',
     ozet: 'Ekip bekleyen çağrılar, kime kim gidiyor, ekip gönderme.',
-    katmanlar: ['yollar', 'hasarliYollar', 'ekipler', 'saglik'],
+    katmanlar: ['yollar', 'hasarliYollar', 'ekipler', 'saglik', 'toplanma'],
   },
   {
     id: 'ekipler',
     grup: 'ana',
     ad: 'Ekipler',
     ozet: 'Hangi ekip nerede, neye gidiyor, kaç kişiyle; ekip tanımı ve bağlı hesaplar.',
-    katmanlar: ['yollar', 'hasarliYollar', 'ekipler', 'ihbarlar'],
+    katmanlar: ['yollar', 'hasarliYollar', 'ekipler', 'ihbarlar', 'toplanma'],
   },
   {
     id: 'ihtiyac',
