@@ -24,7 +24,7 @@ dizine bir satır ekleyin. Hiçbir madde silinmez; kimlikler değişmez.
 
 ## Özet (18 Kasım 2026)
 
-178 maddenin **96'sı kapandı** ve `EKSIKLER_ARSIV.md`'ye taşındı (dizini bu dosyanın sonunda).
+179 maddenin **97'si kapandı** ve `EKSIKLER_ARSIV.md`'ye taşındı (dizini bu dosyanın sonunda).
 Burada kalan **82 madde** şöyle dağılıyor:
 
 | Neye ait | Madde | Ne zaman |
@@ -2172,6 +2172,7 @@ kimlikle. Başka belgelerdeki "EKSIKLER J-xxx" atıfları için kimliği burada 
 | J-176 | 🟡 Giriş ekranı: hesap açarken üç kapı seçilebilir duruyordu; şifre görünür yapılamıyordu; zemin boştu | 18 Kasım 2026 |
 | J-177 | 🟠 Konsol yazısı küçüktü (U-5); acil bildirim saha ekibi ekranında hiç görünmüyordu | 18 Kasım 2026 |
 | J-167 | 🟠 Uçtan uca tarama (17 Kasım): giriş ve SOS sınırsız, birkaç ölü ekran, saha ana düğmesi ekran dışında | 18 Kasım 2026 |
+| J-178 | 🟡 Haritada mahalle, sokak ve cadde adları okunmuyordu | 20 Kasım 2026 |
 
 ---
 
@@ -2402,3 +2403,4 @@ kimlikle. Başka belgelerdeki "EKSIKLER J-xxx" atıfları için kimliği burada 
 | 18 Kasım 2026 | **J-176** kapatıldı: giriş ekranında hesap açma kipinde kapı seçicisi gizli; bütün şifre alanlarında göster/gizle ve büyük harf uyarısı; zemin gerçek veriden okunur bir Türkiye haritası (fay türü renkte, kayma hızı kalınlıkta, 6 Şubat 2023 depremleri, OSM yol silüeti), açılışta bir kez belirir, yalnız geniş ekranda iner (gzip 20,2 KB). Madde arşivde. |
 | 18 Kasım 2026 | Toplanma alanları genel durum, SOS kuyruğu ve ekipler modlarının varsayılan katmanlarına geri eklendi. J-172'deki sadeleştirmede SOS ve ekipler modlarından çıkarılmıştı; kullanıcı "acil toplanma alanlarını göremiyorum" dedi. Veri sağlamdı (AFAD dosyası yerinde, API Antakya'da 129 alan veriyor); simgeler yalnız z11 ve üstünde çizilir. |
 | 18 Kasım 2026 | **J-177** kapatıldı: konsol yazı ölçeği bir kademe büyük (12 px'te yalnız etiket; genel %91 → %13). Acil bildirim uçtan uca sınandı (senaryo 61/61); saha ekibi ekranı bildirimi hiç göstermiyordu, duyuru bandı ve listesi eklendi; bildirim sayfasında önem rengi, bölge önerisi, yayın süresi, 5'ten fazla uyarısı. J-167 Grup G bitti. |
+| 20 Kasım 2026 | **J-178** kapatıldı: harita adları okunur (sokak 14 px ink-2, mahalle 14 px kalın beyaz, kalın hale). Madde arşivde. |

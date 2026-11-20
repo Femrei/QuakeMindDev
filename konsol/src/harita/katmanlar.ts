@@ -80,14 +80,32 @@ const YOL_GENISLIGI_M = [7, 5, 3.4, 2, 1.4]
 
 /* Adlar (J-41): çakışan ad yazılmaz, önceliği yüksek olan kalır (şehir >
    ilçe > köy > mahalle > büyük yol > sokak). Adlar veri katmanlarının üstünde,
-   zemin renginde ince bir haleyle yazılır; yine de sönük tondadır (ARAYUZ §11). */
+   zemin renginde kalın bir haleyle yazılır.
+
+   Okunurluk (J-178, kullanıcı: "mahalle, sokak, cadde adları hiç okunmuyor"):
+   sokak adları en küçük boy ve en sönük griyle (micro, ink-3), mahalleler
+   small ve ink-2 ile yazılıyordu; hale de yazı atlasının dar boşluğu yüzünden
+   inceydi (outlineWidth 3 / radius 12). Şimdi sokak body + ink-2, mahalle ve
+   köy body + ink + kalın, şehir ve ilçe subtitle + kalın; atlas boşluğu ve
+   hale kalın. Büyüyen ad daha çok yer kapladığı için çakışma süzgeci biraz daha az
+   sokak adı yazar: okunur az ad, okunmayan çok addan iyidir. */
 const CAKISMA = new CollisionFilterExtension()
 
 /** Yakınlaştırmaya göre yazılan adlar: -1 yalnız bölge adları, 0 şehir/ilçe,
     1 +köy, 2 +mahalle, 3 +sokak. */
 export type EtiketSeviyesi = -1 | 0 | 1 | 2 | 3
 
-export function etiketKatmani(id: string, data: Etiket[], boy: number, renk: [number, number, number]) {
+/** Yazı atlası: hale kalınlığı atlastaki boşlukla sınırlı (deck.gl: outlineWidth / radius). */
+const AD_YAZISI = { sdf: true, fontSize: 64, buffer: 8, radius: 16 } as const
+const AD_HALESI = 6
+
+export function etiketKatmani(
+  id: string,
+  data: Etiket[],
+  boy: number,
+  renk: [number, number, number],
+  kalinlik: 500 | 600 = 500,
+) {
   return new TextLayer<Etiket, CollisionFilterExtensionProps<Etiket>>({
     id,
     data,
@@ -97,10 +115,10 @@ export function etiketKatmani(id: string, data: Etiket[], boy: number, renk: [nu
     getSize: boy,
     getColor: renk,
     fontFamily: 'IBM Plex Sans, sans-serif',
-    fontWeight: 500,
+    fontWeight: kalinlik,
     characterSet: 'auto',
-    fontSettings: { sdf: true },
-    outlineWidth: 3,
+    fontSettings: AD_YAZISI,
+    outlineWidth: AD_HALESI,
     outlineColor: [...tokenRenk('--color-ground'), 255],
     getTextAnchor: 'middle',
     getAlignmentBaseline: 'center',
@@ -118,7 +136,7 @@ export function adKatmanlari(
   seviye: EtiketSeviyesi,
 ): Layer[] {
   if (seviye < 0) {
-    return [etiketKatmani('ad-bolgeler', bolgeAdlari, tokenPx('--text-title'), tokenRenk('--color-ink'))]
+    return [etiketKatmani('ad-bolgeler', bolgeAdlari, tokenPx('--text-title'), tokenRenk('--color-ink'), 600)]
   }
   const L: Layer[] = []
   for (const b of bolgeler) {
@@ -127,8 +145,9 @@ export function adKatmanlari(
       etiketKatmani(
         `ad-${b.id}-yer-${yerSeviyesi}`,
         b.yerAdlari[yerSeviyesi],
-        tokenPx(yerSeviyesi === 0 ? '--text-subtitle' : '--text-small'),
-        tokenRenk(yerSeviyesi === 0 ? '--color-ink' : '--color-ink-2'),
+        tokenPx(yerSeviyesi === 0 ? '--text-subtitle' : '--text-body'),
+        tokenRenk('--color-ink'),
+        600,
       ),
     )
     if (seviye >= 3) {
@@ -136,8 +155,8 @@ export function adKatmanlari(
         etiketKatmani(
           `ad-${b.id}-sokak`,
           b.sokakAdlari,
-          tokenPx('--text-micro'),
-          tokenRenk('--color-ink-3'),
+          tokenPx('--text-body'),
+          tokenRenk('--color-ink-2'),
         ),
       )
     }

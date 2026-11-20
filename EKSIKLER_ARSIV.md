@@ -4108,3 +4108,17 @@ Veritabanının kopyasında koşar (`--api http://127.0.0.1:8001`), canlı veriy
 **Temizlik (18 Kasım 2026).** Grup A–C `kamera-analiz-gelistirme`, D J-170, E J-171, F J-172'de kapandı; J-173 ve J-174 ayrıca risk ve uçtan uca akış. Kalan tek madde U-5: konsol metninin %87'si 11–12 px; token ölçeği (`ARAYUZ_KARARLARI.md`) kullanıcıyla konuşulmadan değiştirilmez.
 
 **Kapanış (18 Kasım 2026).** Son kalan Grup G (U-5, konsol yazı boyutu) J-177'de yapıldı.
+
+## J-178 🟡 Haritada mahalle, sokak ve cadde adları okunmuyordu
+**Durum:** KAPALI (20 Kasım 2026) · **Bulundu:** 18 Kasım 2026 (kullanıcı ekran görüntüsüyle: "mahalle sokak cadde isimleri gibi isimler okunmuyor hiç") · **İlgili:** J-41, J-177, ARAYUZ §11
+
+**Bulgu.** `harita/katmanlar.ts` `etiketKatmani`: sokak adları en küçük boy (micro) ve en sönük griyle (ink-3), mahalle ve köy adları small ve ink-2 ile yazılıyordu. Hale (`outlineWidth` 3) yazı atlasının dar boşluğu (deck.gl varsayılanı radius 12, buffer 4) yüzünden inceydi; koyu yapı çokgenlerinin üstünde ad zeminle karışıyordu.
+
+**Yapılan.**
+- Sokak ve cadde: body (14 px) + ink-2. Mahalle ve köy: body + ink + kalın (600). Şehir ve ilçe: subtitle + ink + kalın. Bölge adları: title + kalın.
+- Yazı atlası `buffer` 8, `radius` 16; hale `outlineWidth` 6 (zemin renginde). Kalın hale adı yapıların ve yolların üstünde ayırır.
+- Büyüyen ad daha çok yer kapladığı için çakışma süzgeci yakın adlardan birini yazmaz; okunur az ad, okunmayan çok addan iyi.
+
+**Doğrulama.** Tarayıcıda Antakya merkezinde mahalle ölçeğinde ve sokak ölçeğinde bakıldı: Meydan, Antakya, Yenicami, Habib-i Neccar; General Şükrü Kanatlı Caddesi, Kemal Paşa Caddesi okunur. `npx tsc -b` ve `kontrol:token` temiz. Ölçüm (kare süresi) yapılmadı; yazı atlası bir kez üretilir.
+
+---
